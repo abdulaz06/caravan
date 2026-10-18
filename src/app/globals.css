@@ -1,26 +1,230 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* ──────────────────────────────────────────────────────────────────────
+   Lanks design system — "tropical travel poster"
+   Teal Indian Ocean, jungle green, sunset orange & saffron on warm sand.
+   Display: Fraunces (soft, wonky, poster-ish). Body: Instrument Sans.
+   ────────────────────────────────────────────────────────────────────── */
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-fraunces), ui-serif, Georgia, serif;
+  --font-sans: var(--font-instrument), ui-sans-serif, system-ui, sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@theme {
+  /* Sand & paper */
+  --color-paper: #fffbf4;
+  --color-sand-50: #fcf7ee;
+  --color-sand-100: #f7eee0;
+  --color-sand-200: #efe1c9;
+  --color-sand-300: #e2cba6;
+  --color-sand-400: #cfae7c;
+
+  /* Ink (warm near-black) */
+  --color-ink: #1d1914;
+  --color-ink-2: #4a4239;
+  --color-ink-3: #8a7e70;
+
+  /* Indian Ocean */
+  --color-ocean-950: #04242c;
+  --color-ocean-900: #06323d;
+  --color-ocean-800: #0a4351;
+  --color-ocean-700: #0d5a69;
+  --color-ocean-600: #117485;
+  --color-ocean-500: #1a8e9c;
+  --color-ocean-300: #79c6c3;
+  --color-ocean-100: #d6efeb;
+
+  /* Jungle */
+  --color-jungle-900: #112d20;
+  --color-jungle-800: #173d2c;
+  --color-jungle-700: #1e5139;
+  --color-jungle-600: #2b6a48;
+  --color-jungle-400: #6aa06a;
+  --color-jungle-100: #dcebd5;
+
+  /* Sun */
+  --color-saffron-600: #d98a1c;
+  --color-saffron-500: #f2a33a;
+  --color-saffron-400: #f7ba5c;
+  --color-saffron-200: #fbe0ae;
+  --color-saffron-100: #fdf0d6;
+
+  --color-sunset-700: #b23d1d;
+  --color-sunset-600: #d64f28;
+  --color-sunset-500: #ec6437;
+  --color-sunset-300: #f6a17f;
+  --color-sunset-100: #fde3d8;
+
+  /* Night */
+  --color-hibiscus-600: #b02f58;
+  --color-hibiscus-500: #d6467a;
+  --color-hibiscus-300: #ef94b4;
+  --color-dusk-950: #120f2a;
+  --color-dusk-900: #1a1638;
+  --color-dusk-800: #252050;
+  --color-dusk-700: #352d68;
+  --color-plum-600: #6a2d6c;
+
+  --radius-card: 1.6rem;
+
+  --shadow-card: 0 1px 0 rgb(255 255 255 / 0.7) inset, 0 1px 2px rgb(29 25 20 / 0.06), 0 12px 28px -14px rgb(29 25 20 / 0.28);
+  --shadow-lift: 0 30px 60px -20px rgb(29 25 20 / 0.45), 0 10px 20px -10px rgb(29 25 20 / 0.25);
+  --shadow-press: 0 4px 0 0 var(--tw-shadow-color, rgb(29 25 20 / 0.9));
+
+  --ease-out-back: cubic-bezier(0.2, 0.9, 0.25, 1.2);
+
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-spin-slow: spin 24s linear infinite;
+  --animate-marquee: marquee 60s linear infinite;
+  --animate-shimmer: shimmer 2.4s ease-in-out infinite;
+  --animate-shake: shake 0.42s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0) rotate(-2deg); }
+    50% { transform: translateY(-6px) rotate(2deg); }
+  }
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+  @keyframes shimmer {
+    0%, 100% { opacity: 0.55; }
+    50% { opacity: 1; }
+  }
+  @keyframes shake {
+    10%, 90% { transform: translateX(-2px); }
+    20%, 80% { transform: translateX(4px); }
+    30%, 50%, 70% { transform: translateX(-7px); }
+    40%, 60% { transform: translateX(7px); }
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer base {
+  html {
+    color-scheme: light;
+    -webkit-tap-highlight-color: transparent;
+    text-size-adjust: 100%;
+  }
+  body {
+    background: var(--color-sand-100);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-feature-settings: "ss01", "cv11";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overscroll-behavior-y: none;
+  }
+  .font-display {
+    font-variation-settings: "SOFT" 100, "WONK" 1;
+  }
+  h1, h2, h3 {
+    text-wrap: balance;
+  }
+  p {
+    text-wrap: pretty;
+  }
+  :focus-visible {
+    outline: 3px solid var(--color-saffron-500);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+  button, [role="button"] {
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+  button:disabled {
+    cursor: not-allowed;
+  }
+  ::selection {
+    background: var(--color-saffron-200);
+  }
+}
+
+@layer components {
+  /* Subtle paper grain over sand backgrounds */
+  .grain {
+    position: relative;
+    isolation: isolate;
+  }
+  .grain::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.09;
+    mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .27 0 0 0 0 .18 0 0 0 .9 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* Retro poster sunburst */
+  .sunburst {
+    background-image: repeating-conic-gradient(
+      from 0deg at 50% 110%,
+      rgb(255 255 255 / 0.07) 0deg 6deg,
+      transparent 6deg 12deg
+    );
+  }
+
+  /* Evening slots: dusk sky */
+  .dusk {
+    background:
+      radial-gradient(120% 90% at 85% -10%, rgb(214 70 122 / 0.45), transparent 55%),
+      radial-gradient(90% 80% at 0% 110%, rgb(26 142 156 / 0.35), transparent 60%),
+      linear-gradient(160deg, var(--color-dusk-800), var(--color-dusk-950));
+  }
+  .stars {
+    position: relative;
+    isolation: isolate;
+  }
+  .stars::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    pointer-events: none;
+    background-image:
+      radial-gradient(1px 1px at 12% 22%, rgb(255 255 255 / 0.8), transparent 60%),
+      radial-gradient(1px 1px at 72% 18%, rgb(255 255 255 / 0.6), transparent 60%),
+      radial-gradient(1.5px 1.5px at 88% 62%, rgb(255 255 255 / 0.7), transparent 60%),
+      radial-gradient(1px 1px at 38% 78%, rgb(255 255 255 / 0.5), transparent 60%),
+      radial-gradient(1px 1px at 55% 40%, rgb(255 255 255 / 0.45), transparent 60%);
+  }
+
+  /* Ticket perforation between the date stub and the slots */
+  .perforated {
+    background-image: linear-gradient(to bottom, var(--color-sand-300) 50%, transparent 50%);
+    background-size: 2px 10px;
+    background-repeat: repeat-y;
+    background-position: center;
+  }
+
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .pb-safe {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+
+  .label {
+    font-size: 0.6875rem;
+    line-height: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
 }

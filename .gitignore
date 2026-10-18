@@ -34,3 +34,9 @@ Thumbs.db
 npm-debug.log*
 *.tsbuildinfo
 next-env.d.ts
+
+# local dev database (used when Supabase env vars are missing)
+.data/
+
+# local Claude Code launch config
+.claude/
