@@ -76,9 +76,9 @@ export function Welcome({ counts }: { counts: PublicCounts }) {
           initial={{ opacity: 0, rotate: -40, scale: 0.6 }}
           animate={{ opacity: 1, rotate: -12, scale: 1 }}
           transition={{ delay: 0.5, type: "spring", stiffness: 160, damping: 14 }}
-          className="absolute right-4 top-[22%] z-10"
+          className="absolute right-4 top-[22%] z-10 [@media(max-height:740px)]:top-[10%]"
         >
-          <Stamp className="size-[104px] text-saffron-500 drop-shadow-xl" />
+          <Stamp className="size-[104px] text-saffron-500 drop-shadow-xl [@media(max-height:740px)]:size-[78px]" />
         </motion.div>
 
         <motion.div
@@ -92,16 +92,16 @@ export function Welcome({ counts }: { counts: PublicCounts }) {
           </motion.p>
           <motion.h1
             variants={rise}
-            className="font-display mt-3 text-[46px] font-semibold leading-[0.98] tracking-[-0.03em] sm:text-[52px]"
+            className="font-display mt-3 text-[46px] font-semibold leading-[0.98] tracking-[-0.03em] sm:text-[52px] [@media(max-height:740px)]:text-[38px]"
           >
             Build your dream <span className="relative inline-block italic text-saffron-400">Sri Lanka</span> trip.
           </motion.h1>
-          <motion.p variants={rise} className="mt-4 max-w-sm text-[17px] leading-snug text-paper/85">
+          <motion.p variants={rise} className="mt-4 max-w-sm text-[17px] leading-snug text-paper/85 [@media(max-height:740px)]:mt-2.5 [@media(max-height:740px)]:text-[15.5px]">
             Takes 5 minutes, or as long as you like. Pick your days and nights, and we&apos;ll plan the trip from
             everyone&apos;s picks.
           </motion.p>
 
-          <motion.div variants={rise} className="mt-6 flex items-center gap-3">
+          <motion.div variants={rise} className="mt-6 flex items-center gap-3 [@media(max-height:740px)]:mt-4">
             {counts.joined > 0 ? (
               <>
                 <AvatarStack initials={counts.initials} />
@@ -128,7 +128,7 @@ export function Welcome({ counts }: { counts: PublicCounts }) {
               <Lock className="size-4 shrink-0 text-saffron-400" /> Edits are closed — the final plan is coming!
             </motion.p>
           )}
-          <motion.div variants={rise} className="mt-6 flex flex-col gap-3">
+          <motion.div variants={rise} className="mt-6 flex flex-col gap-3 [@media(max-height:740px)]:mt-4 [@media(max-height:740px)]:gap-2">
             <Link href="/join" className="group">
               <span className="flex h-14 w-full items-center justify-center gap-2 rounded-full bg-sunset-500 text-base font-semibold text-white shadow-[0_4px_0_0_var(--color-sunset-700)] transition group-active:translate-y-[3px] group-active:shadow-[0_1px_0_0_var(--color-sunset-700)]">
                 Join the trip

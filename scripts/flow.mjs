@@ -14,7 +14,8 @@ const PIN = process.env.PIN ?? "4826";
 fs.mkdirSync(outDir, { recursive: true });
 
 const browser = await chromium.launch(exe ? { executablePath: exe } : {});
-const phone = { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true };
+const [vw, vh] = (process.env.VIEW ?? "390x844").split("x").map(Number);
+const phone = { viewport: { width: vw, height: vh }, deviceScaleFactor: 2, isMobile: true, hasTouch: true };
 let n = 0;
 const errors = [];
 
