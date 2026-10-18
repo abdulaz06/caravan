@@ -7,7 +7,7 @@ import { useState } from "react";
 import { cn } from "@/lib/cn";
 import { rangeLabel } from "@/lib/dates";
 import { Avatar } from "../avatar";
-import { Wordmark } from "../brand/wordmark";
+import { Lockup } from "../brand/wordmark";
 import { Button } from "../ui/button";
 import { PinInput } from "../ui/pin-input";
 import { useToast } from "../ui/toast";
@@ -51,7 +51,7 @@ export function AdminLogin() {
         }}
         className="relative z-[1] w-full max-w-sm rounded-[30px] bg-sand-50 p-6 shadow-lift"
       >
-        <Wordmark />
+        <Lockup size="md" />
         <h1 className="font-display mt-6 text-[30px] font-semibold leading-tight">Organizer only</h1>
         <p className="mt-1 text-[15px] text-ink-2">Lock edits, manage people and export everything.</p>
         <label htmlFor="admin-pw" className="label mt-6 block text-ink-3">
@@ -129,8 +129,8 @@ export function AdminDashboard({ people, locked, localStore }: { people: Row[]; 
   return (
     <div className="grain min-h-dvh pb-16">
       <header className="sticky top-0 z-40 border-b border-ink/[0.06] bg-sand-100/85 backdrop-blur-xl">
-        <div className="mx-auto flex h-14 max-w-3xl items-center gap-3 px-4">
-          <Wordmark />
+        <div className="mx-auto flex h-16 max-w-3xl items-center gap-3 px-4">
+          <Lockup size="sm" />
           <span className="rounded-full bg-ink px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-paper">Organizer</span>
           <button
             onClick={async () => {

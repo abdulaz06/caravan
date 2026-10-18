@@ -6,6 +6,8 @@ import { useMemo } from "react";
 import { interests as INTERESTS } from "@/content/preferences";
 import type { ItineraryData } from "@/lib/itinerary";
 import { balanceOf, buildTimeline } from "@/lib/timeline";
+import { SiteFooter } from "../brand/site-footer";
+import { Lockup } from "../brand/wordmark";
 import { BalanceMeter } from "../trip/balance-meter";
 import { ItineraryTimeline } from "../trip/itinerary-timeline";
 import { TripPoster } from "../trip/trip-poster";
@@ -16,12 +18,12 @@ export function PersonView({ name, data, isMe }: { name: string; data: Itinerary
   const balance = useMemo(() => balanceOf(data), [data]);
   const into = data.preferences.interests?.map((i) => INTERESTS.find((x) => x.id === i)?.label).filter(Boolean);
   return (
-    <div className="grain min-h-dvh pb-16">
-      <header className="sticky top-0 z-40 flex h-14 items-center gap-3 border-b border-ink/[0.06] bg-sand-100/85 px-4 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
+    <div className="grain min-h-dvh">
+      <header className="sticky top-0 z-40 flex h-16 items-center gap-3 border-b border-ink/[0.06] bg-sand-100/85 px-4 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
         <Link href="/group" className="flex items-center gap-1.5 rounded-full px-2 py-1.5 text-[14px] font-semibold text-ink-2 hover:bg-sand-200">
           <ArrowLeft className="size-4" /> The crew
         </Link>
-        <span className="font-display ml-auto truncate text-[18px] font-semibold italic">{isMe ? "Your trip" : `${name}'s trip`}</span>
+        <Lockup size="sm" className="ml-auto" />
       </header>
       <div className="relative z-[1] space-y-4 px-3 pt-5">
         <TripPoster name={name} data={data} timeline={timeline} />
@@ -43,6 +45,7 @@ export function PersonView({ name, data, isMe }: { name: string; data: Itinerary
           <ItineraryTimeline data={data} timeline={timeline} />
         </section>
       </div>
+      <SiteFooter className="relative z-[1] mt-4" />
     </div>
   );
 }

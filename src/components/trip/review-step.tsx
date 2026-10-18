@@ -15,7 +15,8 @@ import {
 } from "@/content/preferences";
 import { countPicks, type ItineraryData, type ItineraryStatus } from "@/lib/itinerary";
 import { balanceOf, buildTimeline } from "@/lib/timeline";
-import { Stamp } from "../brand/wordmark";
+import { SiteFooter } from "../brand/site-footer";
+import { Lockup, Stamp } from "../brand/wordmark";
 import { Button, ButtonLink } from "../ui/button";
 import { BalanceMeter } from "./balance-meter";
 import type { Step } from "./header";
@@ -119,6 +120,7 @@ export function ReviewStep({ name, data, status, updatedAt, locked, saveState, o
 
         <PrefsSummary data={data} />
       </div>
+      <SiteFooter className="relative z-[1] mt-6" />
 
       {!locked && (
         <div className="pb-safe fixed inset-x-0 bottom-0 z-30 bg-gradient-to-t from-sand-100 via-sand-100/90 to-transparent px-4 pt-6 lg:left-auto lg:w-[480px]">
@@ -163,7 +165,7 @@ export function ReviewStep({ name, data, status, updatedAt, locked, saveState, o
                 You&apos;re <span className="italic text-sunset-600">in!</span>
               </h2>
               <p className="mt-3 text-[15px] text-ink-2">
-                Your dream trip is with Abdul. Now see where everyone overlaps — and peek at the crew&apos;s picks.
+                Your dream trip is in with the 10hyaya crew. Now see where everyone overlaps — and peek at their picks.
               </p>
               <ButtonLink href="/group" size="lg" block className="mt-6">
                 See the group <ArrowRight className="size-5" strokeWidth={2.5} />
@@ -171,6 +173,9 @@ export function ReviewStep({ name, data, status, updatedAt, locked, saveState, o
               <button onClick={() => setCelebrate(false)} className="mt-3 text-sm font-semibold text-ink-3">
                 Back to my trip
               </button>
+              <div className="mt-6 flex justify-center border-t border-dashed border-sand-300 pt-5">
+                <Lockup size="sm" />
+              </div>
             </motion.div>
           </motion.div>
         )}

@@ -12,6 +12,8 @@ import { balanceLabel } from "@/lib/timeline";
 import type { GroupStats } from "@/lib/server/group";
 import { Avatar } from "../avatar";
 import { Firework, Palm } from "../brand/illustrations";
+import { SiteFooter } from "../brand/site-footer";
+import { Lockup } from "../brand/wordmark";
 import { ButtonLink } from "../ui/button";
 import { Photo } from "../ui/photo";
 import { BalanceMeter } from "../trip/balance-meter";
@@ -41,12 +43,12 @@ const rise = { initial: { opacity: 0, y: 20 }, whileInView: { opacity: 1, y: 0 }
 export function GroupView({ stats, myStatus, canBrowse, itineraries, editsLocked }: Props) {
   const pct = stats.joined ? stats.submitted / stats.joined : 0;
   return (
-    <div className="grain min-h-dvh pb-16">
-      <header className="sticky top-0 z-40 flex h-14 items-center gap-3 border-b border-ink/[0.06] bg-sand-100/85 px-4 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
+    <div className="grain min-h-dvh">
+      <header className="sticky top-0 z-40 flex h-16 items-center gap-3 border-b border-ink/[0.06] bg-sand-100/85 px-4 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
         <Link href="/trip" className="flex items-center gap-1.5 rounded-full px-2 py-1.5 text-[14px] font-semibold text-ink-2 hover:bg-sand-200">
           <ArrowLeft className="size-4" /> My trip
         </Link>
-        <span className="font-display ml-auto text-[18px] font-semibold italic">The crew</span>
+        <Lockup size="sm" className="ml-auto" />
       </header>
 
       {editsLocked && (
@@ -55,7 +57,13 @@ export function GroupView({ stats, myStatus, canBrowse, itineraries, editsLocked
         </div>
       )}
 
-      <div className="relative z-[1] space-y-4 px-3 pt-5">
+      <div className="relative z-[1] px-5 pt-7">
+        <p className="label text-sunset-600">Group overview</p>
+        <h1 className="font-display mt-2 text-[38px] font-semibold leading-[1] tracking-[-0.025em]">
+          The <span className="italic text-ocean-700">crew</span>
+        </h1>
+      </div>
+      <div className="relative z-[1] mt-5 space-y-4 px-3">
         {/* Responses */}
         <section className="relative overflow-hidden rounded-[30px] bg-ocean-800 p-5 text-paper shadow-lift">
           <div className="sunburst absolute inset-0" />
@@ -214,6 +222,7 @@ export function GroupView({ stats, myStatus, canBrowse, itineraries, editsLocked
           )}
         </motion.section>
       </div>
+      <SiteFooter className="relative z-[1] mt-4" />
     </div>
   );
 }

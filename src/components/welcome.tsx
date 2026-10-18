@@ -5,7 +5,8 @@ import { ArrowRight, CalendarHeart, Lock, Swords, PartyPopper } from "lucide-rea
 import Link from "next/link";
 import { heroPhotos, optionsById } from "@/content";
 import { Photo } from "./ui/photo";
-import { Stamp, Wordmark } from "./brand/wordmark";
+import { Lockup, Stamp } from "./brand/wordmark";
+import { SiteFooter } from "./brand/site-footer";
 import { Palm, TukTuk, WaveEdge } from "./brand/illustrations";
 import { AvatarStack } from "./avatar";
 import type { PublicCounts } from "@/lib/server/group";
@@ -66,7 +67,7 @@ export function Welcome({ counts }: { counts: PublicCounts }) {
         <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-ocean-950 via-ocean-950/85 to-transparent" />
 
         <header className="relative z-10 flex items-center justify-between px-5 pt-[max(1.25rem,env(safe-area-inset-top))]">
-          <Wordmark tone="light" />
+          <Lockup size="md" tone="light" className="lg:invisible" />
           <span className="rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold ring-1 ring-white/25 backdrop-blur-md">
             Dec ’26 – Jan ’27
           </span>
@@ -88,7 +89,7 @@ export function Welcome({ counts }: { counts: PublicCounts }) {
           transition={{ staggerChildren: 0.09, delayChildren: 0.25 }}
         >
           <motion.p variants={rise} className="label text-saffron-400">
-            The group trip · Sri Lanka
+            The <span className="normal-case tracking-[0.06em]">10hyaya</span> group trip · Sri Lanka
           </motion.p>
           <motion.h1
             variants={rise}
@@ -205,20 +206,22 @@ export function Welcome({ counts }: { counts: PublicCounts }) {
       <section className="relative z-[1] mt-4 overflow-hidden bg-ocean-800 px-5 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-14 text-paper">
         <WaveEdge className="absolute inset-x-0 top-0 h-5 rotate-180 text-sand-100" fill="var(--color-sand-100)" />
         <Palm className="absolute -right-6 bottom-0 h-56 text-jungle-900/70" />
-        <TukTuk className="absolute bottom-6 left-[-8px] w-24 opacity-90" />
         <div className="relative">
           <h2 className="font-display text-[32px] font-semibold leading-[1.02] tracking-[-0.02em]">
             Whales or leopards? <span className="italic text-saffron-400">Beach party or rooftop?</span>
           </h2>
           <p className="mt-3 max-w-xs text-paper/80">You decide. Everyone&apos;s picks shape the final plan.</p>
-          <Link
-            href="/join"
-            className="mt-7 inline-flex h-14 items-center gap-2 rounded-full bg-saffron-500 px-7 font-semibold text-ink shadow-[0_4px_0_0_var(--color-saffron-600)] transition active:translate-y-[3px] active:shadow-[0_1px_0_0_var(--color-saffron-600)]"
-          >
-            Start building <ArrowRight className="size-5" strokeWidth={2.5} />
-          </Link>
-          <p className="mt-16 pl-24 text-xs text-paper/50">Photos by Wikimedia Commons contributors, credited on each option.</p>
+          <div className="mt-7 flex items-center gap-4">
+            <Link
+              href="/join"
+              className="inline-flex h-14 items-center gap-2 rounded-full bg-saffron-500 px-7 font-semibold text-ink shadow-[0_4px_0_0_var(--color-saffron-600)] transition active:translate-y-[3px] active:shadow-[0_1px_0_0_var(--color-saffron-600)]"
+            >
+              Start building <ArrowRight className="size-5" strokeWidth={2.5} />
+            </Link>
+            <TukTuk className="w-20 animate-float" />
+          </div>
         </div>
+        <SiteFooter tone="light" className="relative mt-12 border-t border-white/10 px-0 pb-0" />
       </section>
     </div>
   );

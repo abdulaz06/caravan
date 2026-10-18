@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { heroPhotos } from "@/content";
-import { Stamp, Wordmark } from "@/components/brand/wordmark";
+import { Lockup, Stamp } from "@/components/brand/wordmark";
 
 /**
  * Participant pages live in a phone-width column. On desktop the column sits
@@ -26,10 +26,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <div className="absolute inset-0 bg-gradient-to-t from-ocean-950/90 via-ocean-950/20 to-ocean-950/40" />
         <div className="sunburst absolute inset-0 opacity-60" />
         <div className="relative flex h-full flex-col justify-between p-12 text-paper">
-          <Wordmark tone="light" className="text-3xl" />
+          <Lockup size="lg" tone="light" className="self-start" />
           <div className="max-w-xl">
             <Stamp className="mb-8 size-28 text-saffron-500" />
-            <p className="label text-saffron-400">The group trip · Dec 2026 – Jan 2027</p>
+            <p className="label text-saffron-400">The <span className="normal-case tracking-[0.06em]">10hyaya</span> group trip · Dec 2026 – Jan 2027</p>
             <h2 className="font-display mt-3 text-6xl font-semibold leading-[0.95] tracking-[-0.03em] xl:text-7xl">
               Sri Lanka,
               <br />

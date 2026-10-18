@@ -14,16 +14,19 @@ export async function GET() {
 export async function PUT(req: Request) {
   const p = await currentParticipant();
   if (!p) return error("Not signed in", 401);
-  if ((await db().getSettings()).edits_locked) return error("locked", 423);
+  const [settings, existing, body] = await Promise.all([
+    db().getSettings(),
+    db().getItinerary(p.id),
+    readJson(req),
+  ]);
+  if (settings.edits_locked) return error("locked", 423);
 
-  const body = await readJson(req);
   const data = parseItinerary(body?.data);
   if (!data) return error("That itinerary didn't look right — try refreshing.", 400);
 
   const submit = body?.submit === true;
   if (submit && !data.startDate) return error("Pick your dates before submitting.", 400);
 
-  const existing = await db().getItinerary(p.id);
   const now = new Date().toISOString();
   const status = submit || existing?.status === "submitted" ? "submitted" : "draft";
   const saved = await db().saveItinerary({

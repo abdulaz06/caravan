@@ -153,7 +153,7 @@ export function BuildStep({ data, update, locked, onBack, onNext }: Props) {
         )}
       </section>
 
-      <div className="sticky top-[calc(3.5rem+env(safe-area-inset-top))] z-30 mt-5 px-3">
+      <div className="sticky top-[calc(4rem+env(safe-area-inset-top))] z-30 mt-5 px-3">
         <div className="rounded-[22px] bg-paper/90 px-4 py-3 shadow-card ring-1 ring-ink/[0.04] backdrop-blur-xl">
           <div className="mb-2 flex items-center justify-between text-[12.5px] font-semibold">
             <span className="text-ink-2">

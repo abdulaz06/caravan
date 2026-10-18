@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/cn";
 import { Avatar } from "../avatar";
-import { SunMark } from "../brand/illustrations";
+import { Lockup } from "../brand/wordmark";
 import type { SaveState } from "./use-autosave";
 
 export type Step = "dates" | "build" | "prefs" | "review";
@@ -46,10 +46,10 @@ export function TripHeader({ name, step, canVisit, onStep, saveState, submitted,
   return (
     <>
       <header className="sticky top-0 z-40 border-b border-ink/[0.06] bg-sand-100/85 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
-        <div className="flex h-14 items-center gap-3 px-4">
-          <SunMark className="size-6 shrink-0 text-saffron-500" />
+        <div className="flex h-16 items-center gap-2.5 px-3.5">
+          <Lockup size="sm" className="shrink-0" />
           <nav className="flex flex-1 items-center gap-1" aria-label="Steps">
-            {(Object.keys(LABELS) as Step[]).map((s, i) => {
+            {(Object.keys(LABELS) as Step[]).map((s) => {
               const active = s === step;
               const enabled = canVisit(s);
               return (
@@ -59,16 +59,14 @@ export function TripHeader({ name, step, canVisit, onStep, saveState, submitted,
                   onClick={() => onStep(s)}
                   aria-current={active ? "step" : undefined}
                   className={cn(
-                    "relative flex h-8 flex-1 items-center justify-center rounded-full text-[12.5px] font-semibold transition-colors",
+                    "relative flex h-8 flex-1 items-center justify-center rounded-full text-[12.5px] font-semibold tracking-[-0.01em] transition-colors",
                     active ? "text-paper" : enabled ? "text-ink-2 hover:bg-sand-200" : "text-ink-3/50",
                   )}
                 >
                   {active && (
                     <motion.span layoutId="step-pill" className="absolute inset-0 rounded-full bg-ink" />
                   )}
-                  <span className="relative">
-                    <span className="mr-0.5 opacity-60">{i + 1}</span> {LABELS[s]}
-                  </span>
+                  <span className="relative">{LABELS[s]}</span>
                 </button>
               );
             })}

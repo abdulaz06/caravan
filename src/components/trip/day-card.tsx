@@ -101,7 +101,7 @@ export function DayCard({ entry, index, t, locked, onSlot, onNote }: CardProps) 
       <SlotView
         kind="day"
         option={t.day}
-        empty={t.tags.includes("arrival") ? "Daytime · landing day" : t.tags.includes("departure") ? "Daytime · before you fly" : "Pick your daytime"}
+        empty={t.tags.includes("arrival") ? "Landing day" : t.tags.includes("departure") ? "Daytime · before you fly" : "Pick your daytime"}
         onClick={() => onSlot("day")}
         locked={locked}
         className="mt-1.5"

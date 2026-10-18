@@ -158,6 +158,14 @@ Itinerary `data` (versioned):
 ## Design direction
 Tropical travel-poster: warm, bold, confident. Teal Indian Ocean, jungle green, sunset orange/saffron, sand; characterful display type paired with a clean body font; big photography; subtle textures and illustrated touches (palms, waves, tuk-tuks, train, elephant) — tasteful, not kitschy. Delightful micro-interactions (choosing between A vs B should feel like a satisfying matchup), smooth page transitions, satisfying drag. Mobile-first (WhatsApp in-app browser on iPhone and Android is the main target), excellent on desktop too. Accessible contrast, respects reduced-motion. A custom **Open Graph image** and title/description so the link preview in the group chat looks great. Custom favicon.
 
+## Branding
+- The friend group is **10hyaya** — always lowercase, exactly `10hyaya`, everywhere (copy, titles, exports, images). Never uppercase it, even inside an uppercase label: wrap it in `normal-case` (CSS `text-transform: none`).
+- The brand is a **lockup**: the `☀ Lanks` wordmark (Fraunces 900 italic + saffron sun) with a smaller `by [10hyaya]` line right-aligned underneath like a signature. "by" is Fraunces italic; `10hyaya` is a rubber stamp — Rubik Dirt, double-ruled border, rotated −5°, sunset ink (`sunset-600`) on light backgrounds, saffron (`saffron-400`) on dark.
+- Use the `<Lockup size tone>` component (`src/components/brand/wordmark.tsx`); don't rebuild it by hand. The stamp alone is `<TenHyaya>` / the `.stamp-10h` class in `globals.css`. Sizes: `sm` headers, `md` footer/login/hero, `lg` desktop poster panel, `xl` big moments.
+- Where it appears: app headers (trip, group, person, join, admin), welcome hero, desktop poster panel, celebration card, `SiteFooter`, and the Open Graph image (`scripts/make-brand-assets.mjs` → `src/app/opengraph-image.jpg`; rerun after brand changes).
+- Name in metadata: tab title "Lanks by 10hyaya" (pages: "Page · Lanks by 10hyaya"); descriptions mention "the 10hyaya group trip".
+- The favicon / app icon stays a simple Lanks sun mark (no "10hyaya") so it reads at 16px.
+
 ## Engineering rules
 - Never commit secrets. `.env.local` is gitignored; keep `.env.example` up to date.
 - All Supabase access server-side; validate inputs (zod).

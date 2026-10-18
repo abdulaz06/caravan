@@ -9,6 +9,7 @@
 @theme inline {
   --font-display: var(--font-fraunces), ui-serif, Georgia, serif;
   --font-sans: var(--font-instrument), ui-sans-serif, system-ui, sans-serif;
+  --font-stamp: var(--font-rubik-dirt), var(--font-instrument), ui-sans-serif, sans-serif;
 }
 
 @theme {
@@ -199,6 +200,23 @@
     background-size: 2px 10px;
     background-repeat: repeat-y;
     background-position: center;
+  }
+
+  /* "10hyaya" rubber stamp (see Branding in CLAUDE.md). Size via font-size. */
+  .stamp-10h {
+    display: inline-block;
+    font-family: var(--font-stamp);
+    font-weight: 400;
+    font-size: max(0.3em, 9.5px);
+    line-height: 1.12;
+    letter-spacing: 0.03em;
+    padding: 0.08em 0.4em 0.1em;
+    border: max(0.075em, 1.25px) solid currentColor;
+    border-radius: 0.32em;
+    outline: max(0.035em, 0.75px) solid currentColor;
+    outline-offset: max(0.1em, 1.5px);
+    transform: rotate(-5deg);
+    white-space: nowrap;
   }
 
   .no-scrollbar {

@@ -8,7 +8,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { optionsById } from "@/content";
 import { cn } from "@/lib/cn";
 import { Avatar } from "./avatar";
-import { Wordmark } from "./brand/wordmark";
+import { Lockup } from "./brand/wordmark";
 import { Button } from "./ui/button";
 import { Photo } from "./ui/photo";
 import { PinInput } from "./ui/pin-input";
@@ -30,7 +30,7 @@ export function JoinFlow({ people, startReturning }: { people: PersonLite[]; sta
         <Link href="/" aria-label="Back to start" className="grid size-10 place-items-center rounded-full bg-white/15 text-paper ring-1 ring-white/25 backdrop-blur-md">
           <ArrowLeft className="size-5" />
         </Link>
-        <Wordmark tone="light" />
+        <Lockup size="sm" tone="light" />
         <span className="size-10" />
       </header>
 

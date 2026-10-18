@@ -36,6 +36,16 @@ async function shot(page, name, opts = {}) {
   console.log("📸", file);
 }
 
+async function eventually(fn, timeout = 8000) {
+  const t0 = Date.now();
+  while (Date.now() - t0 < timeout) {
+    const v = await fn().catch(() => null);
+    if (v) return { value: v, ms: Date.now() - t0 };
+    await new Promise((r) => setTimeout(r, 250));
+  }
+  return { value: null, ms: Date.now() - t0 };
+}
+
 function step(label) {
   console.log(`\n▶ ${label}`);
 }
@@ -168,9 +178,13 @@ await page.getByRole("button", { name: "Back to my trip" }).click();
 step("Edit after submit");
 await page.getByRole("button", { name: /Edit extras/ }).click();
 await page.getByRole("button", { name: "Hiking" }).click();
-await page.waitForTimeout(1500);
-const saved = await page.request.get(base + "/api/itinerary").then((r) => r.json());
-await expect(saved?.status === "submitted" && saved.data.preferences.interests.includes("hiking"), "edit after submit saved, still submitted");
+const polled = await eventually(async () => {
+  const r = await page.request.get(base + "/api/itinerary").then((x) => x.json());
+  return r?.data?.preferences?.interests?.includes("hiking") ? r : null;
+});
+const saved = polled.value;
+console.log(`  (autosave landed after ${polled.ms} ms, incl. 800 ms debounce)`);
+await expect(saved?.status === "submitted", "edit after submit saved, still submitted");
 
 step("Group overview (user 1)");
 await page.goto(base + "/group");
@@ -252,6 +266,17 @@ await shot(pd, "desktop-welcome", { wait: 1500 });
 await ctxD.addCookies(await ctx.cookies());
 await pd.goto(base + "/trip?step=build");
 await shot(pd, "desktop-build", { wait: 1500 });
+
+step("Cleanup: delete the test users");
+const everyone = await pa.request.get(base + "/api/people").then((r) => r.json());
+for (const person of everyone.filter((x) => x.name === NAME || x.name === NAME2)) {
+  const r = await pa.request.delete(`${base}/api/admin/participants/${person.id}`);
+  await expect(r.ok(), `deleted ${person.name}`);
+}
+const left = await pa.request.get(base + "/api/people").then((r) => r.json());
+await expect(!left.some((x) => x.name === NAME || x.name === NAME2), "test users gone from the database");
+const settings = await pa.request.post(base + "/api/admin/lock", { data: { locked: false } });
+await expect(settings.ok(), "edits left unlocked");
 
 await browser.close();
 console.log(errors.length ? `\n${errors.length} problem(s):\n- ${errors.join("\n- ")}` : "\nAll checks passed ✓");

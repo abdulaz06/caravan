@@ -27,7 +27,7 @@ console.log("icons ✓");
 // ── Open Graph image ─────────────────────────────────────────────────
 const html = `<!doctype html><html><head>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,600,100,1;1,9..144,600,100,1;1,9..144,900,100,1&family=Instrument+Sans:wght@500;700&display=block" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,600,100,1;1,9..144,600,100,1;1,9..144,900,100,1&family=Fraunces:ital,opsz,wght,SOFT,WONK@1,9..144,500,100,1&family=Instrument+Sans:wght@500;700&family=Rubik+Dirt&display=block" rel="stylesheet">
 <style>
   * { margin: 0; box-sizing: border-box; }
   body { width: 1200px; height: 630px; overflow: hidden; background: #06323d; font-family: 'Instrument Sans', sans-serif; }
@@ -36,7 +36,11 @@ const html = `<!doctype html><html><head>
     background: repeating-conic-gradient(from 0deg at 30% 120%, rgba(255,255,255,.06) 0deg 5deg, transparent 5deg 10deg),
       radial-gradient(80% 90% at 20% 100%, #0d5a69, #06323d 70%); }
   .left { position: relative; width: 640px; padding: 56px 0 56px 64px; display: flex; flex-direction: column; color: #fffbf4; }
-  .brand { font-family: 'Fraunces'; font-style: italic; font-weight: 900; font-size: 38px; display: flex; align-items: center; gap: 10px; }
+  .lock { display: inline-grid; justify-items: end; align-self: flex-start; font-size: 60px; line-height: 1; }
+  .brand { font-family: 'Fraunces'; font-style: italic; font-weight: 900; font-variation-settings: 'SOFT' 100, 'WONK' 1; letter-spacing: -0.02em; display: flex; align-items: center; gap: .22em; }
+  .by { display: flex; align-items: center; gap: .18em; margin-top: .03em; margin-right: -.04em; }
+  .byw { font-family: 'Fraunces'; font-style: italic; font-weight: 500; font-size: .3em; color: rgba(255,251,244,.75); }
+  .st { font-family: 'Rubik Dirt'; font-size: .32em; line-height: 1.12; letter-spacing: .03em; color: #f7ba5c; padding: .08em .4em .1em; border: .075em solid currentColor; border-radius: .32em; outline: .035em solid currentColor; outline-offset: .1em; transform: rotate(-5deg); }
   .eyebrow { margin-top: auto; font-weight: 700; letter-spacing: .16em; font-size: 18px; color: #f7ba5c; text-transform: uppercase; }
   h1 { font-family: 'Fraunces'; font-weight: 600; font-size: 84px; line-height: .95; letter-spacing: -0.03em; margin-top: 14px; font-variation-settings: 'SOFT' 100, 'WONK' 1; }
   h1 em { color: #f7ba5c; }
@@ -50,8 +54,11 @@ const html = `<!doctype html><html><head>
   .stamp { position: absolute; left: -58px; top: 455px; width: 150px; height: 150px; transform: rotate(-14deg); }
 </style></head><body><div class="wrap"><div class="bg"></div>
   <div class="left">
-    <div class="brand"><svg width="40" height="40" viewBox="0 0 32 32">${SUN("#f2a33a")}</svg>Lanks</div>
-    <div class="eyebrow">The group trip · Dec ’26 – Jan ’27</div>
+    <div class="lock">
+      <div class="brand"><svg width="56" height="56" viewBox="0 0 32 32">${SUN("#f2a33a")}</svg>Lanks</div>
+      <div class="by"><span class="byw">by</span><span class="st">10hyaya</span></div>
+    </div>
+    <div class="eyebrow">The <span style="text-transform:none;letter-spacing:.06em">10hyaya</span> group trip · Dec ’26 – Jan ’27</div>
     <h1>Build your dream <em><i>Sri Lanka</i></em> trip.</h1>
     <div class="sub">Pick your days & nights — whales, safaris, sunrise climbs, beach parties. Takes 5 minutes.</div>
   </div>
@@ -59,13 +66,6 @@ const html = `<!doctype html><html><head>
     <div class="card c1"><span class="label">Nine Arches, Ella</span></div>
     <div class="card c2"><span class="label" style="top:12px;bottom:auto">Blue whales, Mirissa</span></div>
     <div class="card c3"><span class="label">Coconut Tree Hill</span></div>
-    <svg class="stamp" viewBox="0 0 120 120">
-      <defs><path id="c" d="M60 60 m-46 0 a46 46 0 1 1 92 0 a46 46 0 1 1 -92 0"/></defs>
-      <circle cx="60" cy="60" r="58" fill="#f2a33a"/>
-      <circle cx="60" cy="60" r="54" fill="none" stroke="rgba(0,0,0,.25)" stroke-dasharray="2 3"/>
-      <text font-size="11.5" font-weight="700" letter-spacing="2.2" fill="#1d1914" font-family="Instrument Sans"><textPath href="#c">SRI LANKA · DEC 2026 – JAN 2027 · </textPath></text>
-      <g transform="translate(40 40) scale(1.25)">${SUN("#1d1914")}</g>
-    </svg>
   </div>
 </div></body></html>`;
 
@@ -81,5 +81,5 @@ await page.waitForTimeout(500);
 const png = await page.screenshot({ type: "png" });
 await browser.close();
 await sharp(png).jpeg({ quality: 84, mozjpeg: true }).toFile(path.join(root, "src/app/opengraph-image.jpg"));
-fs.writeFileSync(path.join(root, "src/app/opengraph-image.alt.txt"), "Lanks — build your dream Sri Lanka trip with the group");
+fs.writeFileSync(path.join(root, "src/app/opengraph-image.alt.txt"), "Lanks by 10hyaya — build your dream Sri Lanka trip with the crew");
 console.log("opengraph-image.jpg ✓");
