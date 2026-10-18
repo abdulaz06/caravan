@@ -254,7 +254,7 @@ export function isUsingLocalStore(): boolean {
 export function db(): Store {
   if (store) return store;
   const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SECRET_KEY;
   if (url && key) {
     store = new SupabaseStore(
       createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } }),
