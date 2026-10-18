@@ -191,6 +191,7 @@ export function SlotView({ kind, option, empty, onClick, locked, nye, className 
       animate={{ scale: 1, rotate: 0, opacity: 1 }}
       transition={{ type: "spring", stiffness: 500, damping: 22 }}
       onClick={onClick}
+      aria-label={`${night ? "Evening" : "Daytime"}: ${title}${locked ? "" : " — options"}`}
       className={cn(
         "flex w-full items-center gap-3 rounded-2xl p-2 pr-2.5 text-left",
         night ? "dusk text-paper" : "bg-sand-100 text-ink",

@@ -90,21 +90,26 @@ export function computeStats(people: Person[]): GroupStats {
     if (b !== null) balances.push(b);
   }
 
-  // Sweet spot: the 5-day window (or 4, if nothing fits) everyone can make most.
+  // Sweet spot: the window (5, 4 or 3 days) where the most people can make
+  // every single day. Ties go to the longer window, then the busier one.
   let sweetSpot: GroupStats["sweetSpot"] = null;
   let bestSum = -1;
-  for (const len of [5, 4]) {
+  for (const len of [5, 4, 3]) {
     for (let i = 0; i + len <= dates.length; i++) {
       const window = dates.slice(i, i + len);
       const counts = window.map((d) => dateCounts[d]);
       const min = Math.min(...counts);
       const sum = counts.reduce((a, b) => a + b, 0);
-      if (min > 0 && (!sweetSpot || min > sweetSpot.min || (min === sweetSpot.min && sum > bestSum))) {
+      const better =
+        !sweetSpot ||
+        min > sweetSpot.min ||
+        (min === sweetSpot.min && len > sweetSpot.days) ||
+        (min === sweetSpot.min && len === sweetSpot.days && sum > bestSum);
+      if (min > 0 && better) {
         sweetSpot = { start: window[0], end: window[len - 1], min, days: len };
         bestSum = sum;
       }
     }
-    if (sweetSpot) break;
   }
 
   return {
@@ -131,15 +136,18 @@ export function computeStats(people: Person[]): GroupStats {
 }
 
 /** Counts shown on the public welcome page (no names). */
-export async function publicCounts(): Promise<{ joined: number; submitted: number; initials: string[] }> {
+export type PublicCounts = { joined: number; submitted: number; initials: string[]; locked: boolean };
+
+export async function publicCounts(): Promise<PublicCounts> {
   try {
-    const people = await loadPeople();
+    const [people, settings] = await Promise.all([loadPeople(), db().getSettings()]);
     return {
       joined: people.length,
       submitted: people.filter((p) => p.status === "submitted").length,
       initials: people.slice(-5).map((p) => p.name.trim()[0]?.toUpperCase() ?? "?"),
+      locked: settings.edits_locked,
     };
   } catch {
-    return { joined: 0, submitted: 0, initials: [] };
+    return { joined: 0, submitted: 0, initials: [], locked: false };
   }
 }

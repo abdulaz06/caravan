@@ -129,7 +129,7 @@ await expect(d3.night?.pairId === "nye", "NYE evening still pinned to 31 Dec aft
 await expect(d0.night?.pairId !== "nye", "day 1 did not take the NYE pick");
 
 step("Slot actions: move a daytime pick to another day");
-await page.locator("li").nth(1).getByRole("button", { name: /Blue whale|Learn to surf|Mirissa beach|Galle Fort|Unawatuna|Snorkel|Negombo lagoon|Colombo by/ }).first().click();
+await page.getByRole("button", { name: /^Daytime: / }).first().click();
 await page.waitForTimeout(700);
 await shot(page, "slot-actions");
 await page.getByRole("button", { name: "Move to another day" }).click();

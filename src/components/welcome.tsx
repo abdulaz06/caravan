@@ -1,13 +1,14 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ArrowRight, CalendarHeart, Swords, PartyPopper } from "lucide-react";
+import { ArrowRight, CalendarHeart, Lock, Swords, PartyPopper } from "lucide-react";
 import Link from "next/link";
 import { heroPhotos, optionsById } from "@/content";
 import { Photo } from "./ui/photo";
 import { Stamp, Wordmark } from "./brand/wordmark";
 import { Palm, TukTuk, WaveEdge } from "./brand/illustrations";
 import { AvatarStack } from "./avatar";
+import type { PublicCounts } from "@/lib/server/group";
 
 const MARQUEE = [
   "pidurangala-sunrise",
@@ -47,7 +48,7 @@ const rise = {
   show: { opacity: 1, y: 0 },
 };
 
-export function Welcome({ counts }: { counts: { joined: number; submitted: number; initials: string[] } }) {
+export function Welcome({ counts }: { counts: PublicCounts }) {
   const hero = heroPhotos[0];
   return (
     <div className="grain">
@@ -119,6 +120,14 @@ export function Welcome({ counts }: { counts: { joined: number; submitted: numbe
             )}
           </motion.div>
 
+          {counts.locked && (
+            <motion.p
+              variants={rise}
+              className="mt-5 flex items-center gap-2 rounded-2xl bg-white/12 px-4 py-3 text-[14px] font-medium ring-1 ring-white/20 backdrop-blur-md"
+            >
+              <Lock className="size-4 shrink-0 text-saffron-400" /> Edits are closed — the final plan is coming!
+            </motion.p>
+          )}
           <motion.div variants={rise} className="mt-6 flex flex-col gap-3">
             <Link href="/join" className="group">
               <span className="flex h-14 w-full items-center justify-center gap-2 rounded-full bg-sunset-500 text-base font-semibold text-white shadow-[0_4px_0_0_var(--color-sunset-700)] transition group-active:translate-y-[3px] group-active:shadow-[0_1px_0_0_var(--color-sunset-700)]">

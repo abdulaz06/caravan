@@ -146,7 +146,9 @@ export function GroupView({ stats, myStatus, canBrowse, itineraries, editsLocked
               })}
             </ol>
             {stats.chillCount > 0 && (
-              <p className="mt-3 text-[12.5px] text-ink-3">Plus {stats.chillCount} chill nights in 🛋️</p>
+              <p className="mt-3 text-[12.5px] text-ink-3">
+                Plus {stats.chillCount} chill {stats.chillCount === 1 ? "night" : "nights"} in 🛋️
+              </p>
             )}
           </motion.section>
         )}
@@ -251,7 +253,9 @@ function Heatmap({ stats }: { stats: GroupStats }) {
             <span className="font-display text-[17px] font-semibold">Sweet spot: {rangeLabel(stats.sweetSpot.start, stats.sweetSpot.end)}</span>
             <br />
             <span className="text-paper/75">
-              At least {stats.sweetSpot.min} of {stats.withDates} free every one of those {stats.sweetSpot.days} days.
+              {stats.sweetSpot.min === stats.withDates
+                ? `Everyone with dates is free all ${stats.sweetSpot.days} days.`
+                : `${stats.sweetSpot.min} of ${stats.withDates} free on every one of those ${stats.sweetSpot.days} days.`}
             </span>
           </p>
         </div>

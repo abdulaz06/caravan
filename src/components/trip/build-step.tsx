@@ -258,7 +258,7 @@ export function BuildStep({ data, update, locked, onBack, onNext }: Props) {
         {actions && moving && (
           <div className="px-4 pb-8">
             <p className="px-1 pb-3 text-[14px] text-ink-2">Pick a day — whatever&apos;s there swaps over here.</p>
-            <ul className="grid gap-2">
+            <ul className="grid grid-cols-[minmax(0,1fr)] gap-2">
               {data.days.map((d, i) => {
                 if (i === actions.index) return null;
                 const ok = canSwapSlot(data, actions.slot, actions.index, i);

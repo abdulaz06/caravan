@@ -5,13 +5,10 @@ type P = { className?: string };
 
 const FRONDS = [-12, 24, -48, -132, -168, 150];
 
-export function Palm({ className, color = "currentColor" }: P & { color?: string }) {
+function PalmShape({ color }: { color: string }) {
   return (
-    <svg viewBox="0 0 80 110" className={className} aria-hidden="true">
-      <path
-        d="M37 108 C40 86 42 62 39 38 L44 38 C48 62 47 86 44 108 Z"
-        fill={color}
-      />
+    <>
+      <path d="M37 108 C40 86 42 62 39 38 L44 38 C48 62 47 86 44 108 Z" fill={color} />
       {[50, 62, 74, 86, 98].map((y) => (
         <path key={y} d={`M${38 + (108 - y) * 0.02} ${y} q4 -2 7 0`} stroke="rgb(0 0 0 / 0.18)" strokeWidth="1.4" fill="none" />
       ))}
@@ -19,7 +16,7 @@ export function Palm({ className, color = "currentColor" }: P & { color?: string
         {FRONDS.map((a) => (
           <path
             key={a}
-            transform={`rotate(${a})`}
+            transform={`rotate(${a}) scale(1.15)`}
             d="M0 0 C9 -9 25 -10 38 1 C33 -1 30 2 27 0 C24 3 20 1 17 3 C13 1 7 3 0 0 Z"
             fill={color}
           />
@@ -27,6 +24,14 @@ export function Palm({ className, color = "currentColor" }: P & { color?: string
         <circle cx="-2" cy="4" r="3.2" fill={color} />
         <circle cx="3" cy="5" r="3.2" fill={color} />
       </g>
+    </>
+  );
+}
+
+export function Palm({ className, color = "currentColor" }: P & { color?: string }) {
+  return (
+    <svg viewBox="-4 -4 88 114" className={className} aria-hidden="true">
+      <PalmShape color={color} />
     </svg>
   );
 }
@@ -54,8 +59,8 @@ export function PalmScene({ className }: P) {
           opacity={0.8 - i * 0.15}
         />
       ))}
-      <g transform="translate(40 60) scale(1.9)">
-        <Palm color="#173d2c" />
+      <g transform="translate(20 52) scale(2.2)">
+        <PalmShape color="#173d2c" />
       </g>
     </svg>
   );
@@ -83,17 +88,23 @@ export function SunMark({ className }: P) {
 
 export function TukTuk({ className }: P) {
   return (
-    <svg viewBox="0 0 72 48" className={className} aria-hidden="true">
-      <path d="M6 37 V20 Q6 9 18 8 L44 7 Q53 7 57 15 L63 29 Q64 31 64 33 V37 Z" fill="#ec6437" />
-      <path d="M10 9 Q11 5 18 5 L45 4 Q52 4 55 9 Z" fill="#b23d1d" />
-      <path d="M45 11 L52 11 Q54 11 55 13 L59 24 L47 24 Z" fill="#d6efeb" />
-      <rect x="14" y="13" width="25" height="13" rx="3" fill="#1d1914" opacity="0.85" />
-      <rect x="6" y="29" width="58" height="3" fill="#f7ba5c" />
-      <circle cx="16" cy="38" r="6.5" fill="#1d1914" />
-      <circle cx="16" cy="38" r="2.4" fill="#efe1c9" />
-      <circle cx="54" cy="38" r="6.5" fill="#1d1914" />
-      <circle cx="54" cy="38" r="2.4" fill="#efe1c9" />
-      <circle cx="62" cy="26" r="2" fill="#fbe0ae" />
+    <svg viewBox="0 0 72 50" className={className} aria-hidden="true">
+      {/* canopy roof */}
+      <path d="M9 15 Q10 5 22 4 H42 Q51 4 55 10 L57 14 H51 Q48 9 42 9 H22 Q14 10 13 15 Z" fill="#1a8e9c" />
+      {/* body */}
+      <path d="M9 15 H13 V33 H40 V15 H52 L61 31 Q63 34 62 37 H9 Z" fill="#ec6437" />
+      {/* open side with bench */}
+      <path d="M13 15 H40 V33 H13 Z" fill="#1d1914" opacity="0.88" />
+      <rect x="15" y="25" width="15" height="4" rx="1.5" fill="#f7ba5c" />
+      {/* windscreen */}
+      <path d="M43 15 H51 L57 26 H43 Z" fill="#d6efeb" />
+      <rect x="9" y="33" width="54" height="2.5" fill="#f7ba5c" />
+      {/* wheels: big rear, small front */}
+      <circle cx="19" cy="40" r="6.5" fill="#1d1914" />
+      <circle cx="19" cy="40" r="2.4" fill="#efe1c9" />
+      <circle cx="56" cy="41" r="5" fill="#1d1914" />
+      <circle cx="56" cy="41" r="1.9" fill="#efe1c9" />
+      <circle cx="61" cy="30" r="1.8" fill="#fbe0ae" />
     </svg>
   );
 }

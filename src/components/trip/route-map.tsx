@@ -69,7 +69,18 @@ export function RouteMap({ stops, className, weights, tone = "dark" }: Props) {
                   stroke="#fffbf4"
                   strokeWidth="2"
                 />
-                <text x={x + r + 3} y={y + 4} fontSize="12" fontWeight="700" fill="#1d1914" fontFamily="var(--font-instrument)">
+                <text
+                  x={LABEL[w.region] === "l" ? x - r - 3 : x + r + 3}
+                  y={y + 4}
+                  textAnchor={LABEL[w.region] === "l" ? "end" : "start"}
+                  fontSize="12"
+                  fontWeight="700"
+                  fill="#1d1914"
+                  fontFamily="var(--font-instrument)"
+                  paintOrder="stroke"
+                  stroke="#e8f2e3"
+                  strokeWidth="3"
+                >
                   {regions[w.region].short}
                 </text>
               </g>

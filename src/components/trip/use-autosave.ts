@@ -38,6 +38,7 @@ export function useAutosave(
   const pending = useRef<ItineraryData | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const optsRef = useRef(opts);
+  const retry = useRef<() => void>(() => {});
   useEffect(() => {
     optsRef.current = opts;
   });
@@ -63,10 +64,19 @@ export function useAutosave(
       if (!d) return true;
       pending.current = null;
       setState("saving");
-      return handle(await put(d, false, keepalive));
+      const r = await put(d, false, keepalive);
+      if (!r.ok && r.code === 0 && !keepalive) {
+        // Offline / flaky connection: keep the change and try again shortly.
+        pending.current ??= d;
+        timer.current = setTimeout(() => retry.current(), 5000);
+      }
+      return handle(r);
     },
     [handle],
   );
+  useEffect(() => {
+    retry.current = () => void flush();
+  }, [flush]);
 
   useEffect(() => {
     if (first.current) {
