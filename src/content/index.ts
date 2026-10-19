@@ -1,39 +1,59 @@
-import { addOns, addOnsById } from "./addons";
-import { dayOptions, nightOptions, nyeOptions, stayIn, type StayIn } from "./options";
-import { dayPairs, nightPairs, nyePairs } from "./pairs";
+import { extras, options, stayIn, type StayIn } from "./options";
+import { nyePairs, pairs, pairsFor } from "./pairs";
 import { photos } from "./photos.generated";
-import type { BaseId, Option, Pair } from "./types";
+import type { Activity, Category, Pair } from "./types";
 
 export * from "./types";
-export { regions, regionList, travelHours, formatHours, bases, LEGS } from "./regions";
-export type { Base, FixedLeg } from "./regions";
-export { stayIn, dayPairs, nightPairs, nyePairs, addOns, addOnsById };
+export { regions, regionList, travelHours, formatHours, stays, COAST_ROAD, COAST_ROAD_KM, LEGS } from "./regions";
+export type { Stay, FixedLeg } from "./regions";
+export { stayIn, pairs, pairsFor, nyePairs, options, extras };
 export type { StayIn };
 
-export const allOptions: Option[] = [...dayOptions, ...nightOptions, ...nyeOptions];
-export const optionsById: Record<string, Option> = Object.fromEntries(allOptions.map((o) => [o.id, o]));
-export const allPairs: Pair[] = [...dayPairs, ...nightPairs, nyePairs.colombo, nyePairs.galle];
+/** Options + Quick extras — everything that can sit in a slot (besides Stay in). */
+export const activities: Activity[] = [...options, ...extras];
+export const activitiesById: Record<string, Activity> = Object.fromEntries(activities.map((a) => [a.id, a]));
+/** @deprecated name kept for older call sites — same as activitiesById. */
+export const optionsById = activitiesById;
+
+export const allPairs: Pair[] = [...pairs, nyePairs.colombo, nyePairs.galle];
 export const pairsById: Record<string, Pair> = Object.fromEntries(allPairs.map((p) => [p.id, p]));
-export const BASE_IDS: BaseId[] = ["colombo", "galle"];
 
 export const heroPhotos = photos["hero"] ?? [];
 
-/** Trip window everyone can choose from. */
+/** The window everyone can place their trip in. */
 export const TRIP_WINDOW = { start: "2026-12-01", end: "2027-01-31" } as const;
 export const NYE_DATE = "2026-12-31";
-export const MAX_TRIP_DAYS = 14;
-export const RECOMMENDED_DAYS = "4–5 days";
+/** The group voted: 6 days · 5 nights. 5 days is a preview-only sandbox. */
+export const TRIP_DAYS = 6;
+export const PREVIEW_DAYS = 5;
+
+export const CATEGORIES: { id: Category; label: string; emoji: string }[] = [
+  { id: "adventure", label: "Adventure", emoji: "🥾" },
+  { id: "water", label: "Beach & Water", emoji: "🌊" },
+  { id: "nature", label: "Nature", emoji: "🌿" },
+  { id: "culture", label: "Culture", emoji: "🛕" },
+  { id: "food", label: "Food", emoji: "🍛" },
+  { id: "party", label: "Party", emoji: "🪩" },
+  { id: "chill", label: "Chill / Stay in", emoji: "🌴" },
+];
 
 // Fail fast in dev if the content files drift out of sync.
-for (const p of allPairs) {
-  for (const id of [p.a, p.b]) {
-    const o = optionsById[id];
-    if (!o) throw new Error(`Pair ${p.id} references unknown option ${id}`);
-    const expected = p.slot === "day" ? "day" : "night";
-    if (o.slot !== expected) throw new Error(`Option ${id} has slot ${o.slot} but pair ${p.id} is ${p.slot}`);
-    if (o.base !== p.base) throw new Error(`Option ${id} is in base ${o.base} but pair ${p.id} is ${p.base}`);
+{
+  const seen = new Set<string>();
+  for (const a of activities) {
+    if (seen.has(a.id) || a.id === "stay") throw new Error(`Duplicate activity id ${a.id}`);
+    seen.add(a.id);
+    if (!a.slots.length || !a.where.length || !a.categories.length) throw new Error(`Activity ${a.id} is missing slots/where/categories`);
+    if (a.kind === "option" && a.slots.length !== 1) throw new Error(`Option ${a.id} must have exactly one slot`);
   }
-}
-for (const a of addOns) {
-  if (!a.slots.length) throw new Error(`Add-on ${a.id} has no slots`);
+  for (const p of allPairs) {
+    for (const id of [p.a, p.b]) {
+      const o = activitiesById[id];
+      if (!o || o.kind !== "option") throw new Error(`Pair ${p.id} references unknown option ${id}`);
+      const slot = p.slot === "day" ? "day" : "night";
+      if (!o.slots.includes(slot)) throw new Error(`Option ${id} isn't a ${slot} option but pair ${p.id} is`);
+      if (!o.where.includes(p.where)) throw new Error(`Option ${id} isn't valid in ${p.where} (pair ${p.id})`);
+    }
+  }
+  void pairsFor;
 }

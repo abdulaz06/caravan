@@ -1,4 +1,4 @@
-import type { BaseId } from "./types";
+type BaseId = "colombo" | "galle";
 
 /**
  * Assumptions behind the budget tracker. All USD, per person unless noted.

@@ -1,19 +1,42 @@
 export type RegionId =
   | "airport"
   | "colombo"
+  | "mount-lavinia"
   | "negombo"
-  | "kandy"
+  | "kalutara"
   | "bentota"
+  | "kosgoda"
+  | "balapitiya"
+  | "ambalangoda"
   | "hikkaduwa"
   | "galle"
+  | "unawatuna"
+  | "koggala"
+  | "ahangama"
+  | "weligama"
   | "mirissa"
-  | "hiriketiya";
+  | "madiha"
+  | "hiriketiya"
+  | "mulkirigala"
+  | "kottawa"
+  | "hiyare"
+  | "kanneliya"
+  | "sinharaja"
+  | "udawalawe";
 
-/** The two bases every trip is split into: Colombo first, then Galle. */
-export type BaseId = "colombo" | "galle";
+/**
+ * Where an activity can be picked:
+ * - colombo: Day 1 (the only Colombo day)
+ * - enroute: Day 2 daytime, stops along the coast road to Galle
+ * - galle:   Day 2 evening and Days 3–5 (the Galle base)
+ */
+export type Where = "colombo" | "enroute" | "galle";
 
 export type Slot = "day" | "night";
 export type Vibe = -2 | -1 | 0 | 1 | 2;
+
+/** Catalog filter categories ("chill" also covers Stay in). */
+export type Category = "adventure" | "water" | "nature" | "culture" | "food" | "party" | "chill";
 
 export type Photo = {
   src: string; // local path under /public
@@ -25,70 +48,58 @@ export type Photo = {
   blurDataURL?: string;
 };
 
-/** One way of getting to a day trip (e.g. Kandy by train or by road). */
-export type TransportChoice = {
-  mode: "train" | "road";
-  title: string; // "Scenic train"
-  out: string; // "Colombo Fort → Kandy"
-  back: string; // "Kandy → Colombo Fort"
-  hours: number; // each way
-  label: string; // "~2.5 hrs each way"
-  detail: string;
-  costUsd: [number, number]; // per person, return
-};
+export type Source = { label: string; url: string };
 
 export type CourseHole = { venue: string; area: string; par: number; note?: string };
 
-export type Option = {
+/**
+ * Anything that can go in a Daytime or Evening slot: curated options (which
+ * appear in the A-vs-B matchups) and smaller Quick extras (catalog only).
+ */
+export type Activity = {
   id: string;
-  slot: Slot;
-  base: BaseId;
+  kind: "option" | "extra";
+  /** Options have exactly one slot; extras may fit both. */
+  slots: Slot[];
+  where: Where[];
   title: string;
   region: RegionId;
-  /** Hours each way from the base, if it differs from the region's drive time. */
-  travelFromBase?: number;
+  /** Quick extras: who/where runs it ("Playdium, One Galle Face"). */
+  venue?: string;
+  emoji?: string;
+  categories: Category[];
   tagline: string;
+  /** "Why people love it" — distilled from recent traveller reviews. */
+  loved: string;
   description: string;
   highlights: string[];
   duration: string;
-  estCostUsd?: [number, number]; // per person
+  /** Rough hours it takes on the day (for slot time totals). */
+  hours: number;
+  estCostUsd: [number, number]; // per person
   vibe: Vibe; // -2 pure nature/adventure … +2 pure nightlife
   intensity?: "easy" | "moderate" | "tough";
   tags: string[];
   images: Photo[]; // first = cover
+  sources: Source[];
   /** Honest caveat shown in the detail sheet (seasonality, schedules…). */
   goodToKnow?: string;
   /** Days of the week it runs (0 = Sun … 6 = Sat). Omit = every day. */
   availableDays?: number[];
-  /** Day trips where people choose train vs road. */
-  transport?: { train: TransportChoice; road: TransportChoice };
   /** A fun rules card in the detail view (e.g. Pub Golf). */
   rules?: { title: string; items: string[] };
   course?: CourseHole[];
+  /** En-route stops: km from Colombo along the coast road (A2). */
+  routeKm?: number;
 };
 
-/** Smaller extras that can be attached to any pick in the same base and time of day. */
-export type AddOn = {
-  id: string;
-  base: BaseId;
-  slots: Slot[];
-  title: string;
-  venue: string;
-  region: RegionId;
-  emoji: string;
-  tagline: string;
-  description: string;
-  duration: string;
-  estCostUsd: [number, number]; // per person
-  tags: string[];
-  images: Photo[];
-  goodToKnow?: string;
-};
+/** Kept for readability where only curated options make sense. */
+export type Option = Activity;
 
 export type Pair = {
   id: string;
   slot: Slot | "nye";
-  base: BaseId;
+  where: Where;
   a: string; // option id
   b: string; // option id
   theme?: string;
@@ -99,7 +110,7 @@ export type Region = {
   name: string;
   short: string;
   blurb: string;
-  /** approx. coordinates, used for the route map */
+  /** approx. coordinates, used for drive-time estimates and the route map */
   lat: number;
   lng: number;
   images: Photo[];
