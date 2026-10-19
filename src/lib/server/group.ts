@@ -1,7 +1,7 @@
 import "server-only";
-import { optionsById, regions, TRIP_WINDOW, type RegionId } from "@/content";
+import { TRIP_DAYS, activitiesById, regions, TRIP_WINDOW, type RegionId } from "@/content";
 import { dateRange } from "@/lib/dates";
-import { isStay, normalize, optionFor, tripLength, type ItineraryData } from "@/lib/itinerary";
+import { STAY_ID, countItems, normalize, tripLength, type ItineraryData } from "@/lib/itinerary";
 import { balanceOf } from "@/lib/timeline";
 import { db, type ItineraryRow, type ParticipantRow } from "./db";
 
@@ -24,9 +24,8 @@ export async function loadPeople(): Promise<Person[]> {
   const byId = new Map<string, ItineraryRow>(itineraries.map((i) => [i.participant_id, i]));
   return participants.map((p: ParticipantRow) => {
     const it = byId.get(p.id);
-    const picks = it
-      ? it.data.days.reduce((n, d) => n + (d.day ? 1 : 0) + (d.night ? 1 : 0), 0)
-      : 0;
+    const data = it?.data ? normalize(it.data) : null; // also upgrades older (v1/v2) itineraries
+    const picks = data ? countItems(data) : 0;
     return {
       id: p.id,
       name: p.display_name,
@@ -35,7 +34,7 @@ export async function loadPeople(): Promise<Person[]> {
       updatedAt: it?.updated_at ?? null,
       submittedAt: it?.submitted_at ?? null,
       picks,
-      data: it?.data ? normalize(it.data) : null, // also upgrades legacy "chill" picks
+      data,
     };
   });
 }
@@ -79,23 +78,24 @@ export function computeStats(people: Person[]): GroupStats {
     }
     if (d.flexibility) flexibility[d.flexibility] = (flexibility[d.flexibility] ?? 0) + 1;
     for (const day of d.days) {
-      for (const o of [optionFor(day.day), optionFor(day.night)]) {
+      for (const x of [...day.day, ...day.night]) {
+        const o = activitiesById[x.id];
         if (!o) continue;
         optionCounts.set(o.id, (optionCounts.get(o.id) ?? 0) + 1);
         regionCounts.set(o.region, (regionCounts.get(o.region) ?? 0) + 1);
       }
-      if (isStay(day.day)) stayCount.day++;
-      if (isStay(day.night)) stayCount.night++;
+      if (day.day.some((x) => x.id === STAY_ID)) stayCount.day++;
+      if (day.night.some((x) => x.id === STAY_ID)) stayCount.night++;
     }
     const b = balanceOf(d).score;
     if (b !== null) balances.push(b);
   }
 
-  // Sweet spot: the window (5, 4 or 3 days) where the most people can make
-  // every single day. Ties go to the longer window, then the busier one.
+  // Sweet spot: the 6-day window (the voted trip length) where the most people
+  // can make every single day; ties go to the busier window.
   let sweetSpot: GroupStats["sweetSpot"] = null;
   let bestSum = -1;
-  for (const len of [5, 4, 3]) {
+  for (const len of [TRIP_DAYS]) {
     for (let i = 0; i + len <= dates.length; i++) {
       const window = dates.slice(i, i + len);
       const counts = window.map((d) => dateCounts[d]);
@@ -123,7 +123,7 @@ export function computeStats(people: Person[]): GroupStats {
     topOptions: [...optionCounts.entries()]
       .sort((a, b) => b[1] - a[1])
       .slice(0, 10)
-      .map(([optionId, count]) => ({ optionId, count, slot: optionsById[optionId].slot })),
+      .map(([optionId, count]) => ({ optionId, count, slot: activitiesById[optionId].slots[0] })),
     stayCount,
     balance: balances.length ? balances.reduce((a, b) => a + b, 0) / balances.length : null,
     regions: [...regionCounts.entries()]

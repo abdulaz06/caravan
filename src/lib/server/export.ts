@@ -1,8 +1,8 @@
 import "server-only";
-import { addOnsById, regions, stayIn, type Option } from "@/content";
+import { activitiesById, regions, stayIn } from "@/content";
 import { computeBudget } from "@/lib/budget";
 import { addDays } from "@/lib/dates";
-import { baseOfIndex, baseSplit, isPick, isStay, optionFor, tripLength, type SlotPick } from "@/lib/itinerary";
+import { DAY_NAMES, STAY_ID, dayRole, daysNightsLabel, nights, slotWhere, tripLength, type SlotItem } from "@/lib/itinerary";
 import { balanceOf, buildTimeline, type SlotView } from "@/lib/timeline";
 import type { Person } from "./group";
 
@@ -18,23 +18,25 @@ const toCsv = (rows: Record<string, unknown>[]): string => {
   return [headers.join(","), ...rows.map((r) => headers.map((h) => csvCell(r[h])).join(","))].join("\n");
 };
 
-const STAY_ID = "stay";
+const titleOf = (x: SlotItem) => (x.id === STAY_ID ? stayIn.day.title : (activitiesById[x.id]?.title ?? x.id));
 
-function summarize(v: SlotView) {
-  const addOns = (v.pick?.addOns ?? []).map((id) => ({ id, title: addOnsById[id]?.title ?? id }));
-  const transport = isPick(v.pick) ? (v.pick.transport ?? null) : null;
-  if (v.value === "stay") return { id: STAY_ID, title: stayIn.day.title, region: null, vibe: 0, addOns };
-  if (!v.value) return null;
-  const o: Option = v.value;
-  return { id: o.id, title: o.title, region: o.region, vibe: o.vibe, transport, addOns };
+function summarizeSlot(v: SlotView) {
+  return {
+    plannedHours: v.plannedHours,
+    items: v.items.map((it) =>
+      it.resolved.kind === "stay"
+        ? { id: STAY_ID, title: it.resolved.stay.title, kind: "stay", vibe: 0 }
+        : {
+            id: it.resolved.activity.id,
+            title: it.resolved.activity.title,
+            kind: it.resolved.activity.kind,
+            region: regions[it.resolved.activity.region].name,
+            vibe: it.resolved.activity.vibe,
+            pairId: it.item.pairId ?? null,
+          },
+    ),
+  };
 }
-
-const pickTitle = (p: SlotPick | null) => {
-  const main = isStay(p) ? stayIn.day.title : (optionFor(p)?.title ?? "—");
-  const extras = (p?.addOns ?? []).map((id) => addOnsById[id]?.title ?? id);
-  const transport = isPick(p) && p.transport ? ` [${p.transport}]` : "";
-  return `${main}${transport}${extras.length ? ` + ${extras.join(" + ")}` : ""}`;
-};
 
 function budgetSummary(p: Person) {
   if (!p.data?.startDate) return null;
@@ -53,25 +55,29 @@ function summary(p: Person) {
   const d = p.data;
   if (!d) return null;
   const t = buildTimeline(d);
-  const split = baseSplit(d.days.length);
+  const len = tripLength(d);
   return {
-    tripLength: tripLength(d),
-    bases: { colomboDays: split.colombo, galleDays: split.galle },
+    tripLength: len ? daysNightsLabel(len) : null,
+    days: len,
+    nights: nights(len),
     balance: balanceOf(d),
     budget: budgetSummary(p),
     currency: d.preferences.currency ?? null,
     regionsVisited: t.regionsVisited.map((r) => regions[r].name),
     totalTravelHours: t.totalHours,
-    days: t.days.map((day) => ({
+    itinerary: t.days.map((day) => ({
       date: day.date,
-      base: day.base,
+      day: day.index + 1,
+      name: day.name,
       tags: day.tags,
-      daytime: summarize(day.day),
-      evening: summarize(day.night),
+      daytime: summarizeSlot(day.day),
+      evening: summarizeSlot(day.night),
       note: d.days[day.index].note ?? null,
-      travel: [...day.legsBefore, ...day.day.before, ...day.day.after, ...day.night.before, ...day.night.after, ...day.legsAfter].map(
-        (s) => ({ title: s.title, hours: s.hours, mode: s.mode }),
-      ),
+      travel: [
+        ...day.legsBefore,
+        ...[...day.day.items, ...day.night.items].map((x) => x.before).filter((x) => !!x),
+        ...[day.day.after, day.night.after].filter((x) => !!x),
+      ].map((s) => ({ title: s!.title, hours: s!.hours })),
       warnings: day.warnings,
     })),
   };
@@ -81,7 +87,8 @@ export function exportJson(people: Person[], editsLocked: boolean) {
   return {
     exportedAt: new Date().toISOString(),
     editsLocked,
-    notes: "All money is per person in USD (the app's base currency). Budget totals exclude flights.",
+    notes:
+      "Trip is 6 days · 5 nights (1 night Colombo, 4 nights Galle). All money is per person in USD (the app's base currency). Budget totals exclude flights.",
     participants: people.map((p) => ({
       id: p.id,
       name: p.name,
@@ -103,13 +110,16 @@ export function exportWideCsv(people: Person[]): string {
       const pr = d?.preferences ?? {};
       const b = d ? balanceOf(d) : null;
       const budget = budgetSummary(p);
-      const split = d ? baseSplit(d.days.length) : null;
+      const len = d ? tripLength(d) : 0;
       const plan = d?.startDate
         ? d.days
             .map((day, i) => {
               const date = addDays(d.startDate!, i);
-              const base = baseOfIndex(d.days.length, i);
-              return `${date} (${base}): ${pickTitle(day.day)} / ${pickTitle(day.night)}${day.note ? ` (note: ${day.note})` : ""}`;
+              const role = dayRole(i, d.days.length);
+              const slot = (xs: SlotItem[]) => (xs.length ? xs.map(titleOf).join(" + ") : "—");
+              return role === "departure"
+                ? `${date} (Day ${i + 1} · ${DAY_NAMES[role]})`
+                : `${date} (Day ${i + 1} · ${DAY_NAMES[role]}): ${slot(day.day)} / ${slot(day.night)}${day.note ? ` (note: ${day.note})` : ""}`;
             })
             .join(" | ")
         : "";
@@ -121,14 +131,15 @@ export function exportWideCsv(people: Person[]): string {
         submitted_at: p.submittedAt,
         start_date: d?.startDate,
         end_date: d?.endDate,
-        trip_days: d ? tripLength(d) : "",
-        colombo_days: split?.colombo ?? "",
-        galle_days: split?.galle ?? "",
+        trip_days: len || "",
+        trip_nights: len ? len - 1 : "",
+        colombo_nights: len ? nights(len).colombo : "",
+        galle_nights: len ? nights(len).galle : "",
         flexibility: d?.flexibility,
-        picks: p.picks,
+        items: p.picks,
         balance_score: b?.score?.toFixed(2),
-        nature_picks: b?.nature,
-        nightlife_picks: b?.nightlife,
+        nature_items: b?.nature,
+        nightlife_items: b?.nightlife,
         budget_estimate_low_usd: budget?.totalUsd[0] ?? "",
         budget_estimate_high_usd: budget?.totalUsd[1] ?? "",
         budget_verdict: budget?.verdict ?? "",
@@ -158,22 +169,25 @@ const LONG_HEADERS = {
   status: "",
   date: "",
   day_number: "",
-  base: "",
+  day_name: "",
+  where: "",
   slot: "",
+  position: "",
   kind: "",
-  option_id: "",
-  option_title: "",
+  item_id: "",
+  item_title: "",
   pair_id: "",
-  transport: "",
   region: "",
   vibe: "",
+  categories: "",
+  available_days: "",
   est_cost_low_usd: "",
   est_cost_high_usd: "",
   tags: "",
   note: "",
 };
 
-/** One row per slot pick, plus one row per add-on (long format). */
+/** One row per item in every slot (long format). */
 export function exportLongCsv(people: Person[]): string {
   const rows: Record<string, unknown>[] = [];
   for (const p of people) {
@@ -181,51 +195,36 @@ export function exportLongCsv(people: Person[]): string {
     if (!d?.startDate) continue;
     d.days.forEach((day, i) => {
       const date = addDays(d.startDate!, i);
-      const base = baseOfIndex(d.days.length, i);
-      for (const [slot, pick] of [["daytime", day.day], ["evening", day.night]] as const) {
-        if (!pick) continue;
-        const stay = isStay(pick);
-        const o = stay ? null : optionFor(pick);
-        rows.push({
-          ...LONG_HEADERS,
-          name: p.name,
-          status: p.status,
-          date,
-          day_number: i + 1,
-          base,
-          slot,
-          kind: "pick",
-          option_id: stay ? STAY_ID : o?.id,
-          option_title: stay ? stayIn.day.title : o?.title,
-          pair_id: isPick(pick) ? pick.pairId : "",
-          transport: isPick(pick) ? (pick.transport ?? "") : "",
-          region: o ? regions[o.region].name : "",
-          vibe: stay ? 0 : o?.vibe,
-          est_cost_low_usd: stay ? 0 : (o?.estCostUsd?.[0] ?? ""),
-          est_cost_high_usd: stay ? 0 : (o?.estCostUsd?.[1] ?? ""),
-          tags: o?.tags ?? [],
-          note: day.note ?? "",
-        });
-        for (const id of pick.addOns ?? []) {
-          const a = addOnsById[id];
-          if (!a) continue;
+      const role = dayRole(i, d.days.length);
+      for (const [slot, key] of [["daytime", "day"], ["evening", "night"]] as const) {
+        day[key].forEach((x, pos) => {
+          const stay = x.id === STAY_ID;
+          const a = stay ? null : activitiesById[x.id];
+          if (!stay && !a) return;
           rows.push({
             ...LONG_HEADERS,
             name: p.name,
             status: p.status,
             date,
             day_number: i + 1,
-            base,
+            day_name: DAY_NAMES[role],
+            where: slotWhere(role, key) ?? "",
             slot,
-            kind: "add-on",
-            option_id: a.id,
-            option_title: a.title,
-            region: regions[a.region].name,
-            est_cost_low_usd: a.estCostUsd[0],
-            est_cost_high_usd: a.estCostUsd[1],
-            tags: a.tags,
+            position: pos + 1,
+            kind: stay ? "stay" : a!.kind,
+            item_id: x.id,
+            item_title: stay ? stayIn.day.title : a!.title,
+            pair_id: x.pairId ?? "",
+            region: a ? regions[a.region].name : "",
+            vibe: stay ? 0 : a!.vibe,
+            categories: stay ? ["chill"] : a!.categories,
+            available_days: a?.availableDays ?? [],
+            est_cost_low_usd: stay ? 0 : a!.estCostUsd[0],
+            est_cost_high_usd: stay ? 0 : a!.estCostUsd[1],
+            tags: a?.tags ?? [],
+            note: day.note ?? "",
           });
-        }
+        });
       }
     });
   }

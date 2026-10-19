@@ -1,3 +1,4 @@
+import { isSubmittable } from "@/lib/itinerary";
 import { parseItinerary } from "@/lib/schema";
 import { db } from "@/lib/server/db";
 import { error, json, readJson } from "@/lib/server/http";
@@ -26,6 +27,7 @@ export async function PUT(req: Request) {
 
   const submit = body?.submit === true;
   if (submit && !data.startDate) return error("Pick your dates before submitting.", 400);
+  if (submit && !isSubmittable(data)) return error("The group voted 6 days. Switch back to submit.", 400);
 
   const now = new Date().toISOString();
   const status = submit || existing?.status === "submitted" ? "submitted" : "draft";

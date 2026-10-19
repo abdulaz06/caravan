@@ -9,23 +9,17 @@ import {
   stayIds,
   transportIds,
 } from "@/content/preferences";
-import { MAX_TRIP_DAYS, TRIP_WINDOW } from "@/content";
+import { TRIP_DAYS, TRIP_WINDOW } from "@/content";
 import { CURRENCY_CODES } from "./currency";
 import { diffDays, isValidISO } from "./dates";
-import { normalize, type ItineraryData } from "./itinerary";
+import { MAX_ITEMS, normalize, type ItineraryData } from "./itinerary";
 
 const isoDate = z.string().refine(isValidISO, "Invalid date");
 const text = (max: number) => z.string().trim().max(max).optional();
 
-const addOnIds = z.array(z.string().max(64)).max(12).optional();
-const optionPick = z.object({
-  pairId: z.string().max(64),
-  optionId: z.string().max(64),
-  addOns: addOnIds,
-  transport: z.enum(["train", "road"]).optional(),
-});
-// "chill" is the pre-Stay-in shape; normalize() upgrades it to { type: "stay" }.
-const slotPick = z.union([optionPick, z.object({ type: z.enum(["stay", "chill"]), addOns: addOnIds })]);
+const slotItems = z
+  .array(z.object({ key: z.string().min(1).max(16), id: z.string().min(1).max(64), pairId: z.string().max(64).optional() }).strip())
+  .max(MAX_ITEMS);
 
 export const preferencesSchema = z
   .object({
@@ -48,7 +42,7 @@ export const preferencesSchema = z
 
 export const itinerarySchema = z
   .object({
-    version: z.union([z.literal(1), z.literal(2)]),
+    version: z.literal(3),
     startDate: isoDate.nullable(),
     endDate: isoDate.nullable(),
     flexibility: z.enum(flexibilityIds).nullable(),
@@ -56,12 +50,12 @@ export const itinerarySchema = z
       .array(
         z.object({
           id: z.string().min(1).max(40),
-          day: slotPick.nullable(),
-          night: slotPick.nullable(),
+          day: slotItems,
+          night: slotItems,
           note: z.string().max(280).optional(),
         }),
       )
-      .max(MAX_TRIP_DAYS),
+      .max(TRIP_DAYS),
     preferences: preferencesSchema,
     budget: z
       .object({ excluded: z.array(z.string().max(120)).max(300).optional(), accommodation: z.boolean().optional() })
@@ -75,8 +69,12 @@ export const itinerarySchema = z
     }
     if (d.startDate && d.endDate) {
       const len = diffDays(d.startDate, d.endDate) + 1;
-      if (d.startDate < TRIP_WINDOW.start || d.endDate > TRIP_WINDOW.end || len < 1 || len > MAX_TRIP_DAYS) {
+      if (d.startDate < TRIP_WINDOW.start || d.endDate > TRIP_WINDOW.end) {
         ctx.addIssue({ code: "custom", message: "Dates are outside the trip window" });
+      }
+      // The group voted 6 days · 5 nights — the 5-day preview is never saved.
+      if (len !== TRIP_DAYS || d.days.length !== TRIP_DAYS) {
+        ctx.addIssue({ code: "custom", message: "The trip is 6 days · 5 nights" });
       }
     }
   });
@@ -85,7 +83,7 @@ export const itinerarySchema = z
 export function parseItinerary(input: unknown): ItineraryData | null {
   const res = itinerarySchema.safeParse(input);
   if (!res.success) return null;
-  return normalize(res.data as ItineraryData);
+  return normalize(res.data as ItineraryData, TRIP_DAYS);
 }
 
 export const nameSchema = z

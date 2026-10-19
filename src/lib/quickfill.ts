@@ -1,134 +1,129 @@
-// "Quick fill": builds a sensible, balanced itinerary inside the two bases
-// that people can then tweak. Prefers variety, keeps travel light (and the
-// transfer/departure days close to Galle), respects day-of-week options, and
-// picks a few attempts with a little randomness so everyone's isn't identical.
-import { dayPairs, nightPairs, nyePairs, optionsById, type BaseId, type Option, type Pair } from "@/content";
+// "Quick fill": one balanced item per empty slot, from that slot's curated
+// pairs, that people can then tweak. Prefers variety, keeps travel light
+// (big day trips are rare), respects day-of-week options, and tries a few
+// attempts with a little randomness so everyone's isn't identical.
+import { activitiesById, pairsFor, type Activity, type Pair } from "@/content";
 import { parseISO } from "./dates";
 import {
-  STAY,
-  baseOfIndex,
+  STAY_ID,
   clearAllPicks,
   dateAt,
-  isPick,
-  isStay,
+  dayRole,
+  hasSlots,
+  itemCounts,
+  makeItem,
   normalize,
   nyeIndex,
-  optionCounts,
-  optionFor,
-  transferIndex,
+  nyePairAt,
+  slotWhere,
   type ItineraryData,
-  type OptionPick,
 } from "./itinerary";
-import { buildTimeline, hoursFromBase } from "./timeline";
+import { buildTimeline, hoursFrom } from "./timeline";
 
 type Rng = () => number;
 
-const pairOptions = (p: Pair): Option[] => [optionsById[p.a], optionsById[p.b]];
-const runsOn = (o: Option, date: string | null) =>
-  !o.availableDays || (!!date && o.availableDays.includes(parseISO(date).getUTCDay()));
+const pairOptions = (p: Pair): Activity[] => [activitiesById[p.a], activitiesById[p.b]];
+const runsOn = (a: Activity, date: string | null) =>
+  !a.availableDays || (!!date && a.availableDays.includes(parseISO(date).getUTCDay()));
 
 function fill(input: ItineraryData, rng: Rng, onlyEmpty: boolean): ItineraryData {
   const data = onlyEmpty ? structuredClone(input) : clearAllPicks(input);
   const n = data.days.length;
   const nye = nyeIndex(data);
-  const transfer = transferIndex(data);
-  const used = new Set(optionCounts(data).keys());
+  const used = new Set(itemCounts(data).keys());
   const pairUses = new Map<string, number>();
   let vibeSum = 0;
   let vibeCount = 0;
+  let bigTrips = 0;
   for (const d of data.days) {
-    for (const p of [d.day, d.night]) {
-      if (isPick(p)) pairUses.set(p.pairId, (pairUses.get(p.pairId) ?? 0) + 1);
-      const o = optionFor(p);
-      if (o) vibeSum += o.vibe;
-      if (o || isStay(p)) vibeCount++;
+    for (const x of [...d.day, ...d.night]) {
+      if (x.pairId) pairUses.set(x.pairId, (pairUses.get(x.pairId) ?? 0) + 1);
+      const a = activitiesById[x.id];
+      if (a) vibeSum += a.vibe;
+      if (a || x.id === STAY_ID) vibeCount++;
+      if (a?.tags.includes("big day trip")) bigTrips++;
     }
   }
   const balancePenalty = (v: number) => Math.abs((vibeSum + v) / (vibeCount + 1));
-  const take = (o: Option, pair: Pair): OptionPick => {
-    used.add(o.id);
+  const take = (a: Activity, pair: Pair) => {
+    used.add(a.id);
     pairUses.set(pair.id, (pairUses.get(pair.id) ?? 0) + 1);
-    vibeSum += o.vibe;
+    vibeSum += a.vibe;
     vibeCount++;
-    const pick: OptionPick = { pairId: pair.id, optionId: o.id };
-    if (o.transport) pick.transport = rng() < 0.6 ? "train" : "road";
-    return pick;
+    if (a.tags.includes("big day trip")) bigTrips++;
+    return [makeItem(a.id, pair.id)];
   };
   const stay = () => {
     vibeCount++;
-    return { ...STAY };
+    return [makeItem(STAY_ID)];
   };
-  const best = (pairs: Pair[], score: (o: Option) => number | null) => {
-    let top: { o: Option; pair: Pair; s: number } | null = null;
+  const best = (pairs: Pair[], score: (a: Activity) => number | null) => {
+    let top: { a: Activity; pair: Pair; s: number } | null = null;
     for (const pair of pairs) {
-      for (const o of pairOptions(pair)) {
-        if (used.has(o.id)) continue;
-        const s = score(o);
+      for (const a of pairOptions(pair)) {
+        if (used.has(a.id)) continue;
+        const s = score(a);
         if (s === null) continue;
         const total = s + (pairUses.get(pair.id) ?? 0) * 2 + rng();
-        if (!top || total < top.s) top = { o, pair, s: total };
+        if (!top || total < top.s) top = { a, pair, s: total };
       }
     }
     return top;
   };
 
   for (let i = 0; i < n; i++) {
+    const role = dayRole(i, n);
+    if (!hasSlots(role)) continue;
     const d = data.days[i];
-    const base: BaseId = baseOfIndex(n, i);
     const date = dateAt(data, i);
-    const isLast = i === n - 1 && n > 1;
+    const dayWhere = slotWhere(role, "day")!;
+    const nightWhere = slotWhere(role, "night")!;
+    const lastFull = i === n - 2;
 
-    // Daytime (landing day stays free on longer trips)
-    if (!d.day && !(i === 0 && n >= 3)) {
-      const pick = best(
-        dayPairs.filter((p) => p.base === base),
-        (o) => {
-          if (!runsOn(o, date)) return null;
-          const h = hoursFromBase(o);
-          if (i === 0 && h >= 2) return null;
-          if (i === transfer && h >= 1 && o.region !== "bentota") return null;
-          if (isLast && (h >= 1 || o.tags.includes("diving"))) return null;
-          return h * 0.8 + balancePenalty(o.vibe) * 1.2;
-        },
-      );
-      d.day = pick ? take(pick.o, pick.pair) : i < n - 1 ? stay() : null;
+    if (!d.day.length) {
+      const pick = best(pairsFor(dayWhere, "day"), (a) => {
+        if (!runsOn(a, date)) return null;
+        if (dayWhere === "enroute") return balancePenalty(a.vibe) * 1.2;
+        const h = hoursFrom(a, dayWhere);
+        if (a.tags.includes("big day trip") && (bigTrips >= 1 || lastFull)) return null;
+        if (lastFull && a.tags.includes("diving")) return null;
+        return h * 0.8 + balancePenalty(a.vibe) * 1.2;
+      });
+      d.day = pick ? take(pick.a, pick.pair) : stay();
     }
 
-    // Evening (departure night stays free — you're flying)
-    if (d.night || isLast) continue;
+    if (d.night.length) continue;
     if (i === nye) {
-      const pair = nyePairs[base];
-      const [a, b] = pairOptions(pair);
-      const pick = hoursFromBase(a) + rng() * 1.2 <= hoursFromBase(b) + 0.6 ? a : b;
-      d.night = take(pick, pair);
-      continue;
+      const pair = nyePairAt(data);
+      if (pair) {
+        const [a, b] = pairOptions(pair);
+        const pickA = hoursFrom(a, nightWhere) + rng() * 1.2 <= hoursFrom(b, nightWhere) + 0.6;
+        d.night = take(pickA ? a : b, pair);
+        continue;
+      }
     }
-    const tomorrow = optionFor(data.days[i + 1]?.day);
-    const earlyStart = !!tomorrow && (tomorrow.tags.includes("early") || !!tomorrow.transport);
-    const stays = data.days.filter((x) => isStay(x.night)).length;
-    if (earlyStart || (i > 0 && stays < Math.floor(n / 3) && rng() < 0.22)) {
+    const tomorrow = data.days[i + 1]?.day.map((x) => activitiesById[x.id]).find(Boolean);
+    const earlyStart = !!tomorrow && (tomorrow.tags.includes("early") || tomorrow.tags.includes("big day trip"));
+    const stays = data.days.filter((x) => x.night.some((y) => y.id === STAY_ID)).length;
+    if (earlyStart || (i > 1 && stays < 1 && rng() < 0.25)) {
       d.night = stay();
       continue;
     }
-    const pick = best(
-      nightPairs.filter((p) => p.base === base),
-      (o) => {
-        if (!runsOn(o, date)) return null;
-        const h = hoursFromBase(o);
-        if (h > 1.25 && i === 0) return null;
-        return h * 1.1 + balancePenalty(o.vibe) * 1.2 + (i === 0 && o.vibe >= 2 ? 1.5 : 0);
-      },
-    );
-    d.night = pick ? take(pick.o, pick.pair) : stay();
+    const pick = best(pairsFor(nightWhere, "night"), (a) => {
+      if (!runsOn(a, date)) return null;
+      const h = hoursFrom(a, nightWhere);
+      if (role === "transfer" && h > 1) return null;
+      return h * 1.1 + balancePenalty(a.vibe) * 1.2;
+    });
+    d.night = pick ? take(pick.a, pick.pair) : stay();
   }
-  return normalize(data);
+  return normalize(data, n);
 }
 
 function score(data: ItineraryData): number {
   const t = buildTimeline(data);
   const warnings = t.days.reduce((n, d) => n + d.warnings.length, 0);
-  const empty = data.days.reduce((n, d, i) => n + (d.day || i === 0 ? 0 : 1), 0);
-  return t.totalHours + warnings * 6 + empty * 3;
+  return t.totalHours + warnings * 6;
 }
 
 export function quickFill(data: ItineraryData, opts: { onlyEmpty?: boolean; rng?: Rng } = {}): ItineraryData {
