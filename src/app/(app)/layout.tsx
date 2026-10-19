@@ -14,7 +14,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         {hero && (
           <Image
             src={hero.src}
-            alt="Coconut Tree Hill, Mirissa"
+            alt="Galle Fort lighthouse"
             fill
             sizes="(min-width: 1024px) 60vw, 1px"
             placeholder={hero.blurDataURL ? "blur" : "empty"}
@@ -36,7 +36,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               <span className="italic text-saffron-400">your way.</span>
             </h2>
             <p className="mt-5 max-w-md text-lg text-paper/80">
-              Whales, leopards, sunrise climbs, tea country and beach parties. Build your dream version, then
+              Colombo nights, a Kandy day trip, then Galle: whales, turtles, surf and beach parties. Build your dream version, then
               we&apos;ll plan the trip together.
             </p>
             {hero && (

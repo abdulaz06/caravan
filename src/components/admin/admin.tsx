@@ -89,6 +89,7 @@ export function AdminDashboard({ people, locked, localStore }: { people: Row[]; 
   const [newPin, setNewPin] = useState("");
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const submitted = people.filter((p) => p.status === "submitted").length;
+  const drafts = people.filter((p) => p.status === "draft").length;
 
   async function toggleLock() {
     const next = !isLocked;
@@ -194,7 +195,7 @@ export function AdminDashboard({ people, locked, localStore }: { people: Row[]; 
               {submitted} submitted <span className="text-ink-3">/ {people.length} joined</span>
             </p>
             <p className="mt-1 text-[13.5px] text-ink-3">
-              {people.filter((p) => p.status === "draft").length} drafts in progress
+              {drafts} {drafts === 1 ? "draft" : "drafts"} in progress
             </p>
           </section>
         </div>

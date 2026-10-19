@@ -8,6 +8,7 @@ import type { ItineraryData } from "@/lib/itinerary";
 import { balanceOf, buildTimeline } from "@/lib/timeline";
 import { SiteFooter } from "../brand/site-footer";
 import { Lockup } from "../brand/wordmark";
+import { CurrencyPicker } from "../currency";
 import { BalanceMeter } from "../trip/balance-meter";
 import { ItineraryTimeline } from "../trip/itinerary-timeline";
 import { TripPoster } from "../trip/trip-poster";
@@ -23,7 +24,9 @@ export function PersonView({ name, data, isMe }: { name: string; data: Itinerary
         <Link href="/group" className="flex items-center gap-1.5 rounded-full px-2 py-1.5 text-[14px] font-semibold text-ink-2 hover:bg-sand-200">
           <ArrowLeft className="size-4" /> The crew
         </Link>
-        <Lockup size="sm" className="ml-auto" />
+        <span className="flex-1" />
+        <CurrencyPicker />
+        <Lockup size="sm" />
       </header>
       <div className="relative z-[1] space-y-4 px-3 pt-5">
         <TripPoster name={name} data={data} timeline={timeline} />

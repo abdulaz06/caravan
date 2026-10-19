@@ -12,18 +12,18 @@ import { AvatarStack } from "./avatar";
 import type { PublicCounts } from "@/lib/server/group";
 
 const MARQUEE = [
-  "pidurangala-sunrise",
   "mirissa-whale-watching",
-  "nine-arches-little-adams",
-  "yala-leopard-safari",
-  "galle-fort-sunset-dinner",
+  "galle-fort",
+  "kandy-day-trip",
   "mirissa-beach-hop",
-  "kandyan-dance-dinner",
-  "tea-estate-high-tea",
   "hikkaduwa-turtles",
   "colombo-rooftop",
-  "elephant-safari-kaudulla",
+  "tea-and-stilts",
+  "galle-fort-sunset-dinner",
+  "scuba-diving",
+  "galle-face-street-food",
   "unawatuna-jungle-beach",
+  "pub-golf-galle",
 ].map((id) => optionsById[id]);
 
 const STEPS = [
@@ -61,7 +61,7 @@ export function Welcome({ counts }: { counts: PublicCounts }) {
           animate={{ scale: 1 }}
           transition={{ duration: 2.4, ease: [0.2, 0.7, 0.2, 1] }}
         >
-          <Photo photo={hero} alt="A blue train crossing the Nine Arches Bridge near Ella" sizes="(min-width: 1024px) 480px, 100vw" priority quality={85} />
+          <Photo photo={hero} alt="Leaning palms on Coconut Tree Hill, Mirissa" sizes="(min-width: 1024px) 480px, 100vw" priority quality={85} />
         </motion.div>
         <div className="absolute inset-0 bg-gradient-to-b from-ocean-950/55 via-transparent via-35% to-ocean-950" />
         <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-ocean-950 via-ocean-950/85 to-transparent" />
@@ -208,7 +208,7 @@ export function Welcome({ counts }: { counts: PublicCounts }) {
         <Palm className="absolute -right-6 bottom-0 h-56 text-jungle-900/70" />
         <div className="relative">
           <h2 className="font-display text-[32px] font-semibold leading-[1.02] tracking-[-0.02em]">
-            Whales or leopards? <span className="italic text-saffron-400">Beach party or rooftop?</span>
+            Whales or wrecks? <span className="italic text-saffron-400">Jungle party or Pub Golf?</span>
           </h2>
           <p className="mt-3 max-w-xs text-paper/80">You decide. Everyone&apos;s picks shape the final plan.</p>
           <div className="mt-7 flex items-center gap-4">

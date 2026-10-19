@@ -129,16 +129,28 @@ export function Van({ className }: P) {
 export function Train({ className }: P) {
   return (
     <svg viewBox="0 0 96 40" className={className} aria-hidden="true">
-      <path d="M2 30 V10 Q2 5 7 5 H80 Q92 5 94 18 V30 Z" fill="#1a6fb0" />
-      <rect x="2" y="21" width="92" height="4" fill="#c9302c" />
-      {[8, 22, 36, 50, 64].map((x) => (
-        <rect key={x} x={x} y="9" width="10" height="8" rx="1.5" fill="#d6efeb" />
+      {/* sleepers + rail */}
+      {[4, 14, 24, 34, 44, 54, 64, 74, 84].map((x) => (
+        <rect key={x} x={x} y="35" width="6" height="3" rx="0.5" fill="#b9ab97" />
       ))}
-      <path d="M80 9 H86 Q90 9 91 15 V17 H80 Z" fill="#d6efeb" />
-      {[14, 30, 62, 78].map((x) => (
-        <circle key={x} cx={x} cy="32" r="4" fill="#1d1914" />
+      <rect x="0" y="34" width="96" height="1.6" fill="#6b6155" />
+      {/* carriage */}
+      <rect x="2" y="9" width="40" height="22" rx="3" fill="#1a6fb0" />
+      <rect x="2" y="23" width="40" height="3" fill="#c9302c" />
+      {[6, 18, 30].map((x) => (
+        <rect key={x} x={x} y="12" width="8" height="7" rx="1.5" fill="#d6efeb" />
       ))}
-      <rect x="0" y="36" width="96" height="2" fill="#8a7e70" />
+      <rect x="42" y="25" width="5" height="2" fill="#1d1914" />
+      {/* locomotive with a sloped nose */}
+      <path d="M47 31 V11 Q47 7 51 7 H76 Q84 7 88 14 L94 25 V31 Z" fill="#1a6fb0" />
+      <rect x="62" y="3" width="5" height="5" rx="1" fill="#1d1914" />
+      <rect x="47" y="23" width="47" height="3" fill="#c9302c" />
+      <rect x="51" y="11" width="8" height="7" rx="1.5" fill="#d6efeb" />
+      <path d="M78 11 H82 Q85 11 87 15 L89 19 H78 Z" fill="#d6efeb" />
+      <circle cx="92" cy="28.5" r="1.6" fill="#f4b545" />
+      {[10, 34, 55, 83].map((x) => (
+        <circle key={x} cx={x} cy="31.5" r="3" fill="#1d1914" />
+      ))}
     </svg>
   );
 }

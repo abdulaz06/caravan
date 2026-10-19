@@ -2,13 +2,14 @@
 
 import { Moon, Sun } from "lucide-react";
 import { useState } from "react";
-import { regions, stayIn, type Option, type RegionId } from "@/content";
+import { bases, stayIn, type Option } from "@/content";
 import { cn } from "@/lib/cn";
-import type { ItineraryData } from "@/lib/itinerary";
-import type { Timeline } from "@/lib/timeline";
+import { isPick, type ItineraryData, type SlotKind } from "@/lib/itinerary";
+import { baseDistanceLabel, type SlotView, type Timeline } from "@/lib/timeline";
 import { Firework } from "../brand/illustrations";
 import { Photo } from "../ui/photo";
-import { RoadTrip, ToAirport, VibeDots, Warning } from "./bits";
+import { AddOnChips } from "./addons";
+import { RoadTrip, Tip, VibeDots, Warning } from "./bits";
 import { StayThumb } from "./day-card";
 import { OptionDetail } from "./option-detail";
 
@@ -19,35 +20,51 @@ export function ItineraryTimeline({ data, timeline }: { data: ItineraryData; tim
     <>
       <ol className="relative">
         <span className="absolute bottom-6 left-[19px] top-4 w-0.5 border-l-2 border-dashed border-sand-300" aria-hidden="true" />
-        {timeline.days.map((t) => {
+        {timeline.days.map((t, k) => {
           const nye = t.tags.includes("nye");
           const note = data.days[t.index]?.note;
+          const newBase = k === 0 || timeline.days[k - 1].base !== t.base;
           return (
             <li key={t.index} className="relative pb-6 pl-12">
-              <span
-                className={cn(
-                  "font-display absolute left-0 top-0 grid size-10 place-items-center rounded-full text-[17px] font-bold ring-4 ring-sand-100",
-                  nye ? "bg-dusk-900 text-saffron-400" : "bg-ink text-paper",
-                )}
-              >
-                {t.index + 1}
-              </span>
-              <div className="flex flex-wrap items-baseline gap-x-2 pt-1.5">
-                <h3 className="font-display text-[20px] font-semibold leading-none">{t.label}</h3>
-                {t.tags.includes("arrival") && <span className="text-[12px] font-bold text-ocean-600">Arrival</span>}
-                {t.tags.includes("departure") && <span className="text-[12px] font-bold text-sunset-600">Departure</span>}
-                {nye && (
-                  <span className="inline-flex items-center gap-1 text-[12px] font-bold text-hibiscus-600">
-                    <Firework className="size-3.5" /> New Year&apos;s Eve
-                  </span>
-                )}
+              {newBase && (
+                <p className="label -ml-12 mb-3 inline-flex items-center gap-1.5 rounded-full bg-ocean-800 px-3 py-1 text-saffron-400">
+                  Base · {bases[t.base].name}
+                </p>
+              )}
+              <div className="relative">
+                <span
+                  className={cn(
+                    "font-display absolute -left-12 top-0 grid size-10 place-items-center rounded-full text-[17px] font-bold ring-4 ring-sand-100",
+                    nye ? "bg-dusk-900 text-saffron-400" : "bg-ink text-paper",
+                  )}
+                >
+                  {t.index + 1}
+                </span>
+                <div className="flex flex-wrap items-baseline gap-x-2 pt-1.5">
+                  <h3 className="font-display text-[20px] font-semibold leading-none">{t.label}</h3>
+                  {t.tags.includes("arrival") && <span className="text-[12px] font-bold text-ocean-600">Arrival</span>}
+                  {t.tags.includes("transfer") && <span className="text-[12px] font-bold text-saffron-600">Move to Galle</span>}
+                  {t.tags.includes("departure") && <span className="text-[12px] font-bold text-sunset-600">Departure</span>}
+                  {nye && (
+                    <span className="inline-flex items-center gap-1 text-[12px] font-bold text-hibiscus-600">
+                      <Firework className="size-3.5" /> New Year&apos;s Eve
+                    </span>
+                  )}
+                </div>
               </div>
               <div className="mt-2.5 space-y-2">
-                {t.beforeDay && <RoadTrip seg={t.beforeDay} />}
-                <PickRow kind="day" option={t.day} onOpen={setDetail} />
-                {t.beforeNight && <RoadTrip seg={t.beforeNight} />}
-                <PickRow kind="night" option={t.night} onOpen={setDetail} />
+                {t.legsBefore.map((l) => (
+                  <RoadTrip key={l.title} seg={l} />
+                ))}
+                <SlotRows kind="day" view={t.day} onOpen={setDetail} />
+                <SlotRows kind="night" view={t.night} onOpen={setDetail} />
+                {t.legsAfter.map((l) => (
+                  <RoadTrip key={l.title} seg={l} />
+                ))}
                 {note && <p className="rounded-xl bg-paper px-3 py-2 text-[13px] italic text-ink-2 shadow-card">“{note}”</p>}
+                {t.tips.map((w) => (
+                  <Tip key={w} text={w} />
+                ))}
                 {t.warnings.map((w) => (
                   <Warning key={w} text={w} />
                 ))}
@@ -56,14 +73,29 @@ export function ItineraryTimeline({ data, timeline }: { data: ItineraryData; tim
           );
         })}
       </ol>
-      {timeline.toAirport && <ToAirport seg={timeline.toAirport} />}
       <OptionDetail open={!!detail} option={detail} onClose={() => setDetail(null)} />
     </>
   );
 }
 
-function PickRow({ kind, option, onOpen }: { kind: "day" | "night"; option: Option | "stay" | null; onOpen: (o: Option) => void }) {
+function SlotRows({ kind, view, onOpen }: { kind: SlotKind; view: SlotView; onOpen: (o: Option) => void }) {
+  return (
+    <div className="space-y-1.5">
+      {view.before.map((s) => (
+        <RoadTrip key={s.title} seg={s} />
+      ))}
+      <PickRow kind={kind} view={view} onOpen={onOpen} />
+      {view.pick?.addOns?.length ? <AddOnChips ids={view.pick.addOns} className="pl-1" /> : null}
+      {view.after.map((s) => (
+        <RoadTrip key={s.title} seg={s} />
+      ))}
+    </div>
+  );
+}
+
+function PickRow({ kind, view, onOpen }: { kind: SlotKind; view: SlotView; onOpen: (o: Option) => void }) {
   const night = kind === "night";
+  const option = view.value;
   if (!option) {
     return (
       <div className={cn("flex h-12 items-center gap-2.5 rounded-2xl px-3 text-[13.5px] font-medium", night ? "bg-dusk-900/[0.06] text-ink-3" : "bg-sand-200/50 text-ink-3")}>
@@ -94,6 +126,7 @@ function PickRow({ kind, option, onOpen }: { kind: "day" | "night"; option: Opti
       </div>
     );
   }
+  const transport = isPick(view.pick) ? view.pick.transport : undefined;
   return (
     <button onClick={() => onOpen(option)} className={cn(rowClass, "active:scale-[0.99]")}>
       <span className="relative size-14 shrink-0 overflow-hidden rounded-xl bg-ocean-800">
@@ -103,21 +136,12 @@ function PickRow({ kind, option, onOpen }: { kind: "day" | "night"; option: Opti
         {eyebrow}
         <span className="line-clamp-2 text-[14.5px] font-semibold leading-tight">{option.title}</span>
         <span className={cn("mt-0.5 flex items-center gap-2 text-[11.5px] font-medium", night ? "text-paper/60" : "text-ink-3")}>
-          {regions[option.region].short}
+          <span className="truncate">
+            {transport ? (transport === "train" ? "By scenic train" : "By road") : baseDistanceLabel(option)}
+          </span>
           <VibeDots vibe={option.vibe} />
         </span>
       </span>
     </button>
   );
-}
-
-export function routeStops(timeline: Timeline): RegionId[] {
-  const stops: RegionId[] = ["airport"];
-  for (const d of timeline.days) {
-    for (const seg of [d.beforeDay, d.beforeNight]) {
-      if (seg && stops[stops.length - 1] !== seg.to) stops.push(seg.to);
-    }
-  }
-  if (timeline.toAirport) stops.push("airport");
-  return stops;
 }

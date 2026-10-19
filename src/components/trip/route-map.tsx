@@ -6,34 +6,34 @@ import { MAP, project } from "@/lib/map-data";
 import { cn } from "@/lib/cn";
 
 /** Where each region's label sits relative to its dot, so nothing clips or collides. */
-const LABEL: Record<RegionId, "r" | "l" | "b"> = {
-  airport: "r",
+const LABEL: Record<RegionId, "r" | "l" | "b" | "t"> = {
+  airport: "t",
   negombo: "r",
   colombo: "r",
+  kandy: "r",
+  bentota: "r",
   hikkaduwa: "r",
   galle: "l",
-  mirissa: "r",
-  yala: "r",
-  ella: "r",
-  "nuwara-eliya": "l",
-  kandy: "r",
-  sigiriya: "r",
+  mirissa: "t",
+  hiriketiya: "r",
 };
 
 type Props = {
-  stops: RegionId[]; // in visiting order, starting at the airport
+  stops: RegionId[]; // main route in visiting order, starting at the airport
+  /** There-and-back trips from a base, drawn as thinner dashed lines. */
+  spokes?: { from: RegionId; to: RegionId }[];
   className?: string;
   /** Optional weights to draw bubbles instead of a route (group view). */
   weights?: { region: RegionId; count: number }[];
   tone?: "dark" | "light";
 };
 
-export function RouteMap({ stops, className, weights, tone = "dark" }: Props) {
+export function RouteMap({ stops, spokes = [], className, weights, tone = "dark" }: Props) {
   const dark = tone === "dark";
   const pts = stops.map((r) => project(regions[r].lat, regions[r].lng));
   const d = pts.map((p, i) => `${i ? "L" : "M"}${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join(" ");
   const max = weights ? Math.max(1, ...weights.map((w) => w.count)) : 1;
-  const unique = [...new Set(stops)];
+  const unique = [...new Set([...stops, ...spokes.map((s) => s.to)])];
 
   return (
     <svg viewBox={`0 0 ${MAP.width} ${MAP.height}`} className={cn("h-auto w-full", className)} role="img" aria-label={`Route: ${unique.map((r) => regions[r].short).join(", ")}`}>
@@ -100,10 +100,28 @@ export function RouteMap({ stops, className, weights, tone = "dark" }: Props) {
                 animate={{ pathLength: 1 }}
                 transition={{ duration: 1.6, ease: "easeInOut", delay: 0.3 }}
               />
+              {spokes.map((s, i) => {
+                const [x1, y1] = project(regions[s.from].lat, regions[s.from].lng);
+                const [x2, y2] = project(regions[s.to].lat, regions[s.to].lng);
+                return (
+                  <motion.path
+                    key={`${s.from}-${s.to}`}
+                    d={`M${x1.toFixed(1)} ${y1.toFixed(1)} L${x2.toFixed(1)} ${y2.toFixed(1)}`}
+                    fill="none"
+                    stroke="#1a8e9c"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                    strokeDasharray="1 5"
+                    initial={{ pathLength: 0 }}
+                    animate={{ pathLength: 1 }}
+                    transition={{ duration: 0.6, delay: 1.2 + i * 0.15 }}
+                  />
+                );
+              })}
               {unique.map((r, i) => {
                 const [x, y] = project(regions[r].lat, regions[r].lng);
                 const pos = LABEL[r];
-                const showLabel = !(r === "airport" && unique.includes("negombo"));
+                const showLabel = !(r === "negombo" && unique.includes("airport"));
                 return (
                   <motion.g
                     key={r}
@@ -112,10 +130,17 @@ export function RouteMap({ stops, className, weights, tone = "dark" }: Props) {
                     transition={{ delay: 0.3 + (i / Math.max(1, unique.length)) * 1.5 }}
                     style={{ transformOrigin: `${x}px ${y}px` }}
                   >
-                    <circle cx={x} cy={y} r={r === "airport" ? 5 : 6.5} fill={r === "airport" ? "#1d1914" : "#f2a33a"} stroke="#1d1914" strokeWidth="2" />
+                    <circle
+                      cx={x}
+                      cy={y}
+                      r={r === "airport" ? 5 : r === "colombo" || r === "galle" ? 7.5 : 5}
+                      fill={r === "airport" ? "#1d1914" : r === "colombo" || r === "galle" ? "#f2a33a" : "#d6efeb"}
+                      stroke="#1d1914"
+                      strokeWidth="2"
+                    />
                     {showLabel && <text
                       x={pos === "l" ? x - 10 : pos === "r" ? x + 10 : x}
-                      y={pos === "b" ? y + 20 : y + 4}
+                      y={pos === "b" ? y + 20 : pos === "t" ? y - 10 : y + 4}
                       textAnchor={pos === "l" ? "end" : pos === "r" ? "start" : "middle"}
                       fontSize="12.5"
                       fontWeight="700"

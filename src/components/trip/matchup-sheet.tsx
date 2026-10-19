@@ -3,27 +3,29 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowDownUp, Check, Info, MapPin, Repeat2 } from "lucide-react";
 import { useMemo, useState } from "react";
-import {
-  dayPairs,
-  formatHours,
-  nightPairs,
-  nyePair,
-  optionsById,
-  regions,
-  stayIn,
-  travelHours,
-  type Option,
-  type Pair,
-} from "@/content";
+import { bases, dayPairs, nightPairs, nyePairs, optionsById, stayIn, type Option, type Pair } from "@/content";
 import { cn } from "@/lib/cn";
-import { dayLabel } from "@/lib/dates";
-import { STAY, alsoOn, dateAt, isPick, isStay, nyeIndex, type ItineraryData, type OptionPick } from "@/lib/itinerary";
-import { locationBefore } from "@/lib/timeline";
+import { dayLabel, parseISO } from "@/lib/dates";
+import {
+  STAY,
+  alsoOn,
+  baseAt,
+  dateAt,
+  isPick,
+  isStay,
+  nyeIndex,
+  type ItineraryData,
+  type OptionPick,
+  type TransportMode,
+} from "@/lib/itinerary";
+import { baseDistanceLabel, hoursFromBase } from "@/lib/timeline";
 import { Firework, StayInIcon } from "../brand/illustrations";
 import { Photo } from "../ui/photo";
 import { Sheet } from "../ui/sheet";
-import { VibeDots } from "./bits";
+import { Button } from "../ui/button";
+import { DaysBadge, VibeDots } from "./bits";
 import { OptionDetail } from "./option-detail";
+import { TransportChooser } from "./transport";
 
 type Props = {
   open: boolean;
@@ -47,31 +49,44 @@ export function MatchupSheet({ open, onClose, data, index, slot, onPick, onStay 
   const [sort, setSort] = useState<"near" | "all">("near");
   const [chosen, setChosen] = useState<string | null>(null);
   const [detail, setDetail] = useState<{ option: Option; pair: Pair } | null>(null);
+  const [transportFor, setTransportFor] = useState<{ option: Option; pair: Pair } | null>(null);
+  const [mode, setMode] = useState<TransportMode>("train");
 
   const nye = slot === "night" && nyeIndex(data) === index;
   const night = slot === "night";
   const date = dateAt(data, index);
-  const from = locationBefore(data, index, slot);
+  const weekday = date ? parseISO(date).getUTCDay() : null;
+  const base = baseAt(data, index);
   const current = data.days[index]?.[slot] ?? null;
   const currentId = isPick(current) ? current.optionId : null;
 
   const pairs = useMemo(() => {
-    const list = slot === "day" ? dayPairs : nye ? [nyePair] : nightPairs;
+    const list = (slot === "day" ? dayPairs : nye ? [nyePairs[base]] : nightPairs).filter((p) => p.base === base);
     if (sort === "all") return list;
-    const dist = (p: Pair) =>
-      Math.min(travelHours(from, optionsById[p.a].region), travelHours(from, optionsById[p.b].region));
+    const dist = (p: Pair) => Math.min(hoursFromBase(optionsById[p.a]), hoursFromBase(optionsById[p.b]));
     return [...list].sort((a, b) => dist(a) - dist(b));
-  }, [slot, nye, sort, from]);
+  }, [slot, nye, sort, base]);
 
-  function choose(pair: Pair, option: Option) {
+  function commit(pair: Pair, option: Option, transport?: TransportMode) {
     if (chosen) return;
     setChosen(option.id);
     setDetail(null);
     setTimeout(() => {
-      onPick({ pairId: pair.id, optionId: option.id });
+      onPick({ pairId: pair.id, optionId: option.id, ...(transport ? { transport } : {}) });
       setChosen(null);
       onClose();
     }, 480);
+  }
+
+  function choose(pair: Pair, option: Option) {
+    if (option.transport) {
+      // Day trips ask how you want to get there first.
+      setDetail(null);
+      setMode(isPick(current) && current.optionId === option.id && current.transport ? current.transport : "train");
+      setTransportFor({ option, pair });
+      return;
+    }
+    commit(pair, option);
   }
 
   function chooseStay() {
@@ -108,7 +123,7 @@ export function MatchupSheet({ open, onClose, data, index, slot, onPick, onStay 
             <span className="flex min-w-0 items-center gap-1.5">
               <MapPin className="size-3.5 shrink-0" />
               <span className="truncate">
-                {from === "airport" ? "Starting from the airport" : `You'll be coming from ${regions[from].short}`}
+                Times from your {bases[base].name} base
               </span>
             </span>
             {!nye && (
@@ -161,7 +176,7 @@ export function MatchupSheet({ open, onClose, data, index, slot, onPick, onStay 
                       <OptionTile
                         key={o.id}
                         option={o}
-                        from={from}
+                        weekday={weekday}
                         isCurrent={currentId === o.id}
                         also={alsoLabel(alsoOn(data, slot, index, { pairId: pair.id, optionId: o.id }))}
                         state={chosen ? (chosen === o.id ? "won" : "lost") : "idle"}
@@ -192,13 +207,44 @@ export function MatchupSheet({ open, onClose, data, index, slot, onPick, onStay 
         pickLabel={`Pick for Day ${index + 1}`}
         onPick={() => detail && choose(detail.pair, detail.option)}
       />
+      <Sheet
+        open={!!transportFor}
+        onClose={() => setTransportFor(null)}
+        size="auto"
+        eyebrow={transportFor?.option.title}
+        title="Train or road?"
+        footer={
+          transportFor ? (
+            <Button
+              size="lg"
+              block
+              onClick={() => {
+                const t = transportFor;
+                setTransportFor(null);
+                commit(t.pair, t.option, mode);
+              }}
+            >
+              Pick for Day {index + 1} · {mode === "train" ? "Scenic train 🚂" : "Road trip 🚐"}
+            </Button>
+          ) : undefined
+        }
+      >
+        {transportFor && (
+          <div className="px-4 pb-4">
+            <TransportChooser option={transportFor.option} value={mode} onChange={setMode} compact />
+            {transportFor.option.goodToKnow && (
+              <p className="mt-3 rounded-2xl bg-saffron-100 p-3 text-[12.5px] leading-snug text-ink-2">{transportFor.option.goodToKnow}</p>
+            )}
+          </div>
+        )}
+      </Sheet>
     </>
   );
 }
 
 function OptionTile({
   option,
-  from,
+  weekday,
   isCurrent,
   also,
   state,
@@ -206,14 +252,14 @@ function OptionTile({
   onInfo,
 }: {
   option: Option;
-  from: ReturnType<typeof locationBefore>;
+  weekday: number | null;
   isCurrent: boolean;
   also: string | null;
   state: "idle" | "won" | "lost";
   onChoose: () => void;
   onInfo: () => void;
 }) {
-  const hours = travelHours(from, option.region);
+  const offDay = !!option.availableDays && weekday !== null && !option.availableDays.includes(weekday);
   return (
     <motion.div
       animate={state === "won" ? { scale: 1.04, zIndex: 2 } : state === "lost" ? { scale: 0.94, opacity: 0.35 } : { scale: 1, opacity: 1 }}
@@ -230,14 +276,17 @@ function OptionTile({
       >
         <Photo photo={option.images[0]} alt={option.title} sizes="(min-width: 1024px) 220px, 46vw" />
         <span className="absolute inset-0 bg-gradient-to-t from-ink/90 via-ink/25 to-transparent" />
-        <span className="absolute left-2 top-2 rounded-full bg-ink/45 px-2 py-0.5 text-[10.5px] font-bold text-white backdrop-blur-md">
-          {hours === 0 ? "You're here" : `${formatHours(hours)} away`}
+        <span className="absolute left-2 right-11 top-2 flex flex-wrap gap-1">
+          <span className="rounded-full bg-ink/45 px-2 py-0.5 text-[10.5px] font-bold text-white backdrop-blur-md">
+            {option.transport ? "Day trip · train or road" : baseDistanceLabel(option)}
+          </span>
         </span>
         <span className="absolute inset-x-2.5 bottom-2.5">
           {also && <AlsoChip label={also} />}
+          {option.availableDays && <DaysBadge option={option} warn={offDay} className="mb-1.5" />}
           <span className="font-display line-clamp-3 block text-[16px] font-semibold leading-[1.12]">{option.title}</span>
           <span className="mt-1 flex items-center gap-2 text-[11px] font-semibold text-paper/75">
-            <span className="truncate">{regions[option.region].short}</span>
+            <span className="truncate">{offDay ? "Not on this day" : option.duration.split(" (")[0]}</span>
             <VibeDots vibe={option.vibe} />
           </span>
         </span>

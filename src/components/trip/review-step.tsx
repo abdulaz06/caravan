@@ -2,7 +2,7 @@
 
 import confetti from "canvas-confetti";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, CalendarDays, CheckCircle2, Pencil, Send, SlidersHorizontal, Users } from "lucide-react";
+import { ArrowRight, CalendarDays, CheckCircle2, ChevronRight, Pencil, Send, SlidersHorizontal, Users, Wallet } from "lucide-react";
 import { useMemo, useState } from "react";
 import {
   budgets,
@@ -22,6 +22,9 @@ import { BalanceMeter } from "./balance-meter";
 import type { Step } from "./header";
 import { ItineraryTimeline } from "./itinerary-timeline";
 import { TripPoster } from "./trip-poster";
+import { VerdictChip } from "./budget";
+import { useCurrency } from "../currency";
+import type { BudgetResult } from "@/lib/budget";
 import type { SaveState } from "./use-autosave";
 
 type Props = {
@@ -32,6 +35,8 @@ type Props = {
   locked: boolean;
   saveState: SaveState;
   onEdit: (s: Step) => void;
+  budget: BudgetResult;
+  onOpenBudget: () => void;
   onSubmit: () => Promise<boolean>;
 };
 
@@ -44,7 +49,7 @@ function ago(iso: string | null): string {
   return new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
 }
 
-export function ReviewStep({ name, data, status, updatedAt, locked, saveState, onEdit, onSubmit }: Props) {
+export function ReviewStep({ name, data, status, updatedAt, locked, saveState, onEdit, onSubmit, budget, onOpenBudget }: Props) {
   const timeline = useMemo(() => buildTimeline(data), [data]);
   const balance = useMemo(() => balanceOf(data), [data]);
   const [busy, setBusy] = useState(false);
@@ -96,6 +101,7 @@ export function ReviewStep({ name, data, status, updatedAt, locked, saveState, o
 
       <div className="relative z-[1] mt-6 space-y-4 px-3">
         <TripPoster name={name} data={data} timeline={timeline} />
+        <BudgetSummary budget={budget} onOpen={onOpenBudget} />
         <div className="rounded-[26px] bg-paper p-4 shadow-card">
           <BalanceMeter balance={balance} />
         </div>
@@ -223,5 +229,28 @@ export function PrefsSummary({ data, title = "Your extras" }: { data: ItineraryD
         ))}
       </dl>
     </section>
+  );
+}
+
+function BudgetSummary({ budget, onOpen }: { budget: BudgetResult; onOpen: () => void }) {
+  const { range, rateNote } = useCurrency();
+  return (
+    <button
+      onClick={onOpen}
+      className="flex w-full items-center gap-3 rounded-[26px] bg-paper p-4 text-left shadow-card transition hover:-translate-y-0.5 lg:pointer-events-none"
+    >
+      <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-ocean-100 text-ocean-700">
+        <Wallet className="size-6" />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="label block text-ink-3">Trip budget · per person</span>
+        <span className="font-display block text-[24px] font-semibold leading-tight tabular-nums">≈ {range(budget.total)}</span>
+        <span className="mt-1 flex flex-wrap items-center gap-2">
+          <VerdictChip verdict={budget.verdict} />
+          <span className="text-[11px] text-ink-3">Excl. flights · ≈ {rateNote}</span>
+        </span>
+      </span>
+      <ChevronRight className="size-5 shrink-0 text-ink-3 min-[1360px]:hidden" />
+    </button>
   );
 }

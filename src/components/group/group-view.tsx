@@ -14,6 +14,7 @@ import { Avatar } from "../avatar";
 import { Firework, Palm } from "../brand/illustrations";
 import { SiteFooter } from "../brand/site-footer";
 import { Lockup } from "../brand/wordmark";
+import { CurrencyPicker } from "../currency";
 import { ButtonLink } from "../ui/button";
 import { Photo } from "../ui/photo";
 import { BalanceMeter } from "../trip/balance-meter";
@@ -49,7 +50,9 @@ export function GroupView({ stats, myStatus, canBrowse, itineraries, editsLocked
         <Link href="/trip" className="flex items-center gap-1.5 rounded-full px-2 py-1.5 text-[14px] font-semibold text-ink-2 hover:bg-sand-200">
           <ArrowLeft className="size-4" /> My trip
         </Link>
-        <Lockup size="sm" className="ml-auto" />
+        <span className="flex-1" />
+        <CurrencyPicker />
+        <Lockup size="sm" />
       </header>
 
       {editsLocked && (

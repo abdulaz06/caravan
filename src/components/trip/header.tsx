@@ -6,6 +6,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/cn";
+import type { CurrencyCode } from "@/lib/currency";
+import { CurrencyPicker } from "../currency";
 import { Avatar } from "../avatar";
 import { Lockup } from "../brand/wordmark";
 import type { SaveState } from "./use-autosave";
@@ -22,9 +24,10 @@ type Props = {
   submitted: boolean;
   locked: boolean;
   beforeLeave: () => Promise<unknown>;
+  onCurrency?: (c: CurrencyCode) => void;
 };
 
-export function TripHeader({ name, step, canVisit, onStep, saveState, submitted, locked, beforeLeave }: Props) {
+export function TripHeader({ name, step, canVisit, onStep, saveState, submitted, locked, beforeLeave, onCurrency }: Props) {
   const [menu, setMenu] = useState(false);
   const router = useRouter();
   const ref = useRef<HTMLDivElement>(null);
@@ -46,31 +49,10 @@ export function TripHeader({ name, step, canVisit, onStep, saveState, submitted,
   return (
     <>
       <header className="sticky top-0 z-40 border-b border-ink/[0.06] bg-sand-100/85 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
-        <div className="flex h-16 items-center gap-2.5 px-3.5">
+        <div className="flex h-14 items-center gap-2.5 px-3.5">
           <Lockup size="sm" className="shrink-0" />
-          <nav className="flex flex-1 items-center gap-1" aria-label="Steps">
-            {(Object.keys(LABELS) as Step[]).map((s) => {
-              const active = s === step;
-              const enabled = canVisit(s);
-              return (
-                <button
-                  key={s}
-                  disabled={!enabled}
-                  onClick={() => onStep(s)}
-                  aria-current={active ? "step" : undefined}
-                  className={cn(
-                    "relative flex h-8 flex-1 items-center justify-center rounded-full text-[12.5px] font-semibold tracking-[-0.01em] transition-colors",
-                    active ? "text-paper" : enabled ? "text-ink-2 hover:bg-sand-200" : "text-ink-3/50",
-                  )}
-                >
-                  {active && (
-                    <motion.span layoutId="step-pill" className="absolute inset-0 rounded-full bg-ink" />
-                  )}
-                  <span className="relative">{LABELS[s]}</span>
-                </button>
-              );
-            })}
-          </nav>
+          <span className="flex-1" />
+          <CurrencyPicker onPick={onCurrency} />
           <div className="relative" ref={ref}>
             <button
               onClick={() => setMenu((m) => !m)}
@@ -113,6 +95,29 @@ export function TripHeader({ name, step, canVisit, onStep, saveState, submitted,
             </AnimatePresence>
           </div>
         </div>
+        <nav className="flex items-center gap-1 px-3 pb-2" aria-label="Steps">
+        {(Object.keys(LABELS) as Step[]).map((s) => {
+          const active = s === step;
+          const enabled = canVisit(s);
+          return (
+            <button
+              key={s}
+              disabled={!enabled}
+              onClick={() => onStep(s)}
+              aria-current={active ? "step" : undefined}
+              className={cn(
+                "relative flex h-7 flex-1 items-center justify-center rounded-full text-[12.5px] font-semibold tracking-[-0.01em] transition-colors",
+                active ? "text-paper" : enabled ? "text-ink-2 hover:bg-sand-200" : "text-ink-3/50",
+              )}
+            >
+              {active && (
+                <motion.span layoutId="step-pill" className="absolute inset-0 rounded-full bg-ink" />
+              )}
+              <span className="relative">{LABELS[s]}</span>
+            </button>
+          );
+        })}
+      </nav>
       </header>
       {locked && (
         <div className="flex items-center gap-2.5 bg-ocean-800 px-4 py-3 text-[14px] font-medium text-paper">

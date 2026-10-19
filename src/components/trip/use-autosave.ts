@@ -29,12 +29,13 @@ async function put(data: ItineraryData, submit: boolean, keepalive = false): Pro
  */
 export function useAutosave(
   data: ItineraryData,
-  opts: { enabled: boolean; onLocked: () => void; onSignedOut: () => void },
+  opts: { enabled: boolean; onLocked: () => void; onSignedOut: () => void; saveOnMount?: boolean },
 ) {
   const [state, setState] = useState<SaveState>("idle");
   const [status, setStatus] = useState<ItineraryStatus | null>(null);
   const [updatedAt, setUpdatedAt] = useState<string | null>(null);
-  const first = useRef(true);
+  // Skip the initial render unless the data needs persisting (e.g. a v1 → v2 upgrade).
+  const first = useRef(!opts.saveOnMount);
   const pending = useRef<ItineraryData | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const optsRef = useRef(opts);

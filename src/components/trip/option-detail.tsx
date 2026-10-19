@@ -1,13 +1,16 @@
 "use client";
 
-import { Check, Clock, Gauge, Info, MapPin, Wallet } from "lucide-react";
+import { Check, Clock, Flag, Gauge, Info, MapPin, Wallet } from "lucide-react";
 import { useRef, useState } from "react";
-import { regions, type Option, type Photo as PhotoT } from "@/content";
+import { bases, regions, type Option, type Photo as PhotoT } from "@/content";
 import { cn } from "@/lib/cn";
+import { baseDistanceLabel } from "@/lib/timeline";
+import { useCurrency } from "../currency";
+import { Train, Van } from "../brand/illustrations";
 import { Button } from "../ui/button";
 import { Photo, PhotoCredit } from "../ui/photo";
 import { Sheet } from "../ui/sheet";
-import { VibeDots } from "./bits";
+import { DaysBadge, VibeDots } from "./bits";
 
 type Props = {
   option: Option | null;
@@ -55,6 +58,7 @@ export function Gallery({ images, alt, className }: { images: PhotoT[]; alt: str
 }
 
 export function OptionDetail({ option, open, onClose, pickLabel, picked, onPick }: Props) {
+  const { range, rateNote } = useCurrency();
   return (
     <Sheet
       open={open && !!option}
@@ -82,7 +86,11 @@ export function OptionDetail({ option, open, onClose, pickLabel, picked, onPick 
               <span className="inline-flex items-center gap-1 rounded-full bg-ocean-100 px-2.5 py-1 text-ocean-700">
                 <MapPin className="size-3.5" /> {regions[option.region].name}
               </span>
+              <span className="rounded-full bg-sand-200 px-2.5 py-1 text-ink-2">
+                {option.transport ? `Day trip from ${bases[option.base].name}` : baseDistanceLabel(option)}
+              </span>
               <VibeDots vibe={option.vibe} className="rounded-full bg-sand-200 px-2.5 py-1 text-ink-2" />
+              <DaysBadge option={option} className="px-2.5 py-1 text-[12px]" />
             </div>
             <h2 className="font-display mt-3 text-[30px] font-semibold leading-[1.05] tracking-[-0.02em]">{option.title}</h2>
             <p className="font-display mt-2 text-[18px] italic leading-snug text-ocean-700">{option.tagline}</p>
@@ -92,7 +100,7 @@ export function OptionDetail({ option, open, onClose, pickLabel, picked, onPick 
               <Fact
                 icon={Wallet}
                 label="Per person"
-                value={option.estCostUsd ? (option.estCostUsd[0] === 0 && option.estCostUsd[1] === 0 ? "Free" : `$${option.estCostUsd[0]}–${option.estCostUsd[1]}`) : "—"}
+                value={option.estCostUsd ? range(option.estCostUsd) : "—"}
               />
               <Fact icon={Gauge} label="Effort" value={option.intensity ? option.intensity[0].toUpperCase() + option.intensity.slice(1) : option.slot === "night" ? "Evening" : "—"} />
             </dl>
@@ -108,6 +116,72 @@ export function OptionDetail({ option, open, onClose, pickLabel, picked, onPick 
                 </li>
               ))}
             </ul>
+            {option.transport && (
+              <section className="mt-6">
+                <h3 className="font-display text-[20px] font-semibold">Getting there: your choice</h3>
+                <div className="mt-2 grid gap-2">
+                  {(["train", "road"] as const).map((m) => {
+                    const t = option.transport![m];
+                    return (
+                      <div key={m} className="flex items-start gap-3 rounded-2xl bg-paper p-3 shadow-card">
+                        <span className={cn("grid h-10 w-14 shrink-0 place-items-center rounded-xl", m === "train" ? "bg-ocean-100" : "bg-saffron-100")}>
+                          {m === "train" ? <Train className="h-4 w-12" /> : <Van className="h-6 w-10 text-ocean-600" />}
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-[14.5px] font-semibold">
+                            {t.title} · <span className="text-ocean-700">{t.label}</span>
+                          </span>
+                          <span className="block text-[12.5px] leading-snug text-ink-3">{t.detail}</span>
+                        </span>
+                        <span className="shrink-0 text-[12.5px] font-bold tabular-nums">{range(t.costUsd)}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+            )}
+            {option.course && (
+              <section className="mt-6 overflow-hidden rounded-[22px] bg-jungle-800 text-paper">
+                <div className="flex items-center gap-2 px-4 pb-2 pt-4">
+                  <Flag className="size-5 text-saffron-400" />
+                  <h3 className="font-display text-[20px] font-semibold">The course</h3>
+                  <span className="ml-auto text-[12px] font-semibold text-paper/60">
+                    Par {option.course.reduce((n, h) => n + h.par, 0)}
+                  </span>
+                </div>
+                <ol className="divide-y divide-white/10 px-4 pb-2">
+                  {option.course.map((h, i) => (
+                    <li key={h.venue} className="flex items-center gap-3 py-2.5">
+                      <span className="font-display grid size-8 shrink-0 place-items-center rounded-full bg-saffron-400 text-[15px] font-bold text-ink">
+                        {i + 1}
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-[14px] font-semibold leading-tight">{h.venue}</span>
+                        <span className="block text-[11.5px] text-paper/60">
+                          {h.area}
+                          {h.note ? ` · ${h.note}` : ""}
+                        </span>
+                      </span>
+                      <span className="shrink-0 rounded-full bg-white/10 px-2 py-0.5 text-[11px] font-bold">Par {h.par}</span>
+                    </li>
+                  ))}
+                </ol>
+              </section>
+            )}
+            {option.rules && (
+              <section className="relative mt-4 rotate-[-0.6deg] rounded-[18px] border-2 border-dashed border-jungle-600 bg-jungle-100 p-4">
+                <span className="label absolute -top-2.5 left-4 rounded-full bg-jungle-600 px-2.5 py-0.5 text-paper">Scorecard</span>
+                <h3 className="font-display mt-1 text-[19px] font-semibold text-jungle-900">{option.rules.title}</h3>
+                <ul className="mt-2 space-y-1.5">
+                  {option.rules.items.map((r) => (
+                    <li key={r} className="flex gap-2 text-[13.5px] leading-snug text-jungle-900">
+                      <span aria-hidden="true">⛳</span>
+                      <span>{r}</span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
             {option.goodToKnow && (
               <div className="mt-6 flex gap-3 rounded-2xl bg-ocean-100/70 p-4 text-[14px] leading-snug text-ocean-900">
                 <Info className="mt-0.5 size-4 shrink-0 text-ocean-600" />
@@ -121,7 +195,7 @@ export function OptionDetail({ option, open, onClose, pickLabel, picked, onPick 
               {option.images.map((img) => (
                 <PhotoCredit key={img.src} photo={img} className="block" />
               ))}
-              <p className="text-[10.5px] text-ink-3/70">Prices are rough estimates for late 2026.</p>
+              <p className="text-[10.5px] text-ink-3/70">Prices are rough per-person estimates for late 2026 · ≈ {rateNote}.</p>
             </div>
           </div>
         </article>

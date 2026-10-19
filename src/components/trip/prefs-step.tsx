@@ -10,7 +10,9 @@ import {
   stays,
   transport,
 } from "@/content/preferences";
+import { BUDGET_BOUNDS } from "@/content/costs";
 import { cn } from "@/lib/cn";
+import { useCurrency } from "../currency";
 import type { ItineraryData, Preferences } from "@/lib/itinerary";
 import { TukTuk, Van, Train, SunMark, Palm } from "../brand/illustrations";
 import { Button } from "../ui/button";
@@ -26,6 +28,13 @@ const STAY_ICONS = { hostel: BedDouble, boutique: Building2, villa: Home, mix: S
 
 export function PrefsStep({ data, update, locked, onNext }: Props) {
   const p = data.preferences;
+  const { money, code } = useCurrency();
+  const tierLabel = (id: string) => {
+    const [lo, hi] = BUDGET_BOUNDS[id];
+    if (lo === 0) return `Under ${money(hi)}`;
+    if (!Number.isFinite(hi)) return `${money(lo)}+`;
+    return `${money(lo)} – ${money(hi)}`;
+  };
   const set = <K extends keyof Preferences>(key: K, value: Preferences[K]) =>
     update((d) => {
       const preferences = { ...d.preferences, [key]: value };
@@ -55,13 +64,13 @@ export function PrefsStep({ data, update, locked, onNext }: Props) {
       </section>
 
       <fieldset disabled={locked} className="relative z-[1] mt-7 space-y-5 px-3">
-        <Card title="Budget" sub="Per person for the whole trip, not counting flights">
+        <Card title="Budget" sub={`Per person for the whole trip, not counting flights · shown in ${code}`}>
           <div className="grid gap-2">
             {budgets.map((b, i) => (
               <Choice key={b.id} on={p.budget === b.id} onClick={() => single("budget", b.id)} className="flex items-center gap-3 px-3.5 py-3">
-                <span className="font-display w-9 text-[18px] font-semibold text-saffron-600">{"$".repeat(i + 1).slice(0, 5)}</span>
+                <span className="font-display w-9 text-[18px] font-semibold text-saffron-600">{"●".repeat(i + 1)}</span>
                 <span className="flex-1">
-                  <span className="block text-[15px] font-semibold">{b.label}</span>
+                  <span className="block text-[15px] font-semibold tabular-nums">{tierLabel(b.id)}</span>
                   <span className="text-[12.5px] text-ink-3">{b.hint}</span>
                 </span>
                 <Tick on={p.budget === b.id} />

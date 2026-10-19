@@ -2,16 +2,15 @@
 
 import { flexibility as FLEX } from "@/content/preferences";
 import { dayLabel } from "@/lib/dates";
-import { tripLength, type ItineraryData } from "@/lib/itinerary";
+import { baseSplit, tripLength, type ItineraryData } from "@/lib/itinerary";
 import type { Timeline } from "@/lib/timeline";
 import { Palm } from "../brand/illustrations";
-import { routeStops } from "./itinerary-timeline";
 import { RouteMap } from "./route-map";
 
 /** The travel-poster summary card at the top of a review/itinerary view. */
 export function TripPoster({ name, data, timeline }: { name: string; data: ItineraryData; timeline: Timeline }) {
   const len = tripLength(data);
-  const stops = routeStops(timeline);
+  const split = baseSplit(len);
   const flex = FLEX.find((f) => f.id === data.flexibility);
   return (
     <section className="relative overflow-hidden rounded-[30px] bg-ocean-800 text-paper shadow-lift">
@@ -33,13 +32,13 @@ export function TripPoster({ name, data, timeline }: { name: string; data: Itine
           )}
           <dl className="mt-auto grid grid-cols-2 gap-x-3 gap-y-2 pt-5">
             <Stat label="Days" value={len} />
-            <Stat label="Stops" value={timeline.regionsVisited.length} />
-            <Stat label="Hrs driving" value={`~${Math.round(timeline.totalHours)}`} />
+            <Stat label="Colombo + Galle" value={`${split.colombo}+${split.galle}`} />
+            <Stat label="Hrs travelling" value={`~${Math.round(timeline.totalHours)}`} />
             {flex && <Stat label="Dates" value={flex.id === "exact" ? "Fixed" : flex.id === "few_days" ? "± days" : "Flexi"} />}
           </dl>
         </div>
         <div className="self-center">
-          <RouteMap stops={stops} />
+          <RouteMap stops={timeline.route} spokes={timeline.spokes} />
         </div>
       </div>
     </section>

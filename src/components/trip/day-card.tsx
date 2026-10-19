@@ -4,14 +4,15 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { motion } from "framer-motion";
 import { GripVertical, Moon, MoreHorizontal, NotebookPen, Plus, Sun } from "lucide-react";
-import { regions, stayIn, type Option } from "@/content";
+import { stayIn, type Option } from "@/content";
 import { cn } from "@/lib/cn";
 import { parseISO } from "@/lib/dates";
-import type { DayEntry } from "@/lib/itinerary";
-import type { TimelineDay } from "@/lib/timeline";
-import { Firework, StayInIcon } from "../brand/illustrations";
+import { isPick, type DayEntry, type SlotKind } from "@/lib/itinerary";
+import { baseDistanceLabel, type SlotView as SlotViewT, type TimelineDay } from "@/lib/timeline";
+import { Firework, StayInIcon, Train, Van } from "../brand/illustrations";
 import { Photo } from "../ui/photo";
-import { RoadTrip, VibeDots, Warning } from "./bits";
+import { AddOnChips } from "./addons";
+import { DaysBadge, RoadTrip, Tip, VibeDots, Warning } from "./bits";
 
 const WEEKDAY = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
 const MONTH = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
@@ -46,16 +47,18 @@ type CardProps = {
   index: number;
   t: TimelineDay;
   locked: boolean;
-  onSlot: (slot: "day" | "night") => void;
+  onSlot: (slot: SlotKind) => void;
+  onAddOns: (slot: SlotKind) => void;
   onNote: () => void;
 };
 
-export function DayCard({ entry, index, t, locked, onSlot, onNote }: CardProps) {
+export function DayCard({ entry, index, t, locked, onSlot, onAddOns, onNote }: CardProps) {
   const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({
     id: entry.id,
     disabled: locked,
   });
   const nye = t.tags.includes("nye");
+  const departure = t.tags.includes("departure");
 
   return (
     <div
@@ -69,7 +72,8 @@ export function DayCard({ entry, index, t, locked, onSlot, onNote }: CardProps) 
       <div className="flex items-center gap-1.5">
         <span className="label text-ink-3">Day {index + 1}</span>
         {t.tags.includes("arrival") && <Tag className="bg-ocean-100 text-ocean-700">Arrival</Tag>}
-        {t.tags.includes("departure") && <Tag className="bg-sunset-100 text-sunset-700">Departure</Tag>}
+        {t.tags.includes("transfer") && <Tag className="bg-saffron-200 text-ink">Move to Galle</Tag>}
+        {departure && <Tag className="bg-sunset-100 text-sunset-700">Departure</Tag>}
         {nye && <Tag className="bg-dusk-900 text-saffron-400">NYE ✦</Tag>}
         <span className="flex-1" />
         {!locked && (
@@ -97,30 +101,41 @@ export function DayCard({ entry, index, t, locked, onSlot, onNote }: CardProps) 
         )}
       </div>
 
-      {t.beforeDay && <RoadTrip seg={t.beforeDay} className="mt-1" />}
-      <SlotView
+      {t.legsBefore.map((l) => (
+        <RoadTrip key={l.title} seg={l} className="mt-1.5" />
+      ))}
+      <SlotBlock
         kind="day"
-        option={t.day}
-        empty={t.tags.includes("arrival") ? "Landing day" : t.tags.includes("departure") ? "Daytime · before you fly" : "Pick your daytime"}
+        view={t.day}
+        date={t.date}
+        empty={t.tags.includes("arrival") ? "Landing day" : departure ? "Daytime · before you fly" : "Pick your daytime"}
         onClick={() => onSlot("day")}
+        onAddOns={() => onAddOns("day")}
         locked={locked}
         className="mt-1.5"
       />
-      {t.beforeNight && <RoadTrip seg={t.beforeNight} className="mt-1" />}
-      <SlotView
+      <SlotBlock
         kind="night"
-        option={t.night}
-        empty={nye ? "Pick your New Year's Eve" : t.tags.includes("departure") ? "Evening · if you fly late" : "Pick your evening"}
+        view={t.night}
+        date={t.date}
+        empty={nye ? "Pick your New Year's Eve" : departure ? "Evening · if you fly late" : "Pick your evening"}
         onClick={() => onSlot("night")}
+        onAddOns={() => onAddOns("night")}
         locked={locked}
         nye={nye}
         className="mt-2"
       />
+      {t.legsAfter.map((l) => (
+        <RoadTrip key={l.title} seg={l} className="mt-2" />
+      ))}
       {entry.note && (
         <button onClick={onNote} disabled={locked} className="mt-2.5 block w-full rounded-xl bg-sand-100 px-3 py-2 text-left text-[13px] italic text-ink-2">
           “{entry.note}”
         </button>
       )}
+      {t.tips.map((w) => (
+        <Tip key={w} text={w} className="mt-2" />
+      ))}
       {t.warnings.map((w) => (
         <Warning key={w} text={w} className="mt-2" />
       ))}
@@ -132,17 +147,58 @@ function Tag({ children, className }: { children: React.ReactNode; className?: s
   return <span className={cn("rounded-full px-2 py-0.5 text-[10.5px] font-bold", className)}>{children}</span>;
 }
 
+/** A slot plus its travel lines and add-on chips. */
+function SlotBlock({
+  kind,
+  view,
+  date,
+  empty,
+  onClick,
+  onAddOns,
+  locked,
+  nye,
+  className,
+}: {
+  kind: SlotKind;
+  view: SlotViewT;
+  date: string | null;
+  empty: string;
+  onClick: () => void;
+  onAddOns: () => void;
+  locked: boolean;
+  nye?: boolean;
+  className?: string;
+}) {
+  const transport = isPick(view.pick) ? view.pick.transport : undefined;
+  return (
+    <div className={className}>
+      {view.before.map((s) => (
+        <RoadTrip key={s.title} seg={s} />
+      ))}
+      <SlotView kind={kind} option={view.value} empty={empty} onClick={onClick} locked={locked} nye={nye} date={date} transport={transport} />
+      {view.value && (
+        <AddOnChips ids={view.pick?.addOns} onAdd={locked ? undefined : onAddOns} className="mt-1.5 pl-1" />
+      )}
+      {view.after.map((s) => (
+        <RoadTrip key={s.title} seg={s} />
+      ))}
+    </div>
+  );
+}
+
 type SlotProps = {
-  kind: "day" | "night";
+  kind: SlotKind;
   option: Option | "stay" | null;
   empty: string;
   onClick: () => void;
   locked: boolean;
   nye?: boolean;
+  date?: string | null;
+  transport?: "train" | "road";
   className?: string;
 };
 
-export function SlotView({ kind, option, empty, onClick, locked, nye, className }: SlotProps) {
+export function SlotView({ kind, option, empty, onClick, locked, nye, date, transport, className }: SlotProps) {
   const night = kind === "night";
   if (!option) {
     return (
@@ -183,6 +239,7 @@ export function SlotView({ kind, option, empty, onClick, locked, nye, className 
 
   const isStay = option === "stay";
   const title = isStay ? stayIn[kind].title : option.title;
+  const offDay = !isStay && !!option.availableDays && !!date && !option.availableDays.includes(parseISO(date).getUTCDay());
   return (
     <motion.button
       key={isStay ? "stay" : option.id}
@@ -197,14 +254,21 @@ export function SlotView({ kind, option, empty, onClick, locked, nye, className 
         className,
       )}
     >
-      {isStay ? <StayThumb kind={kind} /> : (
+      {isStay ? (
+        <StayThumb kind={kind} />
+      ) : (
         <span className="relative size-[56px] shrink-0 overflow-hidden rounded-xl bg-ocean-800">
           <Photo photo={option.images[0]} alt={title} sizes="56px" />
+          {transport && (
+            <span className="absolute inset-x-0 bottom-0 flex h-4 items-center justify-center bg-paper/95">
+              {transport === "train" ? <Train className="h-3 w-8" /> : <Van className="h-3.5 w-6 text-ocean-600" />}
+            </span>
+          )}
         </span>
       )}
       <span className="min-w-0 flex-1">
         <span className="line-clamp-2 text-[14.5px] font-semibold leading-tight">{title}</span>
-        <span className={cn("mt-1 flex items-center gap-2 text-[11.5px] font-medium", night ? "text-paper/60" : "text-ink-3")}>
+        <span className={cn("mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11.5px] font-medium", night ? "text-paper/60" : "text-ink-3")}>
           {isStay ? (
             <>
               <span className="truncate">At the villa</span>
@@ -212,8 +276,9 @@ export function SlotView({ kind, option, empty, onClick, locked, nye, className 
             </>
           ) : (
             <>
-              <span className="truncate">{regions[option.region].short}</span>
+              <span className="truncate">{transport ? (transport === "train" ? "By scenic train" : "By road") : baseDistanceLabel(option)}</span>
               <VibeDots vibe={option.vibe} />
+              <DaysBadge option={option} warn={offDay} />
             </>
           )}
         </span>
