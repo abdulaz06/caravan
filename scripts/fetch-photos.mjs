@@ -68,6 +68,16 @@ async function download(url) {
   throw new Error(`Failed to download ${url}`);
 }
 
+// Which Commons page each existing file came from, so a changed pick re-downloads.
+const previous = new Map();
+try {
+  const gen = await fs.readFile(path.join(root, "src/content/photos.generated.ts"), "utf8");
+  const json = JSON.parse(gen.slice(gen.indexOf("= ") + 2).trim().replace(/;$/, ""));
+  for (const list of Object.values(json)) for (const ph of list) previous.set(ph.src, ph.source);
+} catch {
+  // first run
+}
+
 const allTitles = [...new Set(Object.values(picks).flatMap((p) => p.files))];
 const meta = await info(allTitles);
 const done = new Map(); // title -> image record
@@ -83,6 +93,7 @@ for (const [key, { dir, files }] of Object.entries(picks)) {
       await fs.mkdir(path.dirname(dest), { recursive: true });
       let buf;
       try {
+        if (previous.has(rel) && previous.get(rel) !== m.page) throw new Error("pick changed");
         buf = await fs.readFile(dest);
       } catch {
         const raw = await download(m.url);

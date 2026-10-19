@@ -1,56 +1,385 @@
 {
   "_readme": "Photos per option/region. First file = cover. Titles are Wikimedia Commons file names. Run `npm run photos` after editing to download, optimize and regenerate src/content/photos.generated.ts.",
-  "pidurangala-sunrise": { "dir": "sigiriya", "files": ["File:Sigiriya view from pidurangala.jpg", "File:Sigiriya view from Pidurangala 3.jpg", "File:Sigiriya Rock Fortress View from Pidurangala Rock.jpg"] },
-  "sigiriya-lion-rock": { "dir": "sigiriya", "files": ["File:Sigiriya Lion Rock Aerial (175658393).jpeg", "File:LionPawStairs Sigiriya.jpg", "File:Sigiriya 'lion paws' (7567477194).jpg"] },
-  "yala-leopard-safari": { "dir": "yala", "files": ["File:Leopard on stone in Yala National Park.jpg", "File:Srilankan leopard in Yala National Park.jpg", "File:Sri Lanka Photo179.jpg"] },
-  "elephant-safari-kaudulla": { "dir": "sigiriya", "files": ["File:DSC 1593-3.jpg", "File:An elephant in Kaudulla.jpg", "File:Water hole at Kaudulla national park, Sri Lanka.jpg"] },
-  "mirissa-whale-watching": { "dir": "mirissa", "files": ["File:Whale watching in Mirissa.jpg", "File:Mirissa, whale watching, blue whale (6917912897).jpg", "File:20160130 Sri Lanka 4271 crop Indian Ocean sRGB (25744960026).jpg"] },
-  "mirissa-beach-hop": { "dir": "mirissa", "files": ["File:Coconut Tree Hill, Sri Lanka.jpg", "File:Mirissa Beach Coconut Tree hills.jpg", "File:Mirissa sea 2.jpg"] },
-  "weligama-surf-lesson": { "dir": "mirissa", "files": ["File:Beaches In Sri lanka.jpg", "File:Weligama beach (3).jpg", "File:Weligama beach (6).jpg"] },
-  "unawatuna-jungle-beach": { "dir": "galle", "files": ["File:Jungle beach, Galle.jpg", "File:Jungle Beach, Unawatuna, Sri Lanka.jpg", "File:Unawatuna.jpg"] },
-  "hikkaduwa-turtles": { "dir": "hikkaduwa", "files": ["File:Hikkaduwa Turtle.jpg", "File:Hikkaduwa under water.jpg", "File:Hikkaduwa Beach Sri Lanka.jpg"] },
-  "galle-fort": { "dir": "galle", "files": ["File:Lighthouse Galle, Sri Lanka.jpg", "File:Galle Fort lighthouse Leuchtturm (35113214702).jpg", "File:Galle Fort.jpg"] },
-  "ella-rock": { "dir": "ella", "files": ["File:Ella Rock Sri Lanka.jpg", "File:Ella rock- View from the top.jpg", "File:Ella sri lanka 2017-10-23 (1).jpg"] },
-  "nine-arches-little-adams": { "dir": "ella", "files": ["File:Nine Arches Bridge, Sri Lanka.jpg", "File:Nine Arch Bridge in Ella.jpg", "File:Little Adam's Peak, Ella, Sri Lanka.jpg"] },
-  "flying-ravana-zipline": { "dir": "ella", "files": ["File:Ravana Falls (Ella).jpg", "File:Ravana Falls Ella.jpg"] },
-  "ella-cooking-class": { "dir": "ella", "files": ["File:Making curry Sri Lanka.jpg", "File:SL-rice and curry.jpg", "File:Rice and curry at Liberty Mall food court.jpg"] },
-  "horton-plains": { "dir": "nuwara-eliya", "files": ["File:Sri Lanka, World's End at Horton Plains.jpg", "File:Worlds end at Horton plains national park.jpg", "File:World's end, Horton Plains, Sri Lanka - හෝටන් තැන්න, ශ්‍රී ලංකාව (10226463745).jpg"] },
-  "tea-estate-high-tea": { "dir": "nuwara-eliya", "files": ["File:Tea-plantation Nuwara Eliya-2567.jpg", "File:Sri Lanka, Tea plantations, Nuwara Eliya, Picking tea leaves.jpg", "File:Nuwara Eliya Tea.jpg"] },
-  "peradeniya-gardens": { "dir": "kandy", "files": ["File:Royal Botanical Gardens, Peradeniya - panoramio.jpg", "File:Royal Botanical Gardens, Peradeniya - panoramio (1).jpg"] },
-  "kandy-temple-city": { "dir": "kandy", "files": ["File:Sacred Tooth Relic Temple 5.jpg", "File:Sacred Tooth Relic Temple 3.jpg", "File:Temple of the Tooth, Sitting Buddha statues.- Kandy.jpg"] },
-  "negombo-lagoon": { "dir": "negombo", "files": ["File:Fishing boat in Negombo.jpg", "File:Negambo Lagoon, Sri Lanka. Where boats come to rest.jpg", "File:Flickr - ronsaunders47 - BOATS AND A BIKE. SRI LANKA..jpg"] },
-  "colombo-tuk-tuk": { "dir": "colombo", "files": ["File:Sea Street Junction Pettah 2012 - panoramio.jpg", "File:Seema Malaka temple.JPG", "File:Sri Lanka Colombo street Wikivoyage banner.jpg"] },
-
-  "colombo-club-night": { "dir": "colombo", "files": ["File:Colombo city skyline at night.png", "File:Colombo night skyline 2024.png"] },
-  "colombo-rooftop": { "dir": "colombo", "files": ["File:Colombo sunset skyline Jul 2016.jpg", "File:View of Altair and the Colombo City Centre from Baira Lake.jpg"] },
-  "ministry-of-crab": { "dir": "colombo", "files": ["File:Dutch Hospital.jpg", "File:Crabs, Fish Market Street, Galle, Sri Lanka.jpg"] },
-  "negombo-beach-sundowners": { "dir": "negombo", "files": ["File:Negombo beach 3.jpg", "File:Negombo Beach, Sri Lanka.jpg"] },
-  "unawatuna-beach-party": { "dir": "galle", "files": ["File:Unawatuna.jpg", "File:Jungle beach.jpg"] },
-  "galle-fort-sunset-dinner": { "dir": "galle", "files": ["File:Sunset behind Galle Fort 1.jpg", "File:Sunset behind Galle Fort 2.jpg", "File:GALLE FORT AT SUNSET SRI LANKA JAN 2013 (8509060483).jpg"] },
-  "doctors-house-madiha": { "dir": "mirissa", "files": ["File:Madiha sri lanka 01.jpg", "File:Madiha Stones.jpg"] },
-  "mirissa-seafood-bbq": { "dir": "mirissa", "files": ["File:IN THE EVENING AT MIRISSA BEACH.jpg", "File:Crabs, Fish Market Street, Galle, Sri Lanka.jpg"] },
-  "hikkaduwa-beach-party": { "dir": "hikkaduwa", "files": ["File:Long Beach Guest House sunset. (Unsplash).jpg", "File:Photo 8-23-17, 5 50 14 PM.jpg"] },
-  "weligama-sundowners": { "dir": "mirissa", "files": ["File:Weligama beach (3).jpg", "File:Mirissa sea 2.jpg"] },
-  "ella-bar-night": { "dir": "ella", "files": ["File:Sri Lanka Photo153.jpg", "File:Ella, Sri Lanka, Mountains in clouds, Panorama.jpg"] },
-  "ninety-eight-acres-sunset": { "dir": "ella", "files": ["File:Little Adam's Peak in Ella.jpg", "File:Ella Gap (Valley), dramatic clouds over mountains of Sri Lanka.jpg"] },
-  "kandy-pub-night": { "dir": "kandy", "files": ["File:Kandy lake on pere hare night - panoramio.jpg", "File:Kandy city mountain view.jpg"] },
-  "kandyan-dance-dinner": { "dir": "kandy", "files": ["File:Kandyan Kandy Dance 1.jpg", "File:Kandyan Dance Kandy Sri Lanka 1.jpg", "File:Fire Eating Kandy Sri Lanka.jpg"] },
-  "yala-safari-camp": { "dir": "yala", "files": ["File:Dusk at Yala.jpg", "File:Sunset at yala.jpg", "File:Sunset at Tissa Lake.jpg"] },
-  "sigiriya-village-dinner": { "dir": "sigiriya", "files": ["File:Bullock Cart (5088194838).jpg", "File:Sigiriya Village (4).jpg", "File:Making curry Sri Lanka.jpg"] },
-  "nye-mirissa-beach-party": { "dir": "mirissa", "files": ["File:For a new beginning.jpg", "File:Mirissa-Plage (3).jpg"] },
-  "nye-colombo-rooftop": { "dir": "colombo", "files": ["File:New Year Celebration 7.JPG", "File:New Year Celebration 8.JPG", "File:Twilight (Galle Face Green) 03.jpg"] },
-  "stay-in": { "dir": "misc", "files": ["File:Negombo Beach resort pool (Unsplash).jpg", "File:Thiranagama village Sri Lanka Haritha Villas.png"] },
-
-  "region-airport": { "dir": "airport", "files": ["File:Runway of Bandaranaike International Airport.jpg"] },
-  "region-negombo": { "dir": "negombo", "files": ["File:Negombo Beach, Sri Lanka3.JPG"] },
-  "region-colombo": { "dir": "colombo", "files": ["File:Colombo skyline from Hilton.jpg"] },
-  "region-hikkaduwa": { "dir": "hikkaduwa", "files": ["File:Hikkaduwa beach beauty.jpg"] },
-  "region-galle": { "dir": "galle", "files": ["File:Galle Fort.jpg"] },
-  "region-mirissa": { "dir": "mirissa", "files": ["File:Mirissa-Plage (4).jpg"] },
-  "region-yala": { "dir": "yala", "files": ["File:Sri Lanka Photo179.jpg"] },
-  "region-ella": { "dir": "ella", "files": ["File:Ella Gap (Valley), dramatic clouds over mountains of Sri Lanka.jpg"] },
-  "region-nuwara-eliya": { "dir": "nuwara-eliya", "files": ["File:Nuwara Eliya Gregory Lake.jpg"] },
-  "region-kandy": { "dir": "kandy", "files": ["File:Sri Lanka - 027 - Kandy lake and city centre.jpg"] },
-  "region-sigiriya": { "dir": "sigiriya", "files": ["File:Sigiriya Lion Rock Aerial (175658393).jpeg"] },
-  "hero": { "dir": "misc", "files": ["File:Nine Arches Bridge, Sri Lanka.jpg", "File:Coconut Tree Hill, Sri Lanka.jpg", "File:Sigiriya view from pidurangala.jpg"] }
+  "mirissa-whale-watching": {
+    "dir": "mirissa",
+    "files": [
+      "File:Whale watching in Mirissa.jpg",
+      "File:Mirissa, whale watching, blue whale (6917912897).jpg",
+      "File:20160130 Sri Lanka 4271 crop Indian Ocean sRGB (25744960026).jpg"
+    ]
+  },
+  "mirissa-beach-hop": {
+    "dir": "mirissa",
+    "files": [
+      "File:Coconut Tree Hill, Sri Lanka.jpg",
+      "File:Mirissa Beach Coconut Tree hills.jpg",
+      "File:Mirissa sea 2.jpg"
+    ]
+  },
+  "weligama-surf-lesson": {
+    "dir": "mirissa",
+    "files": [
+      "File:Beaches In Sri lanka.jpg",
+      "File:Weligama beach (3).jpg",
+      "File:Weligama beach (6).jpg"
+    ]
+  },
+  "unawatuna-jungle-beach": {
+    "dir": "galle",
+    "files": [
+      "File:Jungle beach, Galle.jpg",
+      "File:Jungle Beach, Unawatuna, Sri Lanka.jpg",
+      "File:Unawatuna.jpg"
+    ]
+  },
+  "hikkaduwa-turtles": {
+    "dir": "hikkaduwa",
+    "files": [
+      "File:Hikkaduwa Turtle.jpg",
+      "File:Hikkaduwa under water.jpg",
+      "File:Hikkaduwa Beach Sri Lanka.jpg"
+    ]
+  },
+  "galle-fort": {
+    "dir": "galle",
+    "files": [
+      "File:Lighthouse Galle, Sri Lanka.jpg",
+      "File:Galle Fort lighthouse Leuchtturm (35113214702).jpg",
+      "File:Galle Fort.jpg"
+    ]
+  },
+  "negombo-lagoon": {
+    "dir": "negombo",
+    "files": [
+      "File:Fishing boat in Negombo.jpg",
+      "File:Negambo Lagoon, Sri Lanka. Where boats come to rest.jpg",
+      "File:Flickr - ronsaunders47 - BOATS AND A BIKE. SRI LANKA..jpg"
+    ]
+  },
+  "colombo-tuk-tuk": {
+    "dir": "colombo",
+    "files": [
+      "File:Sea Street Junction Pettah 2012 - panoramio.jpg",
+      "File:Seema Malaka temple.JPG",
+      "File:Sri Lanka Colombo street Wikivoyage banner.jpg"
+    ]
+  },
+  "colombo-club-night": {
+    "dir": "colombo",
+    "files": [
+      "File:Colombo city skyline at night.png",
+      "File:Colombo night skyline 2024.png"
+    ]
+  },
+  "colombo-rooftop": {
+    "dir": "colombo",
+    "files": [
+      "File:Colombo sunset skyline Jul 2016.jpg",
+      "File:View of Altair and the Colombo City Centre from Baira Lake.jpg"
+    ]
+  },
+  "ministry-of-crab": {
+    "dir": "colombo",
+    "files": [
+      "File:Dutch Hospital.jpg",
+      "File:Crabs, Fish Market Street, Galle, Sri Lanka.jpg"
+    ]
+  },
+  "unawatuna-beach-party": {
+    "dir": "galle",
+    "files": [
+      "File:Unawatuna.jpg",
+      "File:Jungle beach.jpg"
+    ]
+  },
+  "galle-fort-sunset-dinner": {
+    "dir": "galle",
+    "files": [
+      "File:Sunset behind Galle Fort 1.jpg",
+      "File:Sunset behind Galle Fort 2.jpg",
+      "File:GALLE FORT AT SUNSET SRI LANKA JAN 2013 (8509060483).jpg"
+    ]
+  },
+  "doctors-house-madiha": {
+    "dir": "mirissa",
+    "files": [
+      "File:Madiha sri lanka 01.jpg",
+      "File:Madiha Stones.jpg"
+    ]
+  },
+  "mirissa-seafood-bbq": {
+    "dir": "mirissa",
+    "files": [
+      "File:IN THE EVENING AT MIRISSA BEACH.jpg",
+      "File:Crabs, Fish Market Street, Galle, Sri Lanka.jpg"
+    ]
+  },
+  "hikkaduwa-beach-party": {
+    "dir": "hikkaduwa",
+    "files": [
+      "File:Long Beach Guest House sunset. (Unsplash).jpg",
+      "File:Photo 8-23-17, 5 50 14 PM.jpg"
+    ]
+  },
+  "weligama-sundowners": {
+    "dir": "mirissa",
+    "files": [
+      "File:Weligama beach (3).jpg",
+      "File:Mirissa sea 2.jpg"
+    ]
+  },
+  "nye-mirissa-beach-party": {
+    "dir": "mirissa",
+    "files": [
+      "File:For a new beginning.jpg",
+      "File:Mirissa-Plage (3).jpg"
+    ]
+  },
+  "nye-colombo-rooftop": {
+    "dir": "colombo",
+    "files": [
+      "File:New Year Celebration 7.JPG",
+      "File:New Year Celebration 8.JPG",
+      "File:Twilight (Galle Face Green) 03.jpg"
+    ]
+  },
+  "stay-in": {
+    "dir": "misc",
+    "files": [
+      "File:Negombo Beach resort pool (Unsplash).jpg",
+      "File:Thiranagama village Sri Lanka Haritha Villas.png"
+    ]
+  },
+  "region-airport": {
+    "dir": "airport",
+    "files": [
+      "File:Runway of Bandaranaike International Airport.jpg"
+    ]
+  },
+  "region-negombo": {
+    "dir": "negombo",
+    "files": [
+      "File:Negombo Beach, Sri Lanka3.JPG"
+    ]
+  },
+  "region-colombo": {
+    "dir": "colombo",
+    "files": [
+      "File:Colombo skyline from Hilton.jpg"
+    ]
+  },
+  "region-hikkaduwa": {
+    "dir": "hikkaduwa",
+    "files": [
+      "File:Hikkaduwa beach beauty.jpg"
+    ]
+  },
+  "region-galle": {
+    "dir": "galle",
+    "files": [
+      "File:Galle Fort.jpg"
+    ]
+  },
+  "region-mirissa": {
+    "dir": "mirissa",
+    "files": [
+      "File:Mirissa-Plage (4).jpg"
+    ]
+  },
+  "region-kandy": {
+    "dir": "kandy",
+    "files": [
+      "File:Sri Lanka - 027 - Kandy lake and city centre.jpg"
+    ]
+  },
+  "hero": {
+    "dir": "misc",
+    "files": [
+      "File:Coconut Tree Hill, Sri Lanka.jpg",
+      "File:Lighthouse Galle, Sri Lanka.jpg",
+      "File:Jungle beach, Galle.jpg"
+    ]
+  },
+  "kandy-day-trip": {
+    "dir": "kandy",
+    "files": [
+      "File:Sacred Tooth Relic Temple 5.jpg",
+      "File:Sri Lanka - 027 - Kandy lake and city centre.jpg",
+      "File:Royal Botanical Gardens, Peradeniya - panoramio.jpg"
+    ]
+  },
+  "colombo-design-trail": {
+    "dir": "colombo",
+    "files": [
+      "File:The Gallery entrance.jpg",
+      "File:Eingangsbereich-Wohnhaus Geoffrey Bawa-Colombo.jpg",
+      "File:Dutch Hospital.jpg"
+    ]
+  },
+  "mount-lavinia-beach": {
+    "dir": "colombo",
+    "files": [
+      "File:Mount Lavinia Hotel Sri Lanka (30039549556).jpg",
+      "File:Mount Lavinia Hotel Beach.jpg"
+    ]
+  },
+  "lotus-tower-port-city": {
+    "dir": "colombo",
+    "files": [
+      "File:Blue lotus tower.jpg",
+      "File:Lotus Tower Floating Market-Colombo Srilanka-Andres Larin.jpg",
+      "File:Beautiful Sunrise over the Colombo Skyline as seen from the ocean.jpg"
+    ]
+  },
+  "galle-face-street-food": {
+    "dir": "colombo",
+    "files": [
+      "File:Sunset at Galle Face Colombo.JPG",
+      "File:Galle Face Green (5439939147).jpg",
+      "File:Twilight (Galle Face Green) 03.jpg"
+    ]
+  },
+  "casino-night": {
+    "dir": "colombo",
+    "files": [
+      "File:Colombo night skyline 2024.png",
+      "File:Colombo city skyline at night.png"
+    ]
+  },
+  "pub-golf-colombo": {
+    "dir": "colombo",
+    "files": [
+      "File:Night View of Galle Face Hotel..JPG",
+      "File:Galle Face Hotel 02.jpg",
+      "File:Colombo city skyline at night.png"
+    ]
+  },
+  "scuba-diving": {
+    "dir": "galle",
+    "files": [
+      "File:Underwater images of Unawatuna 173.jpg",
+      "File:Hikkaduwa under water.jpg",
+      "File:Hikkaduwa Turtle.jpg"
+    ]
+  },
+  "tea-and-stilts": {
+    "dir": "galle",
+    "files": [
+      "File:Fishermen practicing traditional stilt fishing near Galle, southern Sri Lanka, 20260207 1420 9464.jpg",
+      "File:Fishermen practicing traditional stilt fishing in Koggala near Galle, southern Sri Lanka, 20260207 1421 9473.jpg"
+    ]
+  },
+  "bentota-water-sports": {
+    "dir": "bentota",
+    "files": [
+      "File:Bentota river.jpg",
+      "File:Bentota Beach - panoramio (1).jpg",
+      "File:LK-aluthgama-bentota-river-01.jpg"
+    ]
+  },
+  "madu-river-safari": {
+    "dir": "bentota",
+    "files": [
+      "File:Maduganga Mangrove.jpg",
+      "File:Kothduwa Temple, Sri Lanka 2015 (Unsplash).jpg",
+      "File:Turtle Sanctuary, Kosgoda (9824634943).jpg"
+    ]
+  },
+  "secret-jungle-party": {
+    "dir": "hiriketiya",
+    "files": [
+      "File:Boatsblueisland.jpg",
+      "File:Dickwella beach.jpg"
+    ]
+  },
+  "pub-golf-galle": {
+    "dir": "galle",
+    "files": [
+      "File:Fort Printers at Night.jpg",
+      "File:Galle Fort Hotel (sign).jpg",
+      "File:GALLE FORT AT NIGHT SRI LANKA JAN 2013 (8509041917).jpg"
+    ]
+  },
+  "nye-mount-lavinia": {
+    "dir": "colombo",
+    "files": [
+      "File:Mount Lavinia (1 of 1).jpg",
+      "File:Mount Lavinia Hotel Sri Lanka (30039549556).jpg"
+    ]
+  },
+  "nye-galle-fort": {
+    "dir": "galle",
+    "files": [
+      "File:MUSLIM CHURCH AT NIGHT GALLE FORT SRI LANKA JAN 2013 (8623449340).jpg",
+      "File:Fort Printers at Night.jpg",
+      "File:Lighthouse Galle, Sri Lanka.jpg"
+    ]
+  },
+  "addon-playdium": {
+    "dir": "colombo",
+    "files": [
+      "File:Colombo One Galle Face.jpg"
+    ]
+  },
+  "addon-spa": {
+    "dir": "misc",
+    "files": [
+      "File:Ayurweda kopfmassage.JPG"
+    ]
+  },
+  "addon-kottu": {
+    "dir": "colombo",
+    "files": [
+      "File:Kottu Roti (mit Meeresfrüchten).jpg"
+    ]
+  },
+  "addon-snorkel": {
+    "dir": "galle",
+    "files": [
+      "File:Jungle beach, Galle.jpg",
+      "File:Underwater images of Unawatuna 173.jpg"
+    ]
+  },
+  "addon-catamaran": {
+    "dir": "mirissa",
+    "files": [
+      "File:Mirissa-Catamaran.jpg"
+    ]
+  },
+  "addon-cooking": {
+    "dir": "galle",
+    "files": [
+      "File:Making curry Sri Lanka.jpg"
+    ]
+  },
+  "addon-turtle-hatchery": {
+    "dir": "galle",
+    "files": [
+      "File:20160129 Sri Lanka 4191 Habaraduwa sRGB (25139072394).jpg"
+    ]
+  },
+  "addon-stilt": {
+    "dir": "galle",
+    "files": [
+      "File:Fishermen practicing traditional stilt fishing in Koggala near Galle, southern Sri Lanka, 20260207 1421 9473.jpg"
+    ]
+  },
+  "addon-peace-pagoda": {
+    "dir": "galle",
+    "files": [
+      "File:Japanese Peace Pagoda Rumassala.jpg"
+    ]
+  },
+  "region-bentota": {
+    "dir": "bentota",
+    "files": [
+      "File:Bentota Beach - panoramio (3).jpg"
+    ]
+  },
+  "region-hiriketiya": {
+    "dir": "hiriketiya",
+    "files": [
+      "File:Dickwella beach.jpg"
+    ]
+  }
 }

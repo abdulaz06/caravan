@@ -1,53 +1,36 @@
 {
-  "pidurangala-sunrise": ["Sigiriya view from Pidurangala", "Pidurangala rock summit"],
-  "sigiriya-lion-rock": ["Sigiriya lion paws", "Sigiriya rock fortress", "Dambulla cave temple buddha"],
-  "yala-leopard-safari": ["leopard Yala National Park", "Yala National Park jeep safari"],
-  "elephant-safari-hurulu": ["Kaudulla elephants", "Minneriya elephants herd", "Hurulu eco park elephant"],
-  "mirissa-whale-watching": ["blue whale Mirissa", "Mirissa whale watching boat"],
-  "mirissa-beach-hop": ["Coconut Tree Hill Mirissa", "Mirissa beach", "Parrot rock Mirissa"],
-  "weligama-surf-lesson": ["Weligama surf", "Weligama beach surfers"],
-  "unawatuna-jungle-beach": ["Jungle beach Unawatuna", "Unawatuna beach"],
-  "hikkaduwa-turtles": ["Hikkaduwa sea turtle", "green turtle Hikkaduwa", "Hikkaduwa coral reef snorkeling"],
-  "galle-fort": ["Galle Fort lighthouse", "Galle Fort street", "Galle fort ramparts"],
-  "ella-rock": ["Ella Rock Sri Lanka", "Ella gap view"],
-  "nine-arches-little-adams": ["Nine Arches Bridge Demodara train", "Little Adams Peak Ella"],
-  "flying-ravana-zipline": ["Ravana Falls Ella", "zipline Ella Sri Lanka"],
-  "ella-cooking-class": ["Sri Lankan rice and curry", "Sri Lankan cooking clay pot curry", "Ella Sri Lanka town"],
-  "horton-plains": ["Horton Plains World's End", "Horton Plains National Park", "Baker's Falls Horton Plains"],
-  "tea-estate-high-tea": ["tea plantation Nuwara Eliya", "tea pluckers Sri Lanka", "Pedro tea estate"],
-  "peradeniya-gardens": ["Peradeniya Royal Botanical Gardens", "Peradeniya garden palm avenue"],
-  "kandy-temple-city": ["Temple of the Tooth Kandy", "Kandy lake temple"],
-  "negombo-lagoon": ["Negombo lagoon boat", "Negombo fishing boats", "Negombo fish market"],
-  "colombo-tuk-tuk": ["Gangaramaya Temple Colombo", "Pettah market Colombo", "Red Mosque Colombo Jami Ul-Alfar", "tuk tuk Colombo"],
-  "colombo-club-night": ["Colombo night skyline", "Colombo at night", "Kingsbury hotel Colombo"],
-  "colombo-rooftop": ["Colombo skyline sunset", "Colombo Lotus Tower night", "Colombo city view"],
-  "ministry-of-crab": ["Old Dutch Hospital Colombo", "Sri Lankan crab curry", "Ministry of Crab"],
-  "negombo-beach-sundowners": ["Negombo beach sunset", "Negombo beach"],
-  "unawatuna-beach-party": ["Unawatuna beach night", "Unawatuna bay", "Unawatuna beach sunset"],
-  "galle-fort-sunset-dinner": ["Galle fort sunset", "Galle Fort at night", "Galle Dutch fort clock tower"],
-  "doctors-house-madiha": ["Madiha beach", "Polhena beach", "Mirissa beach night"],
-  "mirissa-seafood-bbq": ["Mirissa beach restaurant", "Mirissa beach sunset", "Sri Lanka seafood grilled fish"],
-  "hikkaduwa-beach-party": ["Hikkaduwa beach sunset", "Hikkaduwa beach", "Hikkaduwa night"],
-  "weligama-sundowners": ["Weligama bay sunset", "Weligama stilt fishermen", "Weligama beach"],
-  "ella-bar-night": ["Ella town Sri Lanka", "Ella railway station", "Ella main street"],
-  "ninety-eight-acres-sunset": ["98 Acres Resort Ella", "Ella tea fields view", "Little Adam's Peak view"],
-  "kandy-pub-night": ["Kandy lake night", "Kandy city view", "Kandy lake sunset"],
-  "kandyan-dance-dinner": ["Kandyan dance", "Kandyan dancers", "Kandy Esala Perahera dancers"],
-  "yala-safari-camp": ["Yala safari camp", "Yala National Park sunset", "campfire Sri Lanka"],
-  "sigiriya-village-dinner": ["Sri Lankan village food clay pot", "Sigiriya village", "Sri Lanka village dinner"],
-  "nye-mirissa-beach-party": ["Mirissa beach party", "fireworks beach Sri Lanka", "Mirissa night"],
-  "nye-colombo-rooftop": ["Galle Face Green", "Colombo fireworks", "Galle Face Green night"],
-  "chill": ["Sri Lanka villa pool", "Galle villa pool", "Bentota villa"],
-  "region-airport": ["Bandaranaike International Airport", "Bandaranaike airport terminal"],
-  "region-negombo": ["Negombo beach", "Negombo"],
-  "region-colombo": ["Colombo skyline", "Colombo Galle Face"],
-  "region-hikkaduwa": ["Hikkaduwa beach"],
-  "region-galle": ["Galle Fort aerial", "Galle Fort"],
-  "region-mirissa": ["Mirissa beach palm", "Mirissa"],
-  "region-yala": ["Yala National Park landscape", "Yala"],
-  "region-ella": ["Ella Sri Lanka landscape", "Ella gap"],
-  "region-nuwara-eliya": ["Nuwara Eliya", "Gregory lake Nuwara Eliya"],
-  "region-kandy": ["Kandy city lake", "Kandy"],
-  "region-sigiriya": ["Sigiriya aerial", "Sigiriya"],
-  "hero": ["Nine Arches Bridge train", "Sri Lanka train hill country", "Sri Lanka beach palm sunset"]
+ "casino2": [
+  "Cinnamon Life",
+  "City of Dreams Colombo",
+  "Colombo Beira Lake skyline night",
+  "Nuwa hotel Colombo"
+ ],
+ "design2": [
+  "Paradise Road Colombo",
+  "Geoffrey Bawa Colombo",
+  "Colombo Dutch Hospital shopping",
+  "Barefoot Colombo"
+ ],
+ "hiri2": [
+  "Hiriketiya",
+  "Dikwella",
+  "Hiriketiya bay surf"
+ ],
+ "bentota2": [
+  "Bentota River",
+  "Bentota ganga",
+  "Bentota beach Sri Lanka",
+  "jet ski Sri Lanka"
+ ],
+ "madu2": [
+  "Madu Ganga Sri Lanka",
+  "Balapitiya",
+  "cinnamon island Madu river"
+ ],
+ "snorkel2": [
+  "Unawatuna coral reef",
+  "snorkel Sri Lanka",
+  "Unawatuna beach snorkel",
+  "Rumassala reef"
+ ]
 }

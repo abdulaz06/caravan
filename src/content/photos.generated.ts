@@ -3,122 +3,6 @@
 import type { Photo } from "./types";
 
 export const photos: Record<string, Photo[]> = {
-  "pidurangala-sunrise": [
-    {
-      "src": "/images/sigiriya/pidurangala-sunrise-1.webp",
-      "credit": "Manoj Samarakoon",
-      "source": "https://commons.wikimedia.org/wiki/File:Sigiriya_view_from_pidurangala.jpg",
-      "license": "CC BY-SA 4.0",
-      "width": 1600,
-      "height": 1000,
-      "blurDataURL": "data:image/webp;base64,UklGRlQAAABXRUJQVlA4IEgAAADwAQCdASoQAAoAA4BaJYgCdADz22wlxgAA/vIWlN9duRb2w0D+945mhL4PDt/6Y1co8QJjjtrw5vOqlgCWUUlIdeFe8KWc0AA="
-    },
-    {
-      "src": "/images/sigiriya/pidurangala-sunrise-2.webp",
-      "credit": "Nipuna Gamage",
-      "source": "https://commons.wikimedia.org/wiki/File:Sigiriya_view_from_Pidurangala_3.jpg",
-      "license": "CC BY-SA 4.0",
-      "width": 1333,
-      "height": 2000,
-      "blurDataURL": "data:image/webp;base64,UklGRngAAABXRUJQVlA4IGwAAADwAwCdASoQABgAPu1orU6ppiSiMAgBMB2JQBOgDUNrdtlnw0KOAKAAAP6WGjrzAwmhqhZF7LgWlfzDW22xrbQx39635RlSa4AT/QmD//ywdn3u+MZw5VDaIJY5EImyXnFGhxn0oth7vkRC4AA="
-    },
-    {
-      "src": "/images/sigiriya/pidurangala-sunrise-3.webp",
-      "credit": "Gayomiw",
-      "source": "https://commons.wikimedia.org/wiki/File:Sigiriya_Rock_Fortress_View_from_Pidurangala_Rock.jpg",
-      "license": "CC BY-SA 4.0",
-      "width": 1600,
-      "height": 1067,
-      "blurDataURL": "data:image/webp;base64,UklGRkAAAABXRUJQVlA4IDQAAAAQAgCdASoQAAsAA4BaJZwCdAEPEIKYkbFAAP7zcyj6UkXLdOPdDG7o7LiEuB8XyH2W4P4A"
-    }
-  ],
-  "sigiriya-lion-rock": [
-    {
-      "src": "/images/sigiriya/sigiriya-lion-rock-1.webp",
-      "credit": "Dronepicr",
-      "source": "https://commons.wikimedia.org/wiki/File:Sigiriya_Lion_Rock_Aerial_(175658393).jpeg",
-      "license": "CC BY 3.0",
-      "width": 1600,
-      "height": 899,
-      "blurDataURL": "data:image/webp;base64,UklGRkQAAABXRUJQVlA4IDgAAADQAQCdASoQAAkAA4BaJaACdAEO0/kpAAD94668AoB45U1/JGuVsncl/a3HNYLGazf4b1MrngAAAA=="
-    },
-    {
-      "src": "/images/sigiriya/sigiriya-lion-rock-2.webp",
-      "credit": "Santhoshj",
-      "source": "https://commons.wikimedia.org/wiki/File:LionPawStairs_Sigiriya.jpg",
-      "license": "CC BY 3.0",
-      "width": 1600,
-      "height": 898,
-      "blurDataURL": "data:image/webp;base64,UklGRlQAAABXRUJQVlA4IEgAAADwAQCdASoQAAkAA4BaJZACdADpGIgfpbgA/u+N2FupdOdG1xUCpa7u3chGu8H5lONGiTzt3sRd7R33M5WWkVmdpgfWeSgAAAA="
-    },
-    {
-      "src": "/images/sigiriya/sigiriya-lion-rock-3.webp",
-      "credit": "shankar s. from Dubai, united arab emirates",
-      "source": "https://commons.wikimedia.org/wiki/File:Sigiriya_%27lion_paws%27_(7567477194).jpg",
-      "license": "CC BY 2.0",
-      "width": 1600,
-      "height": 1200,
-      "blurDataURL": "data:image/webp;base64,UklGRmgAAABXRUJQVlA4IFwAAADQAQCdASoQAAwAA4BaJQBOgMXDsBXiAAD789qjsrrGyHN3heMJB4hlFiOgGi0lMk5g/mWX/cRZ3ypBwc+THBL2pFVIDhwWOeklKKmlfvGXR3mQVzvWmNMibsDAAA=="
-    }
-  ],
-  "yala-leopard-safari": [
-    {
-      "src": "/images/yala/yala-leopard-safari-1.webp",
-      "credit": "Byrdyak",
-      "source": "https://commons.wikimedia.org/wiki/File:Leopard_on_stone_in_Yala_National_Park.jpg",
-      "license": "CC BY-SA 4.0",
-      "width": 1600,
-      "height": 1065,
-      "blurDataURL": "data:image/webp;base64,UklGRmgAAABXRUJQVlA4IFwAAACwAQCdASoQAAsAA4BaJbACdABh0YuYAPoPcfjB7cln9rFw6dFf7chyV0yPNv8JxqitCX+PtIqmb8khUCfcMq2VdeQ+5mh2vhHTB+GVZ1EowF0W/RFWHasFPsMAAA=="
-    },
-    {
-      "src": "/images/yala/yala-leopard-safari-2.webp",
-      "credit": "AdrianRanasinghe",
-      "source": "https://commons.wikimedia.org/wiki/File:Srilankan_leopard_in_Yala_National_Park.jpg",
-      "license": "CC BY-SA 4.0",
-      "width": 1600,
-      "height": 1067,
-      "blurDataURL": "data:image/webp;base64,UklGRkoAAABXRUJQVlA4ID4AAADwAQCdASoQAAsAA4BaJZQAAl1uJLkLvgAA/vaUhjTCSo+TjdvlL5iGResJBBxscqyF5YW+aqOUzuV3vQgAAA=="
-    },
-    {
-      "src": "/images/yala/yala-leopard-safari-3.webp",
-      "credit": "psychoslave",
-      "source": "https://commons.wikimedia.org/wiki/File:Sri_Lanka_Photo179.jpg",
-      "license": "CC BY-SA 4.0",
-      "width": 1600,
-      "height": 1200,
-      "blurDataURL": "data:image/webp;base64,UklGRlIAAABXRUJQVlA4IEYAAADwAQCdASoQAAwAA4BaJQBOgB6UQP1uTcAA/o04BOGCUQVgX00X/C7D9HLsYxrwaR1XLNpN29tK79BHoUWych+VxUtGNgAA"
-    }
-  ],
-  "elephant-safari-kaudulla": [
-    {
-      "src": "/images/sigiriya/elephant-safari-kaudulla-1.webp",
-      "credit": "Binxla",
-      "source": "https://commons.wikimedia.org/wiki/File:DSC_1593-3.jpg",
-      "license": "CC BY-SA 4.0",
-      "width": 1600,
-      "height": 1433,
-      "blurDataURL": "data:image/webp;base64,UklGRmoAAABXRUJQVlA4IF4AAAAwAgCdASoQAA4AA4BaJbACdAYuvImbDUY3wAD+y+goGVsFECMy7unAZQo8++sCoArycN8T2hd1eCKCWt/ceFpUiuhvUjXu9vc1vBjUPDrEUtYZnvgJ6/J06ZlUAAAA"
-    },
-    {
-      "src": "/images/sigiriya/elephant-safari-kaudulla-2.webp",
-      "credit": "KR Chrutti",
-      "source": "https://commons.wikimedia.org/wiki/File:An_elephant_in_Kaudulla.jpg",
-      "license": "CC BY-SA 4.0",
-      "width": 1500,
-      "height": 2000,
-      "blurDataURL": "data:image/webp;base64,UklGRnYAAABXRUJQVlA4IGoAAADwAwCdASoQABUAPu1iqU2ppaOiMAgBMB2JYgCw7CGqiGJfm1zK+674AP7EPPM81Vu1KG7d7KBMQEMfgr+COQ3BnLdvyozxahH/6eK/iHRzvH1ZLUr0PJOjKlE8KY5ugJ6CcVtHPTvkhQgA"
-    },
-    {
-      "src": "/images/sigiriya/elephant-safari-kaudulla-3.webp",
-      "credit": "KR Chrutti",
-      "source": "https://commons.wikimedia.org/wiki/File:Water_hole_at_Kaudulla_national_park,_Sri_Lanka.jpg",
-      "license": "CC BY-SA 4.0",
-      "width": 1600,
-      "height": 1200,
-      "blurDataURL": "data:image/webp;base64,UklGRloAAABXRUJQVlA4IE4AAAAQAgCdASoQAAwAA4BaJZgCdAEXIrv/6gbAAP7I2sP5jU4q2UXbrsyhA5R4pmX6QcfVNEgfPvX5Ti1wovegppWnOxlogico/oleTHJAAAA="
-    }
-  ],
   "mirissa-whale-watching": [
     {
       "src": "/images/mirissa/mirissa-whale-watching-1.webp",
@@ -293,220 +177,6 @@ export const photos: Record<string, Photo[]> = {
       "blurDataURL": "data:image/webp;base64,UklGRlgAAABXRUJQVlA4IEwAAADQAQCdASoQAAwAA4BaJZACdADNnAdgAAD+63NW8rdYdFNhUA8Yua4G7dPC/ZEs3Ni/dgd/9IHZiRzvnGONxYdxcK2NzJ73TtSLlpgA"
     }
   ],
-  "ella-rock": [
-    {
-      "src": "/images/ella/ella-rock-1.webp",
-      "credit": "Gayan Perera",
-      "source": "https://commons.wikimedia.org/wiki/File:Ella_Rock_Sri_Lanka.jpg",
-      "license": "CC BY-SA 4.0",
-      "width": 1600,
-      "height": 1200,
-      "blurDataURL": "data:image/webp;base64,UklGRmQAAABXRUJQVlA4IFgAAAAQAgCdASoQAAwAA4BaJYgCdAEC1fJO0T+AAP7kKVY36ktE3aUPms7EoBUiKrw3n3E/ASpBLfFcM9dKSRrZwfrTYK+SImJ8LOicaiCau9lyWFM3dQvgIcAA"
-    },
-    {
-      "src": "/images/ella/ella-rock-2.webp",
-      "credit": "Sccneranjan",
-      "source": "https://commons.wikimedia.org/wiki/File:Ella_rock-_View_from_the_top.jpg",
-      "license": "CC BY-SA 4.0",
-      "width": 1500,
-      "height": 2000,
-      "blurDataURL": "data:image/webp;base64,UklGRowAAABXRUJQVlA4IIAAAADQAwCdASoQABUAPu1iqU2ppaOiMAgBMB2JQBdgBECKFf7g4fWLUx4A/NicWhbUPUpr4wEUkS/3vR796iAj7fji5/I3seZl1Xsvv0Os6ZENRyZUThvLbcsTIw35OyvJ0/v254k6TvVucEXm2trxIuZIZFnzd3wtAtGdCHkILAOAAA=="
-    },
-    {
-      "src": "/images/ella/ella-rock-3.webp",
-      "credit": "Z thomas",
-      "source": "https://commons.wikimedia.org/wiki/File:Ella_sri_lanka_2017-10-23_(1).jpg",
-      "license": "CC BY-SA 4.0",
-      "width": 1600,
-      "height": 1200,
-      "blurDataURL": "data:image/webp;base64,UklGRkoAAABXRUJQVlA4ID4AAADwAQCdASoQAAwAA4BaJZwAAuO9uYXRxCYA/vfqYF22+rXw6UzKOuhft9jD0bHq9Y2ls4qK6N/dYnWsoMAAAA=="
-    }
-  ],
-  "nine-arches-little-adams": [
-    {
-      "src": "/images/ella/nine-arches-little-adams-1.webp",
-      "credit": "Mohamed Aabid Ali",
-      "source": "https://commons.wikimedia.org/wiki/File:Nine_Arches_Bridge,_Sri_Lanka.jpg",
-      "license": "CC BY-SA 4.0",
-      "width": 1125,
-      "height": 2000,
-      "blurDataURL": "data:image/webp;base64,UklGRrQAAABXRUJQVlA4IKgAAAAwBACdASoQABwAPu1orU6ppiSiMAgBMB2JZAC7AYv+7LCfAvsyPbwmrgAA+6Xwp/VyMy28LzmVGs5wcXJJrN6ATaLOvsMPQCoG79Ag0zvkP7VXgAMgLLJ+rAqaWXOv+PlhwmkgcKj3kEzruaJGxDDv9A4hTXKs/BD5WIg4vViZRQJ2R4LMDuFsDDmp3LuXF2//XHvw9puma7b4abMz8ZGO5Ce/FWccAAA="
-    },
-    {
-      "src": "/images/ella/nine-arches-little-adams-2.webp",
-      "credit": "Dilshan255",
-      "source": "https://commons.wikimedia.org/wiki/File:Nine_Arch_Bridge_in_Ella.jpg",
-      "license": "CC BY-SA 4.0",
-      "width": 1600,
-      "height": 1200,
-      "blurDataURL": "data:image/webp;base64,UklGRmgAAABXRUJQVlA4IFwAAABQAgCdASoQAAwAA4BaJagCdH8AGZMRg9azI4AA/sYD9QILAgYFuW6dkxtElrv9MBLleuIlEQ6bKvt5BWrNYtMbY+SHI/c2tDM7ghklIT2aa2EVhZYyJyzQkUQAAA=="
-    },
-    {
-      "src": "/images/ella/nine-arches-little-adams-3.webp",
-      "credit": "Bcd4e6",
-      "source": "https://commons.wikimedia.org/wiki/File:Little_Adam%27s_Peak,_Ella,_Sri_Lanka.jpg",
-      "license": "CC BY-SA 4.0",
-      "width": 1600,
-      "height": 1200,
-      "blurDataURL": "data:image/webp;base64,UklGRlYAAABXRUJQVlA4IEoAAAAQAgCdASoQAAwAA4BaJaACdAEe/8DMI5fYAP7FxzYqnqhF2Bpx0ed17zgmJrlFuclbIA6j8Uvz/A/DSWEICD4ao7KIGfLY9egAAA=="
-    }
-  ],
-  "flying-ravana-zipline": [
-    {
-      "src": "/images/ella/flying-ravana-zipline-1.webp",
-      "credit": "A-wiki-guest-user",
-      "source": "https://commons.wikimedia.org/wiki/File:Ravana_Falls_(Ella).jpg",
-      "license": "CC BY-SA 4.0",
-      "width": 1333,
-      "height": 2000,
-      "blurDataURL": "data:image/webp;base64,UklGRqIAAABXRUJQVlA4IJYAAAAwBACdASoQABgAPu1iqU2ppaOiMAgBMB2JYwCdAYxstfT2nmu4pHo+v5AA/obOH6DaT3wq/VXKVOqSfR1UtMeY5a2kSrV6JqlY7w95S0xYnS86B7EGAelevLrus+XlnYqmxQ7Dau10MBo56uXAQkBPSZOem72RVHRvs7IRMCVbXC0HUdrTpdDlBkkibnIio+QU8eQAAAA="
-    },
-    {
-      "src": "/images/ella/flying-ravana-zipline-2.webp",
-      "credit": "Philip Nalangan",
-      "source": "https://commons.wikimedia.org/wiki/File:Ravana_Falls_Ella.jpg",
-      "license": "CC BY 4.0",
-      "width": 1339,
-      "height": 2000,
-      "blurDataURL": "data:image/webp;base64,UklGRooAAABXRUJQVlA4IH4AAABwAwCdASoQABgAPu1iqU2ppaOiMAgBMB2JZQAAK0IoKw1bnKgA/tKlAcDDPuD2Vil+pSTcLWbaYH8+DcglS52Mj9KDor1O3u7675MnaN07jjnxU1I0A0SP5byu1WyGoD89c8DPs/49e3v5WC5IQTwkhV/POeQsnw3kDIpE4AA="
-    }
-  ],
-  "ella-cooking-class": [
-    {
-      "src": "/images/ella/ella-cooking-class-1.webp",
-      "credit": "Peter van der Sluijs",
-      "source": "https://commons.wikimedia.org/wiki/File:Making_curry_Sri_Lanka.jpg",
-      "license": "CC BY-SA 3.0",
-      "width": 1600,
-      "height": 1067,
-      "blurDataURL": "data:image/webp;base64,UklGRl4AAABXRUJQVlA4IFIAAABQAgCdASoQAAsAA4BaJQBOgCKfJyXHb8KZgAAA/tvgE09zJOGWbv8eMQWsC1fevRctcuFK7v7r/UlvFe2KFV4Y47gD+8DBlRLk00ulli/sAAAA"
-    },
-    {
-      "src": "/images/ella/ella-cooking-class-2.webp",
-      "credit": "Ubcule",
-      "source": "https://commons.wikimedia.org/wiki/File:SL-rice_and_curry.jpg",
-      "license": "CC BY-SA 4.0",
-      "width": 1536,
-      "height": 1134,
-      "blurDataURL": "data:image/webp;base64,UklGRmQAAABXRUJQVlA4IFgAAABwAgCdASoQAAwAA4BaJYwCdAYs32w0VJRPu8PAAP7jiWVUdMlWxU66F5HqUjZz7ob3LntEXWbPk3HaJpbfc3bTgUUJwQb7kklodhCUwUkpGTIxIiLYAAAA"
-    },
-    {
-      "src": "/images/ella/ella-cooking-class-3.webp",
-      "credit": "Syced",
-      "source": "https://commons.wikimedia.org/wiki/File:Rice_and_curry_at_Liberty_Mall_food_court.jpg",
-      "license": "CC0",
-      "width": 1600,
-      "height": 1200,
-      "blurDataURL": "data:image/webp;base64,UklGRnAAAABXRUJQVlA4IGQAAADQAQCdASoQAAwAA4BaJaACdAEC8qeNngD+gpSOplK5PRkym79dsE9zarinjOY0aGuZ3GgiPl1NuKj8L152iWadl8kMla19DrAksH7DthquD6W3ABrDtjdW/oIy+qTiZGbqMKAA"
-    }
-  ],
-  "horton-plains": [
-    {
-      "src": "/images/nuwara-eliya/horton-plains-1.webp",
-      "credit": "Vyacheslav Argenberg",
-      "source": "https://commons.wikimedia.org/wiki/File:Sri_Lanka,_World%27s_End_at_Horton_Plains.jpg",
-      "license": "CC BY 4.0",
-      "width": 1333,
-      "height": 2000,
-      "blurDataURL": "data:image/webp;base64,UklGRngAAABXRUJQVlA4IGwAAAAQBACdASoQABgAPu1krU6ppaSiMAgBMB2JYgCdABtXQe2Hx5PQAvqxYAD+3u+tmsKEHBhtraJ2j4ZRbV9yuImJQGIjk2JaT0BckYH9rnQV9+Nvcyoa4EjiLgoZfjy856NMlSP/sWNL/oScSAA="
-    },
-    {
-      "src": "/images/nuwara-eliya/horton-plains-2.webp",
-      "credit": "Venushka Fonseka",
-      "source": "https://commons.wikimedia.org/wiki/File:Worlds_end_at_Horton_plains_national_park.jpg",
-      "license": "CC BY-SA 4.0",
-      "width": 1600,
-      "height": 1200,
-      "blurDataURL": "data:image/webp;base64,UklGRlYAAABXRUJQVlA4IEoAAACQAQCdASoQAAwAA4BaJQAAOaFV6EAAyhaD5mQ2BW1edypPfrRAmyrcAw5UYFrsmge5HwUMZeed+JOTTByclUalfX0QHk1ftoEAAA=="
-    },
-    {
-      "src": "/images/nuwara-eliya/horton-plains-3.webp",
-      "credit": "Romain Pontida",
-      "source": "https://commons.wikimedia.org/wiki/File:World%27s_end,_Horton_Plains,_Sri_Lanka_-_%E0%B7%84%E0%B7%9D%E0%B6%A7%E0%B6%B1%E0%B7%8A_%E0%B6%AD%E0%B7%90%E0%B6%B1%E0%B7%8A%E0%B6%B1,_%E0%B7%81%E0%B7%8A%E2%80%8D%E0%B6%BB%E0%B7%93_%E0%B6%BD%E0%B6%82%E0%B6%9A%E0%B7%8F%E0%B7%80_(10226463745).jpg",
-      "license": "CC BY-SA 2.0",
-      "width": 1600,
-      "height": 1200,
-      "blurDataURL": "data:image/webp;base64,UklGRl4AAABXRUJQVlA4IFIAAADwAQCdASoQAAwAA4BaJZwAAvaQVJUmjAAA/vISo9f8JljJmq4wwc21smMFhvS1CBhlWKV3/6vL5/M8xDXRjnH5MBw5y2UMDTU4uflP5OG64AAA"
-    }
-  ],
-  "tea-estate-high-tea": [
-    {
-      "src": "/images/nuwara-eliya/tea-estate-high-tea-1.webp",
-      "credit": "Bergentroll",
-      "source": "https://commons.wikimedia.org/wiki/File:Tea-plantation_Nuwara_Eliya-2567.jpg",
-      "license": "CC0",
-      "width": 1600,
-      "height": 1067,
-      "blurDataURL": "data:image/webp;base64,UklGRkgAAABXRUJQVlA4IDwAAAAQAgCdASoQAAsAA4BaJbACdAEOukT3eh+gAP72DEqlP2ZUEPhpgKEchdjW83vq+U2cfbweJ7d7EwfgAAA="
-    },
-    {
-      "src": "/images/nuwara-eliya/tea-estate-high-tea-2.webp",
-      "credit": "Vyacheslav Argenberg",
-      "source": "https://commons.wikimedia.org/wiki/File:Sri_Lanka,_Tea_plantations,_Nuwara_Eliya,_Picking_tea_leaves.jpg",
-      "license": "CC BY 4.0",
-      "width": 1600,
-      "height": 1067,
-      "blurDataURL": "data:image/webp;base64,UklGRloAAABXRUJQVlA4IE4AAACQAQCdASoQAAsAA4BaJZgCdACJOoAA3JsOs/wfEUoEJRWeyFzbRS2i/NyHidkxunFg6nsu3HPVhivj0/zMeW5+/7ue1Bl6y0Tf2tXgAAA="
-    },
-    {
-      "src": "/images/nuwara-eliya/tea-estate-high-tea-3.webp",
-      "credit": "Curved.kiwix",
-      "source": "https://commons.wikimedia.org/wiki/File:Nuwara_Eliya_Tea.jpg",
-      "license": "CC BY-SA 4.0",
-      "width": 1600,
-      "height": 713,
-      "blurDataURL": "data:image/webp;base64,UklGRlwAAABXRUJQVlA4IFAAAADwAQCdASoQAAcAA4BaJbAC7ADcrJOWZgAA/dvqr7mIszkONzeGFZfd7nOMytOxwlWgRJzYlSsBbcJ0BeYd7n0P2U6xBL+afr+YzGc742A0AA=="
-    }
-  ],
-  "peradeniya-gardens": [
-    {
-      "src": "/images/kandy/peradeniya-gardens-1.webp",
-      "credit": "Alexey Komarov",
-      "source": "https://commons.wikimedia.org/wiki/File:Royal_Botanical_Gardens,_Peradeniya_-_panoramio.jpg",
-      "license": "CC BY 3.0",
-      "width": 1600,
-      "height": 1067,
-      "blurDataURL": "data:image/webp;base64,UklGRloAAABXRUJQVlA4IE4AAADQAQCdASoQAAsAA4BaJbAC7AEREPmGIAD+6D3Jv301NL++v2Qfmh0OVEqQo80lBc9MUbmJFiVyF6ygRaSgkE08NA/aaArZYfx/sPEwAAA="
-    },
-    {
-      "src": "/images/kandy/peradeniya-gardens-2.webp",
-      "credit": "Alexey Komarov",
-      "source": "https://commons.wikimedia.org/wiki/File:Royal_Botanical_Gardens,_Peradeniya_-_panoramio_(1).jpg",
-      "license": "CC BY 3.0",
-      "width": 1600,
-      "height": 1067,
-      "blurDataURL": "data:image/webp;base64,UklGRlgAAABXRUJQVlA4IEwAAAAQAgCdASoQAAsAA4BaJYgC7ADpNYwA5QbAAP72l/jjZF2wwLrncpwqz9rpAfljSgKA9kYpRGyLZcgpmVC7+l1gftv1vy4hWDwvYAAA"
-    }
-  ],
-  "kandy-temple-city": [
-    {
-      "src": "/images/kandy/kandy-temple-city-1.webp",
-      "credit": "Philip Nalangan",
-      "source": "https://commons.wikimedia.org/wiki/File:Sacred_Tooth_Relic_Temple_5.jpg",
-      "license": "CC BY 4.0",
-      "width": 1600,
-      "height": 1071,
-      "blurDataURL": "data:image/webp;base64,UklGRmIAAABXRUJQVlA4IFYAAADwAQCdASoQAAsAA4BaJZwAApMY1jS18uAA/aWwn9vj0L/6g/wRmeQmvB1JvR0WY+OKBEG1GWfmw1sPl7DOUBJLSy2tbs6qGcqXFnsPvobhrAAKEFMAAA=="
-    },
-    {
-      "src": "/images/kandy/kandy-temple-city-2.webp",
-      "credit": "Philip Nalangan",
-      "source": "https://commons.wikimedia.org/wiki/File:Sacred_Tooth_Relic_Temple_3.jpg",
-      "license": "CC BY 4.0",
-      "width": 1600,
-      "height": 1071,
-      "blurDataURL": "data:image/webp;base64,UklGRmAAAABXRUJQVlA4IFQAAADQAQCdASoQAAsAA4BaJQBOgCHerj+T0AD+NH3Oe8qdGxBfaO1V3ae4xZfINcM2yYPdGDmRwfm1W0fto/cBZ6mZ1oIiOE8PFbvl9D4hioy2xTm0AAA="
-    },
-    {
-      "src": "/images/kandy/kandy-temple-city-3.webp",
-      "credit": "Pierre André Leclercq",
-      "source": "https://commons.wikimedia.org/wiki/File:Temple_of_the_Tooth,_Sitting_Buddha_statues.-_Kandy.jpg",
-      "license": "CC BY-SA 4.0",
-      "width": 1600,
-      "height": 882,
-      "blurDataURL": "data:image/webp;base64,UklGRmIAAABXRUJQVlA4IFYAAAAQAgCdASoQAAkAA4BaJagCdAYtpQ39MIwAAPZBur41BXDXvEVHKWPk/U785OA4WZ8xz2y2Ny2sDH+NeSJ7EQrrbTBRfrd3VItMf/DwGFzNKuVemuYAAA=="
-    }
-  ],
   "negombo-lagoon": [
     {
       "src": "/images/negombo/negombo-lagoon-1.webp",
@@ -623,26 +293,6 @@ export const photos: Record<string, Photo[]> = {
       "width": 1600,
       "height": 900,
       "blurDataURL": "data:image/webp;base64,UklGRmoAAABXRUJQVlA4IF4AAAAQAgCdASoQAAkAA4BaJZgCdAEWaSCvN12AAPaHV2r4oHGgZqqhOkYlgVnVrF/s2bkkfDqGteSqhcvRB4yE3GFUi083BHcPmQczN43k97bTg/18oCTVSdt8zBW/kAAA"
-    }
-  ],
-  "negombo-beach-sundowners": [
-    {
-      "src": "/images/negombo/negombo-beach-sundowners-1.webp",
-      "credit": "Dhananjaya Bulathwatte",
-      "source": "https://commons.wikimedia.org/wiki/File:Negombo_beach_3.jpg",
-      "license": "CC BY-SA 4.0",
-      "width": 1600,
-      "height": 1067,
-      "blurDataURL": "data:image/webp;base64,UklGRkoAAABXRUJQVlA4ID4AAAAwAgCdASoQAAsAA4BaJZQCdMn8BAq9iaVQAAD7Ig5sndQa0s2I8bz2EYA+LJnyWl80TLAbVYw8Jbo9wF3AAA=="
-    },
-    {
-      "src": "/images/negombo/negombo-beach-sundowners-2.webp",
-      "credit": "S B from Sydney, Australia",
-      "source": "https://commons.wikimedia.org/wiki/File:Negombo_Beach,_Sri_Lanka.jpg",
-      "license": "CC BY 2.0",
-      "width": 1600,
-      "height": 1200,
-      "blurDataURL": "data:image/webp;base64,UklGRmYAAABXRUJQVlA4IFoAAADwAQCdASoQAAwAA4BaJbACdADMjqUFgoAAzfvLFazfOHHqtMREidOjB/YbSL0g/hCx6/+UXdJcbLHY6u0oa0b+fiuxm9ewF0bECcUMw6Zxl0NjFpU+LfbjEAA="
     }
   ],
   "unawatuna-beach-party": [
@@ -772,153 +422,6 @@ export const photos: Record<string, Photo[]> = {
       "width": 1600,
       "height": 1188,
       "blurDataURL": "data:image/webp;base64,UklGRlIAAABXRUJQVlA4IEYAAADwAQCdASoQAAwAA4BaJbACdAEDZUy4TUAA/urIeBUw5rlDP+XMWSkCUB8MOyrz+oFuVL2vLODyp3zzXHarNrr101vSn8AA"
-    }
-  ],
-  "ella-bar-night": [
-    {
-      "src": "/images/ella/ella-bar-night-1.webp",
-      "credit": "psychoslave",
-      "source": "https://commons.wikimedia.org/wiki/File:Sri_Lanka_Photo153.jpg",
-      "license": "CC BY-SA 4.0",
-      "width": 1600,
-      "height": 1200,
-      "blurDataURL": "data:image/webp;base64,UklGRlYAAABXRUJQVlA4IEoAAAAQAgCdASoQAAwAA4BaJYgCdAEN+q/OM++AAP7wRfLmkX13qGn7AuYlPgLGDMXE5bsfhvSL/aMsQNBgOti/EHGTDejCEY4K87AAAA=="
-    },
-    {
-      "src": "/images/ella/ella-bar-night-2.webp",
-      "credit": "Vyacheslav Argenberg",
-      "source": "https://commons.wikimedia.org/wiki/File:Ella,_Sri_Lanka,_Mountains_in_clouds,_Panorama.jpg",
-      "license": "CC BY 4.0",
-      "width": 1600,
-      "height": 1067,
-      "blurDataURL": "data:image/webp;base64,UklGRkIAAABXRUJQVlA4IDYAAADwAQCdASoQAAsAA4BaJQBOgCHeojEvRWAA/pqR9nhUn8h/Dk511F0qx51ojfghrXrtffgAAAA="
-    }
-  ],
-  "ninety-eight-acres-sunset": [
-    {
-      "src": "/images/ella/ninety-eight-acres-sunset-1.webp",
-      "credit": "MikeWilli",
-      "source": "https://commons.wikimedia.org/wiki/File:Little_Adam%27s_Peak_in_Ella.jpg",
-      "license": "CC BY-SA 4.0",
-      "width": 1600,
-      "height": 1200,
-      "blurDataURL": "data:image/webp;base64,UklGRk4AAABXRUJQVlA4IEIAAAAQAgCdASoQAAwAA4BaJZgCdAEPEK0Ch39QAP7triYk60AUTKm/ZfjiPb0BvDTv0Vm1LR1raQ0VT+y4LU4MTzI2AAA="
-    },
-    {
-      "src": "/images/ella/ninety-eight-acres-sunset-2.webp",
-      "credit": "Vyacheslav Argenberg",
-      "source": "https://commons.wikimedia.org/wiki/File:Ella_Gap_(Valley),_dramatic_clouds_over_mountains_of_Sri_Lanka.jpg",
-      "license": "CC BY 4.0",
-      "width": 1600,
-      "height": 1067,
-      "blurDataURL": "data:image/webp;base64,UklGRlAAAABXRUJQVlA4IEQAAAAQAgCdASoQAAsAA4BaJQBOgCHerieZRDYAAP61qq0V8QcjpITjSqe3H5enQbzN7MohjuOKl8DS0RXJb1UIcTQhS2wAAA=="
-    }
-  ],
-  "kandy-pub-night": [
-    {
-      "src": "/images/kandy/kandy-pub-night-1.webp",
-      "credit": "Omar AV",
-      "source": "https://commons.wikimedia.org/wiki/File:Kandy_lake_on_pere_hare_night_-_panoramio.jpg",
-      "license": "CC BY 3.0",
-      "width": 1600,
-      "height": 1067,
-      "blurDataURL": "data:image/webp;base64,UklGRlgAAABXRUJQVlA4IEwAAADQAQCdASoQAAsAA4BaJQBOgCHXVScOgAD++FGV+ifIYBfLwN+cuWxIVdXSCgVdXB0rAiv/j3118vUuBvL0GljFKSYfHhp0k54pOAAA"
-    },
-    {
-      "src": "/images/kandy/kandy-pub-night-2.webp",
-      "credit": "Pasindu g bandara",
-      "source": "https://commons.wikimedia.org/wiki/File:Kandy_city_mountain_view.jpg",
-      "license": "CC BY-SA 4.0",
-      "width": 1600,
-      "height": 1060,
-      "blurDataURL": "data:image/webp;base64,UklGRmAAAABXRUJQVlA4IFQAAADwAQCdASoQAAsAA4BaJbACdAD0Tc/U9wgA/mbfUkZQZLk6bZ14vW8Nws4i/XAG1ojuUGWs+FDW/CNHPkaSxsQUndpoFebL0qseBIcJht9yn4ccAAA="
-    }
-  ],
-  "kandyan-dance-dinner": [
-    {
-      "src": "/images/kandy/kandyan-dance-dinner-1.webp",
-      "credit": "Philip Nalangan",
-      "source": "https://commons.wikimedia.org/wiki/File:Kandyan_Kandy_Dance_1.jpg",
-      "license": "CC BY-SA 4.0",
-      "width": 1600,
-      "height": 1071,
-      "blurDataURL": "data:image/webp;base64,UklGRnYAAABXRUJQVlA4IGoAAABQAgCdASoQAAsAA4BaJZACdIExgqy/21K7HgAA/vb5zgJ2cKLEMLyGYzQURGOnJ/LG7x2CsBoNJTYGtJZ8uEzn4ejzIWuxoZtZY/o0giHkt2VunIJgshwHByB7IObNE5sggOOhk6961pwA"
-    },
-    {
-      "src": "/images/kandy/kandyan-dance-dinner-2.webp",
-      "credit": "Philip Nalangan",
-      "source": "https://commons.wikimedia.org/wiki/File:Kandyan_Dance_Kandy_Sri_Lanka_1.jpg",
-      "license": "CC BY-SA 4.0",
-      "width": 1600,
-      "height": 1071,
-      "blurDataURL": "data:image/webp;base64,UklGRkQAAABXRUJQVlA4IDgAAAAQAgCdASoQAAsAA4BaJZQC7AEQUPAVmGwAAP75FyyMrprEYXo0yQtbUXpDuf2RxZmp86Wh5raMAA=="
-    },
-    {
-      "src": "/images/kandy/kandyan-dance-dinner-3.webp",
-      "credit": "Philip Nalangan",
-      "source": "https://commons.wikimedia.org/wiki/File:Fire_Eating_Kandy_Sri_Lanka.jpg",
-      "license": "CC BY-SA 4.0",
-      "width": 1600,
-      "height": 1071,
-      "blurDataURL": "data:image/webp;base64,UklGRkYAAABXRUJQVlA4IDoAAACQAQCdASoQAAsAA4BaJYwAAtrHNwAA/vnCW5j2/3GY1X/IoFsFQdXY5lX0fzNGp7cWctTqP1NCh4AA"
-    }
-  ],
-  "yala-safari-camp": [
-    {
-      "src": "/images/yala/yala-safari-camp-1.webp",
-      "credit": "Krozairo1994",
-      "source": "https://commons.wikimedia.org/wiki/File:Dusk_at_Yala.jpg",
-      "license": "CC BY-SA 4.0",
-      "width": 1600,
-      "height": 593,
-      "blurDataURL": "data:image/webp;base64,UklGRkQAAABXRUJQVlA4IDgAAADQAQCdASoQAAYAA4BaJaACdAEKo34hsAD+8smqBobBlfcZPjXSjFt7Ay56QwTyc9bUO4wArCOAAA=="
-    },
-    {
-      "src": "/images/yala/yala-safari-camp-2.webp",
-      "credit": "BenjaminDev90",
-      "source": "https://commons.wikimedia.org/wiki/File:Sunset_at_yala.jpg",
-      "license": "CC BY-SA 4.0",
-      "width": 1333,
-      "height": 2000,
-      "blurDataURL": "data:image/webp;base64,UklGRkwAAABXRUJQVlA4IEAAAAAQAwCdASoQABgAPu1iqU2ppaOiMAgBMB2JQAALfWYHXSIA/uMPnMsi184D/Id3Ub1I+5H3mOf8GVXspgMPgAAA"
-    },
-    {
-      "src": "/images/yala/yala-safari-camp-3.webp",
-      "credit": "Kasuna",
-      "source": "https://commons.wikimedia.org/wiki/File:Sunset_at_Tissa_Lake.jpg",
-      "license": "CC BY-SA 4.0",
-      "width": 1600,
-      "height": 1063,
-      "blurDataURL": "data:image/webp;base64,UklGRmQAAABXRUJQVlA4IFgAAAAQAgCdASoQAAsAA4BaJbACdAEfAfjvwitgAPljKDm6y9L+jXia4/JdRN8X1C8ZGU8WJcVBlAmmDbsdFs9oeTe8H+W8BtO+Z9dEd0EhNf24MI6D6r+DfTAA"
-    }
-  ],
-  "sigiriya-village-dinner": [
-    {
-      "src": "/images/sigiriya/sigiriya-village-dinner-1.webp",
-      "credit": "Hafiz Issadeen from Dharga Town, Sri Lanka",
-      "source": "https://commons.wikimedia.org/wiki/File:Bullock_Cart_(5088194838).jpg",
-      "license": "CC BY 2.0",
-      "width": 1600,
-      "height": 1067,
-      "blurDataURL": "data:image/webp;base64,UklGRnAAAABXRUJQVlA4IGQAAAAwAgCdASoQAAsAA4BaJagCdAYvXVJRfbjpwAD671fG0lyRd1Tt9AuwjyHCU+T3T9q+qFIcckfCZlsPhaW9BHsaOn+lTdjrr9IttYtUYYFWYTVUHUKsFWUHUKVYVwKa9nxB4AAA"
-    },
-    {
-      "src": "/images/sigiriya/sigiriya-village-dinner-2.webp",
-      "credit": "Ji-Elle",
-      "source": "https://commons.wikimedia.org/wiki/File:Sigiriya_Village_(4).jpg",
-      "license": "CC BY-SA 3.0",
-      "width": 1600,
-      "height": 1200,
-      "blurDataURL": "data:image/webp;base64,UklGRnAAAABXRUJQVlA4IGQAAAAwAgCdASoQAAwAA4BaJYgCdAD7WMSZE9vgAAD+uFKxsXe/jb+5+rP31fXsHW0Gwt3Za5WwnmJZsmhBI1GDF9VnSY5cT1E5/l6Gj+9+jVi1962PSer0g6wTuygj8aCoPMTe/pAA"
-    },
-    {
-      "src": "/images/ella/ella-cooking-class-1.webp",
-      "credit": "Peter van der Sluijs",
-      "source": "https://commons.wikimedia.org/wiki/File:Making_curry_Sri_Lanka.jpg",
-      "license": "CC BY-SA 3.0",
-      "width": 1600,
-      "height": 1067,
-      "blurDataURL": "data:image/webp;base64,UklGRl4AAABXRUJQVlA4IFIAAABQAgCdASoQAAsAA4BaJQBOgCKfJyXHb8KZgAAA/tvgE09zJOGWbv8eMQWsC1fevRctcuFK7v7r/UlvFe2KFV4Y47gD+8DBlRLk00ulli/sAAAA"
     }
   ],
   "nye-mirissa-beach-party": [
@@ -1056,39 +559,6 @@ export const photos: Record<string, Photo[]> = {
       "blurDataURL": "data:image/webp;base64,UklGRlwAAABXRUJQVlA4IFAAAAAwAgCdASoQAAwAA4BaJaACdAELz9x08/qMQAD+mPm2XdiHteFoOrctlDqlYEu7t+fKPXojoK73DbBrZyjmc6wrf4pEVDTQa5aCI55k+AAAAA=="
     }
   ],
-  "region-yala": [
-    {
-      "src": "/images/yala/yala-leopard-safari-3.webp",
-      "credit": "psychoslave",
-      "source": "https://commons.wikimedia.org/wiki/File:Sri_Lanka_Photo179.jpg",
-      "license": "CC BY-SA 4.0",
-      "width": 1600,
-      "height": 1200,
-      "blurDataURL": "data:image/webp;base64,UklGRlIAAABXRUJQVlA4IEYAAADwAQCdASoQAAwAA4BaJQBOgB6UQP1uTcAA/o04BOGCUQVgX00X/C7D9HLsYxrwaR1XLNpN29tK79BHoUWych+VxUtGNgAA"
-    }
-  ],
-  "region-ella": [
-    {
-      "src": "/images/ella/ninety-eight-acres-sunset-2.webp",
-      "credit": "Vyacheslav Argenberg",
-      "source": "https://commons.wikimedia.org/wiki/File:Ella_Gap_(Valley),_dramatic_clouds_over_mountains_of_Sri_Lanka.jpg",
-      "license": "CC BY 4.0",
-      "width": 1600,
-      "height": 1067,
-      "blurDataURL": "data:image/webp;base64,UklGRlAAAABXRUJQVlA4IEQAAAAQAgCdASoQAAsAA4BaJQBOgCHerieZRDYAAP61qq0V8QcjpITjSqe3H5enQbzN7MohjuOKl8DS0RXJb1UIcTQhS2wAAA=="
-    }
-  ],
-  "region-nuwara-eliya": [
-    {
-      "src": "/images/nuwara-eliya/region-nuwara-eliya-1.webp",
-      "credit": "Chamixth",
-      "source": "https://commons.wikimedia.org/wiki/File:Nuwara_Eliya_Gregory_Lake.jpg",
-      "license": "CC BY-SA 4.0",
-      "width": 1600,
-      "height": 1056,
-      "blurDataURL": "data:image/webp;base64,UklGRmQAAABXRUJQVlA4IFgAAADQAQCdASoQAAsAA4BaJbACdAEHMAlhYAD+W/GQwxgXbfV+O+rxQrNuoKPcNqUuZq/+YMCGckR6uEfEAt/Rwr82pp+WbznIn92IYWfwhvvsyL+c5Ni8daAA"
-    }
-  ],
   "region-kandy": [
     {
       "src": "/images/kandy/region-kandy-1.webp",
@@ -1100,27 +570,7 @@ export const photos: Record<string, Photo[]> = {
       "blurDataURL": "data:image/webp;base64,UklGRmQAAABXRUJQVlA4IFgAAAAQAgCdASoQAAwAA4BaJZACdAEUU6UIvrgAAP7Fnhrs5qxe8O4JAFgoDzh1kilVlFe/oqdvfeizb6EFL4WXz1rVQgNIclPra2LVS13ANHqOTB0Z3MP6JAAA"
     }
   ],
-  "region-sigiriya": [
-    {
-      "src": "/images/sigiriya/sigiriya-lion-rock-1.webp",
-      "credit": "Dronepicr",
-      "source": "https://commons.wikimedia.org/wiki/File:Sigiriya_Lion_Rock_Aerial_(175658393).jpeg",
-      "license": "CC BY 3.0",
-      "width": 1600,
-      "height": 899,
-      "blurDataURL": "data:image/webp;base64,UklGRkQAAABXRUJQVlA4IDgAAADQAQCdASoQAAkAA4BaJaACdAEO0/kpAAD94668AoB45U1/JGuVsncl/a3HNYLGazf4b1MrngAAAA=="
-    }
-  ],
   "hero": [
-    {
-      "src": "/images/ella/nine-arches-little-adams-1.webp",
-      "credit": "Mohamed Aabid Ali",
-      "source": "https://commons.wikimedia.org/wiki/File:Nine_Arches_Bridge,_Sri_Lanka.jpg",
-      "license": "CC BY-SA 4.0",
-      "width": 1125,
-      "height": 2000,
-      "blurDataURL": "data:image/webp;base64,UklGRrQAAABXRUJQVlA4IKgAAAAwBACdASoQABwAPu1orU6ppiSiMAgBMB2JZAC7AYv+7LCfAvsyPbwmrgAA+6Xwp/VyMy28LzmVGs5wcXJJrN6ATaLOvsMPQCoG79Ag0zvkP7VXgAMgLLJ+rAqaWXOv+PlhwmkgcKj3kEzruaJGxDDv9A4hTXKs/BD5WIg4vViZRQJ2R4LMDuFsDDmp3LuXF2//XHvw9puma7b4abMz8ZGO5Ce/FWccAAA="
-    },
     {
       "src": "/images/mirissa/mirissa-beach-hop-1.webp",
       "credit": "Sergei Gussev",
@@ -1131,13 +581,542 @@ export const photos: Record<string, Photo[]> = {
       "blurDataURL": "data:image/webp;base64,UklGRroAAABXRUJQVlA4IK4AAAAwBACdASoQABUAPu1iqU2ppaOiMAgBMB2JbACdMoAlpRgcbBV9GReLaXAA/uhKiPCAwOvE1EeCxiqsPYrxxFFr6XJVWAkMA4bsEyEG59MIHhFpjCn4PIWpLxX93ncv+rdnG7i2z8/FqaVMNbOS0o/UaXSSdJtBkzDjRtW18y3n1/XA/n761rvJ8/3i0IBvxv87h/4E63p/qzM5/zH/R1ltQ1d/0u1ugu5/hrFMcAA="
     },
     {
-      "src": "/images/sigiriya/pidurangala-sunrise-1.webp",
-      "credit": "Manoj Samarakoon",
-      "source": "https://commons.wikimedia.org/wiki/File:Sigiriya_view_from_pidurangala.jpg",
+      "src": "/images/galle/galle-fort-1.webp",
+      "credit": "Samal Nadeeshan",
+      "source": "https://commons.wikimedia.org/wiki/File:Lighthouse_Galle,_Sri_Lanka.jpg",
       "license": "CC BY-SA 4.0",
       "width": 1600,
-      "height": 1000,
-      "blurDataURL": "data:image/webp;base64,UklGRlQAAABXRUJQVlA4IEgAAADwAQCdASoQAAoAA4BaJYgCdADz22wlxgAA/vIWlN9duRb2w0D+945mhL4PDt/6Y1co8QJjjtrw5vOqlgCWUUlIdeFe8KWc0AA="
+      "height": 1067,
+      "blurDataURL": "data:image/webp;base64,UklGRmYAAABXRUJQVlA4IFoAAADwAQCdASoQAAsAA4BaJbACdAEOkqVNTEAA/uk7eAXlj0V0PDYYFk9K6GIOxoQmYeX6TnfgMqyvaoiYbXBWEmToAXbaJ28XVFNWzssX8ca/u5NwB6Rl38RPAAA="
+    },
+    {
+      "src": "/images/galle/unawatuna-jungle-beach-1.webp",
+      "credit": "Kavindu96",
+      "source": "https://commons.wikimedia.org/wiki/File:Jungle_beach,_Galle.jpg",
+      "license": "CC BY-SA 4.0",
+      "width": 1600,
+      "height": 900,
+      "blurDataURL": "data:image/webp;base64,UklGRlwAAABXRUJQVlA4IFAAAADQAQCdASoQAAkAA4BaJbACdAEOo50WAAD+6um5gcBqtE4BmJbfsGpN+6klK2l2wBauEa8Y6heYGan8ghft75Q7Yp/uZ2XC4GPq93b7i8VAAA=="
+    }
+  ],
+  "kandy-day-trip": [
+    {
+      "src": "/images/kandy/kandy-day-trip-1.webp",
+      "credit": "Philip Nalangan",
+      "source": "https://commons.wikimedia.org/wiki/File:Sacred_Tooth_Relic_Temple_5.jpg",
+      "license": "CC BY 4.0",
+      "width": 1600,
+      "height": 1071,
+      "blurDataURL": "data:image/webp;base64,UklGRmIAAABXRUJQVlA4IFYAAADwAQCdASoQAAsAA4BaJZwAApMY1jS18uAA/aWwn9vj0L/6g/wRmeQmvB1JvR0WY+OKBEG1GWfmw1sPl7DOUBJLSy2tbs6qGcqXFnsPvobhrAAKEFMAAA=="
+    },
+    {
+      "src": "/images/kandy/region-kandy-1.webp",
+      "credit": "McKay Savage",
+      "source": "https://commons.wikimedia.org/wiki/File:Sri_Lanka_-_027_-_Kandy_lake_and_city_centre.jpg",
+      "license": "CC BY 2.0",
+      "width": 1600,
+      "height": 1200,
+      "blurDataURL": "data:image/webp;base64,UklGRmQAAABXRUJQVlA4IFgAAAAQAgCdASoQAAwAA4BaJZACdAEUU6UIvrgAAP7Fnhrs5qxe8O4JAFgoDzh1kilVlFe/oqdvfeizb6EFL4WXz1rVQgNIclPra2LVS13ANHqOTB0Z3MP6JAAA"
+    },
+    {
+      "src": "/images/kandy/kandy-day-trip-3.webp",
+      "credit": "Alexey Komarov",
+      "source": "https://commons.wikimedia.org/wiki/File:Royal_Botanical_Gardens,_Peradeniya_-_panoramio.jpg",
+      "license": "CC BY 3.0",
+      "width": 1600,
+      "height": 1067,
+      "blurDataURL": "data:image/webp;base64,UklGRloAAABXRUJQVlA4IE4AAADQAQCdASoQAAsAA4BaJbAC7AEREPmGIAD+6D3Jv301NL++v2Qfmh0OVEqQo80lBc9MUbmJFiVyF6ygRaSgkE08NA/aaArZYfx/sPEwAAA="
+    }
+  ],
+  "colombo-design-trail": [
+    {
+      "src": "/images/colombo/colombo-design-trail-1.webp",
+      "credit": "Andrés Moreno",
+      "source": "https://commons.wikimedia.org/wiki/File:The_Gallery_entrance.jpg",
+      "license": "CC BY-SA 2.0",
+      "width": 1600,
+      "height": 1200,
+      "blurDataURL": "data:image/webp;base64,UklGRlgAAABXRUJQVlA4IEwAAADwAQCdASoQAAwAA4BaJQBOgBuldvsajaAA/veCQmA/ojQ1Q4aR5iNWkqnyuG1SYFlkIR5JSZrJefEoGFbO3lknsAvUD3APGJRIAAAA"
+    },
+    {
+      "src": "/images/colombo/colombo-design-trail-2.webp",
+      "credit": "JanManu",
+      "source": "https://commons.wikimedia.org/wiki/File:Eingangsbereich-Wohnhaus_Geoffrey_Bawa-Colombo.jpg",
+      "license": "CC BY-SA 4.0",
+      "width": 1500,
+      "height": 2000,
+      "blurDataURL": "data:image/webp;base64,UklGRmYAAABXRUJQVlA4IFoAAADQAwCdASoQABUAPu1kqU4ppaOiMAgBMB2JZQC7AA3n2k79OZnWioAA7xnxNoakhVlhYmlRFjfKZ/SvHBDZL5x1EfgnemBTNHSfDdGcaRvXBv8u1OHLXoEHAAA="
+    },
+    {
+      "src": "/images/colombo/ministry-of-crab-1.webp",
+      "credit": "Kanatonian",
+      "source": "https://commons.wikimedia.org/wiki/File:Dutch_Hospital.jpg",
+      "license": "CC BY-SA 3.0",
+      "width": 1600,
+      "height": 1200,
+      "blurDataURL": "data:image/webp;base64,UklGRlgAAABXRUJQVlA4IEwAAACwAQCdASoQAAwAA4BaJZQAAo/AKr4AAP5m31NrOqe12T/z95G/uMueEoXW00ooxZwq8/y1KhNOjdU0n2zsMJA7rISuFd/t2r21BAAA"
+    }
+  ],
+  "mount-lavinia-beach": [
+    {
+      "src": "/images/colombo/mount-lavinia-beach-1.webp",
+      "credit": "dronepicr",
+      "source": "https://commons.wikimedia.org/wiki/File:Mount_Lavinia_Hotel_Sri_Lanka_(30039549556).jpg",
+      "license": "CC BY 2.0",
+      "width": 1600,
+      "height": 1067,
+      "blurDataURL": "data:image/webp;base64,UklGRmAAAABXRUJQVlA4IFQAAABQAgCdASoQAAsAA4BaJZACdAfwBjsb7BotcgAA99Pzqq5cDxn0KyvfM4zCylAdEW9+KKsURbjmgQ1X5NmO9PkeIsYZpt985hBqoaPUKLl/oHz1AAA="
+    },
+    {
+      "src": "/images/colombo/mount-lavinia-beach-2.webp",
+      "credit": "Kalaiarasy",
+      "source": "https://commons.wikimedia.org/wiki/File:Mount_Lavinia_Hotel_Beach.jpg",
+      "license": "CC BY-SA 3.0",
+      "width": 1600,
+      "height": 1200,
+      "blurDataURL": "data:image/webp;base64,UklGRloAAABXRUJQVlA4IE4AAADwAQCdASoQAAwAA4BaJaACw7DbpeRgdgAA/uJxQznjJxJzXXs69pyBB1Wtl7p9bYwCicJAWZDcpRmVufQWgY3bH45ayMkG67vypbmGAAA="
+    }
+  ],
+  "lotus-tower-port-city": [
+    {
+      "src": "/images/colombo/lotus-tower-port-city-1.webp",
+      "credit": "Mohamed Rilwan1210",
+      "source": "https://commons.wikimedia.org/wiki/File:Blue_lotus_tower.jpg",
+      "license": "CC BY-SA 4.0",
+      "width": 1600,
+      "height": 1394,
+      "blurDataURL": "data:image/webp;base64,UklGRmYAAABXRUJQVlA4IFoAAAAwAgCdASoQAA4AA4BaJbACdLoAAwkkgH0uOAD+4/+KHx1bPZbseOf5i4H8YWmL+BrqX3JRWHiTM1xvX/8cXuN/+93AZO0snfJujNf4wXHATsb0Rex+kAYAAAA="
+    },
+    {
+      "src": "/images/colombo/lotus-tower-port-city-2.webp",
+      "credit": "Saaremees",
+      "source": "https://commons.wikimedia.org/wiki/File:Lotus_Tower_Floating_Market-Colombo_Srilanka-Andres_Larin.jpg",
+      "license": "CC BY-SA 4.0",
+      "width": 1600,
+      "height": 1200,
+      "blurDataURL": "data:image/webp;base64,UklGRl4AAABXRUJQVlA4IFIAAADwAQCdASoQAAwAA4BaJZQCdACg/le5beAA/sn+m8ReHGzNdnPJez3GlI+1O61zmLEdO7XnIgQkCcA4AlGZKSDHFb3BdqHIEdobGYOT5fIQWQAA"
+    },
+    {
+      "src": "/images/colombo/lotus-tower-port-city-3.webp",
+      "credit": "Praveenshashika",
+      "source": "https://commons.wikimedia.org/wiki/File:Beautiful_Sunrise_over_the_Colombo_Skyline_as_seen_from_the_ocean.jpg",
+      "license": "CC BY-SA 4.0",
+      "width": 1600,
+      "height": 1200,
+      "blurDataURL": "data:image/webp;base64,UklGRmIAAABXRUJQVlA4IFYAAAAwAgCdASoQAAwAA4BaJbACdAEfxAliYCvYAAD+pY5ZwyMQAK6n5UTwni4aDQycjHnOes9JARIq8wQ4nsRBEDNKK8KTMVFbct03WKvslU/Yiw9M+t0YAA=="
+    }
+  ],
+  "galle-face-street-food": [
+    {
+      "src": "/images/colombo/galle-face-street-food-1.webp",
+      "credit": "Mayooresan",
+      "source": "https://commons.wikimedia.org/wiki/File:Sunset_at_Galle_Face_Colombo.JPG",
+      "license": "CC BY-SA 3.0",
+      "width": 1600,
+      "height": 1064,
+      "blurDataURL": "data:image/webp;base64,UklGRkwAAABXRUJQVlA4IEAAAAAQAgCdASoQAAsAA4BaJagCdH8AFd4HNysAAPjgblhRRujf/ei1m/qFzdz2Ff46V9WT80II1kDuAjVW7YZ3AAAA"
+    },
+    {
+      "src": "/images/colombo/galle-face-street-food-2.webp",
+      "credit": "Jorge Láscar from Australia",
+      "source": "https://commons.wikimedia.org/wiki/File:Galle_Face_Green_(5439939147).jpg",
+      "license": "CC BY 2.0",
+      "width": 1600,
+      "height": 1063,
+      "blurDataURL": "data:image/webp;base64,UklGRkoAAABXRUJQVlA4ID4AAACQAQCdASoQAAsAA4BaJYwAAo4WqAAA/uZ/68TxuxSHk7iNBLTWD9nTNjxzq0/ixzqvmD5zPu97q8ubLUAAAA=="
+    },
+    {
+      "src": "/images/colombo/nye-colombo-rooftop-3.webp",
+      "credit": "AKS.9955",
+      "source": "https://commons.wikimedia.org/wiki/File:Twilight_(Galle_Face_Green)_03.jpg",
+      "license": "CC BY-SA 4.0",
+      "width": 1600,
+      "height": 1067,
+      "blurDataURL": "data:image/webp;base64,UklGRlIAAABXRUJQVlA4IEYAAADwAQCdASoQAAsAA4BaJYgCdADcHhX9DbAA/tDu4ctdw2nVCn6mjCnWsAhkNWndgWoU1pTRBM9oEcegMYfwmGVr2oB0mzAA"
+    }
+  ],
+  "casino-night": [
+    {
+      "src": "/images/colombo/colombo-club-night-2.webp",
+      "credit": "Gihanud2001",
+      "source": "https://commons.wikimedia.org/wiki/File:Colombo_night_skyline_2024.png",
+      "license": "CC0",
+      "width": 1440,
+      "height": 1080,
+      "blurDataURL": "data:image/webp;base64,UklGRlwAAABXRUJQVlA4IFAAAADwAQCdASoQAAwAA4BaJYwC7AEO5rPU1gAA/oKRqU3gskVizE/1Wgc5shhhslVLAz21Dt1T/Ev7X4CV4symJAUvpqlOjP4QWrR0RWB68TwAAA=="
+    },
+    {
+      "src": "/images/colombo/colombo-club-night-1.webp",
+      "credit": "Gihanud2001",
+      "source": "https://commons.wikimedia.org/wiki/File:Colombo_city_skyline_at_night.png",
+      "license": "CC0",
+      "width": 1440,
+      "height": 1080,
+      "blurDataURL": "data:image/webp;base64,UklGRmQAAABXRUJQVlA4IFgAAAAwAgCdASoQAAwAA4BaJbACdGuAAoXCzcueAAD+6doiZUiqNsHuHgZig3KaIylcTuDtH9iOPsLVgZ3aZyhuibfyBLdcdQpHtfociyYRbp3iu7W8b5MJlAAA"
+    }
+  ],
+  "pub-golf-colombo": [
+    {
+      "src": "/images/colombo/pub-golf-colombo-1.webp",
+      "credit": "Shamli071",
+      "source": "https://commons.wikimedia.org/wiki/File:Night_View_of_Galle_Face_Hotel..JPG",
+      "license": "CC BY-SA 3.0",
+      "width": 1600,
+      "height": 1067,
+      "blurDataURL": "data:image/webp;base64,UklGRjoAAABXRUJQVlA4IC4AAADQAQCdASoQAAsAA4BaJaQAAudmz9F0AAD++b+HRDPZrcADgPaksI+yH85c6AAA"
+    },
+    {
+      "src": "/images/colombo/pub-golf-colombo-2.webp",
+      "credit": "Bernard Gagnon",
+      "source": "https://commons.wikimedia.org/wiki/File:Galle_Face_Hotel_02.jpg",
+      "license": "CC BY-SA 3.0",
+      "width": 1600,
+      "height": 1200,
+      "blurDataURL": "data:image/webp;base64,UklGRnIAAABXRUJQVlA4IGYAAACQAgCdASoQAAwAA4BaJZgCdH8AgrTBVMdvoaf9AAD+6ACyjyfDkRwL7H8ca0nb29gAVu0PXN85ppPVlD4PJKJ7ksVFXLGX5eJ2/+XpaNCGOtcptG/hfx/rlrWtPg4Kqpzy1EwAAAA="
+    },
+    {
+      "src": "/images/colombo/colombo-club-night-1.webp",
+      "credit": "Gihanud2001",
+      "source": "https://commons.wikimedia.org/wiki/File:Colombo_city_skyline_at_night.png",
+      "license": "CC0",
+      "width": 1440,
+      "height": 1080,
+      "blurDataURL": "data:image/webp;base64,UklGRmQAAABXRUJQVlA4IFgAAAAwAgCdASoQAAwAA4BaJbACdGuAAoXCzcueAAD+6doiZUiqNsHuHgZig3KaIylcTuDtH9iOPsLVgZ3aZyhuibfyBLdcdQpHtfociyYRbp3iu7W8b5MJlAAA"
+    }
+  ],
+  "scuba-diving": [
+    {
+      "src": "/images/galle/scuba-diving-1.webp",
+      "credit": "tmc1233",
+      "source": "https://commons.wikimedia.org/wiki/File:Underwater_images_of_Unawatuna_173.jpg",
+      "license": "CC BY 2.0",
+      "width": 1600,
+      "height": 1200,
+      "blurDataURL": "data:image/webp;base64,UklGRmQAAABXRUJQVlA4IFgAAADwAQCdASoQAAwAA4BaJbACdADxNop9fIAA9Gg5tR9NQKWohKufRzbCqFFk5uE9q/AJSG/U5SMZ6DtNboHu8SZXSsJv+Qv/k32yeSt//C5Dp/ZfVNhxLQAA"
+    },
+    {
+      "src": "/images/hikkaduwa/hikkaduwa-turtles-2.webp",
+      "credit": "Janindu wijesoorya",
+      "source": "https://commons.wikimedia.org/wiki/File:Hikkaduwa_under_water.jpg",
+      "license": "CC BY-SA 4.0",
+      "width": 1600,
+      "height": 900,
+      "blurDataURL": "data:image/webp;base64,UklGRkoAAABXRUJQVlA4ID4AAADQAQCdASoQAAkAA4BaJYgCdACXrjQbAAD1w8MjnppCripLr+6C5A2+QxWx4hYacqysM6XM99HJaTdCT8AAAA=="
+    },
+    {
+      "src": "/images/hikkaduwa/hikkaduwa-turtles-1.webp",
+      "credit": "Chamixth",
+      "source": "https://commons.wikimedia.org/wiki/File:Hikkaduwa_Turtle.jpg",
+      "license": "CC BY-SA 4.0",
+      "width": 1600,
+      "height": 1067,
+      "blurDataURL": "data:image/webp;base64,UklGRkYAAABXRUJQVlA4IDoAAADwAQCdASoQAAsAA4BaJbACdADdpzVODAAA/r2RR7f29wRn3bYdGW+aUYlyAVX+Le9bXeLVrQQU1AAA"
+    }
+  ],
+  "tea-and-stilts": [
+    {
+      "src": "/images/galle/tea-and-stilts-1.webp",
+      "credit": "Jakub Hałun",
+      "source": "https://commons.wikimedia.org/wiki/File:Fishermen_practicing_traditional_stilt_fishing_near_Galle,_southern_Sri_Lanka,_20260207_1420_9464.jpg",
+      "license": "CC BY 4.0",
+      "width": 1600,
+      "height": 1068,
+      "blurDataURL": "data:image/webp;base64,UklGRkQAAABXRUJQVlA4IDgAAADwAQCdASoQAAsAA4BaJZQCdAEO4qwfcgAA/uGd2/7LRbsC0v0OO6EzOPdE+2uKSQ0dvYoVL6IAAA=="
+    },
+    {
+      "src": "/images/galle/tea-and-stilts-2.webp",
+      "credit": "Jakub Hałun",
+      "source": "https://commons.wikimedia.org/wiki/File:Fishermen_practicing_traditional_stilt_fishing_in_Koggala_near_Galle,_southern_Sri_Lanka,_20260207_1421_9473.jpg",
+      "license": "CC BY 4.0",
+      "width": 1335,
+      "height": 2000,
+      "blurDataURL": "data:image/webp;base64,UklGRmQAAABXRUJQVlA4IFgAAAAQBACdASoQABgAPu1iqU2ppaQiMAgBMB2JZQC7ACHw1zgrH5fgtFqZ4AD+30xKXHbskT433l0U9hf2MRHU2Vf9oe1cS23Obn+ksJBd3QxwQto5r+R4uAAA"
+    }
+  ],
+  "bentota-water-sports": [
+    {
+      "src": "/images/bentota/bentota-water-sports-1.webp",
+      "credit": "Hafiz Issadeen (YIM Hafiz), Dharga Town, Sri Lanka (https://www.flickr.com/photos/yimhafiz/)",
+      "source": "https://commons.wikimedia.org/wiki/File:Bentota_river.jpg",
+      "license": "CC BY 2.0",
+      "width": 1600,
+      "height": 1065,
+      "blurDataURL": "data:image/webp;base64,UklGRlIAAABXRUJQVlA4IEYAAADwAQCdASoQAAsAA4BaJZgCdAEUntoguQAA/vT6Jj6qBt4GHSANInVG1vlpA0vvLFtWOcfmk98qYOM6t2K4Mn254/rR8AAA"
+    },
+    {
+      "src": "/images/bentota/bentota-water-sports-2.webp",
+      "credit": "Pavan Lulla",
+      "source": "https://commons.wikimedia.org/wiki/File:Bentota_Beach_-_panoramio_(1).jpg",
+      "license": "CC BY 3.0",
+      "width": 1600,
+      "height": 1067,
+      "blurDataURL": "data:image/webp;base64,UklGRlgAAABXRUJQVlA4IEwAAADwAQCdASoQAAsAA4BaJbACdAEUf/sLhQAA/uJml+nwm8AQXi6+QtpY1JyUud9TMcR0Li+nIXZAJC/G5Eic1Afssza8eLJ3jopIAAAA"
+    },
+    {
+      "src": "/images/bentota/bentota-water-sports-3.webp",
+      "credit": "Balou46",
+      "source": "https://commons.wikimedia.org/wiki/File:LK-aluthgama-bentota-river-01.jpg",
+      "license": "CC BY-SA 3.0",
+      "width": 1600,
+      "height": 1067,
+      "blurDataURL": "data:image/webp;base64,UklGRmYAAABXRUJQVlA4IFoAAADwAQCdASoQAAsAA4BaJaACdADMiZ3o6yAA/uzYDs+Yx6WVPQVGSAmMH3ob1ZEzjDuq5qUL1vEuP1BmSCgruAE7vTHFhLlHEUFlEVF0cXv1MMXMTJmjpAsAAAA="
+    }
+  ],
+  "madu-river-safari": [
+    {
+      "src": "/images/bentota/madu-river-safari-1.webp",
+      "credit": "Kalaiarasy",
+      "source": "https://commons.wikimedia.org/wiki/File:Maduganga_Mangrove.jpg",
+      "license": "CC BY-SA 3.0",
+      "width": 1600,
+      "height": 1200,
+      "blurDataURL": "data:image/webp;base64,UklGRlYAAABXRUJQVlA4IEoAAACwAQCdASoQAAwAA4BaJQAAL1ZuwcOgAP2U7qHZIUDrp0SManKrNDskKcE48An4lOjf2d8tvFfOIJGxW/q4lJeMAtX+IUMK2uAAAA=="
+    },
+    {
+      "src": "/images/bentota/madu-river-safari-2.webp",
+      "credit": "Christian Löhner diren89",
+      "source": "https://commons.wikimedia.org/wiki/File:Kothduwa_Temple,_Sri_Lanka_2015_(Unsplash).jpg",
+      "license": "CC0",
+      "width": 1600,
+      "height": 1067,
+      "blurDataURL": "data:image/webp;base64,UklGRk4AAABXRUJQVlA4IEIAAAAQAgCdASoQAAsAA4BaJZQC7AEPEQHTNnpgAP4GIRdElvuX/CMiI9Uu0xj3Mruwxl1yAuqqGCN7NYNJ8a/Dp0MAAAA="
+    },
+    {
+      "src": "/images/bentota/madu-river-safari-3.webp",
+      "credit": "Antony Stanley from Gloucester, UK",
+      "source": "https://commons.wikimedia.org/wiki/File:Turtle_Sanctuary,_Kosgoda_(9824634943).jpg",
+      "license": "CC BY-SA 2.0",
+      "width": 1600,
+      "height": 1236,
+      "blurDataURL": "data:image/webp;base64,UklGRmQAAABXRUJQVlA4IFgAAAAQAgCdASoQAAwAA4BaJaQAD4wPq7NgVZmAAP286XYd5JT0lD4GJ9wfVpt6nYBdBmdeoI5xmgQ25OIckz3AtiKqZeHr6Ius+WmxPlSjA/G2+8RGgz6agAAA"
+    }
+  ],
+  "secret-jungle-party": [
+    {
+      "src": "/images/hiriketiya/secret-jungle-party-1.webp",
+      "credit": "KingAlawaka",
+      "source": "https://commons.wikimedia.org/wiki/File:Boatsblueisland.jpg",
+      "license": "CC BY-SA 4.0",
+      "width": 1600,
+      "height": 1386,
+      "blurDataURL": "data:image/webp;base64,UklGRlIAAABXRUJQVlA4IEYAAACwAQCdASoQAA4AA4BaJYwCdAERF60cAP7po5sMdcHozdW0HY2CYYrhbGU89qCmEDAnAuphYd99MfJ5CofxPnYucAOuJkAA"
+    },
+    {
+      "src": "/images/hiriketiya/secret-jungle-party-2.webp",
+      "credit": "Shamilapathirana",
+      "source": "https://commons.wikimedia.org/wiki/File:Dickwella_beach.jpg",
+      "license": "CC BY-SA 4.0",
+      "width": 1600,
+      "height": 1200,
+      "blurDataURL": "data:image/webp;base64,UklGRloAAABXRUJQVlA4IE4AAADQAQCdASoQAAwAA4BaJYwCdADz4BaZIAD+335Dq8S4ymbUTcbu3gWvOsM9FBUHZ7mi6yRe0GzksPeQfsdvaGR/Cwf0p2xm+1mKLuElwAA="
+    }
+  ],
+  "pub-golf-galle": [
+    {
+      "src": "/images/galle/pub-golf-galle-1.webp",
+      "credit": "Dan arndt",
+      "source": "https://commons.wikimedia.org/wiki/File:Fort_Printers_at_Night.jpg",
+      "license": "CC BY-SA 4.0",
+      "width": 1600,
+      "height": 1065,
+      "blurDataURL": "data:image/webp;base64,UklGRkoAAABXRUJQVlA4ID4AAACQAQCdASoQAAsAA4BaJYwAAtYu6AAA/vkX8c1Zahws+j1L+Zq+0sgOUNJkOI5g/Cqt+LUXrkPeW00ndtAAAA=="
+    },
+    {
+      "src": "/images/galle/pub-golf-galle-2.webp",
+      "credit": "Dan arndt",
+      "source": "https://commons.wikimedia.org/wiki/File:Galle_Fort_Hotel_(sign).jpg",
+      "license": "CC BY-SA 4.0",
+      "width": 1600,
+      "height": 1067,
+      "blurDataURL": "data:image/webp;base64,UklGRnAAAABXRUJQVlA4IGQAAABwAgCdASoQAAsAA4BaJaACdAYwxymNW7+wubLAAN5nTFzRWTk+OTf0C8TX2kg1aLDKQI1LrH2ntnXvngjDVeRPb3xvemi6DXA6BjL7P41HKagfOSp5Fk0+e7UhB9mwJ/wjf0AA"
+    },
+    {
+      "src": "/images/galle/pub-golf-galle-3.webp",
+      "credit": "calflier001",
+      "source": "https://commons.wikimedia.org/wiki/File:GALLE_FORT_AT_NIGHT_SRI_LANKA_JAN_2013_(8509041917).jpg",
+      "license": "CC BY-SA 2.0",
+      "width": 1600,
+      "height": 991,
+      "blurDataURL": "data:image/webp;base64,UklGRlIAAABXRUJQVlA4IEYAAACwAQCdASoQAAoAA4BaJQBOgCHS4MiQAP75wWOon1oPK+QIlnex96yHTXeS5kriFizE0IOC0rzYztPiZPixk3IAmWKFAAAA"
+    }
+  ],
+  "nye-mount-lavinia": [
+    {
+      "src": "/images/colombo/nye-mount-lavinia-1.webp",
+      "credit": "Hemaka Pathiranage",
+      "source": "https://commons.wikimedia.org/wiki/File:Mount_Lavinia_(1_of_1).jpg",
+      "license": "CC BY-SA 4.0",
+      "width": 1600,
+      "height": 1067,
+      "blurDataURL": "data:image/webp;base64,UklGRnYAAABXRUJQVlA4IGoAAAAwAgCdASoQAAsAA4BaJbACdLoAAjy+K7GOAAD+5gRZF/2FKl0KIa5r2o9wMR1YgE5bDI7vTtMDTzbVO4DD/2c25X3jGERb6Y1iyNvb5ExUB5c7r//xLBT+VFU26YdFJcvP+U+p579JaAAA"
+    },
+    {
+      "src": "/images/colombo/mount-lavinia-beach-1.webp",
+      "credit": "dronepicr",
+      "source": "https://commons.wikimedia.org/wiki/File:Mount_Lavinia_Hotel_Sri_Lanka_(30039549556).jpg",
+      "license": "CC BY 2.0",
+      "width": 1600,
+      "height": 1067,
+      "blurDataURL": "data:image/webp;base64,UklGRmAAAABXRUJQVlA4IFQAAABQAgCdASoQAAsAA4BaJZACdAfwBjsb7BotcgAA99Pzqq5cDxn0KyvfM4zCylAdEW9+KKsURbjmgQ1X5NmO9PkeIsYZpt985hBqoaPUKLl/oHz1AAA="
+    }
+  ],
+  "nye-galle-fort": [
+    {
+      "src": "/images/galle/nye-galle-fort-1.webp",
+      "credit": "calflier001",
+      "source": "https://commons.wikimedia.org/wiki/File:MUSLIM_CHURCH_AT_NIGHT_GALLE_FORT_SRI_LANKA_JAN_2013_(8623449340).jpg",
+      "license": "CC BY-SA 2.0",
+      "width": 1600,
+      "height": 1217,
+      "blurDataURL": "data:image/webp;base64,UklGRmIAAABXRUJQVlA4IFYAAADwAQCdASoQAAwAA4BaJYwCdADwyM32mAAA/vnI7iIQq9QLQoBOW7EuLPIFInwQ8SbuWYuwppx1RmRhG4F3AjRhkwuazSuNkmeB3GtVJWEaoSlStITgAA=="
+    },
+    {
+      "src": "/images/galle/pub-golf-galle-1.webp",
+      "credit": "Dan arndt",
+      "source": "https://commons.wikimedia.org/wiki/File:Fort_Printers_at_Night.jpg",
+      "license": "CC BY-SA 4.0",
+      "width": 1600,
+      "height": 1065,
+      "blurDataURL": "data:image/webp;base64,UklGRkoAAABXRUJQVlA4ID4AAACQAQCdASoQAAsAA4BaJYwAAtYu6AAA/vkX8c1Zahws+j1L+Zq+0sgOUNJkOI5g/Cqt+LUXrkPeW00ndtAAAA=="
+    },
+    {
+      "src": "/images/galle/galle-fort-1.webp",
+      "credit": "Samal Nadeeshan",
+      "source": "https://commons.wikimedia.org/wiki/File:Lighthouse_Galle,_Sri_Lanka.jpg",
+      "license": "CC BY-SA 4.0",
+      "width": 1600,
+      "height": 1067,
+      "blurDataURL": "data:image/webp;base64,UklGRmYAAABXRUJQVlA4IFoAAADwAQCdASoQAAsAA4BaJbACdAEOkqVNTEAA/uk7eAXlj0V0PDYYFk9K6GIOxoQmYeX6TnfgMqyvaoiYbXBWEmToAXbaJ28XVFNWzssX8ca/u5NwB6Rl38RPAAA="
+    }
+  ],
+  "addon-playdium": [
+    {
+      "src": "/images/colombo/addon-playdium-1.webp",
+      "credit": "TheSriLankaLK",
+      "source": "https://commons.wikimedia.org/wiki/File:Colombo_One_Galle_Face.jpg",
+      "license": "CC BY-SA 4.0",
+      "width": 1600,
+      "height": 1011,
+      "blurDataURL": "data:image/webp;base64,UklGRmIAAABXRUJQVlA4IFYAAAAQAgCdASoQAAoAA4BaJZgCdAEPNEY0ia6QAP73mLSjvuvnkJpSEwaFmMAxogsAt4rWLq3LFtAxY+2wM2PVUcbCkgfA/Ussk02cvvGo0v7phEWDMAAAAA=="
+    }
+  ],
+  "addon-spa": [
+    {
+      "src": "/images/misc/addon-spa-1.webp",
+      "credit": "Ch-info.ch",
+      "source": "https://commons.wikimedia.org/wiki/File:Ayurweda_kopfmassage.JPG",
+      "license": "CC BY 3.0",
+      "width": 1560,
+      "height": 2000,
+      "blurDataURL": "data:image/webp;base64,UklGRrgAAABXRUJQVlA4IKwAAAAwBACdASoQABUAPu1iqU2ppaOiMAgBMB2JYgCdACIJLAmQuUOqtD6EH7AA/un6Kwa8YnMbte+0FJ/vQM+TgI8Vs7++glFS8IZBo2FerWgDo93kr1U788BsdpHqmz7rKvM8IpLHhfNh9qUd8eKr/NU8tRK3+enbLKxn6fE1bhuOjHyLW0qpzNpMPpHKs9kegwfDAuxgQ8ASDhf/Pjit7ffOxgWkdTe3/B29p4AA"
+    }
+  ],
+  "addon-kottu": [
+    {
+      "src": "/images/colombo/addon-kottu-1.webp",
+      "credit": "Dankesie",
+      "source": "https://commons.wikimedia.org/wiki/File:Kottu_Roti_(mit_Meeresfr%C3%BCchten).jpg",
+      "license": "CC BY-SA 4.0",
+      "width": 1600,
+      "height": 1200,
+      "blurDataURL": "data:image/webp;base64,UklGRoAAAABXRUJQVlA4IHQAAACQAgCdASoQAAwAA4BaJbACdAYuH20tG2JwgDMPoAD+3aFqYSulie/tRVZhwfDOESad4Ya8laM/pZTTn0jcrOj6ObOny3HexFRSSWGWhqn3LG5YkHJo5lBfyKAC1C8RQ/litaKFnXOSmroHrYxrh+c5oAAAAA=="
+    }
+  ],
+  "addon-snorkel": [
+    {
+      "src": "/images/galle/unawatuna-jungle-beach-1.webp",
+      "credit": "Kavindu96",
+      "source": "https://commons.wikimedia.org/wiki/File:Jungle_beach,_Galle.jpg",
+      "license": "CC BY-SA 4.0",
+      "width": 1600,
+      "height": 900,
+      "blurDataURL": "data:image/webp;base64,UklGRlwAAABXRUJQVlA4IFAAAADQAQCdASoQAAkAA4BaJbACdAEOo50WAAD+6um5gcBqtE4BmJbfsGpN+6klK2l2wBauEa8Y6heYGan8ghft75Q7Yp/uZ2XC4GPq93b7i8VAAA=="
+    },
+    {
+      "src": "/images/galle/scuba-diving-1.webp",
+      "credit": "tmc1233",
+      "source": "https://commons.wikimedia.org/wiki/File:Underwater_images_of_Unawatuna_173.jpg",
+      "license": "CC BY 2.0",
+      "width": 1600,
+      "height": 1200,
+      "blurDataURL": "data:image/webp;base64,UklGRmQAAABXRUJQVlA4IFgAAADwAQCdASoQAAwAA4BaJbACdADxNop9fIAA9Gg5tR9NQKWohKufRzbCqFFk5uE9q/AJSG/U5SMZ6DtNboHu8SZXSsJv+Qv/k32yeSt//C5Dp/ZfVNhxLQAA"
+    }
+  ],
+  "addon-catamaran": [
+    {
+      "src": "/images/mirissa/addon-catamaran-1.webp",
+      "credit": "Ji-Elle",
+      "source": "https://commons.wikimedia.org/wiki/File:Mirissa-Catamaran.jpg",
+      "license": "CC BY-SA 3.0",
+      "width": 1500,
+      "height": 2000,
+      "blurDataURL": "data:image/webp;base64,UklGRmoAAABXRUJQVlA4IF4AAADQAwCdASoQABUAPu1krU2ppaSiMAgBMB2JYwC06B5Ul0Hje6P9cYAA/t7sZJmlE25adTveDYEqnjUjxgbCKM9r3IMYb7tOCMDX5XqATIM3YsqonhQq9dyU+5APP4AA"
+    }
+  ],
+  "addon-cooking": [
+    {
+      "src": "/images/galle/addon-cooking-1.webp",
+      "credit": "Peter van der Sluijs",
+      "source": "https://commons.wikimedia.org/wiki/File:Making_curry_Sri_Lanka.jpg",
+      "license": "CC BY-SA 3.0",
+      "width": 1600,
+      "height": 1067,
+      "blurDataURL": "data:image/webp;base64,UklGRl4AAABXRUJQVlA4IFIAAABQAgCdASoQAAsAA4BaJQBOgCKfJyXHb8KZgAAA/tvgE09zJOGWbv8eMQWsC1fevRctcuFK7v7r/UlvFe2KFV4Y47gD+8DBlRLk00ulli/sAAAA"
+    }
+  ],
+  "addon-turtle-hatchery": [
+    {
+      "src": "/images/galle/addon-turtle-hatchery-1.webp",
+      "credit": "Dan Lundberg",
+      "source": "https://commons.wikimedia.org/wiki/File:20160129_Sri_Lanka_4191_Habaraduwa_sRGB_(25139072394).jpg",
+      "license": "CC BY-SA 2.0",
+      "width": 1600,
+      "height": 1200,
+      "blurDataURL": "data:image/webp;base64,UklGRm4AAABXRUJQVlA4IGIAAAAwAgCdASoQAAwAA4BaJagCdAEfPFgikHpvAAD+jz4ID2nwFCS0FWl5nh6jdhFkH6046wfmRzet/3mdqs42P1Hgdda/CErFyjaD/gcmeZZnVh07RYG5g3mt2H/D7u9i3s2gAA=="
+    }
+  ],
+  "addon-stilt": [
+    {
+      "src": "/images/galle/tea-and-stilts-2.webp",
+      "credit": "Jakub Hałun",
+      "source": "https://commons.wikimedia.org/wiki/File:Fishermen_practicing_traditional_stilt_fishing_in_Koggala_near_Galle,_southern_Sri_Lanka,_20260207_1421_9473.jpg",
+      "license": "CC BY 4.0",
+      "width": 1335,
+      "height": 2000,
+      "blurDataURL": "data:image/webp;base64,UklGRmQAAABXRUJQVlA4IFgAAAAQBACdASoQABgAPu1iqU2ppaQiMAgBMB2JZQC7ACHw1zgrH5fgtFqZ4AD+30xKXHbskT433l0U9hf2MRHU2Vf9oe1cS23Obn+ksJBd3QxwQto5r+R4uAAA"
+    }
+  ],
+  "addon-peace-pagoda": [
+    {
+      "src": "/images/galle/addon-peace-pagoda-1.webp",
+      "credit": "Dilshaan_99",
+      "source": "https://commons.wikimedia.org/wiki/File:Japanese_Peace_Pagoda_Rumassala.jpg",
+      "license": "CC BY-SA 3.0",
+      "width": 1500,
+      "height": 2000,
+      "blurDataURL": "data:image/webp;base64,UklGRogAAABXRUJQVlA4IHwAAAAwBACdASoQABUAPu1iqU2ppaOiMAgBMB2JagCdAB9lS9YMe9pdBq42xwAA/hUh3bdBkizs2Pgn5MLuvcqSzofVfCWxnqNMhLHpfVM9dlhgzfH1xctv38dHzqY71bZwizMp/XtZ/iRUebwQg3wmsAPNeTf/WCdKdkxO4AAA"
+    }
+  ],
+  "region-bentota": [
+    {
+      "src": "/images/bentota/region-bentota-1.webp",
+      "credit": "Pavan Lulla",
+      "source": "https://commons.wikimedia.org/wiki/File:Bentota_Beach_-_panoramio_(3).jpg",
+      "license": "CC BY 3.0",
+      "width": 1600,
+      "height": 995,
+      "blurDataURL": "data:image/webp;base64,UklGRlQAAABXRUJQVlA4IEgAAADQAQCdASoQAAoAA4BaJaACdACzNKzwAADieH2UqMZN1+rlult/+5iNO6R9ElVGpK5OS7VKhFXMf/wUFi5Y3crZ4pRxiS0AAAA="
+    }
+  ],
+  "region-hiriketiya": [
+    {
+      "src": "/images/hiriketiya/secret-jungle-party-2.webp",
+      "credit": "Shamilapathirana",
+      "source": "https://commons.wikimedia.org/wiki/File:Dickwella_beach.jpg",
+      "license": "CC BY-SA 4.0",
+      "width": 1600,
+      "height": 1200,
+      "blurDataURL": "data:image/webp;base64,UklGRloAAABXRUJQVlA4IE4AAADQAQCdASoQAAwAA4BaJYwCdADz4BaZIAD+335Dq8S4ymbUTcbu3gWvOsM9FBUHZ7mi6yRe0GzksPeQfsdvaGR/Cwf0p2xm+1mKLuElwAA="
     }
   ]
 };
