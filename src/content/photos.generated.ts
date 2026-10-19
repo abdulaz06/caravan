@@ -559,17 +559,6 @@ export const photos: Record<string, Photo[]> = {
       "blurDataURL": "data:image/webp;base64,UklGRlwAAABXRUJQVlA4IFAAAAAwAgCdASoQAAwAA4BaJaACdAELz9x08/qMQAD+mPm2XdiHteFoOrctlDqlYEu7t+fKPXojoK73DbBrZyjmc6wrf4pEVDTQa5aCI55k+AAAAA=="
     }
   ],
-  "region-kandy": [
-    {
-      "src": "/images/kandy/region-kandy-1.webp",
-      "credit": "McKay Savage",
-      "source": "https://commons.wikimedia.org/wiki/File:Sri_Lanka_-_027_-_Kandy_lake_and_city_centre.jpg",
-      "license": "CC BY 2.0",
-      "width": 1600,
-      "height": 1200,
-      "blurDataURL": "data:image/webp;base64,UklGRmQAAABXRUJQVlA4IFgAAAAQAgCdASoQAAwAA4BaJZACdAEUU6UIvrgAAP7Fnhrs5qxe8O4JAFgoDzh1kilVlFe/oqdvfeizb6EFL4WXz1rVQgNIclPra2LVS13ANHqOTB0Z3MP6JAAA"
-    }
-  ],
   "hero": [
     {
       "src": "/images/mirissa/mirissa-beach-hop-1.webp",
@@ -597,35 +586,6 @@ export const photos: Record<string, Photo[]> = {
       "width": 1600,
       "height": 900,
       "blurDataURL": "data:image/webp;base64,UklGRlwAAABXRUJQVlA4IFAAAADQAQCdASoQAAkAA4BaJbACdAEOo50WAAD+6um5gcBqtE4BmJbfsGpN+6klK2l2wBauEa8Y6heYGan8ghft75Q7Yp/uZ2XC4GPq93b7i8VAAA=="
-    }
-  ],
-  "kandy-day-trip": [
-    {
-      "src": "/images/kandy/kandy-day-trip-1.webp",
-      "credit": "Philip Nalangan",
-      "source": "https://commons.wikimedia.org/wiki/File:Sacred_Tooth_Relic_Temple_5.jpg",
-      "license": "CC BY 4.0",
-      "width": 1600,
-      "height": 1071,
-      "blurDataURL": "data:image/webp;base64,UklGRmIAAABXRUJQVlA4IFYAAADwAQCdASoQAAsAA4BaJZwAApMY1jS18uAA/aWwn9vj0L/6g/wRmeQmvB1JvR0WY+OKBEG1GWfmw1sPl7DOUBJLSy2tbs6qGcqXFnsPvobhrAAKEFMAAA=="
-    },
-    {
-      "src": "/images/kandy/region-kandy-1.webp",
-      "credit": "McKay Savage",
-      "source": "https://commons.wikimedia.org/wiki/File:Sri_Lanka_-_027_-_Kandy_lake_and_city_centre.jpg",
-      "license": "CC BY 2.0",
-      "width": 1600,
-      "height": 1200,
-      "blurDataURL": "data:image/webp;base64,UklGRmQAAABXRUJQVlA4IFgAAAAQAgCdASoQAAwAA4BaJZACdAEUU6UIvrgAAP7Fnhrs5qxe8O4JAFgoDzh1kilVlFe/oqdvfeizb6EFL4WXz1rVQgNIclPra2LVS13ANHqOTB0Z3MP6JAAA"
-    },
-    {
-      "src": "/images/kandy/kandy-day-trip-3.webp",
-      "credit": "Alexey Komarov",
-      "source": "https://commons.wikimedia.org/wiki/File:Royal_Botanical_Gardens,_Peradeniya_-_panoramio.jpg",
-      "license": "CC BY 3.0",
-      "width": 1600,
-      "height": 1067,
-      "blurDataURL": "data:image/webp;base64,UklGRloAAABXRUJQVlA4IE4AAADQAQCdASoQAAsAA4BaJbAC7AEREPmGIAD+6D3Jv301NL++v2Qfmh0OVEqQo80lBc9MUbmJFiVyF6ygRaSgkE08NA/aaArZYfx/sPEwAAA="
     }
   ],
   "colombo-design-trail": [
