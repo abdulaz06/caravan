@@ -970,9 +970,9 @@ export const photos: Record<string, Photo[]> = {
       "blurDataURL": "data:image/webp;base64,UklGRlIAAABXRUJQVlA4IEYAAADwAQCdASoQAAsAA4BaJYgCdADcHhX9DbAA/tDu4ctdw2nVCn6mjCnWsAhkNWndgWoU1pTRBM9oEcegMYfwmGVr2oB0mzAA"
     }
   ],
-  "chill": [
+  "stay-in": [
     {
-      "src": "/images/misc/chill-1.webp",
+      "src": "/images/misc/stay-in-1.webp",
       "credit": "Recal Media recalmedia",
       "source": "https://commons.wikimedia.org/wiki/File:Negombo_Beach_resort_pool_(Unsplash).jpg",
       "license": "CC0",
@@ -981,7 +981,7 @@ export const photos: Record<string, Photo[]> = {
       "blurDataURL": "data:image/webp;base64,UklGRlwAAABXRUJQVlA4IFAAAADQAQCdASoQAAsAA4BaJZgCdADGGlE2sAD+9e1t0GuipNW1tbGdFEcGquTlzWRIo+okL9RSMKB5XKz9zADsS9hNJOm1bTp3HC07bwpeGGAAAA=="
     },
     {
-      "src": "/images/misc/chill-2.webp",
+      "src": "/images/misc/stay-in-2.webp",
       "credit": "Xandrium",
       "source": "https://commons.wikimedia.org/wiki/File:Thiranagama_village_Sri_Lanka_Haritha_Villas.png",
       "license": "CC0",

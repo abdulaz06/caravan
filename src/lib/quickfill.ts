@@ -14,13 +14,14 @@ import {
   type RegionId,
 } from "@/content";
 import {
+  STAY,
   clearAllPicks,
-  isChill,
   isPick,
+  isStay,
   normalize,
   nyeIndex,
+  optionCounts,
   optionFor,
-  pairUsage,
   type ItineraryData,
 } from "./itinerary";
 import { buildTimeline } from "./timeline";
@@ -69,23 +70,33 @@ function fill(input: ItineraryData, route: RegionId[], rng: Rng, onlyEmpty: bool
   const data = onlyEmpty ? structuredClone(input) : clearAllPicks(input);
   const n = data.days.length;
   const nye = nyeIndex(data);
-  const used = new Set(pairUsage(data).keys());
+  // Variety: never repeat the exact same option in a quick fill, and lightly
+  // prefer pairs that haven't been touched (manual picks can repeat freely).
+  const usedOptions = new Set(optionCounts(data).keys());
+  const usedPairs = new Map<string, number>();
   let vibeSum = 0;
   let vibeCount = 0;
   for (const d of data.days) {
-    for (const o of [optionFor(d.day), optionFor(d.night)]) {
+    for (const p of [d.day, d.night]) {
+      if (isPick(p)) usedPairs.set(p.pairId, (usedPairs.get(p.pairId) ?? 0) + 1);
+      const o = optionFor(p);
       if (o) {
         vibeSum += o.vibe;
         vibeCount++;
-      }
+      } else if (isStay(p)) vibeCount++;
     }
   }
   const balancePenalty = (v: number) => Math.abs((vibeSum + v) / (vibeCount + 1));
   const take = (o: Option, pair: Pair) => {
-    used.add(pair.id);
+    usedOptions.add(o.id);
+    usedPairs.set(pair.id, (usedPairs.get(pair.id) ?? 0) + 1);
     vibeSum += o.vibe;
     vibeCount++;
     return { pairId: pair.id, optionId: o.id };
+  };
+  const stay = () => {
+    vibeCount++;
+    return { ...STAY };
   };
 
   // Pass 1 — daytime, following the route.
@@ -94,17 +105,23 @@ function fill(input: ItineraryData, route: RegionId[], rng: Rng, onlyEmpty: bool
     const d = data.days[i];
     const target = route[i] ?? route[route.length - 1];
     if (d.day) {
-      loc = optionFor(d.day)!.region;
+      const o = optionFor(d.day);
+      if (o) loc = o.region;
       continue;
     }
     if (i === 0 && n >= 3) continue; // arrival day: leave room for flights
     let best: { o: Option; pair: Pair; s: number } | null = null;
     for (const pair of dayPairs) {
-      if (used.has(pair.id)) continue;
       for (const o of pairOptions(pair)) {
+        if (usedOptions.has(o.id)) continue;
         const fromTarget = travelHours(target, o.region);
         if (fromTarget > 2) continue;
-        let s: number = fromTarget * 3 + travelHours(loc, o.region) * 0.4 + balancePenalty(o.vibe) * 1.2 + rng();
+        let s: number =
+          fromTarget * 3 +
+          travelHours(loc, o.region) * 0.4 +
+          balancePenalty(o.vibe) * 1.2 +
+          (usedPairs.get(pair.id) ?? 0) * 2 +
+          rng();
         if (o.tags.includes("sunrise") && travelHours(loc, o.region) >= 1.5) s += 4;
         if (!best || s < best.s) best = { o, pair, s };
       }
@@ -112,12 +129,14 @@ function fill(input: ItineraryData, route: RegionId[], rng: Rng, onlyEmpty: bool
     if (best) {
       d.day = take(best.o, best.pair);
       loc = best.o.region;
+    } else if (i < n - 1) {
+      d.day = stay(); // nothing fresh nearby: a slow day off
     }
   }
 
   // Pass 2 — evenings, from wherever the day ended up.
   loc = "airport";
-  let chills = data.days.filter((d) => isChill(d.night)).length;
+  let stays = data.days.filter((d) => isStay(d.night)).length;
   for (let i = 0; i < n; i++) {
     const d = data.days[i];
     const dayOpt = optionFor(d.day);
@@ -138,19 +157,19 @@ function fill(input: ItineraryData, route: RegionId[], rng: Rng, onlyEmpty: bool
     }
     const nextDay = optionFor(data.days[i + 1]?.day);
     const earlyStart = nextDay?.tags.includes("sunrise");
-    if (earlyStart || (i > 0 && chills < Math.floor(n / 3) && rng() < 0.22)) {
-      d.night = { type: "chill" };
-      chills++;
+    if (earlyStart || (i > 0 && stays < Math.floor(n / 3) && rng() < 0.22)) {
+      d.night = stay();
+      stays++;
       continue;
     }
     let best: { o: Option; pair: Pair; s: number } | null = null;
     for (const pair of nightPairs) {
-      if (used.has(pair.id)) continue;
       for (const o of pairOptions(pair)) {
+        if (usedOptions.has(o.id)) continue;
         const h = travelHours(loc, o.region);
         const nextH = nextDay ? travelHours(o.region, nextDay.region) : 0;
         if (h > 1 || nextH > 4.5) continue;
-        const s = h * 3 + nextH * 0.5 + balancePenalty(o.vibe) * 1.2 + rng();
+        const s = h * 3 + nextH * 0.5 + balancePenalty(o.vibe) * 1.2 + (usedPairs.get(pair.id) ?? 0) * 2 + rng();
         if (!best || s < best.s) best = { o, pair, s };
       }
     }
@@ -158,8 +177,8 @@ function fill(input: ItineraryData, route: RegionId[], rng: Rng, onlyEmpty: bool
       d.night = take(best.o, best.pair);
       loc = best.o.region;
     } else {
-      d.night = { type: "chill" };
-      chills++;
+      d.night = stay();
+      stays++;
     }
   }
   return normalize(data);
@@ -196,5 +215,4 @@ export function optionsNear(region: RegionId) {
     .sort((a, b) => a.h - b.h);
 }
 
-export const hasAnyPick = (data: ItineraryData) =>
-  data.days.some((d) => d.day || isPick(d.night) || isChill(d.night));
+export const hasAnyPick = (data: ItineraryData) => data.days.some((d) => d.day || d.night);

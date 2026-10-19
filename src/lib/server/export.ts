@@ -1,7 +1,7 @@
 import "server-only";
-import { chillNight, regions } from "@/content";
+import { regions, stayIn, type Option } from "@/content";
 import { addDays } from "@/lib/dates";
-import { isChill, optionFor, tripLength } from "@/lib/itinerary";
+import { isStay, optionFor, tripLength, type SlotPick } from "@/lib/itinerary";
 import { balanceOf, buildTimeline } from "@/lib/timeline";
 import type { Person } from "./group";
 
@@ -17,6 +17,15 @@ const toCsv = (rows: Record<string, unknown>[]): string => {
   return [headers.join(","), ...rows.map((r) => headers.map((h) => csvCell(r[h])).join(","))].join("\n");
 };
 
+const STAY_ID = "stay";
+
+function summarize(v: Option | "stay" | null) {
+  if (v === "stay") return { id: STAY_ID, title: stayIn.day.title, region: null, vibe: 0 };
+  return v ? { id: v.id, title: v.title, region: v.region, vibe: v.vibe } : null;
+}
+
+const pickTitle = (p: SlotPick | null) => (isStay(p) ? stayIn.day.title : (optionFor(p)?.title ?? "—"));
+
 function summary(p: Person) {
   const d = p.data;
   if (!d) return null;
@@ -29,13 +38,8 @@ function summary(p: Person) {
     days: t.days.map((day) => ({
       date: day.date,
       tags: day.tags,
-      daytime: day.day ? { id: day.day.id, title: day.day.title, region: day.day.region, vibe: day.day.vibe } : null,
-      evening:
-        day.night === "chill"
-          ? { id: "chill", title: chillNight.title, region: null, vibe: 0 }
-          : day.night
-            ? { id: day.night.id, title: day.night.title, region: day.night.region, vibe: day.night.vibe }
-            : null,
+      daytime: summarize(day.day),
+      evening: summarize(day.night),
       note: p.data!.days[day.index].note ?? null,
       roadTrips: [day.beforeDay, day.beforeNight].filter(Boolean),
       warnings: day.warnings,
@@ -71,9 +75,7 @@ export function exportWideCsv(people: Person[]): string {
         ? d.days
             .map((day, i) => {
               const date = addDays(d.startDate!, i);
-              const dayT = optionFor(day.day)?.title ?? "—";
-              const nightT = isChill(day.night) ? chillNight.title : (optionFor(day.night)?.title ?? "—");
-              return `${date}: ${dayT} / ${nightT}${day.note ? ` (note: ${day.note})` : ""}`;
+              return `${date}: ${pickTitle(day.day)} / ${pickTitle(day.night)}${day.note ? ` (note: ${day.note})` : ""}`;
             })
             .join(" | ")
         : "";
@@ -119,23 +121,23 @@ export function exportLongCsv(people: Person[]): string {
     d.days.forEach((day, i) => {
       const date = addDays(d.startDate!, i);
       const slots = [
-        { slot: "daytime", pick: day.day, chill: false },
-        { slot: "evening", pick: day.night, chill: isChill(day.night) },
+        { slot: "daytime", pick: day.day, stay: isStay(day.day) },
+        { slot: "evening", pick: day.night, stay: isStay(day.night) },
       ];
       for (const s of slots) {
         if (!s.pick) continue;
-        const o = s.chill ? null : optionFor(s.pick);
+        const o = s.stay ? null : optionFor(s.pick);
         rows.push({
           name: p.name,
           status: p.status,
           date,
           day_number: i + 1,
           slot: s.slot,
-          option_id: s.chill ? "chill" : o?.id,
-          option_title: s.chill ? chillNight.title : o?.title,
-          pair_id: s.chill ? "" : "pairId" in s.pick ? s.pick.pairId : "",
+          option_id: s.stay ? STAY_ID : o?.id,
+          option_title: s.stay ? stayIn.day.title : o?.title,
+          pair_id: s.stay ? "" : "pairId" in s.pick ? s.pick.pairId : "",
           region: o ? regions[o.region].name : "",
-          vibe: s.chill ? 0 : o?.vibe,
+          vibe: s.stay ? 0 : o?.vibe,
           tags: o?.tags ?? [],
           note: day.note ?? "",
         });

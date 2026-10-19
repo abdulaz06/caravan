@@ -207,3 +207,52 @@ export function Firework({ className }: P) {
     </svg>
   );
 }
+
+/**
+ * "Stay in" mark: a little tropical villa with a palm and a pool.
+ * Day: sun overhead. Night: crescent moon and a glowing window.
+ */
+export function StayInIcon({ variant = "night", className }: P & { variant?: "day" | "night" }) {
+  const night = variant === "night";
+  return (
+    <svg viewBox="0 0 48 48" className={className} aria-hidden="true">
+      {night ? (
+        <g fill="#fbe0ae">
+          <path d="M37.5 4.5a6.5 6.5 0 1 0 6.2 9.6 5.2 5.2 0 0 1-6.2-9.6z" />
+          <circle cx="29.5" cy="7" r="1.1" />
+          <circle cx="44.5" cy="20.5" r="0.9" />
+        </g>
+      ) : (
+        <g fill="#f2a33a">
+          <circle cx="37" cy="10" r="4.4" />
+          {Array.from({ length: 8 }, (_, i) => (
+            <rect key={i} x="36.3" y="1.4" width="1.4" height="3" rx="0.7" transform={`rotate(${i * 45} 37 10)`} />
+          ))}
+        </g>
+      )}
+      {/* palm */}
+      <path d="M38.6 43 C39.8 36 40 30 38.6 23.5 L40.6 23.4 C42.2 30 41.8 36 40.8 43 Z" fill="#1e5139" />
+      <g transform="translate(39.6 23)" fill="#2b6a48">
+        {[-150, -110, -60, -20, 25].map((a) => (
+          <path key={a} transform={`rotate(${a})`} d="M0 0 C3 -3.4 8 -3.6 11.5 0.2 C8.5 -0.8 4 -0.2 0 0 Z" />
+        ))}
+      </g>
+      {night && <circle cx="17" cy="31" r="8.5" fill="#f7ba5c" opacity="0.32" />}
+      {/* villa */}
+      <rect x="8.5" y="24" width="25" height="17.5" rx="1.2" fill="#f3e3c7" />
+      <rect x="8.5" y="38.5" width="25" height="3" fill="#e2cba6" />
+      <path d="M5 26 L21 13.2 L37 26 Z" fill="#c4461f" />
+      <path d="M5 26 H37" stroke="#8a2f15" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M21 13.2 L29 19.6" stroke="#e86a3e" strokeWidth="1.3" strokeLinecap="round" opacity="0.8" />
+      {/* window */}
+      <rect x="12.5" y="28.5" width="8.5" height="7" rx="1" fill={night ? "#f7ba5c" : "#79c6c3"} />
+      <path d="M16.75 28.5 V35.5 M12.5 32 H21" stroke="#f3e3c7" strokeWidth="1.1" />
+      {/* door */}
+      <path d="M24.5 41.5 V33.6 a3.25 3.25 0 0 1 6.5 0 V41.5 Z" fill="#0d5a69" />
+      <circle cx="29.6" cy="37.6" r="0.6" fill="#f7ba5c" />
+      {/* pool */}
+      <rect x="3" y="41.5" width="42" height="4" rx="2" fill="#1a8e9c" />
+      <path d="M7 43.5 q2 -1 4 0 t4 0 M27 43.5 q2 -1 4 0 t4 0" stroke="#d6efeb" strokeWidth="0.9" fill="none" strokeLinecap="round" />
+    </svg>
+  );
+}

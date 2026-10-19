@@ -1,7 +1,6 @@
 // Turns an itinerary into a timeline with auto-inserted road-trip segments,
 // friendly travel warnings and the nature ↔ nightlife balance.
 import {
-  chillNight,
   formatHours,
   regions,
   trainNote,
@@ -9,7 +8,7 @@ import {
   type Option,
   type RegionId,
 } from "@/content";
-import { dateAt, isChill, nyeIndex, optionFor, type ItineraryData } from "./itinerary";
+import { dateAt, isStay, nyeIndex, optionFor, type ItineraryData, type SlotPick } from "./itinerary";
 import { dayLabel } from "./dates";
 
 export type TravelSegment = {
@@ -28,9 +27,9 @@ export type TimelineDay = {
   label: string;
   tags: DayTag[];
   beforeDay?: TravelSegment;
-  day: Option | null;
+  day: Option | "stay" | null;
   beforeNight?: TravelSegment;
-  night: Option | "chill" | null;
+  night: Option | "stay" | null;
   warnings: string[];
 };
 
@@ -48,6 +47,10 @@ function segment(from: RegionId, to: RegionId): TravelSegment {
 
 const SAME_DAY_LIMIT = 3; // hrs between a day plan and that evening's plan
 const OVERNIGHT_LIMIT = 4.5; // hrs before a morning plan
+
+function slotValue(p: SlotPick | null): Option | "stay" | null {
+  return isStay(p) ? "stay" : optionFor(p);
+}
 
 export function buildTimeline(data: ItineraryData): Timeline {
   let loc = "airport" as RegionId;
@@ -68,12 +71,12 @@ export function buildTimeline(data: ItineraryData): Timeline {
       date,
       label: date ? dayLabel(date) : `Day ${index + 1}`,
       tags,
-      day: optionFor(d.day),
-      night: isChill(d.night) ? "chill" : optionFor(d.night),
+      day: slotValue(d.day),
+      night: slotValue(d.night),
       warnings,
     };
 
-    if (entry.day) {
+    if (entry.day && entry.day !== "stay") {
       const to = entry.day.region;
       if (to !== loc) {
         entry.beforeDay = segment(loc, to);
@@ -93,12 +96,12 @@ export function buildTimeline(data: ItineraryData): Timeline {
       if (!visited.includes(to)) visited.push(to);
     }
 
-    if (entry.night && entry.night !== "chill") {
+    if (entry.night && entry.night !== "stay") {
       const to = entry.night.region;
       if (to !== loc) {
         entry.beforeNight = segment(loc, to);
         total += entry.beforeNight.hours;
-        if (entry.day && entry.beforeNight.hours > SAME_DAY_LIMIT) {
+        if (entry.day && entry.day !== "stay" && entry.beforeNight.hours > SAME_DAY_LIMIT) {
           warnings.push(
             `Big travel day: ${entry.beforeNight.label} from ${regions[loc].short} to ${regions[to].short} between your daytime and evening plans. Doable, but you'll arrive tired.`,
           );
@@ -151,12 +154,12 @@ export type Balance = {
 export function balanceOf(data: ItineraryData): Balance {
   const vibes: number[] = [];
   for (const d of data.days) {
-    const day = optionFor(d.day);
-    if (day) vibes.push(day.vibe);
-    if (isChill(d.night)) vibes.push(chillNight.vibe);
-    else {
-      const night = optionFor(d.night);
-      if (night) vibes.push(night.vibe);
+    for (const p of [d.day, d.night]) {
+      if (isStay(p)) vibes.push(0); // Stay in is perfectly balanced
+      else {
+        const o = optionFor(p);
+        if (o) vibes.push(o.vibe);
+      }
     }
   }
   return {

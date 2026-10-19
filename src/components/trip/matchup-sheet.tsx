@@ -1,25 +1,25 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowDownUp, Check, Info, MapPin, Sofa } from "lucide-react";
+import { ArrowDownUp, Check, Info, MapPin, Repeat2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import {
-  chillNight,
   dayPairs,
   formatHours,
   nightPairs,
   nyePair,
   optionsById,
   regions,
+  stayIn,
   travelHours,
   type Option,
   type Pair,
 } from "@/content";
 import { cn } from "@/lib/cn";
 import { dayLabel } from "@/lib/dates";
-import { dateAt, isChill, isPick, nyeIndex, pairUsage, type DayPick, type ItineraryData } from "@/lib/itinerary";
+import { STAY, alsoOn, dateAt, isPick, isStay, nyeIndex, type ItineraryData, type OptionPick } from "@/lib/itinerary";
 import { locationBefore } from "@/lib/timeline";
-import { Firework } from "../brand/illustrations";
+import { Firework, StayInIcon } from "../brand/illustrations";
 import { Photo } from "../ui/photo";
 import { Sheet } from "../ui/sheet";
 import { VibeDots } from "./bits";
@@ -31,11 +31,19 @@ type Props = {
   data: ItineraryData;
   index: number;
   slot: "day" | "night";
-  onPick: (pick: DayPick) => void;
-  onChill: () => void;
+  onPick: (pick: OptionPick) => void;
+  onStay: () => void;
 };
 
-export function MatchupSheet({ open, onClose, data, index, slot, onPick, onChill }: Props) {
+/** "Also on Day 3" / "Also on Days 2 & 5" — repeats are fine, this is just a nudge. */
+function alsoLabel(days: number[]): string | null {
+  if (!days.length) return null;
+  const n = days.map((d) => d + 1);
+  if (n.length === 1) return `Also on Day ${n[0]}`;
+  return `Also on Days ${n.slice(0, -1).join(", ")} & ${n[n.length - 1]}`;
+}
+
+export function MatchupSheet({ open, onClose, data, index, slot, onPick, onStay }: Props) {
   const [sort, setSort] = useState<"near" | "all">("near");
   const [chosen, setChosen] = useState<string | null>(null);
   const [detail, setDetail] = useState<{ option: Option; pair: Pair } | null>(null);
@@ -44,7 +52,6 @@ export function MatchupSheet({ open, onClose, data, index, slot, onPick, onChill
   const night = slot === "night";
   const date = dateAt(data, index);
   const from = locationBefore(data, index, slot);
-  const usage = pairUsage(data);
   const current = data.days[index]?.[slot] ?? null;
   const currentId = isPick(current) ? current.optionId : null;
 
@@ -62,6 +69,16 @@ export function MatchupSheet({ open, onClose, data, index, slot, onPick, onChill
     setDetail(null);
     setTimeout(() => {
       onPick({ pairId: pair.id, optionId: option.id });
+      setChosen(null);
+      onClose();
+    }, 480);
+  }
+
+  function chooseStay() {
+    if (chosen) return;
+    setChosen("stay");
+    setTimeout(() => {
+      onStay();
       setChosen(null);
       onClose();
     }, 480);
@@ -113,14 +130,16 @@ export function MatchupSheet({ open, onClose, data, index, slot, onPick, onChill
             </p>
           )}
 
-          {night && (
-            <ChillCard selected={isChill(current)} onChoose={() => (onChill(), onClose())} />
-          )}
+          <StayInCard
+            slot={slot}
+            selected={isStay(current)}
+            state={chosen ? (chosen === "stay" ? "won" : "lost") : "idle"}
+            also={alsoLabel(alsoOn(data, slot, index, STAY))}
+            onChoose={chooseStay}
+          />
 
           <div className="space-y-4">
             {pairs.map((pair, k) => {
-              const used = usage.get(pair.id);
-              const usedElsewhere = used && !(used.index === index && used.slot === slot);
               const a = optionsById[pair.a];
               const b = optionsById[pair.b];
               return (
@@ -136,19 +155,15 @@ export function MatchupSheet({ open, onClose, data, index, slot, onPick, onChill
                 >
                   <div className="flex items-center justify-between gap-2 px-1.5 pb-2.5 pt-1">
                     <p className="font-display text-[17px] font-medium italic leading-tight">{pair.theme}</p>
-                    {usedElsewhere && (
-                      <span className="shrink-0 rounded-full bg-ocean-600 px-2.5 py-1 text-[11px] font-bold text-white">
-                        Used on Day {used.index + 1}
-                      </span>
-                    )}
                   </div>
-                  <div className={cn("relative grid grid-cols-2 gap-2", usedElsewhere && "saturate-[0.55]")}>
+                  <div className="relative grid grid-cols-2 gap-2">
                     {[a, b].map((o) => (
                       <OptionTile
                         key={o.id}
                         option={o}
                         from={from}
                         isCurrent={currentId === o.id}
+                        also={alsoLabel(alsoOn(data, slot, index, { pairId: pair.id, optionId: o.id }))}
                         state={chosen ? (chosen === o.id ? "won" : "lost") : "idle"}
                         onChoose={() => choose(pair, o)}
                         onInfo={() => setDetail({ option: o, pair })}
@@ -163,12 +178,6 @@ export function MatchupSheet({ open, onClose, data, index, slot, onPick, onChill
                       vs
                     </span>
                   </div>
-                  {usedElsewhere && (
-                    <p className={cn("px-1.5 pb-1 pt-2.5 text-[12.5px] leading-snug", night ? "text-paper/60" : "text-ink-3")}>
-                      Tap one to move it here
-                      {current ? " — Day " + (used.index + 1) + " gets this slot's current pick instead." : " from Day " + (used.index + 1) + "."}
-                    </p>
-                  )}
                 </motion.section>
               );
             })}
@@ -191,6 +200,7 @@ function OptionTile({
   option,
   from,
   isCurrent,
+  also,
   state,
   onChoose,
   onInfo,
@@ -198,6 +208,7 @@ function OptionTile({
   option: Option;
   from: ReturnType<typeof locationBefore>;
   isCurrent: boolean;
+  also: string | null;
   state: "idle" | "won" | "lost";
   onChoose: () => void;
   onInfo: () => void;
@@ -223,6 +234,7 @@ function OptionTile({
           {hours === 0 ? "You're here" : `${formatHours(hours)} away`}
         </span>
         <span className="absolute inset-x-2.5 bottom-2.5">
+          {also && <AlsoChip label={also} />}
           <span className="font-display line-clamp-3 block text-[16px] font-semibold leading-[1.12]">{option.title}</span>
           <span className="mt-1 flex items-center gap-2 text-[11px] font-semibold text-paper/75">
             <span className="truncate">{regions[option.region].short}</span>
@@ -256,32 +268,95 @@ function OptionTile({
   );
 }
 
-function ChillCard({ selected, onChoose }: { selected: boolean; onChoose: () => void }) {
+function AlsoChip({ label, className }: { label: string; className?: string }) {
   return (
-    <button
-      onClick={onChoose}
+    <span
       className={cn(
-        "mb-4 flex w-full items-center gap-3 rounded-[22px] bg-white/[0.07] p-2.5 pr-4 text-left ring-1 transition active:scale-[0.99]",
-        selected ? "ring-[3px] ring-saffron-400" : "ring-white/10 hover:bg-white/10",
+        "mb-1.5 inline-flex items-center gap-1 rounded-full bg-saffron-400/95 px-2 py-0.5 text-[10.5px] font-bold text-ink",
+        className,
       )}
     >
-      <span className="relative size-16 shrink-0 overflow-hidden rounded-2xl bg-ocean-800">
-        <Photo photo={chillNight.images[0]} alt={chillNight.title} sizes="64px" />
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="flex items-center gap-1.5 font-display text-[18px] font-semibold">
-          <Sofa className="size-4 text-saffron-400" /> {chillNight.title}
-        </span>
-        <span className="block text-[12.5px] text-paper/60">{chillNight.tagline} Always available.</span>
-      </span>
-      {selected ? (
-        <span className="grid size-8 place-items-center rounded-full bg-saffron-400 text-ink">
-          <Check className="size-[18px]" strokeWidth={3.5} />
-        </span>
-      ) : (
-        <span className="rounded-full bg-saffron-500 px-3 py-1.5 text-[12px] font-bold text-ink">Pick</span>
-      )}
-    </button>
+      <Repeat2 className="size-3" strokeWidth={2.75} /> {label}
+    </span>
   );
 }
 
+/** "Stay in" — a first-class choice on every slot, as often as you like. */
+function StayInCard({
+  slot,
+  selected,
+  state,
+  also,
+  onChoose,
+}: {
+  slot: "day" | "night";
+  selected: boolean;
+  state: "idle" | "won" | "lost";
+  also: string | null;
+  onChoose: () => void;
+}) {
+  const s = stayIn[slot];
+  const night = slot === "night";
+  const on = selected || state === "won";
+  return (
+    <motion.section
+      initial={{ opacity: 0, y: 18 }}
+      animate={
+        state === "won"
+          ? { opacity: 1, y: 0, scale: 1.02 }
+          : state === "lost"
+            ? { opacity: 0.35, y: 0, scale: 0.97 }
+            : { opacity: 1, y: 0, scale: 1 }
+      }
+      transition={{ type: "spring", stiffness: 420, damping: 26 }}
+      className={cn("mb-4 rounded-[26px] p-2.5", night ? "bg-white/[0.06] ring-1 ring-white/10" : "bg-paper shadow-card")}
+    >
+      <div className="flex items-center justify-between gap-2 px-1.5 pb-2.5 pt-1">
+        <p className="font-display text-[17px] font-medium italic leading-tight">Or keep it easy</p>
+        <span className={cn("text-[11px] font-bold uppercase tracking-[0.12em]", night ? "text-saffron-400" : "text-jungle-600")}>
+          Always available
+        </span>
+      </div>
+      <button
+        onClick={onChoose}
+        aria-label={`Pick Stay in — ${s.tagline}`}
+        className={cn(
+          "relative flex min-h-[132px] w-full overflow-hidden rounded-[20px] bg-ocean-800 text-left text-paper transition active:scale-[0.99]",
+          on && "ring-[3px] ring-saffron-400",
+        )}
+      >
+        <Photo photo={s.images[0]} alt="A villa pool in Sri Lanka" sizes="(min-width: 1024px) 440px, 92vw" />
+        <span className="absolute inset-0 bg-gradient-to-r from-ink/90 via-ink/75 via-55% to-ink/25" />
+        <span className="relative flex w-full items-center gap-3.5 p-3.5 pr-12">
+          <span className="grid size-[68px] shrink-0 place-items-center rounded-[18px] bg-paper/95 shadow-lg">
+            <StayInIcon variant={slot} className="size-[54px]" />
+          </span>
+          <span className="min-w-0 flex-1">
+            {also && <AlsoChip label={also} />}
+            <span className="font-display block text-[22px] font-semibold leading-none">{s.title}</span>
+            <span className="mt-1.5 block max-w-[15rem] text-[13.5px] font-medium leading-snug text-paper/90">{s.tagline}</span>
+            <span className="mt-1.5 flex items-center gap-2 text-[11px] font-semibold text-paper/70">
+              No travel
+              <span className="inline-flex items-center gap-1">
+                <span className="size-1.5 rounded-full bg-saffron-500" /> Balanced
+              </span>
+            </span>
+          </span>
+        </span>
+        <AnimatePresence>
+          {on && (
+            <motion.span
+              initial={{ scale: 0, rotate: -30 }}
+              animate={{ scale: 1, rotate: 0 }}
+              exit={{ scale: 0 }}
+              transition={{ type: "spring", stiffness: 600, damping: 18 }}
+              className="absolute right-2.5 top-2.5 grid size-8 place-items-center rounded-full bg-saffron-400 text-ink shadow-lg"
+            >
+              <Check className="size-[18px]" strokeWidth={3.5} />
+            </motion.span>
+          )}
+        </AnimatePresence>
+      </button>
+    </motion.section>
+  );
+}

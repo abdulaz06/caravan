@@ -44,9 +44,9 @@ Both must feel natural; never force the long path.
   - **Day pairs:** each pair = two daytime options, typically nature/adventure vs. a more social/city/beach option.
   - **Night pairs:** each pair = two evening options, typically a big night out vs. a mellower social night.
   - For any Daytime slot the user opens a sheet showing the day-pair pool, each pair displayed as a side-by-side "A vs B" matchup; they pick one option from one pair. Same for Evening with night pairs.
-  - A pair can be used **once per itinerary**; used pairs show as "Used on Day 3" (tap to swap it here instead).
-  - **Every Evening slot also offers a third choice: "Chill night in"** (dinner and hang at the villa/hotel). It's always available and can be used any number of times.
-- **New Year's Eve:** if their range includes Dec 31, that day's Evening slot shows a dedicated **NYE pair** (plus chill-night-in) instead of the normal pool. The NYE pick is pinned to Dec 31.
+  - **Full freedom:** there is no once-per-itinerary limit. The same option can be picked on as many days as people like, and both options of a pair can be used (on different days, or repeated). Repeats only show a soft, non-blocking hint on the tile ("Also on Day 3"). Quick fill may prefer variety, but manual picks are never restricted.
+  - **Every Daytime and Evening slot also offers "Stay in"** — a first-class choice, not a fallback, available any number of times. Daytime copy: "Slow morning, pool, nap, no plans." Evening copy: "Dinner and hangs at the villa." It uses the custom villa `StayInIcon` (day/night variants) and is stored as `{ type: 'stay' }` (legacy `{ type: 'chill' }` data is upgraded automatically by `normalize()`). Vibe 0, no travel.
+- **New Year's Eve:** if their range includes Dec 31, that day's Evening slot shows a dedicated **NYE pair** (plus Stay in) instead of the normal pool. The NYE pick is pinned to Dec 31.
 - **Fluid editing (critical):** users can at any time
   - change any pick,
   - **drag to reorder whole days** (contents move; dates stay attached to positions),
@@ -54,7 +54,7 @@ Both must feel natural; never force the long path.
   - clear a slot,
   - add a short personal note to any day.
   When reordering, the Dec 31 Evening NYE pick stays pinned to Dec 31.
-- **Balance meter:** every option has a `vibe` score from -2 (pure nature/adventure) to +2 (pure nightlife). Show a live, good-looking meter of their trip's overall nature ↔ nightlife balance as they pick. Chill night in = 0.
+- **Balance meter:** every option has a `vibe` score from -2 (pure nature/adventure) to +2 (pure nightlife). Show a live, good-looking meter of their trip's overall nature ↔ nightlife balance as they pick. Stay in = 0.
 
 ### Geography & road trips
 Sri Lanka is "open to travel", framed as a road trip. Every option has a `region`. When consecutive slots are in different regions (including from the airport at the start), **auto-insert a "Road trip" segment in the timeline before that slot**, showing from → to and approximate duration (e.g., "🚐 Road trip · Kandy → Ella · ~5 hrs"; mention the famous scenic train where relevant). Day 1 starts from Bandaranaike International Airport (CMB). If a day's travel gets unrealistic (e.g., daytime in Ella and evening in Colombo), show a gentle, friendly warning — never block.
@@ -105,7 +105,7 @@ Each option:
 Pairs: `{ id, slot, a: OptionId, b: OptionId, theme?: string }`. Keep options and pairs separate so Abdul can re-pair easily.
 
 ### Photos (required)
-- **Every option (day, night, NYE, and "Chill night in") and every region must have at least one real photo** of that actual place or activity, not a generic stock image. Prefer 2–3 photos per option (`images: Image[]`, first = cover) so the detail view can show a small swipeable gallery.
+- **Every option (day, night, NYE, and "Stay in") and every region must have at least one real photo** of that actual place or activity, not a generic stock image. Prefer 2–3 photos per option (`images: Image[]`, first = cover) so the detail view can show a small swipeable gallery.
 - Source from Wikimedia Commons (preferred, check the license allows reuse) or Unsplash; store `url`, `credit` (author), `source` (page link) and `license`. Show credits subtly in the detail view.
 - Download, resize and optimize the chosen photos into `public/images/<region>/<option-id>-<n>.webp` (≈1600px wide, good compression) so the site doesn't depend on hot-linking. Serve them with `next/image` and blur placeholders.
 - Where photos appear: the cover photo leads each A-vs-B matchup card; a full-bleed gallery in the option detail sheet; thumbnails on day cards and in the review timeline; region photos on road-trip segments; a hero image on the welcome screen.
@@ -147,8 +147,8 @@ Itinerary `data` (versioned):
   flexibility: 'exact' | 'few_days' | 'very',
   days: Array<{
     id: string;                                   // stable id for drag/reorder
-    day: { pairId: string; optionId: string } | null;
-    night: { pairId: string; optionId: string } | { type: 'chill' } | null;
+    day: { pairId: string; optionId: string } | { type: 'stay' } | null;
+    night: { pairId: string; optionId: string } | { type: 'stay' } | null;
     note?: string;
   }>,                                             // dates derive from index + startDate
   preferences: { ... },

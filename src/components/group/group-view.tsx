@@ -18,6 +18,7 @@ import { ButtonLink } from "../ui/button";
 import { Photo } from "../ui/photo";
 import { BalanceMeter } from "../trip/balance-meter";
 import { RouteMap } from "../trip/route-map";
+import { StayThumb } from "../trip/day-card";
 
 type ItinCard = {
   id: string;
@@ -153,10 +154,16 @@ export function GroupView({ stats, myStatus, canBrowse, itineraries, editsLocked
                 );
               })}
             </ol>
-            {stats.chillCount > 0 && (
-              <p className="mt-3 text-[12.5px] text-ink-3">
-                Plus {stats.chillCount} chill {stats.chillCount === 1 ? "night" : "nights"} in 🛋️
-              </p>
+            {stats.stayCount.day + stats.stayCount.night > 0 && (
+              <div className="mt-3 flex items-center gap-3 rounded-2xl bg-sand-100 p-2.5">
+                <StayThumb kind="night" className="size-11" />
+                <p className="text-[13.5px] leading-snug text-ink-2">
+                  <b className="text-ink">Stay in</b> picked {stats.stayCount.day + stats.stayCount.night}{" "}
+                  {stats.stayCount.day + stats.stayCount.night === 1 ? "time" : "times"} · {stats.stayCount.day}{" "}
+                  {stats.stayCount.day === 1 ? "day" : "days"}, {stats.stayCount.night}{" "}
+                  {stats.stayCount.night === 1 ? "evening" : "evenings"}
+                </p>
+              </div>
             )}
           </motion.section>
         )}

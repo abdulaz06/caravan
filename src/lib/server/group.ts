@@ -1,7 +1,7 @@
 import "server-only";
 import { optionsById, regions, TRIP_WINDOW, type RegionId } from "@/content";
 import { dateRange } from "@/lib/dates";
-import { isChill, optionFor, tripLength, type ItineraryData } from "@/lib/itinerary";
+import { isStay, normalize, optionFor, tripLength, type ItineraryData } from "@/lib/itinerary";
 import { balanceOf } from "@/lib/timeline";
 import { db, type ItineraryRow, type ParticipantRow } from "./db";
 
@@ -35,7 +35,7 @@ export async function loadPeople(): Promise<Person[]> {
       updatedAt: it?.updated_at ?? null,
       submittedAt: it?.submitted_at ?? null,
       picks,
-      data: it?.data ?? null,
+      data: it?.data ? normalize(it.data) : null, // also upgrades legacy "chill" picks
     };
   });
 }
@@ -48,7 +48,7 @@ export type GroupStats = {
   maxDateCount: number;
   sweetSpot: { start: string; end: string; min: number; days: number } | null;
   topOptions: { optionId: string; count: number; slot: "day" | "night" }[];
-  chillCount: number;
+  stayCount: { day: number; night: number };
   balance: number | null;
   regions: { region: RegionId; count: number }[];
   flexibility: Record<string, number>;
@@ -64,7 +64,7 @@ export function computeStats(people: Person[]): GroupStats {
   const flexibility: Record<string, number> = {};
   const balances: number[] = [];
   const lengths: number[] = [];
-  let chillCount = 0;
+  const stayCount = { day: 0, night: 0 };
   let withDates = 0;
 
   for (const p of people) {
@@ -84,7 +84,8 @@ export function computeStats(people: Person[]): GroupStats {
         optionCounts.set(o.id, (optionCounts.get(o.id) ?? 0) + 1);
         regionCounts.set(o.region, (regionCounts.get(o.region) ?? 0) + 1);
       }
-      if (isChill(day.night)) chillCount++;
+      if (isStay(day.day)) stayCount.day++;
+      if (isStay(day.night)) stayCount.night++;
     }
     const b = balanceOf(d).score;
     if (b !== null) balances.push(b);
@@ -123,7 +124,7 @@ export function computeStats(people: Person[]): GroupStats {
       .sort((a, b) => b[1] - a[1])
       .slice(0, 10)
       .map(([optionId, count]) => ({ optionId, count, slot: optionsById[optionId].slot })),
-    chillCount,
+    stayCount,
     balance: balances.length ? balances.reduce((a, b) => a + b, 0) / balances.length : null,
     regions: [...regionCounts.entries()]
       .sort((a, b) => b[1] - a[1])

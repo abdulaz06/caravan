@@ -15,7 +15,7 @@ import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrate
 import { motion } from "framer-motion";
 import { ArrowLeft, ArrowRight, ArrowRightLeft, Eye, Repeat2, Sparkles, Trash2, Wand2 } from "lucide-react";
 import { useMemo, useState } from "react";
-import { chillNight, optionsById } from "@/content";
+import { optionsById, stayIn } from "@/content";
 import { cn } from "@/lib/cn";
 import { dayLabel } from "@/lib/dates";
 import {
@@ -24,9 +24,9 @@ import {
   clearSlot,
   countPicks,
   dateAt,
-  isChill,
+  isStay,
   optionFor,
-  pickChill,
+  pickStay,
   pickOption,
   reorderDays,
   setNote,
@@ -41,7 +41,7 @@ import { Sheet } from "../ui/sheet";
 import { useToast } from "../ui/toast";
 import { BalanceMeter } from "./balance-meter";
 import { ToAirport } from "./bits";
-import { DateStub, DayCard } from "./day-card";
+import { DateStub, DayCard, StayThumb } from "./day-card";
 import { MatchupSheet } from "./matchup-sheet";
 import { OptionDetail } from "./option-detail";
 
@@ -104,7 +104,7 @@ export function BuildStep({ data, update, locked, onBack, onNext }: Props) {
   }
 
   const actionPick = actions ? data.days[actions.index][actions.slot] : null;
-  const actionOption = actions ? (isChill(actionPick) ? null : optionFor(actionPick)) : null;
+  const actionOption = actions ? optionFor(actionPick) : null;
 
   if (!data.startDate) {
     return (
@@ -216,7 +216,7 @@ export function BuildStep({ data, update, locked, onBack, onNext }: Props) {
           index={matchup.index}
           slot={matchup.slot}
           onPick={(pick) => update((d) => pickOption(d, matchup.index, matchup.slot, pick))}
-          onChill={() => update((d) => pickChill(d, matchup.index))}
+          onStay={() => update((d) => pickStay(d, matchup.index, matchup.slot))}
         />
       )}
 
@@ -225,7 +225,7 @@ export function BuildStep({ data, update, locked, onBack, onNext }: Props) {
         onClose={() => setActions(null)}
         size="auto"
         eyebrow={actions ? `Day ${actions.index + 1} · ${actions.slot === "day" ? "Daytime" : "Evening"}` : ""}
-        title={actionOption?.title ?? (isChill(actionPick) ? chillNight.title : "")}
+        title={actionOption?.title ?? (actions && isStay(actionPick) ? `${stayIn[actions.slot].title} · ${stayIn[actions.slot].tagline}` : "")}
       >
         {actions && !moving && (
           <div className="grid gap-2 px-5 pb-8 pt-1">
@@ -263,8 +263,8 @@ export function BuildStep({ data, update, locked, onBack, onNext }: Props) {
                 if (i === actions.index) return null;
                 const ok = canSwapSlot(data, actions.slot, actions.index, i);
                 const there = d[actions.slot];
-                const o = isChill(there) ? null : optionFor(there);
-                const label = isChill(there) ? chillNight.title : o?.title ?? "Empty";
+                const o = optionFor(there);
+                const label = isStay(there) ? stayIn[actions.slot].title : (o?.title ?? "Empty");
                 return (
                   <li key={d.id}>
                     <button
@@ -280,11 +280,13 @@ export function BuildStep({ data, update, locked, onBack, onNext }: Props) {
                         <span className="label text-ink-3">Day {i + 1}</span>
                         <span className="text-[12px] font-semibold">{dayLabel(dateAt(data, i)!).split(" ").slice(1).join(" ")}</span>
                       </span>
-                      <span className="relative size-11 shrink-0 overflow-hidden rounded-xl bg-sand-200">
-                        {(o || isChill(there)) && (
-                          <Photo photo={o ? o.images[0] : chillNight.images[0]} alt={label} sizes="44px" />
-                        )}
-                      </span>
+                      {isStay(there) ? (
+                        <StayThumb kind={actions.slot} className="size-11" />
+                      ) : (
+                        <span className="relative size-11 shrink-0 overflow-hidden rounded-xl bg-sand-200">
+                          {o && <Photo photo={o.images[0]} alt={label} sizes="44px" />}
+                        </span>
+                      )}
                       <span className={cn("min-w-0 flex-1 truncate text-[14px] font-semibold", !there && "text-ink-3")}>
                         {ok ? label : "New Year's Eve is pinned"}
                       </span>

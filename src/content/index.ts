@@ -1,11 +1,12 @@
-import { chillNight, dayOptions, nightOptions, nyeOptions } from "./options";
+import { dayOptions, nightOptions, nyeOptions, stayIn, type StayIn } from "./options";
 import { dayPairs, nightPairs, nyePair } from "./pairs";
 import { photos } from "./photos.generated";
 import type { Option, Pair } from "./types";
 
 export * from "./types";
 export { regions, regionList, travelHours, trainNote, formatHours } from "./regions";
-export { chillNight, dayPairs, nightPairs, nyePair };
+export { stayIn, dayPairs, nightPairs, nyePair };
+export type { StayIn };
 
 export const allOptions: Option[] = [...dayOptions, ...nightOptions, ...nyeOptions];
 export const optionsById: Record<string, Option> = Object.fromEntries(

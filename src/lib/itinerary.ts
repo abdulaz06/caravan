@@ -13,14 +13,16 @@ import { addDays, dateRange, diffDays } from "./dates";
 
 export type Flexibility = "exact" | "few_days" | "very";
 export type SlotKind = "day" | "night";
-export type DayPick = { pairId: string; optionId: string };
-export type ChillPick = { type: "chill" };
-export type NightPick = DayPick | ChillPick;
+/** A curated option, picked from one of the A-vs-B pairs. */
+export type OptionPick = { pairId: string; optionId: string };
+/** "Stay in" — available on every Daytime and Evening slot, any number of times. */
+export type StayPick = { type: "stay" };
+export type SlotPick = OptionPick | StayPick;
 
 export type DayEntry = {
   id: string; // stable id for drag/reorder
-  day: DayPick | null;
-  night: NightPick | null;
+  day: SlotPick | null;
+  night: SlotPick | null;
   note?: string;
 };
 
@@ -73,13 +75,14 @@ export function emptyItinerary(): ItineraryData {
   };
 }
 
-export const isChill = (n: NightPick | null | undefined): n is ChillPick =>
-  !!n && "type" in n && n.type === "chill";
+export const STAY: StayPick = { type: "stay" };
 
-export const isPick = (p: DayPick | NightPick | null | undefined): p is DayPick =>
-  !!p && "pairId" in p;
+export const isStay = (p: SlotPick | null | undefined): p is StayPick =>
+  !!p && "type" in p && p.type === "stay";
 
-export function optionFor(p: DayPick | NightPick | null | undefined): Option | null {
+export const isPick = (p: SlotPick | null | undefined): p is OptionPick => !!p && "pairId" in p;
+
+export function optionFor(p: SlotPick | null | undefined): Option | null {
   return isPick(p) ? (optionsById[p.optionId] ?? null) : null;
 }
 
@@ -107,19 +110,36 @@ export function countPicks(data: ItineraryData): number {
   return data.days.reduce((n, d) => n + (d.day ? 1 : 0) + (d.night ? 1 : 0), 0);
 }
 
-/** Where each pair is currently used: pairId -> { index, slot } */
-export function pairUsage(data: ItineraryData): Map<string, { index: number; slot: SlotKind }> {
-  const used = new Map<string, { index: number; slot: SlotKind }>();
-  data.days.forEach((d, index) => {
-    if (d.day) used.set(d.day.pairId, { index, slot: "day" });
-    if (isPick(d.night)) used.set(d.night.pairId, { index, slot: "night" });
+/**
+ * Other days where the same option (or Stay in) is picked in the same slot —
+ * powers the soft "Also on Day 3" hint. Repeats are allowed; this is info only.
+ */
+export function alsoOn(data: ItineraryData, slot: SlotKind, index: number, pick: SlotPick): number[] {
+  const out: number[] = [];
+  data.days.forEach((d, i) => {
+    if (i === index) return;
+    const other = d[slot];
+    if (isStay(pick) ? isStay(other) : isPick(other) && other.optionId === (pick as OptionPick).optionId) {
+      out.push(i);
+    }
   });
-  return used;
+  return out;
+}
+
+/** How many times each option id is used across the trip (for quick-fill variety). */
+export function optionCounts(data: ItineraryData): Map<string, number> {
+  const counts = new Map<string, number>();
+  for (const d of data.days) {
+    for (const p of [d.day, d.night]) {
+      if (isPick(p)) counts.set(p.optionId, (counts.get(p.optionId) ?? 0) + 1);
+    }
+  }
+  return counts;
 }
 
 const clone = <T,>(x: T): T => structuredClone(x);
 
-function validPick(p: DayPick, slot: SlotKind, isNye: boolean): boolean {
+function validPick(p: OptionPick, slot: SlotKind, isNye: boolean): boolean {
   const pair = pairsById[p.pairId];
   const opt = optionsById[p.optionId];
   if (!pair || !opt || (pair.a !== p.optionId && pair.b !== p.optionId)) return false;
@@ -127,9 +147,21 @@ function validPick(p: DayPick, slot: SlotKind, isNye: boolean): boolean {
   return isNye ? pair.id === nyePair.id : pair.slot === "night";
 }
 
+/** Upgrade older saved shapes (e.g. `{ type: "chill" }` → Stay in) and drop junk. */
+function migratePick(p: unknown): SlotPick | null {
+  if (!p || typeof p !== "object") return null;
+  const o = p as Record<string, unknown>;
+  if (o.type === "stay" || o.type === "chill") return { type: "stay" };
+  if (typeof o.pairId === "string" && typeof o.optionId === "string") {
+    return { pairId: o.pairId, optionId: o.optionId };
+  }
+  return null;
+}
+
 /**
- * Enforce every rule: valid references, pairs used once, NYE pair only on
- * 31 Dec (and only the NYE pair there), day count matching the dates.
+ * Enforce the rules: valid references, the NYE pair only on 31 Dec's evening
+ * (and nothing else there except Stay in), day count matching the dates.
+ * Options can repeat freely.
  */
 export function normalize(input: ItineraryData): ItineraryData {
   const data = clone(input);
@@ -141,38 +173,26 @@ export function normalize(input: ItineraryData): ItineraryData {
     data.days = [];
   }
   const nye = nyeIndex(data);
-  const displaced: DayPick[] = [];
-  const seen = new Set<string>();
+  const displaced: OptionPick[] = [];
 
   data.days.forEach((d, i) => {
-    if (d.day && (!validPick(d.day, "day", false) || seen.has(d.day.pairId))) d.day = null;
-    if (d.day) seen.add(d.day.pairId);
-
-    if (isPick(d.night)) {
-      const ok = validPick(d.night, "night", i === nye);
-      if (!ok && i === nye && validPick(d.night, "night", false)) {
-        displaced.push(d.night); // a normal night landed on NYE — try to rehome it
-        d.night = null;
-      } else if (!ok || seen.has(d.night.pairId)) {
-        d.night = null;
-      }
-    } else if (d.night && !isChill(d.night)) {
+    d.day = migratePick(d.day);
+    d.night = migratePick(d.night);
+    if (isPick(d.day) && !validPick(d.day, "day", false)) d.day = null;
+    if (isPick(d.night) && !validPick(d.night, "night", i === nye)) {
+      // A normal evening that landed on NYE gets re-homed below; anything else is invalid.
+      if (i === nye && validPick(d.night, "night", false)) displaced.push(d.night);
       d.night = null;
     }
-    if (isPick(d.night)) seen.add(d.night.pairId);
     if (d.note !== undefined) {
-      d.note = d.note.slice(0, 280);
+      d.note = String(d.note).slice(0, 280);
       if (!d.note) delete d.note;
     }
   });
 
   for (const pick of displaced) {
-    if (seen.has(pick.pairId)) continue;
     const slot = data.days.findIndex((d, i) => i !== nye && d.night === null);
-    if (slot >= 0) {
-      data.days[slot].night = pick;
-      seen.add(pick.pairId);
-    }
+    if (slot >= 0) data.days[slot].night = pick;
   }
   return data;
 }
@@ -206,32 +226,16 @@ export function canSetRange(start: string, end: string): boolean {
   );
 }
 
-/**
- * Pick an option for a slot. If its pair is already used on another day, the
- * pair moves here and that day gets whatever was here before (a swap).
- */
-export function pickOption(
-  input: ItineraryData,
-  index: number,
-  slot: SlotKind,
-  pick: DayPick,
-): ItineraryData {
+/** Put an option in a slot. Any option can be picked on as many days as you like. */
+export function pickOption(input: ItineraryData, index: number, slot: SlotKind, pick: OptionPick): ItineraryData {
   const data = clone(input);
-  const usage = pairUsage(data).get(pick.pairId);
-  const current = data.days[index][slot];
-  if (usage && !(usage.index === index && usage.slot === slot)) {
-    const other = data.days[usage.index];
-    if (usage.slot === "day") other.day = slot === "day" ? (current as DayPick | null) : null;
-    else other.night = slot === "night" ? current : null;
-  }
-  if (slot === "day") data.days[index].day = pick;
-  else data.days[index].night = pick;
+  data.days[index][slot] = { pairId: pick.pairId, optionId: pick.optionId };
   return normalize(data);
 }
 
-export function pickChill(input: ItineraryData, index: number): ItineraryData {
+export function pickStay(input: ItineraryData, index: number, slot: SlotKind): ItineraryData {
   const data = clone(input);
-  data.days[index].night = { type: "chill" };
+  data.days[index][slot] = { ...STAY };
   return data;
 }
 
@@ -284,8 +288,8 @@ export function swapSlot(input: ItineraryData, slot: SlotKind, a: number, b: num
   if (!canSwapSlot(input, slot, a, b)) return input;
   const data = clone(input);
   const tmp = data.days[a][slot];
-  (data.days[a] as Record<SlotKind, unknown>)[slot] = data.days[b][slot];
-  (data.days[b] as Record<SlotKind, unknown>)[slot] = tmp;
+  data.days[a][slot] = data.days[b][slot];
+  data.days[b][slot] = tmp;
   return normalize(data);
 }
 

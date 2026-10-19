@@ -4,12 +4,12 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { motion } from "framer-motion";
 import { GripVertical, Moon, MoreHorizontal, NotebookPen, Plus, Sun } from "lucide-react";
-import { chillNight, regions, type Option } from "@/content";
+import { regions, stayIn, type Option } from "@/content";
 import { cn } from "@/lib/cn";
 import { parseISO } from "@/lib/dates";
 import type { DayEntry } from "@/lib/itinerary";
 import type { TimelineDay } from "@/lib/timeline";
-import { Firework } from "../brand/illustrations";
+import { Firework, StayInIcon } from "../brand/illustrations";
 import { Photo } from "../ui/photo";
 import { RoadTrip, VibeDots, Warning } from "./bits";
 
@@ -134,7 +134,7 @@ function Tag({ children, className }: { children: React.ReactNode; className?: s
 
 type SlotProps = {
   kind: "day" | "night";
-  option: Option | "chill" | null;
+  option: Option | "stay" | null;
   empty: string;
   onClick: () => void;
   locked: boolean;
@@ -181,12 +181,11 @@ export function SlotView({ kind, option, empty, onClick, locked, nye, className 
     );
   }
 
-  const isChill = option === "chill";
-  const title = isChill ? chillNight.title : option.title;
-  const photo = isChill ? chillNight.images[0] : option.images[0];
+  const isStay = option === "stay";
+  const title = isStay ? stayIn[kind].title : option.title;
   return (
     <motion.button
-      key={isChill ? "chill" : option.id}
+      key={isStay ? "stay" : option.id}
       initial={{ scale: 0.94, rotate: -1.5, opacity: 0.4 }}
       animate={{ scale: 1, rotate: 0, opacity: 1 }}
       transition={{ type: "spring", stiffness: 500, damping: 22 }}
@@ -198,14 +197,19 @@ export function SlotView({ kind, option, empty, onClick, locked, nye, className 
         className,
       )}
     >
-      <span className="relative size-[56px] shrink-0 overflow-hidden rounded-xl bg-ocean-800">
-        <Photo photo={photo} alt={title} sizes="56px" />
-      </span>
+      {isStay ? <StayThumb kind={kind} /> : (
+        <span className="relative size-[56px] shrink-0 overflow-hidden rounded-xl bg-ocean-800">
+          <Photo photo={option.images[0]} alt={title} sizes="56px" />
+        </span>
+      )}
       <span className="min-w-0 flex-1">
         <span className="line-clamp-2 text-[14.5px] font-semibold leading-tight">{title}</span>
         <span className={cn("mt-1 flex items-center gap-2 text-[11.5px] font-medium", night ? "text-paper/60" : "text-ink-3")}>
-          {isChill ? (
-            <>At the villa</>
+          {isStay ? (
+            <>
+              <span className="truncate">At the villa</span>
+              <VibeDots vibe={0} />
+            </>
           ) : (
             <>
               <span className="truncate">{regions[option.region].short}</span>
@@ -220,5 +224,22 @@ export function SlotView({ kind, option, empty, onClick, locked, nye, className 
         </span>
       )}
     </motion.button>
+  );
+}
+
+/** Thumbnail for a "Stay in" pick: the villa mark on a warm (day) or dusky (night) tile. */
+export function StayThumb({ kind, className }: { kind: "day" | "night"; className?: string }) {
+  return (
+    <span
+      className={cn(
+        "relative grid size-[56px] shrink-0 place-items-center overflow-hidden rounded-xl",
+        kind === "day"
+          ? "bg-gradient-to-b from-saffron-200 to-sand-200"
+          : "bg-gradient-to-b from-dusk-700 to-ocean-800 ring-1 ring-white/10",
+        className,
+      )}
+    >
+      <StayInIcon variant={kind} className="size-[46px] translate-y-[2px]" />
+    </span>
   );
 }

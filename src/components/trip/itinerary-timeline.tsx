@@ -2,13 +2,14 @@
 
 import { Moon, Sun } from "lucide-react";
 import { useState } from "react";
-import { chillNight, regions, type Option, type RegionId } from "@/content";
+import { regions, stayIn, type Option, type RegionId } from "@/content";
 import { cn } from "@/lib/cn";
 import type { ItineraryData } from "@/lib/itinerary";
 import type { Timeline } from "@/lib/timeline";
 import { Firework } from "../brand/illustrations";
 import { Photo } from "../ui/photo";
 import { RoadTrip, ToAirport, VibeDots, Warning } from "./bits";
+import { StayThumb } from "./day-card";
 import { OptionDetail } from "./option-detail";
 
 /** Read-only, beautiful vertical timeline of a whole itinerary. */
@@ -61,7 +62,7 @@ export function ItineraryTimeline({ data, timeline }: { data: ItineraryData; tim
   );
 }
 
-function PickRow({ kind, option, onOpen }: { kind: "day" | "night"; option: Option | "chill" | null; onOpen: (o: Option) => void }) {
+function PickRow({ kind, option, onOpen }: { kind: "day" | "night"; option: Option | "stay" | null; onOpen: (o: Option) => void }) {
   const night = kind === "night";
   if (!option) {
     return (
@@ -71,27 +72,39 @@ function PickRow({ kind, option, onOpen }: { kind: "day" | "night"; option: Opti
       </div>
     );
   }
-  const chill = option === "chill";
-  const title = chill ? chillNight.title : option.title;
-  const region: RegionId | null = chill ? null : option.region;
+  const rowClass = cn(
+    "flex w-full items-center gap-3 rounded-2xl p-2 pr-3 text-left transition",
+    night ? "dusk text-paper" : "bg-paper shadow-card",
+  );
+  const eyebrow = (
+    <span className={cn("label block", night ? "text-saffron-400" : "text-sunset-600")}>{night ? "Evening" : "Daytime"}</span>
+  );
+  if (option === "stay") {
+    const s = stayIn[kind];
+    return (
+      <div className={rowClass}>
+        <StayThumb kind={kind} className="size-14" />
+        <span className="min-w-0 flex-1">
+          {eyebrow}
+          <span className="text-[14.5px] font-semibold leading-tight">{s.title}</span>
+          <span className={cn("mt-0.5 flex items-center gap-2 text-[11.5px] font-medium", night ? "text-paper/60" : "text-ink-3")}>
+            <span className="truncate">{s.tagline}</span>
+          </span>
+        </span>
+      </div>
+    );
+  }
   return (
-    <button
-      disabled={chill}
-      onClick={() => !chill && onOpen(option)}
-      className={cn(
-        "flex w-full items-center gap-3 rounded-2xl p-2 pr-3 text-left transition enabled:active:scale-[0.99]",
-        night ? "dusk text-paper" : "bg-paper shadow-card",
-      )}
-    >
+    <button onClick={() => onOpen(option)} className={cn(rowClass, "active:scale-[0.99]")}>
       <span className="relative size-14 shrink-0 overflow-hidden rounded-xl bg-ocean-800">
-        <Photo photo={chill ? chillNight.images[0] : option.images[0]} alt={title} sizes="56px" />
+        <Photo photo={option.images[0]} alt={option.title} sizes="56px" />
       </span>
       <span className="min-w-0 flex-1">
-        <span className={cn("label block", night ? "text-saffron-400" : "text-sunset-600")}>{night ? "Evening" : "Daytime"}</span>
-        <span className="line-clamp-2 text-[14.5px] font-semibold leading-tight">{title}</span>
+        {eyebrow}
+        <span className="line-clamp-2 text-[14.5px] font-semibold leading-tight">{option.title}</span>
         <span className={cn("mt-0.5 flex items-center gap-2 text-[11.5px] font-medium", night ? "text-paper/60" : "text-ink-3")}>
-          {region ? regions[region].short : "At the villa"}
-          {!chill && <VibeDots vibe={option.vibe} />}
+          {regions[option.region].short}
+          <VibeDots vibe={option.vibe} />
         </span>
       </span>
     </button>

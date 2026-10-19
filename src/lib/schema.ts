@@ -16,8 +16,9 @@ import { normalize, type ItineraryData } from "./itinerary";
 const isoDate = z.string().refine(isValidISO, "Invalid date");
 const text = (max: number) => z.string().trim().max(max).optional();
 
-const pick = z.object({ pairId: z.string().max(64), optionId: z.string().max(64) });
-const nightPick = z.union([pick, z.object({ type: z.literal("chill") })]);
+const optionPick = z.object({ pairId: z.string().max(64), optionId: z.string().max(64) });
+// "chill" is the pre-Stay-in shape; normalize() upgrades it to { type: "stay" }.
+const slotPick = z.union([optionPick, z.object({ type: z.enum(["stay", "chill"]) })]);
 
 export const preferencesSchema = z
   .object({
@@ -47,8 +48,8 @@ export const itinerarySchema = z
       .array(
         z.object({
           id: z.string().min(1).max(40),
-          day: pick.nullable(),
-          night: nightPick.nullable(),
+          day: slotPick.nullable(),
+          night: slotPick.nullable(),
           note: z.string().max(280).optional(),
         }),
       )

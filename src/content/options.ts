@@ -1,5 +1,5 @@
 import { photos } from "./photos.generated";
-import type { Option } from "./types";
+import type { Option, Photo } from "./types";
 
 /**
  * Every activity/evening someone can pick. Researched Oct 2026 for late
@@ -862,19 +862,54 @@ export const nyeOptions: Option[] = [
   },
 ];
 
-/** Always available on any evening, any number of times. Vibe 0. */
-export const chillNight = {
-  id: "chill",
-  title: "Chill night in",
-  tagline: "Dinner and hang at the villa.",
-  description:
-    "Sometimes the best night is the one where nobody has to go anywhere. Have the villa cook make a rice-and-curry spread (or order in), crack open the arrack, play cards by the pool and get a proper night's sleep before tomorrow's adventure.",
-  highlights: [
-    "Dinner at the villa or hotel — no travel",
-    "Pool, cards & music",
-    "Early night before big days",
-    "Pick it as often as you like",
-  ],
-  vibe: 0 as const,
-  images: photos["chill"] ?? [],
+/**
+ * "Stay in" — offered on every Daytime and Evening slot, as often as people
+ * like. Vibe 0 (perfectly balanced). Same id for both slots; copy differs.
+ */
+export type StayIn = {
+  id: "stay";
+  slot: "day" | "night";
+  title: string;
+  tagline: string;
+  description: string;
+  highlights: string[];
+  vibe: 0;
+  images: Photo[];
+};
+
+const stayPhotos = photos["stay-in"] ?? [];
+
+export const stayIn: Record<"day" | "night", StayIn> = {
+  day: {
+    id: "stay",
+    slot: "day",
+    title: "Stay in",
+    tagline: "Slow morning, pool, nap, no plans.",
+    description:
+      "A day with zero agenda. Sleep in, take a long breakfast, read by the pool, nap in a hammock — maybe a massage or a wander down to the nearest beach. Perfect for recharging between big days (or recovering from last night).",
+    highlights: [
+      "Sleep in & a long breakfast",
+      "Pool, hammock and a good book",
+      "Optional massage or beach wander",
+      "Pick it as often as you like",
+    ],
+    vibe: 0,
+    images: [stayPhotos[1], stayPhotos[0]].filter(Boolean),
+  },
+  night: {
+    id: "stay",
+    slot: "night",
+    title: "Stay in",
+    tagline: "Dinner and hangs at the villa.",
+    description:
+      "Sometimes the best night is the one where nobody has to go anywhere. Have the villa cook make a rice-and-curry spread (or order in), crack open the arrack, play cards by the pool and get a proper night's sleep before tomorrow's adventure.",
+    highlights: [
+      "Dinner at the villa — no travel",
+      "Pool, cards & music",
+      "Early night before big days",
+      "Pick it as often as you like",
+    ],
+    vibe: 0,
+    images: stayPhotos,
+  },
 };

@@ -113,12 +113,56 @@ await page.getByRole("button", { name: /Pick NYE beach party/ }).click();
 await page.waitForTimeout(1200);
 await shot(page, "build-some-picks");
 
+step("Repeat picks: same option on two days, both options of one pair, Stay in day + night");
+const row = (i) => page.locator("ol > li").nth(i);
+// Day 3 daytime: the same surf lesson again (soft "Also on Day 2" hint, no block)
+await row(2).getByRole("button", { name: "Pick your daytime" }).click();
+await page.waitForTimeout(900);
+await expect(page.getByText("Also on Day 2").first().isVisible(), "soft 'Also on Day 2' hint shown on the repeated option");
+await expect(page.getByText(/Used on Day/).count().then((c) => c === 0), "no blocking 'Used on Day' state");
+await shot(page, "matchup-repeat-hint");
+await page.getByRole("button", { name: "Pick Learn to surf in Weligama Bay" }).click();
+await page.waitForTimeout(1100);
+// Day 5 daytime: the OTHER option of the same pair (Paddle out or kick back)
+await row(4).getByRole("button", { name: "Pick your daytime" }).click();
+await page.waitForTimeout(900);
+await page.getByRole("button", { name: "Pick Unawatuna & Jungle Beach day" }).click();
+await page.waitForTimeout(1100);
+// Day 1 daytime: Stay in
+await row(0).getByRole("button", { name: "Landing day" }).click();
+await page.waitForTimeout(900);
+await shot(page, "matchup-stay-day");
+await page.getByRole("button", { name: /^Pick Stay in/ }).click();
+await page.waitForTimeout(1100);
+// Day 3 evening: Stay in
+await row(2).getByRole("button", { name: "Pick your evening" }).click();
+await page.waitForTimeout(900);
+await shot(page, "matchup-stay-night");
+await page.getByRole("button", { name: /^Pick Stay in/ }).click();
+await page.waitForTimeout(1600);
+await shot(page, "build-stay-and-repeats");
+const picked = await eventually(async () => {
+  const r = await page.request.get(base + "/api/itinerary").then((x) => x.json());
+  return r?.data?.days?.[2]?.night?.type === "stay" ? r : null;
+});
+const pdays = picked.value?.data?.days ?? [];
+await expect(pdays[1]?.day?.optionId === "weligama-surf-lesson" && pdays[2]?.day?.optionId === "weligama-surf-lesson", "same option saved on Day 2 and Day 3");
+await expect(pdays[4]?.day?.optionId === "unawatuna-jungle-beach" && pdays[4]?.day?.pairId === "south-surf", "other option of the same pair saved on Day 5");
+await expect(pdays[0]?.day?.type === "stay", "Stay in saved on Day 1 daytime");
+await expect(pdays[2]?.night?.type === "stay", "Stay in saved on Day 3 evening");
+
 step("Quick fill (keep picks)");
 await page.getByRole("button", { name: /Quick fill/ }).click();
 await page.getByRole("button", { name: /Fill the empty slots/ }).click();
 await page.waitForTimeout(1200);
 await shot(page, "build-quickfilled", { full: true });
 await expect(page.getByText("NYE beach party on the south coast").first().isVisible(), "NYE pick kept after quick fill");
+const filled = await eventually(async () => {
+  const r = await page.request.get(base + "/api/itinerary").then((x) => x.json());
+  return r?.data?.days?.every((d, i) => i === 0 || i === 5 || d.day) ? r : null;
+});
+const fd = filled.value?.data?.days ?? [];
+await expect(fd[1]?.day?.optionId === "weligama-surf-lesson" && fd[2]?.day?.optionId === "weligama-surf-lesson" && fd[0]?.day?.type === "stay", "quick fill kept the manual repeats and Stay in");
 
 step("Reorder: move day 4 (31 Dec) to the top — NYE evening must stay on 31 Dec");
 const before = await page.request.get(base + "/api/itinerary").then((r) => r.json()).catch(() => null);
@@ -135,7 +179,7 @@ await shot(page, "build-reordered");
 const after = await page.request.get(base + "/api/itinerary").then((r) => r.json());
 const d0 = after.data.days[0];
 const d3 = after.data.days[3];
-await expect(before && d0.day?.optionId === before.data.days[3].day?.optionId, "day 4's daytime moved to day 1");
+await expect(before && JSON.stringify(d0.day) === JSON.stringify(before.data.days[3].day), "day 4's daytime moved to day 1");
 await expect(d3.night?.pairId === "nye", "NYE evening still pinned to 31 Dec after reorder");
 await expect(d0.night?.pairId !== "nye", "day 1 did not take the NYE pick");
 
@@ -249,6 +293,11 @@ for (const f of ["json", "csv", "csv-long"]) {
   const body = await r.text();
   await expect(r.ok() && body.includes(NAME), `export ${f} works and includes ${NAME}`);
   fs.writeFileSync(path.join(outDir, `export.${f === "json" ? "json" : `${f}.csv`}`), body);
+  if (f === "csv-long") {
+    const mine = body.split("\n").filter((l) => l.startsWith(NAME + ","));
+    await expect(mine.filter((l) => l.includes(",stay,Stay in,")).length >= 2, "long CSV has Stay in rows (day + night)");
+    await expect(mine.filter((l) => l.includes(",weligama-surf-lesson,")).length >= 2, "long CSV has the repeated option twice");
+  }
 }
 await page.goto(base + "/trip");
 await shot(page, "trip-locked", { wait: 1200 });
@@ -269,7 +318,8 @@ await shot(pd, "desktop-build", { wait: 1500 });
 
 step("Cleanup: delete the test users");
 const everyone = await pa.request.get(base + "/api/people").then((r) => r.json());
-for (const person of everyone.filter((x) => x.name === NAME || x.name === NAME2)) {
+const PROTECTED = /^abdul$/i; // the organizer's real account is never deleted by tests
+for (const person of everyone.filter((x) => (x.name === NAME || x.name === NAME2) && !PROTECTED.test(x.name))) {
   const r = await pa.request.delete(`${base}/api/admin/participants/${person.id}`);
   await expect(r.ok(), `deleted ${person.name}`);
 }
