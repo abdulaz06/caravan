@@ -2,7 +2,7 @@
 // Usage: node --env-file=.env.local scripts/flow.mjs <outDir>
 //   env: BASE (default http://localhost:3000), CHROME_PATH, VIEW (e.g. 375x667), PIN, ADMIN_PASSWORD
 //   Against a local-store server on :3100 (LANKS_LOCAL_STORE=1) it also tests the
-//   v1 → v2 migration by writing an old itinerary straight into .data/dev-db.json.
+//   upgrade of an older (v2) itinerary by writing it straight into .data/dev-db.json.
 import { chromium } from "playwright";
 import fs from "node:fs";
 import path from "node:path";
@@ -67,6 +67,7 @@ const saved = (pg, pred) =>
     const r = await pg.request.get(base + "/api/itinerary").then((x) => x.json());
     return r?.data && pred(r) ? r : null;
   });
+const ids = (list) => (list ?? []).map((x) => x.id);
 
 async function join(page, name) {
   await page.goto(base + "/join");
@@ -76,25 +77,51 @@ async function join(page, name) {
   await page.waitForURL("**/trip**");
 }
 
-async function pickDates(page, startLabel, endLabel) {
-  await page.getByRole("button", { name: startLabel }).first().click();
-  await page.getByRole("button", { name: endLabel }).first().click();
+const dateBtn = (page, label) => page.getByRole("button", { name: new RegExp(`^${label}`) }).first();
+async function tapDate(page, label) {
+  await dateBtn(page, label).click();
+  await page.waitForTimeout(400);
+}
+/** Drag the date window from one (in-window) day to another, like a finger would — holding near the edge auto-scrolls. */
+async function dragWindow(page, from, to) {
+  const c = (b) => [b.x + b.width / 2, b.y + b.height / 2];
+  const fromBtn = dateBtn(page, from);
+  await fromBtn.scrollIntoViewIfNeeded();
+  const a = await fromBtn.boundingBox();
+  const vp = page.viewportSize();
+  await page.mouse.move(...c(a));
+  await page.mouse.down();
+  for (let i = 0; i < 60; i++) {
+    const b = await dateBtn(page, to).boundingBox();
+    if (b && b.y > 180 && b.y + b.height < vp.height - 210) {
+      // Leave the auto-scroll zone, let the page settle, then re-measure and drop on the target.
+      await page.mouse.move(c(a)[0], vp.height / 2, { steps: 2 });
+      await page.waitForTimeout(250);
+      const b2 = await dateBtn(page, to).boundingBox();
+      await page.mouse.move(...c(b2), { steps: 6 });
+      break;
+    }
+    await page.mouse.move(c(a)[0], vp.height - 190, { steps: 3 });
+    await page.waitForTimeout(80);
+  }
+  await page.mouse.up();
+  await page.waitForTimeout(500);
 }
 
 const row = (page, i) => page.locator("ol > li").nth(i);
 const sheet = (page) => page.getByRole("dialog").last();
+const summary = (page) => page.locator(".fixed.bottom-0").last();
 
 async function openSlot(page, i, which) {
   await row(page, i).getByRole("button", { name: which }).first().click();
   await page.waitForTimeout(900);
 }
-
 async function closeSheet(page) {
   await page.keyboard.press("Escape");
   await page.waitForTimeout(500);
 }
 
-// ── User 1: Mon 28 Dec – Sat 2 Jan (6 days → Colombo 2, Galle 4; NYE in Galle) ──
+// ── User 1 ───────────────────────────────────────────────────────────
 const ctx = await browser.newContext(phone);
 const page = await ctx.newPage();
 page.on("pageerror", (e) => errors.push(`pageerror: ${e.message}`));
@@ -105,125 +132,159 @@ await page.goto(base + "/");
 await shot(page, "welcome");
 await join(page, NAME);
 
-step("Dates spanning NYE");
-await pickDates(page, "Mon 28 Dec", "Sat 2 Jan");
+step("Dates: 6-day window by default, drag across months, clamp at 31 Jan");
+await expect(page.getByRole("button", { name: /6 days · 5 nights/ }).first().getAttribute("aria-pressed").then((v) => v === "true"), "6 days · 5 nights preset selected by default");
+await shot(page, "dates-empty");
+await tapDate(page, "Sat 26 Dec");
+await expect(summary(page).getByText("6 days · 5 nights").isVisible(), "summary shows 6 days · 5 nights");
+await expect(summary(page).getByText(/Sat 26 Dec → Thu 31 Dec/).isVisible(), "tapping 26 Dec places a 6-day window to 31 Dec");
+await expect(summary(page).getByText("You'd fly home on New Year's Eve").isVisible(), "NYE on the fly-home day is flagged");
+await shot(page, "dates-window");
+await dragWindow(page, "Mon 28 Dec", "Sat 2 Jan");
+await expect(summary(page).getByText(/Thu 31 Dec → Tue 5 Jan/).isVisible(), "dragging the window moved it across into January");
+await shot(page, "dates-dragged");
+await tapDate(page, "Fri 29 Jan");
+await expect(summary(page).getByText(/Tue 26 Jan → Sun 31 Jan/).isVisible(), "window can't run past 31 Jan");
+await tapDate(page, "Mon 28 Dec");
+await expect(summary(page).getByText(/Mon 28 Dec → Sat 2 Jan/).isVisible(), "window placed Mon 28 Dec → Sat 2 Jan");
+await expect(summary(page).getByText(/NYE on Day 4 · Galle/).isVisible(), "NYE lands on Day 4 in Galle");
 await page.getByRole("button", { name: /Exact dates/ }).click();
-await expect(page.getByText("6 days").first().waitFor({ timeout: 4000 }).then(() => true), "trip length shows 6 days");
 await shot(page, "dates-picked");
+let r = await saved(page, (x) => x.data.startDate === "2026-12-28" && x.data.endDate === "2027-01-02" && x.data.days.length === 6);
+await expect(!!r.value, "saved as 6 days (28 Dec – 2 Jan)");
 await page.getByRole("button", { name: /Build days/ }).click();
-await page.waitForTimeout(800);
+await page.waitForTimeout(900);
 
-step("Base split, section headers and fixed travel legs");
-await expect(page.getByLabel("Colombo 2 days, then Galle 4 days").isVisible(), "6 days → Colombo 2 · Galle 4");
-await expect(page.getByRole("heading", { name: "Colombo", exact: true }).isVisible(), "Colombo section header");
-await expect(page.getByRole("heading", { name: "Galle", exact: true }).isVisible(), "Galle section header");
-await expect(row(page, 0).getByText("Land at Colombo airport (CMB) → Colombo").isVisible(), "arrival leg on Day 1");
-await expect(row(page, 2).getByText("Road trip · Colombo → Galle").isVisible(), "Colombo → Galle leg on Day 3");
-await expect(row(page, 5).getByText("Road trip · Galle → Colombo airport (CMB)").isVisible(), "departure leg on the last day");
+step("Day structure: Colombo 1 night → Galle 4 nights; Day 1/2/6");
+await expect(page.getByLabel("Colombo 1 night, then Galle 4 nights").isVisible(), "header: Colombo 1 night → Galle 4 nights");
+await expect(row(page, 0).getByText("Land in Colombo").isVisible(), "Day 1 · Land in Colombo");
+await expect(row(page, 0).getByText(/Our only Colombo day/).isVisible(), "Day 1 says it's the only Colombo day");
+await expect(row(page, 0).getByText("CMB → Colombo").isVisible(), "Day 1 leg: CMB → Colombo");
+await expect(row(page, 1).getByText("Road trip to Galle").first().isVisible(), "Day 2 · Road trip to Galle");
+await expect(row(page, 1).getByText(/Road trip · Colombo → Galle/).isVisible(), "Day 2 leg: Colombo → Galle");
+await expect(row(page, 5).getByText("Check out & fly home").isVisible(), "Day 6 · Check out & fly home");
+await expect(row(page, 5).getByText(/Galle → CMB airport/).isVisible(), "Day 6 leg: Galle → CMB");
+await expect(row(page, 5).getByRole("button").count().then((c) => c === 0), "Day 6 has no slots and isn't editable");
 await shot(page, "build-empty");
 await shot(page, "build-empty-full", { full: true });
 
-step("Colombo day: only Colombo options; Kandy by road");
-await openSlot(page, 1, "Pick your daytime");
-await expect(sheet(page).getByRole("button", { name: /^Pick Colombo by tuk-tuk/ }).isVisible(), "Colombo option offered on a Colombo day");
-await expect(sheet(page).getByRole("button", { name: /^Pick Blue whale watching/ }).count().then((c) => c === 0), "no Galle-area option on a Colombo day");
-await shot(page, "matchup-colombo-day", { wait: 300 });
-await sheet(page).getByRole("button", { name: /^Pick Kandy day trip/ }).click();
-await page.waitForTimeout(800);
-await shot(page, "kandy-transport-choice");
-await sheet(page).getByRole("button", { name: /^Road trip:/ }).click();
-await page.waitForTimeout(300);
-await sheet(page).getByRole("button", { name: /Pick for Day 2 · Road trip/ }).click();
-await page.waitForTimeout(1300);
-let r = await saved(page, (x) => x.data.days[1].day?.optionId === "kandy-day-trip");
-await expect(r.value?.data.days[1].day.transport === "road", "Kandy saved with transport: road");
-await expect(row(page, 1).getByText("Drive back · Kandy → Colombo").isVisible(), "Kandy return leg (road) shown");
-
-step("Galle day: only Galle options; pick surf from the detail sheet");
-await openSlot(page, 2, "Pick your daytime");
-await expect(sheet(page).getByRole("button", { name: /^Pick Learn to surf in Weligama Bay/ }).isVisible(), "Galle option offered on a Galle day");
-await expect(sheet(page).getByRole("button", { name: /^Pick Colombo by tuk-tuk/ }).count().then((c) => c === 0), "no Colombo option on a Galle day");
-await shot(page, "matchup-galle-day", { wait: 300 });
-await sheet(page).getByRole("button", { name: /More about Learn to surf/ }).click();
-await shot(page, "option-detail", { wait: 900 });
-await page.getByRole("button", { name: /Pick for Day 3/ }).last().click();
-await page.waitForTimeout(1300);
-
-step("Secret Jungle Party on a Wednesday → gentle Friday warning");
-await openSlot(page, 2, "Pick your evening");
-await expect(sheet(page).getByText("Fridays only").first().isVisible(), "'Fridays only' badge on the tile");
-await shot(page, "matchup-jungle-party", { wait: 300 });
-await sheet(page).getByRole("button", { name: /^Pick Secret Jungle Party/ }).click();
-await page.waitForTimeout(1300);
-await expect(row(page, 2).getByText(/only runs on Fridays — this is a Wednesday/).isVisible(), "non-Friday warning shown, pick not blocked");
-await shot(page, "jungle-party-warning");
-
-step("NYE in the Galle base");
-await openSlot(page, 3, "Pick your New Year's Eve");
-await expect(sheet(page).getByRole("button", { name: /^Pick NYE in Galle Fort/ }).isVisible(), "Galle NYE pair offered on 31 Dec");
-await expect(sheet(page).getByRole("button", { name: /^Pick NYE rooftop countdown in Colombo/ }).count().then((c) => c === 0), "Colombo NYE not offered in Galle");
-await shot(page, "matchup-nye-galle", { wait: 300 });
-await sheet(page).getByRole("button", { name: /^Pick NYE beach party/ }).click();
-await page.waitForTimeout(1300);
-
-step("Repeats, both halves of a pair, Stay in day + night");
-await openSlot(page, 4, "Pick your daytime");
-await expect(sheet(page).getByText("Also on Day 3").first().isVisible(), "soft 'Also on Day 3' hint on a repeat");
-await sheet(page).getByRole("button", { name: /^Pick Unawatuna & Jungle Beach day/ }).click();
+step("Day 1: Colombo options only");
+await openSlot(page, 0, "Pick your Colombo daytime");
+await expect(sheet(page).getByRole("button", { name: /^Pick Colombo by tuk-tuk/ }).isVisible(), "Colombo option on Day 1");
+await expect(sheet(page).getByRole("button", { name: /^Pick Galle Fort/ }).count().then((c) => c === 0), "no Galle options on Day 1");
+await expect(sheet(page).getByText(/Kandy/).count().then((c) => c === 0), "Kandy day trip is gone");
+await sheet(page).getByRole("button", { name: /^Pick Colombo by tuk-tuk/ }).click();
 await page.waitForTimeout(1100);
-await openSlot(page, 5, "Daytime · before you fly");
+await openSlot(page, 0, "Pick your Colombo night");
+await shot(page, "matchup-colombo-night", { wait: 300 });
+await sheet(page).getByRole("button", { name: /More about Pub Golf: tee off at Bellagio/ }).click();
+await page.waitForTimeout(900);
+await expect(sheet(page).getByText("Bellagio Colombo casino", { exact: true }).isVisible(), "Pub Golf course tees off at Bellagio");
+await expect(sheet(page).getByText("Tee-off").first().isVisible(), "Hole 0 · Tee-off");
+await shot(page, "pub-golf-bellagio", { wait: 300 });
+await sheet(page).getByRole("button", { name: /Pick for Day 1/ }).click();
+await page.waitForTimeout(1200);
+
+step("Day 2: en-route stops only in the daytime; Galle in the evening");
+await openSlot(page, 1, "Pick a stop on the way");
+await expect(sheet(page).getByRole("button", { name: /^Pick Madu River/ }).isVisible(), "en-route stop offered on Day 2 daytime");
+await expect(sheet(page).getByRole("button", { name: /^Pick Galle Fort|^Pick Learn to surf/ }).count().then((c) => c === 0), "no Galle-base daytime options on Day 2");
+await expect(sheet(page).getByRole("button", { name: /^Pick Straight to Galle/ }).isVisible(), "'Straight to Galle' in place of Stay in");
+await shot(page, "matchup-enroute", { wait: 300 });
+await sheet(page).getByRole("button", { name: /^Pick Madu River/ }).click();
+await page.waitForTimeout(1100);
+await expect(row(page, 1).getByLabel(/Stops on the way: Madu River/).isVisible(), "route strip shows the stop on the coast road");
+await row(page, 1).getByRole("button", { name: "Add another to daytime" }).click();
+await page.waitForTimeout(800);
+await expect(sheet(page).getByRole("button", { name: /^Add Learn to surf/ }).count().then((c) => c === 0), "Day 2 catalog is en-route only");
+await sheet(page).getByRole("button", { name: /^Add Ambalangoda devil masks/ }).click();
+await page.waitForTimeout(1100);
+await openSlot(page, 1, "Pick your evening");
+await sheet(page).getByRole("button", { name: /^Pick Sunset on Galle Fort/ }).click();
+await page.waitForTimeout(1200);
+r = await saved(page, (x) => x.data.days[1].night.length === 1);
+await expect(JSON.stringify(ids(r.value?.data.days[1].day)) === JSON.stringify(["madu-river-safari", "ambalangoda-masks"]), "Day 2 daytime saved as two en-route stops");
+await shot(page, "build-day2");
+
+step("Multiple items per slot: matchup first, then the catalog with filters + search");
+await openSlot(page, 2, "Pick your daytime");
 await sheet(page).getByRole("button", { name: /^Pick Learn to surf in Weligama Bay/ }).click();
 await page.waitForTimeout(1100);
-await openSlot(page, 0, "Landing day");
-await shot(page, "matchup-stay-day", { wait: 300 });
-await sheet(page).getByRole("button", { name: /^Pick Stay in/ }).click();
+await row(page, 2).getByRole("button", { name: "Add another to daytime" }).click();
+await page.waitForTimeout(800);
+await shot(page, "catalog", { wait: 300 });
+await sheet(page).getByRole("button", { name: "Beach & Water" }).click();
+await page.waitForTimeout(400);
+await expect(sheet(page).getByRole("button", { name: /^Add Snorkelling/ }).isVisible(), "Quick extras appear in the catalog (Beach & Water)");
+await expect(sheet(page).getByRole("button", { name: /^Add Galle Fort: ramparts/ }).count().then((c) => c === 0), "category filter hides culture options");
+await shot(page, "catalog-water", { wait: 300 });
+await sheet(page).getByLabel("Search activities").fill("dalawella");
+await page.waitForTimeout(400);
+await sheet(page).getByRole("button", { name: /^Add Dalawella/ }).click();
 await page.waitForTimeout(1100);
-await openSlot(page, 4, "Pick your evening");
-await sheet(page).getByRole("button", { name: /^Pick Stay in/ }).click();
-await page.waitForTimeout(1500);
-r = await saved(page, (x) => x.data.days[4].night?.type === "stay" && x.data.days[0].day?.type === "stay");
-const dd = r.value?.data.days ?? [];
-await expect(dd[2]?.day?.optionId === "weligama-surf-lesson" && dd[5]?.day?.optionId === "weligama-surf-lesson", "same option saved on Day 3 and Day 6");
-await expect(dd[4]?.day?.optionId === "unawatuna-jungle-beach", "other half of the surf pair on Day 5");
-await expect(dd[0]?.day?.type === "stay" && dd[4]?.night?.type === "stay", "Stay in saved on a daytime and an evening");
+await row(page, 2).getByRole("button", { name: "Add another to daytime" }).click();
+await page.waitForTimeout(800);
+await sheet(page).getByRole("button", { name: "Chill / Stay in" }).click();
+await page.waitForTimeout(300);
+await sheet(page).getByRole("button", { name: /^Add Ayurvedic massage/ }).click();
+await page.waitForTimeout(1200);
+await expect(row(page, 2).getByText(/planned/).first().isVisible(), "slot shows a time total")
+await expect(row(page, 2).getByText(/Weligama → Unawatuna/).isVisible(), "travel hop between items in different towns");
+r = await saved(page, (x) => x.data.days[2].day.length === 3);
+await expect(JSON.stringify(ids(r.value?.data.days[2].day)) === JSON.stringify(["weligama-surf-lesson", "dalawella-turtles", "ayurveda-massage-galle"]), "three items saved in order");
+await shot(page, "build-multi");
+// reorder within the slot: move Dalawella earlier
+await row(page, 2).getByRole("button", { name: /^Daytime: Dalawella/ }).click();
+await page.waitForTimeout(700);
+await shot(page, "item-sheet", { wait: 200 });
+await sheet(page).getByRole("button", { name: "Earlier" }).click();
+await page.waitForTimeout(400);
+await closeSheet(page);
+r = await saved(page, (x) => x.data.days[2].day[0]?.id === "dalawella-turtles");
+await expect(!!r.value, "items reorder within a slot");
+await row(page, 2).getByRole("button", { name: /^Daytime: Ayurvedic massage/ }).click();
+await page.waitForTimeout(600);
+await sheet(page).getByRole("button", { name: "Remove" }).click();
+await page.waitForTimeout(800);
+r = await saved(page, (x) => x.data.days[2].day.length === 2);
+await expect(!!r.value, "items can be removed");
 
-step("Add-ons (filtered by base) + switch Kandy to the train");
-await row(page, 1).getByRole("button", { name: "Add-on" }).first().click();
-await page.waitForTimeout(800);
-await expect(sheet(page).getByRole("button", { name: /^Snorkelling/ }).count().then((c) => c === 0), "no Galle add-ons on a Colombo pick");
-await sheet(page).getByRole("button", { name: /^Bowling/ }).click();
+step("Secret Jungle Party on a Wednesday → gentle Friday warning; move it to Friday");
+await openSlot(page, 2, "Pick your evening");
+await expect(sheet(page).getByText("Fridays only").first().isVisible(), "'Fridays only' badge");
+await sheet(page).getByRole("button", { name: /^Pick Secret Jungle Party/ }).click();
+await page.waitForTimeout(1200);
+await expect(row(page, 2).getByText(/only runs on Fridays — this is a Wednesday/).isVisible(), "non-Friday warning shown, not blocked");
+await row(page, 2).getByRole("button", { name: /^Evening: Secret Jungle Party/ }).click();
+await page.waitForTimeout(600);
+await sheet(page).getByRole("button", { name: "Move to another day" }).click();
 await page.waitForTimeout(400);
-await sheet(page).getByRole("button", { name: /^Arcade, VR/ }).click();
-await page.waitForTimeout(400);
-await sheet(page).getByRole("button", { name: /^Scenic train:/ }).click();
-await shot(page, "option-sheet-kandy", { wait: 500 });
-await closeSheet(page);
-await row(page, 2).getByRole("button", { name: "Add-on" }).first().click();
-await page.waitForTimeout(800);
-await expect(sheet(page).getByRole("button", { name: /^Bowling/ }).count().then((c) => c === 0), "no Colombo add-ons on a Galle pick");
-await sheet(page).getByRole("button", { name: /^Snorkelling/ }).click();
-await page.waitForTimeout(400);
-await closeSheet(page);
-r = await saved(page, (x) => x.data.days[2].day?.addOns?.includes("snorkel-jungle-beach") && x.data.days[1].day?.transport === "train");
-await expect(
-  JSON.stringify(r.value?.data.days[1].day.addOns) === JSON.stringify(["playdium-bowling", "playdium-arcade"]),
-  "Colombo add-ons saved on the Kandy pick",
-);
-await expect(r.value?.data.days[1].day.transport === "train", "Kandy switched to the scenic train");
-await expect(row(page, 1).getByText("Train back · Kandy → Colombo Fort").isVisible(), "train return leg shown");
-await expect(row(page, 2).getByText("Snorkelling").isVisible(), "add-on chip on the day card");
-await shot(page, "build-addons");
+await expect(sheet(page).getByText("Colombo day").isVisible(), "can't move a Galle evening to the Colombo day");
+await shot(page, "move-targets", { wait: 200 });
+await sheet(page).getByRole("button", { name: /Day 5/ }).click();
+await page.waitForTimeout(1000);
+r = await saved(page, (x) => x.data.days[4].night.some((y) => y.id === "secret-jungle-party"));
+await expect(!!r.value && !r.value.data.days[2].night.length, "moved to Day 5 (Fri 1 Jan)");
+await expect(row(page, 4).getByText(/only runs on Fridays/).count().then((c) => c === 0), "no warning on a Friday");
+
+step("NYE on Day 4 (Galle pair)");
+await openSlot(page, 3, "Pick your New Year's Eve");
+await expect(sheet(page).getByRole("button", { name: /^Pick NYE in Galle Fort/ }).isVisible(), "Galle NYE pair on 31 Dec");
+await sheet(page).getByRole("button", { name: /^Pick NYE beach party/ }).click();
+await page.waitForTimeout(1200);
 
 step("Quick fill keeps manual picks");
 await page.getByRole("button", { name: /Quick fill/ }).click();
 await page.getByRole("button", { name: /Fill the empty slots/ }).click();
 await page.waitForTimeout(1300);
-r = await saved(page, (x) => x.data.days[1].night && x.data.days[3].day);
-await expect(r.value?.data.days[1].day.optionId === "kandy-day-trip" && r.value?.data.days[3].night?.pairId === "nye-galle", "manual picks kept");
+r = await saved(page, (x) => x.data.days[3].day.length && x.data.days[4].day.length && x.data.days[2].night.length);
+await expect(r.value?.data.days[1].day[0]?.id === "madu-river-safari" && r.value?.data.days[3].night[0]?.id === "nye-mirissa-beach-party", "manual picks kept");
+await expect(r.value?.data.days[5].day.length === 0 && r.value?.data.days[5].night.length === 0, "Day 6 stays empty");
 await shot(page, "build-quickfilled", { full: true });
 
-step("Reorder within Galle; NYE evening stays on 31 Dec; can't cross into Colombo");
+step("Reorder Galle days; NYE evening stays on 31 Dec; Day 2 can't be dragged");
 const before = r.value;
+await expect(page.getByRole("button", { name: "Drag to reorder day 2" }).count().then((c) => c === 0), "Day 2 has no drag handle");
 const h4 = page.getByRole("button", { name: "Drag to reorder day 4" });
 await h4.focus();
 await page.keyboard.press("Space");
@@ -233,66 +294,65 @@ await page.waitForTimeout(250);
 await page.keyboard.press("Space");
 await page.waitForTimeout(1300);
 r = await saved(page, (x) => JSON.stringify(x.data.days[2].day) === JSON.stringify(before.data.days[3].day));
-await expect(!!r.value, "day 4's daytime moved to day 3");
-await expect(r.value?.data.days[3].night?.pairId === "nye-galle", "NYE evening still pinned to 31 Dec");
-const colomboBefore = JSON.stringify((r.value ?? before).data.days.slice(0, 2));
-const h3 = page.getByRole("button", { name: "Drag to reorder day 3" });
-await h3.focus();
-await page.keyboard.press("Space");
-for (let i = 0; i < 3; i++) {
-  await page.keyboard.press("ArrowUp");
-  await page.waitForTimeout(150);
-}
-await page.keyboard.press("Space");
-await page.waitForTimeout(1300);
-const afterCross = await page.request.get(base + "/api/itinerary").then((x) => x.json());
-await expect(JSON.stringify(afterCross.data.days.slice(0, 2)) === colomboBefore, "Colombo days untouched by a Galle drag");
+await expect(!!r.value, "Day 4's daytime moved to Day 3");
+await expect(r.value?.data.days[3].night[0]?.id === "nye-mirissa-beach-party", "NYE evening still pinned to 31 Dec");
+await expect(JSON.stringify(r.value?.data.days.slice(0, 2)) === JSON.stringify(before.data.days.slice(0, 2)), "Days 1–2 untouched");
 
-step("Moving a pick: other-base days are unavailable");
-await page.getByRole("button", { name: /^Daytime: Kandy/ }).click();
-await page.waitForTimeout(700);
-await sheet(page).getByRole("button", { name: "Move to another day" }).click();
-await page.waitForTimeout(500);
-await expect(sheet(page).getByText("Galle base").first().isVisible(), "Galle days marked unavailable for a Colombo pick");
-await shot(page, "slot-move-bases");
-await closeSheet(page);
-
-step("Currency switching");
+step("Currency + budget (Colombo 1 night, Galle 4 nights)");
 await page.getByRole("button", { name: /^Currency:/ }).click();
-await page.waitForTimeout(400);
-await shot(page, "currency-picker");
-await page.getByRole("option", { name: /LKR/ }).click();
-await page.waitForTimeout(800);
-await expect(page.getByRole("button", { name: "Open trip budget" }).innerText().then((t) => /Rs|LKR/.test(t)), "budget pill shows rupees");
-r = await saved(page, (x) => x.data.preferences.currency === "LKR");
-await expect(!!r.value, "currency saved to preferences");
-await shot(page, "build-lkr");
-
-step("Budget tracker");
+await page.getByRole("option", { name: /GBP/ }).click();
+await page.waitForTimeout(600);
 await page.getByRole("button", { name: "Open trip budget" }).click();
 await page.waitForTimeout(900);
-await shot(page, "budget-sheet");
+await expect(sheet(page).getByText("Colombo · 1 night").isVisible(), "budget: Colombo · 1 night");
+await expect(sheet(page).getByText("Galle · 4 nights").isVisible(), "budget: Galle · 4 nights");
 const total = () => sheet(page).locator("p", { hasText: /^≈ / }).first().innerText();
 const t0 = await total();
 await sheet(page).getByText("Include places to stay").click();
 await page.waitForTimeout(600);
 const t1 = await total();
-await expect(t0 !== t1, `total changes when accommodation is toggled (${t0} → ${t1})`);
-await sheet(page).locator("label", { hasText: "Learn to surf" }).first().click();
-await page.waitForTimeout(600);
-const t2 = await total();
-await expect(t1 !== t2, `total drops when a line is unticked (${t1} → ${t2})`);
-r = await saved(page, (x) => x.data.budget?.accommodation === false && (x.data.budget?.excluded ?? []).length > 0);
-await expect(!!r.value, "budget toggles saved (accommodation off + one excluded line)");
+await expect(t0 !== t1 && t0.includes("£"), `total changes when accommodation is toggled (${t0} → ${t1})`);
 await sheet(page).getByText("Include places to stay").click();
-await page.waitForTimeout(500);
-await sheet(page).getByText("Untick anything you").scrollIntoViewIfNeeded();
-await shot(page, "budget-sheet-lines", { wait: 400 });
+await page.waitForTimeout(400);
+await shot(page, "budget-sheet");
 await closeSheet(page);
-await page.getByRole("button", { name: /^Currency:/ }).click();
-await page.getByRole("option", { name: /GBP/ }).click();
+
+step("5-day preview: sandboxed, never saved, submit blocked, switching back restores");
+const real = (await page.request.get(base + "/api/itinerary").then((x) => x.json())).data;
+await page.getByRole("navigation", { name: "Steps" }).getByRole("button", { name: "Dates" }).click();
 await page.waitForTimeout(600);
-await expect(page.getByRole("button", { name: "Open trip budget" }).innerText().then((t) => t.includes("£")), "switched to GBP");
+await page.getByRole("button", { name: /Preview.*5 days · 4 nights/ }).click();
+await page.waitForTimeout(600);
+await expect(summary(page).getByText(/Mon 28 Dec → Fri 1 Jan/).isVisible(), "preview window is 5 days");
+await expect(page.getByText(/Previewing 5 days · 4 nights/).first().isVisible(), "preview banner shown");
+await shot(page, "preview-dates");
+await page.getByRole("button", { name: /Build days/ }).click();
+await page.waitForTimeout(900);
+await expect(page.getByLabel("Colombo 1 night, then Galle 3 nights").isVisible(), "preview header: Galle 3 nights");
+await expect(page.locator("ol > li").count().then((c) => c === 5), "preview has 5 day cards");
+await row(page, 2).getByRole("button", { name: "Add another to evening" }).click();
+await page.waitForTimeout(700);
+await sheet(page).getByRole("button", { name: /^Add Sunset catamaran/ }).click();
+await page.waitForTimeout(1500);
+await shot(page, "preview-build");
+const during = (await page.request.get(base + "/api/itinerary").then((x) => x.json())).data;
+await expect(JSON.stringify(during.days) === JSON.stringify(real.days) && during.endDate === "2027-01-02", "preview edits are not autosaved");
+await page.getByRole("navigation", { name: "Steps" }).getByRole("button", { name: "Review" }).click();
+await page.waitForTimeout(1500);
+await expect(page.getByText("The group voted 6 days. Switch back to submit.").isVisible(), "friendly note on review");
+await expect(page.getByRole("button", { name: /Submit my trip/ }).isDisabled(), "Submit disabled in preview");
+await shot(page, "preview-review");
+await page.getByRole("button", { name: "Back to 6 days" }).first().click();
+await page.waitForTimeout(900);
+await page.getByRole("navigation", { name: "Steps" }).getByRole("button", { name: "Days" }).click();
+await page.waitForTimeout(900);
+await expect(page.locator("ol > li").count().then((c) => c === 6), "back to 6 day cards");
+await expect(page.getByLabel("Colombo 1 night, then Galle 4 nights").isVisible(), "back to Galle 4 nights");
+await expect(row(page, 2).getByText("Sunset catamaran").count().then((c) => c === 0), "the preview-only edit is gone");
+const fivePut = await page.request.put(base + "/api/itinerary", {
+  data: { data: { ...real, endDate: "2027-01-01", days: real.days.slice(0, 5) }, submit: true },
+});
+await expect(fivePut.status() === 400, "server rejects a 5-day submission");
 
 step("Preferences, review & submit");
 await page.getByRole("button", { name: /Next: a few extras/ }).click();
@@ -314,8 +374,8 @@ await page.getByRole("button", { name: "Hiking" }).click();
 r = await saved(page, (x) => x.data.preferences.interests?.includes("hiking"));
 await expect(r.value?.status === "submitted", "edit after submit saved, still submitted");
 
-// ── User 2: base splits for 4 / 5 / 8 days, NYE in the Colombo base ──
-step("Second user: splits for 4, 5 and 8 days; NYE in Colombo");
+// ── User 2: NYE on different days ────────────────────────────────────
+step("Second user: NYE on Day 2 (evening), Day 1 (Colombo) and Day 6 (flying)");
 const ctx2 = await browser.newContext(phone);
 const p2 = await ctx2.newPage();
 p2.on("pageerror", (e) => errors.push(`pageerror(2): ${e.message}`));
@@ -326,31 +386,28 @@ await p2.getByRole("button", { name: /Let's go/ }).click();
 await p2.waitForTimeout(700);
 await expect(p2.getByText(/already a/).isVisible(), "case-insensitive duplicate name rejected");
 await join(p2, NAME2);
-const datesTab = p2.getByRole("navigation", { name: "Steps" }).getByRole("button", { name: "Dates" });
-for (const [s, e, label, name] of [
-  ["Sat 26 Dec", "Tue 29 Dec", "Colombo 1 day, then Galle 3 days", "build-4-days"],
-  ["Sat 26 Dec", "Wed 30 Dec", "Colombo 2 days, then Galle 3 days", null],
-  ["Wed 30 Dec", "Wed 6 Jan", "Colombo 2 days, then Galle 6 days", "build-8-days"],
-]) {
-  await datesTab.click();
-  await p2.waitForTimeout(500);
-  await pickDates(p2, s, e);
-  await p2.getByRole("button", { name: /Build days/ }).click();
-  await p2.waitForTimeout(700);
-  await expect(p2.getByLabel(label).isVisible(), `${s} → ${e}: ${label}`);
-  if (name) await shot(p2, name);
-}
+await tapDate(p2, "Wed 30 Dec");
+await p2.getByRole("button", { name: /Build days/ }).click();
+await p2.waitForTimeout(800);
 await openSlot(p2, 1, "Pick your New Year's Eve");
-await expect(sheet(p2).getByRole("button", { name: /^Pick NYE rooftop countdown in Colombo/ }).isVisible(), "Colombo NYE pair when 31 Dec is a Colombo day");
-await expect(sheet(p2).getByRole("button", { name: /^Pick NYE by the sea at Mount Lavinia/ }).isVisible(), "Mount Lavinia NYE offered");
-await shot(p2, "matchup-nye-colombo", { wait: 300 });
+await expect(sheet(p2).getByRole("button", { name: /^Pick NYE in Galle Fort/ }).isVisible(), "NYE on Day 2 evening → Galle pair");
+await shot(p2, "matchup-nye-day2", { wait: 300 });
+await closeSheet(p2);
+await p2.getByRole("navigation", { name: "Steps" }).getByRole("button", { name: "Dates" }).click();
+await p2.waitForTimeout(500);
+await tapDate(p2, "Thu 31 Dec");
+await p2.getByRole("button", { name: /Build days/ }).click();
+await p2.waitForTimeout(800);
+await openSlot(p2, 0, "Pick your New Year's Eve");
+await expect(sheet(p2).getByRole("button", { name: /^Pick NYE rooftop countdown in Colombo/ }).isVisible(), "NYE on Day 1 → Colombo pair");
 await sheet(p2).getByRole("button", { name: /^Pick NYE by the sea at Mount Lavinia/ }).click();
 await p2.waitForTimeout(1100);
 await p2.getByRole("button", { name: /Quick fill/ }).click();
 await p2.getByRole("button", { name: /Fill the empty slots/ }).click();
 await p2.waitForTimeout(1500);
-const q2 = await saved(p2, (x) => x.data.days.length === 8 && x.data.days[2].day);
-await expect(q2.value?.data.days[1].night?.optionId === "nye-mount-lavinia", "NYE pick kept through quick fill");
+const q2 = await saved(p2, (x) => x.data.days[2].day.length && x.data.startDate === "2026-12-31");
+await expect(q2.value?.data.days[0].night[0]?.id === "nye-mount-lavinia", "NYE pick kept through quick fill");
+await shot(p2, "build-nye-day1", { full: true });
 await p2.goto(base + "/trip?step=review");
 await p2.getByRole("button", { name: /Submit my trip/ }).click();
 await p2.waitForTimeout(1200);
@@ -360,9 +417,14 @@ await p2.getByRole("link", { name: new RegExp(NAME) }).first().click();
 await p2.waitForURL("**/group/**");
 await shot(p2, "person-view", { wait: 2000 });
 await shot(p2, "person-view-full", { full: true });
+// NYE on the fly-home day
+await p2.goto(base + "/trip?step=dates");
+await p2.waitForTimeout(800);
+await tapDate(p2, "Sat 26 Dec");
+await expect(summary(p2).getByText("You'd fly home on New Year's Eve").isVisible(), "NYE on Day 6 is flagged on the calendar");
 
-// ── User 3: an old (v1, pre-bases) itinerary gets upgraded ───────────
-step("Migration of an old itinerary");
+// ── User 3: upgrade of an older (v2) itinerary ───────────────────────
+step("Migration of an older itinerary");
 if (fs.existsSync(LOCAL_DB) && base.includes(":3100")) {
   const ctx3 = await browser.newContext(phone);
   const p3 = await ctx3.newPage();
@@ -378,37 +440,43 @@ if (fs.existsSync(LOCAL_DB) && base.includes(":3100")) {
     submitted_at: now,
     updated_at: now,
     data: {
-      version: 1,
-      startDate: "2026-12-29",
-      endDate: "2027-01-02",
+      version: 2,
+      startDate: "2026-12-28",
+      endDate: "2027-01-03",
       flexibility: "exact",
-      preferences: {},
+      preferences: { currency: "LKR" },
       days: [
-        { id: "m1", day: { pairId: "ella-hikes", optionId: "ella-rock" }, night: { type: "chill" } },
-        { id: "m2", day: { pairId: "mirissa-ocean", optionId: "mirissa-whale-watching" }, night: { pairId: "colombo-nights", optionId: "colombo-club-night" } },
-        { id: "m3", day: { pairId: "first-day", optionId: "colombo-tuk-tuk" }, night: { pairId: "nye", optionId: "nye-mirissa-beach-party" } },
-        { id: "m4", day: { pairId: "sigiriya-rocks", optionId: "pidurangala-sunrise" }, night: null },
-        { id: "m5", day: null, night: null },
+        { id: "m1", day: { type: "stay" }, night: { pairId: "colombo-nights", optionId: "colombo-club-night" } },
+        { id: "m2", day: { pairId: "kandy-or-design", optionId: "kandy-day-trip", transport: "road", addOns: ["playdium-bowling"] }, night: { pairId: "lucky-or-thirsty", optionId: "casino-night" } },
+        { id: "m3", day: { pairId: "south-surf", optionId: "weligama-surf-lesson", addOns: ["snorkel-jungle-beach"] }, night: { pairId: "jungle-or-golf", optionId: "secret-jungle-party" } },
+        { id: "m4", day: { pairId: "reef-or-ramparts", optionId: "galle-fort" }, night: { pairId: "nye-galle", optionId: "nye-mirissa-beach-party" } },
+        { id: "m5", day: { pairId: "mirissa-ocean", optionId: "mirissa-whale-watching" }, night: { type: "stay" } },
+        { id: "m6", day: { pairId: "reef-or-ramparts", optionId: "hikkaduwa-turtles" }, night: null },
+        { id: "m7", day: { pairId: "mirissa-ocean", optionId: "mirissa-beach-hop" }, night: null },
       ],
     },
   });
   fs.writeFileSync(LOCAL_DB, JSON.stringify(dbj, null, 2));
   await p3.goto(base + "/trip");
-  await p3.waitForTimeout(1200);
-  await expect(p3.getByText(/locked in Colombo \+ Galle as bases/).isVisible(), "one-time migration note shown");
-  await expect(p3.getByText(/\(4 cleared\)/).isVisible(), "4 out-of-base picks cleared");
+  await p3.waitForTimeout(1300);
+  await expect(p3.getByText(/The group voted for 6 days · 5 nights/).isVisible(), "one-time note explains the group decision");
+  await expect(p3.getByText(/\(5 cleared\)/).isVisible(), "5 picks that no longer fit were cleared");
   await shot(p3, "migration-note");
-  const mig = await saved(p3, (x) => x.data.version === 2);
-  const md = mig.value?.data.days ?? [];
+  const mig = await saved(p3, (x) => x.data.version === 3);
+  const md = mig.value?.data;
+  await expect(md?.days.length === 6 && md.startDate === "2026-12-28" && md.endDate === "2027-01-02", "kept the start date, now 6 days");
   await expect(
-    md[2]?.night?.pairId === "nye-galle" && md[0]?.night?.type === "stay" && md[1]?.night?.optionId === "colombo-club-night",
-    "valid picks kept (old NYE → Galle pair, chill → Stay in)",
+    JSON.stringify(ids(md?.days[0].day)) === '["stay"]' &&
+      JSON.stringify(ids(md?.days[0].night)) === '["colombo-club-night"]' &&
+      JSON.stringify(ids(md?.days[2].day)) === '["weligama-surf-lesson","snorkel-jungle-beach"]' &&
+      md?.days[3].night[0]?.id === "nye-mirissa-beach-party",
+    "valid picks kept (add-on became a Quick extra)",
   );
-  await expect(md.slice(0, 4).every((d) => d.day === null), "out-of-base daytimes cleared");
+  await expect(!md?.days[1].day.length && !md?.days[1].night.length && !md?.days[5].day.length, "invalid picks cleared (Kandy, casino on Day 2, Day 6)");
   await expect(mig.value?.status === "submitted", "still submitted after the upgrade");
   await p3.reload();
   await p3.waitForTimeout(1500);
-  await expect(p3.getByText(/locked in Colombo \+ Galle as bases/).count().then((c) => c === 0), "note doesn't come back after reload");
+  await expect(p3.getByText(/The group voted for 6 days/).count().then((c) => c === 0), "note doesn't come back after reload");
   await ctx3.close();
 } else {
   console.log("  (skipped: needs the local-store server on :3100)");
@@ -442,17 +510,16 @@ for (const f of ["json", "csv", "csv-long"]) {
   fs.writeFileSync(path.join(outDir, `export.${f === "json" ? "json" : `${f}.csv`}`), body);
   if (f === "csv-long") {
     const mine = body.split("\n").filter((l) => l.startsWith(NAME + ","));
-    await expect(mine.filter((l) => l.includes(",add-on,")).length >= 3, "long CSV has one row per add-on");
-    await expect(mine.some((l) => l.includes(",kandy-day-trip,") && l.includes(",train,")), "long CSV has Kandy with its transport");
-    await expect(mine.some((l) => l.includes(",colombo,")) && mine.some((l) => l.includes(",galle,")), "long CSV carries the base on each row");
+    await expect(mine.some((l) => l.includes(",dalawella-turtles,")) && mine.some((l) => l.includes(",2,option,")), "long CSV: one row per item, with position");
+    await expect(mine.some((l) => l.includes(",enroute,")), "long CSV carries where (enroute)");
   }
-  if (f === "csv") await expect(body.split("\n")[0].includes("budget_estimate_low_usd"), "wide CSV has budget totals");
-  if (f === "json") await expect(body.includes("totalUsd"), "JSON export includes the computed budget");
+  if (f === "csv") await expect(body.split("\n")[0].includes("trip_nights") && body.includes(",6,5,1,4,"), "wide CSV has days · nights (6 · 5, 1 + 4)");
+  if (f === "json") await expect(body.includes("6 days · 5 nights") && body.includes("totalUsd"), "JSON export has days · nights and the budget");
 }
 await page.goto(base + "/trip");
 await page.waitForTimeout(1200);
 await expect(page.getByText(/Edits are closed/).first().isVisible(), "locked banner visible to participants");
-const put = await page.request.put(base + "/api/itinerary", { data: { data: afterCross.data } });
+const put = await page.request.put(base + "/api/itinerary", { data: { data: real } });
 await expect(put.status() === 423, "API rejects edits while locked");
 await pa.getByRole("switch", { name: /Lock edits/ }).click();
 await pa.waitForTimeout(600);
@@ -461,6 +528,8 @@ step("Desktop");
 const ctxD = await browser.newContext({ viewport: { width: 1440, height: 900 } });
 await ctxD.addCookies(await ctx.cookies());
 const pd = await ctxD.newPage();
+await pd.goto(base + "/trip?step=dates");
+await shot(pd, "desktop-dates", { wait: 1500 });
 await pd.goto(base + "/trip?step=build");
 await shot(pd, "desktop-build", { wait: 1800 });
 await pd.goto(base + "/trip?step=review");

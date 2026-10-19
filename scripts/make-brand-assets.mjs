@@ -60,7 +60,7 @@ const html = `<!doctype html><html><head>
     </div>
     <div class="eyebrow">The <span style="text-transform:none;letter-spacing:.06em">10hyaya</span> group trip · Dec ’26 – Jan ’27</div>
     <h1>Build your dream <em><i>Sri Lanka</i></em> trip.</h1>
-    <div class="sub">Colombo, then Galle — whales, surf, Galle Fort &amp; beach parties. Takes 5 minutes.</div>
+    <div class="sub">6 days · 5 nights: Colombo, then Galle — rainforests, whales, surf &amp; beach parties.</div>
   </div>
   <div class="right">
     <div class="card c1"><span class="label">Galle Fort</span></div>
