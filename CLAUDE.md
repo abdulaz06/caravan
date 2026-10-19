@@ -166,6 +166,24 @@ Design this step as quick taps first, text fields last.
 ## Group features (logged-in participants only)
 - **Group overview:** responses count (joined vs submitted), **date availability heatmap** (how many people want each date — very important), most-picked options, group nature ↔ nightlife balance, popular regions.
 - **Browse itineraries:** only after you've submitted your own (keeps opinions independent). Read-only timeline view of each submitted itinerary.
+- **Everyone's scale:** each card in the "Everyone's trips" list shows that person's Nature ↔ Nightlife meter.
+- **Group spectrum:** a strip at the top of the group screen — one horizontal Nature ↔ Nightlife line with everyone's avatar/initials plotted where they land (overlaps stack neatly; tap an avatar to open their trip). Like browsing, it unlocks once you've submitted your own. Always labelled "Nature ↔ Nightlife" here (Halal wording only ever appears in Halal mode).
+
+## Route map, share images & Halal mode
+### Zoomed route map (review + person view)
+- The trip poster's map is zoomed to the south-west coast (CMB airport → Colombo → down the coast to Hiriketiya; it grows to include inland day trips like Udawalawe or Sinharaja) using a full-resolution SVG coastline.
+- Each day's route is drawn in its own colour along the coast road (parallel lines where days overlap), with numbered stops and travel legs. Tapping a day chip (or its route) highlights that day — its stops get numbered in visiting order and its legs show drive times.
+
+### "Share my trip" images
+- Two designed, poster-quality exports — **9:16 Story (1080×1920)** and **Square (1080×1080)** — drawn on a canvas (not a page screenshot): the "Lanks by 10hyaya" lockup, their name, dates + "6 days · 5 nights", the zoomed route map, a compact day-by-day list with icons, and their balance meter.
+- Generated client-side with embedded fonts (document fonts loaded via the FontFace API before drawing), same-origin images and an SVG/Path2D map, so it works on iPhone Safari and Android Chrome. Images are pre-generated when the share sheet opens; the Share button uses the Web Share API with the PNG file (save to Photos / share to Instagram) and falls back to a download. Personal day notes are never included.
+
+### Halal mode (easter egg)
+- A subtle crescent-moon "Halal" switch on the user's own review view (tucked into the vibe meter card).
+- When ON it's a **view-only** transformation: every nightlife item (party, club, bar, pub golf, casino, anything alcohol-centric) is swapped for its curated `halalSwap` — a wholesome alternative in the same slot and area with a similar duration. Every nightlife activity in `src/content` must define one (checked at startup); swap targets live in `src/content/activities/halal.ts` or are existing non-nightlife options. Stay in, nature and culture items stay as they are.
+- The meter is relabelled "Halal ↔ Haram" and its titles read accordingly. A banner says "Halal mode: preview only, your real plan is untouched" with one-tap off.
+- It never changes saved data: no autosave, no DB writes, no effect on the group overview, browsing, admin export or budget. Editing and submitting are disabled while it's on, and it resets when they leave the page.
+- Share images made in Halal mode use the swapped itinerary and look completely normal: no banner, no "Halal" label, normal Nature ↔ Nightlife wording, no personal notes.
 
 ## Admin (`/admin`, protected by `ADMIN_PASSWORD` env var)
 - Lock / unlock edits (when locked, everyone sees a read-only banner: "Edits are closed — the final plan is coming!")
