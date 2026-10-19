@@ -344,7 +344,7 @@ function Heatmap({ stats }: { stats: GroupStats }) {
       {flexEntries.length > 0 && (
         <p className="mt-3 text-[12.5px] text-ink-3">
           {flexEntries.map((f) => `${stats.flexibility[f.id]} ${f.label.toLowerCase()}`).join(" · ")}
-          {stats.avgLength ? ` · average trip ${stats.avgLength.toFixed(1)} days` : ""}
+          {stats.avgLength ? " · everyone's window is 6 days · 5 nights" : ""}
         </p>
       )}
     </motion.section>

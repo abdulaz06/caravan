@@ -1,59 +1,77 @@
 "use client";
 
 import { AlertTriangle, CalendarClock, Plane, Sparkles } from "lucide-react";
-import type { Option } from "@/content";
+import { COAST_ROAD_KM, type Activity as Option } from "@/content";
 import { cn } from "@/lib/cn";
 import { daysLabel, type TravelSegment } from "@/lib/timeline";
-import { Train, Van } from "../brand/illustrations";
+import { Van } from "../brand/illustrations";
 
-/** A travel line in the timeline: fixed legs, there-and-back trips and train/road legs. */
+/** A travel line: fixed legs, road trips from base, hops between items and the way back. */
 export function RoadTrip({ seg, tone = "light", className }: { seg: TravelSegment; tone?: "light" | "dark"; className?: string }) {
   const dark = tone === "dark";
   const fixed = seg.kind === "fixed";
   const flight = fixed && (seg.from === "airport" || seg.to === "airport");
+  const small = seg.kind === "hop" || seg.kind === "return";
   return (
     <div
       className={cn(
         "flex items-start gap-2.5",
-        fixed ? cn("rounded-xl px-2.5 py-2", dark ? "bg-white/5" : "bg-ocean-100/60") : "py-1",
+        fixed ? cn("rounded-xl px-2.5 py-2", dark ? "bg-white/5" : "bg-ocean-100/60") : small ? "py-0.5 pl-1" : "py-1",
         className,
       )}
     >
-      <span className="mt-0.5 flex h-5 w-9 shrink-0 items-center justify-center">
-        {seg.mode === "train" ? (
-          <Train className="h-[15px] w-9" />
-        ) : flight ? (
+      <span className={cn("mt-0.5 flex shrink-0 items-center justify-center", small ? "h-4 w-7" : "h-5 w-9")}>
+        {flight ? (
           <span className={cn("grid size-5 place-items-center rounded-full", dark ? "bg-white/10 text-ocean-100" : "bg-ocean-600 text-white")}>
             <Plane className="size-3 -rotate-45" strokeWidth={2.5} />
           </span>
         ) : (
-          <Van className={cn("h-5 w-8", dark ? "text-ocean-300" : "text-ocean-600")} />
+          <Van className={cn(small ? "h-4 w-6" : "h-5 w-8", dark ? "text-ocean-300" : "text-ocean-600")} />
         )}
       </span>
       <div className="min-w-0 flex-1">
-        <p className={cn("text-[12.5px] font-semibold leading-snug", dark ? "text-ocean-100" : "text-ocean-700")}>
+        <p className={cn("font-semibold leading-snug", small ? "text-[11.5px]" : "text-[12.5px]", dark ? "text-ocean-100" : "text-ocean-700")}>
           {seg.title} <span className={dark ? "text-paper/60" : "text-ink-3"}>· {seg.label}</span>
         </p>
-        {fixed && seg.detail && (
-          <p className={cn("mt-0.5 text-[11.5px] leading-snug", dark ? "text-paper/55" : "text-ink-3")}>{seg.detail}</p>
-        )}
-        {seg.stops && (
-          <ul className="mt-1.5 flex flex-wrap gap-1">
-            {seg.stops.map((s) => (
-              <li
-                key={s.name}
-                title={s.note}
-                className={cn(
-                  "rounded-full px-2 py-0.5 text-[11px] font-semibold",
-                  dark ? "bg-white/10 text-paper/80" : "bg-paper text-ocean-800 shadow-sm",
-                )}
-              >
-                {s.name}
-              </li>
-            ))}
-          </ul>
-        )}
+        {fixed && seg.detail && <p className={cn("mt-0.5 text-[11.5px] leading-snug", dark ? "text-paper/55" : "text-ink-3")}>{seg.detail}</p>}
+        {seg.stops && seg.stops.length > 0 && <RouteStrip stops={seg.stops} dark={dark} className="mt-2" />}
       </div>
+    </div>
+  );
+}
+
+/** Colombo ——●——●—— Galle, stops placed by km along the coast road. */
+export function RouteStrip({
+  stops,
+  dark,
+  className,
+}: {
+  stops: { name: string; km: number }[];
+  dark?: boolean;
+  className?: string;
+}) {
+  const pct = (km: number) => `${Math.min(94, Math.max(6, (km / COAST_ROAD_KM) * 100))}%`;
+  const end = cn("shrink-0 text-[9.5px] font-bold uppercase tracking-wide", dark ? "text-paper/55" : "text-ink-3");
+  return (
+    <div className={cn("flex items-center gap-2 py-4", className)} aria-label={`Stops on the way: ${stops.map((s) => s.name).join(", ")}`}>
+      <span className={end}>Colombo</span>
+      <div className="relative h-1.5 flex-1 rounded-full bg-gradient-to-r from-ocean-600 via-saffron-400 to-jungle-600">
+        {stops.map((s, k) => (
+          <span key={s.name} className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2" style={{ left: pct(s.km) }}>
+            <span className="block size-3 rounded-full bg-saffron-500 ring-2 ring-paper" />
+            <span
+              className={cn(
+                "absolute left-1/2 -translate-x-1/2 whitespace-nowrap text-[10px] font-bold leading-none",
+                k % 2 ? "bottom-[15px]" : "top-[15px]",
+                dark ? "text-paper/85" : "text-ink-2",
+              )}
+            >
+              {s.name}
+            </span>
+          </span>
+        ))}
+      </div>
+      <span className={end}>Galle</span>
     </div>
   );
 }

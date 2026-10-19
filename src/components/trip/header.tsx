@@ -25,9 +25,11 @@ type Props = {
   locked: boolean;
   beforeLeave: () => Promise<unknown>;
   onCurrency?: (c: CurrencyCode) => void;
+  /** Shows a "5-day preview" chip that switches back to 6 days. */
+  preview?: { onExit: () => void } | null;
 };
 
-export function TripHeader({ name, step, canVisit, onStep, saveState, submitted, locked, beforeLeave, onCurrency }: Props) {
+export function TripHeader({ name, step, canVisit, onStep, saveState, submitted, locked, beforeLeave, onCurrency, preview }: Props) {
   const [menu, setMenu] = useState(false);
   const router = useRouter();
   const ref = useRef<HTMLDivElement>(null);
@@ -52,6 +54,15 @@ export function TripHeader({ name, step, canVisit, onStep, saveState, submitted,
         <div className="flex h-14 items-center gap-2.5 px-3.5">
           <Lockup size="sm" className="shrink-0" />
           <span className="flex-1" />
+          {preview && (
+            <button
+              onClick={preview.onExit}
+              aria-label="Previewing 5 days — switch back to 6 days"
+              className="shrink-0 rounded-full bg-saffron-400 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-ink shadow-card"
+            >
+              5-day preview
+            </button>
+          )}
           <CurrencyPicker onPick={onCurrency} />
           <div className="relative" ref={ref}>
             <button

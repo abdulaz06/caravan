@@ -35,6 +35,8 @@ export function VerdictChip({ verdict, className }: { verdict: Verdict; classNam
 /** Compact pill for the sticky header card on mobile. */
 export function BudgetPill({ budget, onOpen, className }: { budget: BudgetResult; onOpen: () => void; className?: string }) {
   const { range } = useCurrency();
+  const amount = range(budget.total);
+  const long = amount.length > 13;
   return (
     <button
       onClick={onOpen}
@@ -45,8 +47,8 @@ export function BudgetPill({ budget, onOpen, className }: { budget: BudgetResult
       aria-label="Open trip budget"
     >
       <Wallet className="size-4 shrink-0 text-ocean-600" />
-      <span className="text-[12.5px] font-semibold text-ink-2">Budget</span>
-      <span className="text-[13px] font-bold tabular-nums">≈ {range(budget.total)}</span>
+      {!long && <span className="text-[12.5px] font-semibold text-ink-2">Budget</span>}
+      <span className={cn("whitespace-nowrap font-bold tabular-nums", long ? "text-[12.5px]" : "text-[13px]")}>≈ {amount}</span>
       <span className="text-[11px] font-semibold text-ink-3">pp</span>
       <span
         className={cn(
@@ -54,7 +56,7 @@ export function BudgetPill({ budget, onOpen, className }: { budget: BudgetResult
           VERDICT_STYLE[budget.verdict.kind],
         )}
       >
-        {budget.verdict.kind === "none" ? "Set a budget" : budget.verdict.text}
+        {budget.verdict.kind === "none" ? (long ? "Set budget" : "Set a budget") : budget.verdict.text}
       </span>
       <ChevronRight className="size-4 shrink-0 text-ink-3" />
     </button>

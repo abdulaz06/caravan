@@ -5,17 +5,35 @@ import { regions, type RegionId } from "@/content";
 import { MAP, project } from "@/lib/map-data";
 import { cn } from "@/lib/cn";
 
-/** Where each region's label sits relative to its dot, so nothing clips or collides. */
-const LABEL: Record<RegionId, "r" | "l" | "b" | "t"> = {
+/**
+ * Where each region's label sits relative to its dot, so nothing clips or
+ * collides. "none" = dot only (the little towns clustered around Galle).
+ */
+const LABEL: Record<RegionId, "r" | "l" | "b" | "t" | "none"> = {
   airport: "t",
-  negombo: "r",
   colombo: "r",
-  kandy: "r",
+  "mount-lavinia": "none",
+  negombo: "r",
+  kalutara: "r",
   bentota: "r",
+  kosgoda: "none",
+  balapitiya: "none",
+  ambalangoda: "none",
   hikkaduwa: "r",
   galle: "l",
+  unawatuna: "none",
+  koggala: "none",
+  ahangama: "none",
+  weligama: "none",
   mirissa: "t",
+  madiha: "none",
   hiriketiya: "r",
+  mulkirigala: "r",
+  kottawa: "r",
+  hiyare: "none",
+  kanneliya: "r",
+  sinharaja: "r",
+  udawalawe: "r",
 };
 
 type Props = {
@@ -69,7 +87,7 @@ export function RouteMap({ stops, spokes = [], className, weights, tone = "dark"
                   stroke="#fffbf4"
                   strokeWidth="2"
                 />
-                <text
+                {LABEL[w.region] !== "none" && <text
                   x={LABEL[w.region] === "l" ? x - r - 3 : x + r + 3}
                   y={y + 4}
                   textAnchor={LABEL[w.region] === "l" ? "end" : "start"}
@@ -82,7 +100,7 @@ export function RouteMap({ stops, spokes = [], className, weights, tone = "dark"
                   strokeWidth="3"
                 >
                   {regions[w.region].short}
-                </text>
+                </text>}
               </g>
             );
           })
@@ -121,7 +139,7 @@ export function RouteMap({ stops, spokes = [], className, weights, tone = "dark"
               {unique.map((r, i) => {
                 const [x, y] = project(regions[r].lat, regions[r].lng);
                 const pos = LABEL[r];
-                const showLabel = !(r === "negombo" && unique.includes("airport"));
+                const showLabel = LABEL[r] !== "none" && !(r === "negombo" && unique.includes("airport"));
                 return (
                   <motion.g
                     key={r}

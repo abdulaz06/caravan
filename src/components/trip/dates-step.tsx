@@ -1,22 +1,24 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, Star } from "lucide-react";
-import { useState } from "react";
-import { MAX_TRIP_DAYS, NYE_DATE, TRIP_WINDOW } from "@/content";
+import { ArrowRight, ChevronLeft, ChevronRight, FlaskConical, Hand, Moon, Vote } from "lucide-react";
+import { useCallback, useEffect, useRef } from "react";
+import { NYE_DATE, PREVIEW_DAYS, TRIP_DAYS, TRIP_WINDOW } from "@/content";
 import { flexibility as FLEX } from "@/content/preferences";
 import { cn } from "@/lib/cn";
 import { addDays, dayLabel, diffDays, monthName, parseISO } from "@/lib/dates";
-import { countPicks, setDates, tripLength, type Flexibility, type ItineraryData } from "@/lib/itinerary";
+import { clampStart, dayRole, daysNightsLabel, setStart, type Flexibility, type ItineraryData } from "@/lib/itinerary";
 import { Firework } from "../brand/illustrations";
 import { Button } from "../ui/button";
-import { useToast } from "../ui/toast";
 
 type Props = {
   data: ItineraryData;
   update: (fn: (d: ItineraryData) => ItineraryData) => void;
   locked: boolean;
   onNext: () => void;
+  /** 6 normally, 5 while previewing. */
+  length: number;
+  onLength: (len: number) => void;
 };
 
 const MONTHS = [
@@ -24,6 +26,7 @@ const MONTHS = [
   { y: 2027, m: 0 },
 ];
 const WEEK = ["M", "T", "W", "T", "F", "S", "S"];
+const NYE_PLACE = { colombo: "Colombo", transfer: "road-trip day", galle: "Galle", departure: "" } as const;
 
 function monthCells(y: number, m: number): (string | null)[] {
   const first = new Date(Date.UTC(y, m, 1));
@@ -35,58 +38,142 @@ function monthCells(y: number, m: number): (string | null)[] {
   return cells;
 }
 
-export function DatesStep({ data, update, locked, onNext }: Props) {
-  const toast = useToast();
-  const [anchor, setAnchor] = useState<string | null>(null);
-  const start = anchor ?? data.startDate;
-  const end = anchor ? null : data.endDate;
-  const len = tripLength(data);
-
-  function tap(d: string) {
-    if (locked) return;
-    if (!anchor) {
-      setAnchor(d);
-      return;
-    }
-    let s = anchor;
-    let e = d;
-    if (e < s) {
-      setAnchor(d);
-      return;
-    }
-    if (diffDays(s, e) + 1 > MAX_TRIP_DAYS) {
-      e = addDays(s, MAX_TRIP_DAYS - 1);
-      toast(`Max ${MAX_TRIP_DAYS} days — we trimmed it for you`);
-    }
-    if (e > TRIP_WINDOW.end) e = TRIP_WINDOW.end;
-    if (s < TRIP_WINDOW.start) s = TRIP_WINDOW.start;
-    setAnchor(null);
-    const before = countPicks(data);
-    update((cur) => {
-      const next = setDates(cur, s, e);
-      return next;
-    });
-    if (before > 0 && (s !== data.startDate || e !== data.endDate)) {
-      toast("Dates updated — we kept your picks where we could");
-    }
+const buzz = () => {
+  try {
+    navigator.vibrate?.(6);
+  } catch {
+    /* not supported */
   }
+};
 
-  const inRange = (d: string) => !!start && !!end && d >= start && d <= end;
+export function DatesStep({ data, update, locked, onNext, length, onLength }: Props) {
+  const start = data.startDate;
+  const end = start ? addDays(start, length - 1) : null;
+  const drag = useRef<{ offset: number; id: number; moved: boolean } | null>(null);
+  const justDragged = useRef(0);
+  const preview = length === PREVIEW_DAYS;
+
+  const place = useCallback(
+    (s: string) => {
+      if (locked) return;
+      const next = clampStart(s, length);
+      if (next === data.startDate) return;
+      buzz();
+      update((cur) => setStart(cur, next, length));
+    },
+    [data.startDate, length, locked, update],
+  );
+
+  // Dragging the window: follow the finger across both months, auto-scrolling
+  // near the top/bottom edge (the page can't scroll under a dragging finger).
+  const follow = useRef<(x: number, y: number) => void>(() => {});
+  useEffect(() => {
+    follow.current = (x, y) => {
+      if (!drag.current) return;
+      const el = (document.elementFromPoint(x, y) as HTMLElement | null)?.closest<HTMLElement>("[data-date]");
+      if (!el?.dataset.date) return;
+      const next = clampStart(addDays(el.dataset.date, -drag.current.offset), length);
+      if (next !== data.startDate) {
+        drag.current.moved = true;
+        place(next);
+      }
+    };
+  });
+  useEffect(() => {
+    let frame = 0;
+    let point: { x: number; y: number } | null = null;
+    const tick = () => {
+      frame = 0;
+      if (!drag.current || !point) return;
+      const h = window.innerHeight;
+      const dy = point.y > h - 200 ? 12 : point.y < 170 ? -12 : 0;
+      if (dy) {
+        window.scrollBy(0, dy);
+        follow.current(point.x, point.y);
+      }
+      frame = requestAnimationFrame(tick);
+    };
+    const move = (e: PointerEvent) => {
+      if (!drag.current || e.pointerId !== drag.current.id) return;
+      point = { x: e.clientX, y: e.clientY };
+      follow.current(point.x, point.y);
+      if (!frame) frame = requestAnimationFrame(tick);
+    };
+    const up = (e: PointerEvent) => {
+      if (drag.current?.id !== e.pointerId) return;
+      if (drag.current.moved) justDragged.current = Date.now();
+      drag.current = null;
+      point = null;
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", up);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      window.removeEventListener("pointercancel", up);
+    };
+  }, []);
+
+  const inWindow = (d: string) => !!start && !!end && d >= start && d <= end;
+  const nyeIn = !!start && inWindow(NYE_DATE);
+  const nyeDay = nyeIn ? diffDays(start!, NYE_DATE) : -1;
 
   return (
-    <div className="grain pb-40">
+    <div className="grain pb-44">
       <section className="relative z-[1] px-5 pt-7">
         <p className="label text-sunset-600">Step 1 · Dates</p>
         <h1 className="font-display mt-2 text-[38px] font-semibold leading-[1] tracking-[-0.025em]">
           When are <span className="italic text-ocean-700">you</span> in?
         </h1>
-        <p className="mt-3 text-[15px] text-ink-2">Tap your first day, then your last. Anywhere from 1 Dec to 31 Jan.</p>
-        <span className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-saffron-200 px-3 py-1.5 text-[13px] font-semibold text-ink">
-          <Star className="size-3.5 fill-current" /> Recommended: 4–5 days
-        </span>
+        <p className="mt-3 text-[15px] text-ink-2">
+          Tap the day you&apos;d land, or drag the window around. Anywhere from 1 Dec to 31 Jan.
+        </p>
       </section>
 
-      <section className="relative z-[1] mt-6 space-y-6 px-3">
+      {/* Trip length preset */}
+      <section className="relative z-[1] mt-5 px-3" aria-label="Trip length">
+        <p className="label px-2 text-ink-3">Trip length</p>
+        <div className="mt-2 grid grid-cols-[1fr_auto] gap-2">
+          <button
+            onClick={() => onLength(TRIP_DAYS)}
+            aria-pressed={!preview}
+            className={cn(
+              "flex items-center gap-3 rounded-2xl border-2 p-3 text-left transition active:scale-[0.99]",
+              !preview ? "border-ocean-600 bg-ocean-100/70" : "border-transparent bg-paper shadow-card",
+            )}
+          >
+            <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-ocean-700 text-paper">
+              <Vote className="size-5" />
+            </span>
+            <span className="min-w-0">
+              <span className="font-display block text-[19px] font-semibold leading-tight">6 days · 5 nights</span>
+              <span className="text-[12.5px] font-semibold text-ocean-700">The group&apos;s vote ✓</span>
+            </span>
+          </button>
+          <button
+            onClick={() => onLength(preview ? TRIP_DAYS : PREVIEW_DAYS)}
+            aria-pressed={preview}
+            className={cn(
+              "flex w-[118px] flex-col justify-center rounded-2xl border-2 border-dashed px-3 py-2 text-left transition active:scale-[0.99]",
+              preview ? "border-saffron-500 bg-saffron-100" : "border-sand-300 bg-paper/60",
+            )}
+          >
+            <span className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wide text-ink-3">
+              <FlaskConical className="size-3" /> Preview
+            </span>
+            <span className="text-[13.5px] font-semibold leading-tight">5 days · 4 nights</span>
+          </button>
+        </div>
+        {preview && (
+          <p className="mt-2 rounded-xl bg-saffron-100 px-3 py-2 text-[12.5px] leading-snug text-ink-2 ring-1 ring-saffron-200">
+            Just a sandbox: try a shorter trip without touching your real 6-day plan. Nothing here is saved.
+          </p>
+        )}
+      </section>
+
+      <section className="relative z-[1] mt-5 space-y-5 px-3">
         {MONTHS.map(({ y, m }) => {
           const cells = monthCells(y, m);
           const lastOfMonth = cells.filter(Boolean).at(-1);
@@ -102,54 +189,84 @@ export function DatesStep({ data, update, locked, onNext }: Props) {
                 {cells.map((d, i) => {
                   if (!d) return <div key={i} />;
                   const col = i % 7;
-                  const isStart = d === start;
-                  const isEnd = d === end;
-                  const mid = inRange(d) && !isStart && !isEnd;
-                  const band = inRange(d) && start !== end;
+                  const on = inWindow(d);
+                  const first = d === start;
+                  const last = d === end;
                   const nye = d === NYE_DATE;
+                  const idx = on ? diffDays(start!, d) : -1;
+                  const out = d < TRIP_WINDOW.start || d > TRIP_WINDOW.end;
                   return (
-                    <div key={d} className="relative h-12">
-                      {band && (
+                    <div key={d} className="relative h-[52px]" data-date={d}>
+                      {on && (
                         <div
+                          aria-hidden="true"
                           className={cn(
-                            "absolute inset-y-1 bg-saffron-200",
-                            isStart ? "left-1/2 right-0" : isEnd ? "left-0 right-1/2" : "inset-x-0",
-                            mid && (col === 0 || d.endsWith("-01")) && "left-1 rounded-l-full",
-                            mid && (col === 6 || d === lastOfMonth) && "right-1 rounded-r-full",
+                            "absolute inset-y-1 bg-sunset-500",
+                            first ? "left-1 rounded-l-2xl" : "left-0",
+                            last ? "right-1 rounded-r-2xl" : "right-0",
+                            !first && (col === 0 || d.endsWith("-01")) && "left-1 rounded-l-xl",
+                            !last && (col === 6 || d === lastOfMonth) && "right-1 rounded-r-xl",
                           )}
                         />
                       )}
                       <button
-                        onClick={() => tap(d)}
-                        disabled={locked}
-                        aria-label={`${dayLabel(d)}${nye ? ", New Year's Eve" : ""}`}
-                        aria-pressed={inRange(d) || isStart}
+                        onPointerDown={(e) => {
+                          if (!on || locked) return;
+                          drag.current = { offset: idx, id: e.pointerId, moved: false };
+                          (e.target as HTMLElement).releasePointerCapture?.(e.pointerId);
+                        }}
+                        onClick={() => {
+                          // A drag ends in a click — ignore it; a plain tap starts the window here.
+                          if (Date.now() - justDragged.current < 400) return;
+                          place(d);
+                        }}
+                        onKeyDown={(e) => {
+                          if (!on || !start) return;
+                          const step = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 }[e.key];
+                          if (step) {
+                            e.preventDefault();
+                            place(addDays(start, step));
+                          }
+                        }}
+                        disabled={locked || out}
+                        aria-label={`${dayLabel(d)}${nye ? ", New Year's Eve" : ""}${on ? `, day ${idx + 1} of your trip` : ""}`}
+                        aria-pressed={on}
                         className={cn(
-                          "relative mx-auto grid size-10 place-items-center rounded-full text-[15px] font-semibold tabular-nums transition",
-                          isStart || isEnd
-                            ? "bg-sunset-500 text-white shadow-[0_3px_0_0_var(--color-sunset-700)]"
-                            : mid
-                              ? "text-ink"
-                              : "text-ink hover:bg-sand-200",
+                          "relative mx-auto flex h-full w-full flex-col items-center justify-center rounded-xl text-[15px] font-semibold tabular-nums transition",
+                          on ? "cursor-grab touch-none text-white active:cursor-grabbing" : "text-ink hover:bg-sand-200",
                         )}
                       >
-                        {parseISO(d).getUTCDate()}
+                        <span className={cn(nye && on && "rounded-full px-1.5 ring-2 ring-saffron-200")}>{parseISO(d).getUTCDate()}</span>
+                        {on && (first || last) && (
+                          <span className="text-[9px] font-bold uppercase leading-none tracking-wide text-white/80">
+                            {first ? "Land" : "Fly"}
+                          </span>
+                        )}
                         {nye && (
-                          <Firework
-                            className={cn(
-                              "absolute -right-1 -top-1 size-4",
-                              isStart || isEnd ? "text-saffron-200" : "text-hibiscus-500",
-                            )}
-                          />
+                          <Firework className={cn("absolute right-0.5 top-0.5 size-4", on ? "text-saffron-200" : "text-hibiscus-500")} />
                         )}
                       </button>
+                      {/* night marker between this day and the next */}
+                      {on && !last && (
+                        <span
+                          aria-hidden="true"
+                          className="pointer-events-none absolute -right-2 top-1/2 z-[1] grid size-4 -translate-y-1/2 place-items-center rounded-full bg-sunset-700 ring-2 ring-sunset-500"
+                        >
+                          <Moon className="size-2.5 fill-saffron-200 text-saffron-200" strokeWidth={0} />
+                        </span>
+                      )}
                     </div>
                   );
                 })}
               </div>
               {m === 11 && (
-                <p className="mt-2 flex items-center gap-1.5 px-2 text-[12px] font-medium text-ink-3">
-                  <Firework className="size-3.5 text-hibiscus-500" /> 31 Dec has its own New Year&apos;s Eve picks
+                <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 px-2 text-[12px] font-medium text-ink-3">
+                  <span className="inline-flex items-center gap-1.5">
+                    <Firework className="size-3.5 text-hibiscus-500" /> 31 Dec has its own NYE picks
+                  </span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <Moon className="size-3 fill-sunset-600 text-sunset-600" strokeWidth={0} /> a night away
+                  </span>
                 </p>
               )}
             </div>
@@ -177,12 +294,7 @@ export function DatesStep({ data, update, locked, onNext }: Props) {
                   <span className="block text-[15px] font-semibold">{f.label}</span>
                   <span className="text-[13px] text-ink-3">{f.hint}</span>
                 </span>
-                <span
-                  className={cn(
-                    "grid size-6 place-items-center rounded-full border-2",
-                    on ? "border-ocean-600 bg-ocean-600" : "border-sand-300",
-                  )}
-                >
+                <span className={cn("grid size-6 place-items-center rounded-full border-2", on ? "border-ocean-600 bg-ocean-600" : "border-sand-300")}>
                   {on && <span className="size-2 rounded-full bg-paper" />}
                 </span>
               </button>
@@ -193,44 +305,66 @@ export function DatesStep({ data, update, locked, onNext }: Props) {
 
       {/* Sticky summary + CTA */}
       <div className="pb-safe fixed inset-x-0 bottom-0 z-30 px-4 pt-3 lg:left-auto lg:w-[480px]">
-        <div className="rounded-[26px] bg-ink p-3 pl-5 text-paper shadow-lift">
-          <div className="flex items-center gap-3">
+        <div className="rounded-[26px] bg-ink p-3 pl-4 text-paper shadow-lift">
+          <div className="flex items-center gap-2">
+            {start && (
+              <div className="flex shrink-0 flex-col gap-1">
+                <button
+                  onClick={() => place(addDays(start, -1))}
+                  disabled={locked || start <= TRIP_WINDOW.start}
+                  aria-label="Move a day earlier"
+                  className="grid size-7 place-items-center rounded-full bg-white/10 hover:bg-white/20 disabled:opacity-30"
+                >
+                  <ChevronLeft className="size-4" />
+                </button>
+                <button
+                  onClick={() => place(addDays(start, 1))}
+                  disabled={locked || end! >= TRIP_WINDOW.end}
+                  aria-label="Move a day later"
+                  className="grid size-7 place-items-center rounded-full bg-white/10 hover:bg-white/20 disabled:opacity-30"
+                >
+                  <ChevronRight className="size-4" />
+                </button>
+              </div>
+            )}
             <div className="min-w-0 flex-1">
               <AnimatePresence mode="wait" initial={false}>
                 <motion.div
-                  key={anchor ? "pending" : `${data.startDate}-${data.endDate}`}
-                  initial={{ opacity: 0, y: 6 }}
+                  key={start ?? "none"}
+                  initial={{ opacity: 0, y: 4 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -6 }}
-                  transition={{ duration: 0.15 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={{ duration: 0.12 }}
                 >
-                  {anchor ? (
+                  {start && end ? (
                     <>
-                      <p className="font-display text-[19px] font-semibold">From {dayLabel(anchor)}…</p>
-                      <p className="text-[13px] text-paper/60">Now tap your last day</p>
-                    </>
-                  ) : data.startDate && data.endDate ? (
-                    <>
-                      <p className="font-display text-[19px] font-semibold">
-                        {len} {len === 1 ? "day" : "days"}
-                        <span className="ml-2 text-[13px] font-sans font-semibold text-saffron-400">
-                          {len >= 4 && len <= 5 ? "Sweet spot ✓" : len > 7 ? "Big trip!" : len < 3 ? "Short & sweet" : ""}
-                        </span>
+                      <p className="font-display whitespace-nowrap text-[17px] font-semibold leading-tight">
+                        {daysNightsLabel(length)}
+                        {preview && <span className="ml-1.5 text-[12px] font-sans font-bold text-saffron-400">preview</span>}
                       </p>
-                      <p className="truncate text-[13px] text-paper/60">
-                        {dayLabel(data.startDate)} → {dayLabel(data.endDate)}
+                      <p className="truncate text-[12px] text-paper/70">
+                        {dayLabel(start)} → {dayLabel(end)}
+                      </p>
+                      <p className="truncate text-[11.5px] font-semibold text-saffron-400">
+                        {nyeIn
+                          ? dayRole(nyeDay, length) === "departure"
+                            ? "You'd fly home on New Year's Eve"
+                            : `🎆 NYE on Day ${nyeDay + 1} · ${NYE_PLACE[dayRole(nyeDay, length)]}`
+                          : "No New Year's Eve in this window"}
                       </p>
                     </>
                   ) : (
                     <>
-                      <p className="font-display text-[19px] font-semibold">No dates yet</p>
-                      <p className="text-[13px] text-paper/60">Tap your first day above</p>
+                      <p className="font-display whitespace-nowrap text-[17px] font-semibold">{daysNightsLabel(length)}</p>
+                      <p className="flex items-center gap-1 text-[13px] text-paper/70">
+                        <Hand className="size-3.5" /> Tap the day you&apos;d land
+                      </p>
                     </>
                   )}
                 </motion.div>
               </AnimatePresence>
             </div>
-            <Button onClick={onNext} disabled={!data.startDate || !!anchor} size="md" className="shrink-0">
+            <Button onClick={onNext} disabled={!start} size="md" className="shrink-0">
               Build days <ArrowRight className="size-[18px]" strokeWidth={2.5} />
             </Button>
           </div>

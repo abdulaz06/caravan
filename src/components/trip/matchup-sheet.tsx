@@ -3,29 +3,18 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowDownUp, Check, Info, MapPin, Repeat2 } from "lucide-react";
 import { useMemo, useState } from "react";
-import { bases, dayPairs, nightPairs, nyePairs, optionsById, stayIn, type Option, type Pair } from "@/content";
+import { activitiesById, pairsFor, regions, stayIn, type Activity, type Pair, type Where } from "@/content";
 import { cn } from "@/lib/cn";
 import { dayLabel, parseISO } from "@/lib/dates";
-import {
-  STAY,
-  alsoOn,
-  baseAt,
-  dateAt,
-  isPick,
-  isStay,
-  nyeIndex,
-  type ItineraryData,
-  type OptionPick,
-  type TransportMode,
-} from "@/lib/itinerary";
-import { baseDistanceLabel, hoursFromBase } from "@/lib/timeline";
+import { STAY_ID, alsoOn, dateAt, nyeIndex, nyePairAt, roleAt, slotWhere, type ItineraryData } from "@/lib/itinerary";
+import { distanceLabel, hoursFrom } from "@/lib/timeline";
 import { Firework, StayInIcon } from "../brand/illustrations";
 import { Photo } from "../ui/photo";
 import { Sheet } from "../ui/sheet";
-import { Button } from "../ui/button";
 import { DaysBadge, VibeDots } from "./bits";
 import { OptionDetail } from "./option-detail";
-import { TransportChooser } from "./transport";
+
+type Option = Activity;
 
 type Props = {
   open: boolean;
@@ -33,7 +22,7 @@ type Props = {
   data: ItineraryData;
   index: number;
   slot: "day" | "night";
-  onPick: (pick: OptionPick) => void;
+  onPick: (id: string, pairId: string) => void;
   onStay: () => void;
 };
 
@@ -49,44 +38,33 @@ export function MatchupSheet({ open, onClose, data, index, slot, onPick, onStay 
   const [sort, setSort] = useState<"near" | "all">("near");
   const [chosen, setChosen] = useState<string | null>(null);
   const [detail, setDetail] = useState<{ option: Option; pair: Pair } | null>(null);
-  const [transportFor, setTransportFor] = useState<{ option: Option; pair: Pair } | null>(null);
-  const [mode, setMode] = useState<TransportMode>("train");
 
-  const nye = slot === "night" && nyeIndex(data) === index;
+  const nye = slot === "night" && nyeIndex(data) === index && !!nyePairAt(data);
   const night = slot === "night";
   const date = dateAt(data, index);
   const weekday = date ? parseISO(date).getUTCDay() : null;
-  const base = baseAt(data, index);
-  const current = data.days[index]?.[slot] ?? null;
-  const currentId = isPick(current) ? current.optionId : null;
+  const where: Where = slotWhere(roleAt(data, index), slot) ?? "galle";
+  const first = data.days[index]?.[slot][0] ?? null;
+  const currentId = first?.id ?? null;
+  const enroute = where === "enroute";
 
   const pairs = useMemo(() => {
-    const list = (slot === "day" ? dayPairs : nye ? [nyePairs[base]] : nightPairs).filter((p) => p.base === base);
+    const list = nye ? [nyePairAt(data)!] : pairsFor(where, slot);
     if (sort === "all") return list;
-    const dist = (p: Pair) => Math.min(hoursFromBase(optionsById[p.a]), hoursFromBase(optionsById[p.b]));
+    const key = (a: Option) => (enroute ? (a.routeKm ?? 0) : hoursFrom(a, where));
+    const dist = (p: Pair) => Math.min(key(activitiesById[p.a]), key(activitiesById[p.b]));
     return [...list].sort((a, b) => dist(a) - dist(b));
-  }, [slot, nye, sort, base]);
+  }, [data, nye, where, slot, sort, enroute]);
 
-  function commit(pair: Pair, option: Option, transport?: TransportMode) {
+  function choose(pair: Pair, option: Option) {
     if (chosen) return;
     setChosen(option.id);
     setDetail(null);
     setTimeout(() => {
-      onPick({ pairId: pair.id, optionId: option.id, ...(transport ? { transport } : {}) });
+      onPick(option.id, pair.id);
       setChosen(null);
       onClose();
     }, 480);
-  }
-
-  function choose(pair: Pair, option: Option) {
-    if (option.transport) {
-      // Day trips ask how you want to get there first.
-      setDetail(null);
-      setMode(isPick(current) && current.optionId === option.id && current.transport ? current.transport : "train");
-      setTransportFor({ option, pair });
-      return;
-    }
-    commit(pair, option);
   }
 
   function chooseStay() {
@@ -105,9 +83,12 @@ export function MatchupSheet({ open, onClose, data, index, slot, onPick, onStay 
     </>
   ) : night ? (
     "Pick your evening"
+  ) : enroute ? (
+    "Stops on the way"
   ) : (
     "Pick your daytime"
   );
+  const home = where === "colombo" ? "Colombo" : "Galle";
 
   return (
     <>
@@ -123,7 +104,7 @@ export function MatchupSheet({ open, onClose, data, index, slot, onPick, onStay 
             <span className="flex min-w-0 items-center gap-1.5">
               <MapPin className="size-3.5 shrink-0" />
               <span className="truncate">
-                Times from your {bases[base].name} base
+                {enroute ? `Colombo → ${regions.galle.short} along the coast` : `Times from ${home}`}
               </span>
             </span>
             {!nye && (
@@ -134,7 +115,7 @@ export function MatchupSheet({ open, onClose, data, index, slot, onPick, onStay 
                   night ? "bg-white/10 text-paper" : "bg-sand-200 text-ink-2",
                 )}
               >
-                <ArrowDownUp className="size-3.5" /> {sort === "near" ? "Nearest first" : "All matchups"}
+                <ArrowDownUp className="size-3.5" /> {sort === "near" ? (enroute ? "Route order" : "Nearest first") : "All matchups"}
               </button>
             )}
           </div>
@@ -147,16 +128,17 @@ export function MatchupSheet({ open, onClose, data, index, slot, onPick, onStay 
 
           <StayInCard
             slot={slot}
-            selected={isStay(current)}
+            enroute={enroute}
+            selected={currentId === STAY_ID}
             state={chosen ? (chosen === "stay" ? "won" : "lost") : "idle"}
-            also={alsoLabel(alsoOn(data, slot, index, STAY))}
+            also={enroute ? null : alsoLabel(alsoOn(data, slot, index, STAY_ID))}
             onChoose={chooseStay}
           />
 
           <div className="space-y-4">
             {pairs.map((pair, k) => {
-              const a = optionsById[pair.a];
-              const b = optionsById[pair.b];
+              const a = activitiesById[pair.a];
+              const b = activitiesById[pair.b];
               return (
                 <motion.section
                   key={pair.id}
@@ -176,9 +158,10 @@ export function MatchupSheet({ open, onClose, data, index, slot, onPick, onStay 
                       <OptionTile
                         key={o.id}
                         option={o}
+                        where={where}
                         weekday={weekday}
                         isCurrent={currentId === o.id}
-                        also={alsoLabel(alsoOn(data, slot, index, { pairId: pair.id, optionId: o.id }))}
+                        also={alsoLabel(alsoOn(data, slot, index, o.id))}
                         state={chosen ? (chosen === o.id ? "won" : "lost") : "idle"}
                         onChoose={() => choose(pair, o)}
                         onInfo={() => setDetail({ option: o, pair })}
@@ -207,43 +190,13 @@ export function MatchupSheet({ open, onClose, data, index, slot, onPick, onStay 
         pickLabel={`Pick for Day ${index + 1}`}
         onPick={() => detail && choose(detail.pair, detail.option)}
       />
-      <Sheet
-        open={!!transportFor}
-        onClose={() => setTransportFor(null)}
-        size="auto"
-        eyebrow={transportFor?.option.title}
-        title="Train or road?"
-        footer={
-          transportFor ? (
-            <Button
-              size="lg"
-              block
-              onClick={() => {
-                const t = transportFor;
-                setTransportFor(null);
-                commit(t.pair, t.option, mode);
-              }}
-            >
-              Pick for Day {index + 1} · {mode === "train" ? "Scenic train 🚂" : "Road trip 🚐"}
-            </Button>
-          ) : undefined
-        }
-      >
-        {transportFor && (
-          <div className="px-4 pb-4">
-            <TransportChooser option={transportFor.option} value={mode} onChange={setMode} compact />
-            {transportFor.option.goodToKnow && (
-              <p className="mt-3 rounded-2xl bg-saffron-100 p-3 text-[12.5px] leading-snug text-ink-2">{transportFor.option.goodToKnow}</p>
-            )}
-          </div>
-        )}
-      </Sheet>
     </>
   );
 }
 
 function OptionTile({
   option,
+  where,
   weekday,
   isCurrent,
   also,
@@ -252,6 +205,7 @@ function OptionTile({
   onInfo,
 }: {
   option: Option;
+  where: Where;
   weekday: number | null;
   isCurrent: boolean;
   also: string | null;
@@ -278,7 +232,7 @@ function OptionTile({
         <span className="absolute inset-0 bg-gradient-to-t from-ink/90 via-ink/25 to-transparent" />
         <span className="absolute left-2 right-11 top-2 flex flex-wrap gap-1">
           <span className="rounded-full bg-ink/45 px-2 py-0.5 text-[10.5px] font-bold text-white backdrop-blur-md">
-            {option.transport ? "Day trip · train or road" : baseDistanceLabel(option)}
+            {distanceLabel(option, where)}
           </span>
         </span>
         <span className="absolute inset-x-2.5 bottom-2.5">
@@ -333,18 +287,20 @@ function AlsoChip({ label, className }: { label: string; className?: string }) {
 /** "Stay in" — a first-class choice on every slot, as often as you like. */
 function StayInCard({
   slot,
+  enroute,
   selected,
   state,
   also,
   onChoose,
 }: {
   slot: "day" | "night";
+  enroute?: boolean;
   selected: boolean;
   state: "idle" | "won" | "lost";
   also: string | null;
   onChoose: () => void;
 }) {
-  const s = stayIn[slot];
+  const s = enroute ? stayIn.enroute : stayIn[slot];
   const night = slot === "night";
   const on = selected || state === "won";
   return (
@@ -368,7 +324,7 @@ function StayInCard({
       </div>
       <button
         onClick={onChoose}
-        aria-label={`Pick Stay in — ${s.tagline}`}
+        aria-label={`Pick ${s.title} — ${s.tagline}`}
         className={cn(
           "relative flex min-h-[132px] w-full overflow-hidden rounded-[20px] bg-ocean-800 text-left text-paper transition active:scale-[0.99]",
           on && "ring-[3px] ring-saffron-400",
@@ -385,7 +341,7 @@ function StayInCard({
             <span className="font-display block text-[22px] font-semibold leading-none">{s.title}</span>
             <span className="mt-1.5 block max-w-[15rem] text-[13.5px] font-medium leading-snug text-paper/90">{s.tagline}</span>
             <span className="mt-1.5 flex items-center gap-2 text-[11px] font-semibold text-paper/70">
-              No travel
+              {enroute ? "~2 hrs on the expressway" : "No travel"}
               <span className="inline-flex items-center gap-1">
                 <span className="size-1.5 rounded-full bg-saffron-500" /> Balanced
               </span>

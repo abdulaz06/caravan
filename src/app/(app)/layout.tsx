@@ -36,8 +36,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               <span className="italic text-saffron-400">your way.</span>
             </h2>
             <p className="mt-5 max-w-md text-lg text-paper/80">
-              Colombo nights, a Kandy day trip, then Galle: whales, turtles, surf and beach parties. Build your dream version, then
-              we&apos;ll plan the trip together.
+              6 days · 5 nights: a night in Colombo, then four in Galle — rainforests, whales, surf and beach parties. Build your
+              dream version, then we&apos;ll plan the trip together.
             </p>
             {hero && (
               <a href={hero.source} target="_blank" rel="noreferrer" className="mt-8 block text-xs text-paper/50 hover:text-paper/80">

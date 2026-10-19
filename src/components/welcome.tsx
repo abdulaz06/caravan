@@ -14,13 +14,14 @@ import type { PublicCounts } from "@/lib/server/group";
 const MARQUEE = [
   "mirissa-whale-watching",
   "galle-fort",
-  "kandy-day-trip",
+  "kanneliya-trek",
   "mirissa-beach-hop",
   "hikkaduwa-turtles",
   "colombo-rooftop",
   "tea-and-stilts",
   "galle-fort-sunset-dinner",
   "scuba-diving",
+  "smoke-and-bitters",
   "galle-face-street-food",
   "unawatuna-jungle-beach",
   "pub-golf-galle",
@@ -29,13 +30,13 @@ const MARQUEE = [
 const STEPS = [
   {
     icon: CalendarHeart,
-    title: "Pick your dates",
-    body: "Anywhere from 1 Dec to 31 Jan. Most of us are thinking 4–5 days, maybe over New Year's.",
+    title: "Place your 6 days",
+    body: "The group voted 6 days · 5 nights. Slide the window anywhere from 1 Dec to 31 Jan — over New Year's, maybe?",
   },
   {
     icon: Swords,
     title: "Build your days",
-    body: "For each daytime and evening, choose between two real options. Or tap Quick fill and tweak.",
+    body: "One night in Colombo, four in Galle. Pick A vs B for each daytime and evening, add extras, or tap Quick fill.",
   },
   {
     icon: PartyPopper,

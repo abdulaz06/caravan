@@ -43,7 +43,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Lanks by 10hyaya · Build your dream Sri Lanka trip 🌴",
     description:
-      "The 10hyaya group trip, Dec '26 – Jan '27. Colombo, then Galle: whales, surf, Galle Fort, jungle parties — pick your days and nights. Takes 5 minutes.",
+      "The 10hyaya group trip, Dec '26 – Jan '27. 6 days · 5 nights: a night in Colombo, then four in Galle — rainforests, whales, surf, jungle parties. Takes 5 minutes.",
     siteName: "Lanks by 10hyaya",
     type: "website",
     locale: "en_GB",

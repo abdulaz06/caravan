@@ -20,8 +20,8 @@ export default async function TripPage({ searchParams }: PageProps<"/trip">) {
     getRates(),
   ]);
   const data = row ? normalize(row.data) : emptyItinerary();
-  // Itineraries saved before the Colombo + Galle bases may have lost a few picks.
-  const migrated = row && row.data.version !== 2 ? migrationLoss(row.data) : 0;
+  // Itineraries saved before the fixed 6-day structure are moved over; -1 = already current.
+  const migrated = row ? migrationLoss(row.data) : -1;
   const currency = await initialCurrency(data.preferences.currency);
   return (
     <CurrencyProvider initial={currency} rates={rates}>
@@ -33,7 +33,7 @@ export default async function TripPage({ searchParams }: PageProps<"/trip">) {
         editsLocked={settings.edits_locked}
         requestedStep={typeof sp.step === "string" ? sp.step : undefined}
         migratedPicks={migrated}
-        needsUpgradeSave={!!row && row.data.version !== 2}
+        needsUpgradeSave={migrated >= 0}
       />
     </CurrencyProvider>
   );

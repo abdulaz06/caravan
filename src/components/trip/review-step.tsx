@@ -2,7 +2,7 @@
 
 import confetti from "canvas-confetti";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, CalendarDays, CheckCircle2, ChevronRight, Pencil, Send, SlidersHorizontal, Users, Wallet } from "lucide-react";
+import { ArrowRight, CalendarDays, CheckCircle2, ChevronRight, FlaskConical, Pencil, Send, SlidersHorizontal, Users, Wallet } from "lucide-react";
 import { useMemo, useState } from "react";
 import {
   budgets,
@@ -13,7 +13,7 @@ import {
   stays,
   transport,
 } from "@/content/preferences";
-import { countPicks, type ItineraryData, type ItineraryStatus } from "@/lib/itinerary";
+import { countItems, type ItineraryData, type ItineraryStatus } from "@/lib/itinerary";
 import { balanceOf, buildTimeline } from "@/lib/timeline";
 import { SiteFooter } from "../brand/site-footer";
 import { Lockup, Stamp } from "../brand/wordmark";
@@ -35,6 +35,9 @@ type Props = {
   locked: boolean;
   saveState: SaveState;
   onEdit: (s: Step) => void;
+  /** The 5-day preview sandbox can't be submitted. */
+  previewing?: boolean;
+  onExitPreview?: () => void;
   budget: BudgetResult;
   onOpenBudget: () => void;
   onSubmit: () => Promise<boolean>;
@@ -49,13 +52,13 @@ function ago(iso: string | null): string {
   return new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
 }
 
-export function ReviewStep({ name, data, status, updatedAt, locked, saveState, onEdit, onSubmit, budget, onOpenBudget }: Props) {
+export function ReviewStep({ name, data, status, updatedAt, locked, saveState, onEdit, onSubmit, budget, onOpenBudget, previewing, onExitPreview }: Props) {
   const timeline = useMemo(() => buildTimeline(data), [data]);
   const balance = useMemo(() => balanceOf(data), [data]);
   const [busy, setBusy] = useState(false);
   const [celebrate, setCelebrate] = useState(false);
   const submitted = status === "submitted";
-  const picks = countPicks(data);
+  const picks = countItems(data);
 
   async function submit() {
     setBusy(true);
@@ -130,7 +133,20 @@ export function ReviewStep({ name, data, status, updatedAt, locked, saveState, o
 
       {!locked && (
         <div className="pb-safe fixed inset-x-0 bottom-0 z-30 bg-gradient-to-t from-sand-100 via-sand-100/90 to-transparent px-4 pt-6 lg:left-auto lg:w-[480px]">
-          {submitted ? (
+          {previewing ? (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 rounded-2xl bg-saffron-100 px-3 py-2 text-[13px] font-semibold leading-snug text-ink shadow-card ring-1 ring-saffron-200">
+                <FlaskConical className="size-4 shrink-0 text-sunset-600" />
+                <span className="flex-1">The group voted 6 days. Switch back to submit.</span>
+                <button onClick={onExitPreview} className="shrink-0 rounded-full bg-ink px-3 py-1.5 text-[12px] font-bold text-paper">
+                  Back to 6 days
+                </button>
+              </div>
+              <Button size="lg" block disabled>
+                Submit my trip <Send className="size-[18px]" strokeWidth={2.5} />
+              </Button>
+            </div>
+          ) : submitted ? (
             <div className="flex gap-2.5">
               <div className="flex flex-1 items-center gap-2 rounded-full bg-jungle-100 px-4 text-[14px] font-semibold text-jungle-700">
                 <CheckCircle2 className="size-5 shrink-0" />

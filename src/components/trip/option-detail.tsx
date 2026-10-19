@@ -1,19 +1,22 @@
 "use client";
 
-import { Check, Clock, Flag, Gauge, Info, MapPin, Wallet } from "lucide-react";
+import { Check, Clock, ExternalLink, Flag, Gauge, Heart, Info, MapPin, Wallet } from "lucide-react";
 import { useRef, useState } from "react";
-import { bases, regions, type Option, type Photo as PhotoT } from "@/content";
+import { COAST_ROAD_KM, regions, type Activity, type Photo as PhotoT, type Where } from "@/content";
 import { cn } from "@/lib/cn";
-import { baseDistanceLabel } from "@/lib/timeline";
+import { distanceLabel } from "@/lib/timeline";
 import { useCurrency } from "../currency";
-import { Train, Van } from "../brand/illustrations";
 import { Button } from "../ui/button";
 import { Photo, PhotoCredit } from "../ui/photo";
 import { Sheet } from "../ui/sheet";
 import { DaysBadge, VibeDots } from "./bits";
 
+type Option = Activity;
+
 type Props = {
   option: Option | null;
+  /** Which pool it's being shown for (distance copy); defaults to the option's first. */
+  where?: Where;
   open: boolean;
   onClose: () => void;
   pickLabel?: string;
@@ -57,7 +60,7 @@ export function Gallery({ images, alt, className }: { images: PhotoT[]; alt: str
   );
 }
 
-export function OptionDetail({ option, open, onClose, pickLabel, picked, onPick }: Props) {
+export function OptionDetail({ option, where, open, onClose, pickLabel, picked, onPick }: Props) {
   const { range, rateNote } = useCurrency();
   return (
     <Sheet
@@ -87,22 +90,48 @@ export function OptionDetail({ option, open, onClose, pickLabel, picked, onPick 
                 <MapPin className="size-3.5" /> {regions[option.region].name}
               </span>
               <span className="rounded-full bg-sand-200 px-2.5 py-1 text-ink-2">
-                {option.transport ? `Day trip from ${bases[option.base].name}` : baseDistanceLabel(option)}
+                {distanceLabel(option, where ?? option.where[0])}
               </span>
+              {option.kind === "extra" && <span className="rounded-full bg-saffron-200 px-2.5 py-1 text-ink">Quick extra</span>}
               <VibeDots vibe={option.vibe} className="rounded-full bg-sand-200 px-2.5 py-1 text-ink-2" />
               <DaysBadge option={option} className="px-2.5 py-1 text-[12px]" />
             </div>
             <h2 className="font-display mt-3 text-[30px] font-semibold leading-[1.05] tracking-[-0.02em]">{option.title}</h2>
             <p className="font-display mt-2 text-[18px] italic leading-snug text-ocean-700">{option.tagline}</p>
+            {option.loved && (
+              <p className="mt-3 flex gap-2 rounded-2xl bg-hibiscus-100/70 px-3.5 py-2.5 text-[13.5px] leading-snug text-ink-2">
+                <Heart className="mt-0.5 size-4 shrink-0 fill-hibiscus-500 text-hibiscus-500" />
+                <span>
+                  <b className="text-ink">Why people love it: </b>
+                  {option.loved}
+                </span>
+              </p>
+            )}
+            {option.routeKm !== undefined && (
+              <div className="mt-4 rounded-2xl bg-paper p-3 shadow-card" aria-label={`About ${option.routeKm} km from Colombo on the coast road`}>
+                <div className="flex justify-between text-[11px] font-bold uppercase tracking-wide text-ink-3">
+                  <span>Colombo</span>
+                  <span>On the coast road · km {option.routeKm}</span>
+                  <span>Galle</span>
+                </div>
+                <div className="relative mt-2 h-2 rounded-full bg-sand-200">
+                  <span className="absolute inset-y-0 left-0 rounded-full bg-ocean-600" style={{ width: `${(option.routeKm / COAST_ROAD_KM) * 100}%` }} />
+                  <span
+                    className="absolute top-1/2 size-4 -translate-x-1/2 -translate-y-1/2 rounded-full bg-saffron-500 ring-[3px] ring-paper"
+                    style={{ left: `${(option.routeKm / COAST_ROAD_KM) * 100}%` }}
+                  />
+                </div>
+              </div>
+            )}
 
             <dl className="mt-5 grid grid-cols-3 gap-2">
               <Fact icon={Clock} label="Time" value={option.duration} />
               <Fact
                 icon={Wallet}
                 label="Per person"
-                value={option.estCostUsd ? range(option.estCostUsd) : "—"}
+                value={range(option.estCostUsd)}
               />
-              <Fact icon={Gauge} label="Effort" value={option.intensity ? option.intensity[0].toUpperCase() + option.intensity.slice(1) : option.slot === "night" ? "Evening" : "—"} />
+              <Fact icon={Gauge} label="Effort" value={option.intensity ? option.intensity[0].toUpperCase() + option.intensity.slice(1) : option.slots[0] === "night" ? "Evening" : "—"} />
             </dl>
 
             <p className="mt-5 text-[15.5px] leading-relaxed text-ink-2">{option.description}</p>
@@ -116,30 +145,6 @@ export function OptionDetail({ option, open, onClose, pickLabel, picked, onPick 
                 </li>
               ))}
             </ul>
-            {option.transport && (
-              <section className="mt-6">
-                <h3 className="font-display text-[20px] font-semibold">Getting there: your choice</h3>
-                <div className="mt-2 grid gap-2">
-                  {(["train", "road"] as const).map((m) => {
-                    const t = option.transport![m];
-                    return (
-                      <div key={m} className="flex items-start gap-3 rounded-2xl bg-paper p-3 shadow-card">
-                        <span className={cn("grid h-10 w-14 shrink-0 place-items-center rounded-xl", m === "train" ? "bg-ocean-100" : "bg-saffron-100")}>
-                          {m === "train" ? <Train className="h-4 w-12" /> : <Van className="h-6 w-10 text-ocean-600" />}
-                        </span>
-                        <span className="min-w-0 flex-1">
-                          <span className="block text-[14.5px] font-semibold">
-                            {t.title} · <span className="text-ocean-700">{t.label}</span>
-                          </span>
-                          <span className="block text-[12.5px] leading-snug text-ink-3">{t.detail}</span>
-                        </span>
-                        <span className="shrink-0 text-[12.5px] font-bold tabular-nums">{range(t.costUsd)}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </section>
-            )}
             {option.course && (
               <section className="mt-6 overflow-hidden rounded-[22px] bg-jungle-800 text-paper">
                 <div className="flex items-center gap-2 px-4 pb-2 pt-4">
@@ -153,7 +158,7 @@ export function OptionDetail({ option, open, onClose, pickLabel, picked, onPick 
                   {option.course.map((h, i) => (
                     <li key={h.venue} className="flex items-center gap-3 py-2.5">
                       <span className="font-display grid size-8 shrink-0 place-items-center rounded-full bg-saffron-400 text-[15px] font-bold text-ink">
-                        {i + 1}
+                        {option.course![0].par === 0 ? i : i + 1}
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="block text-[14px] font-semibold leading-tight">{h.venue}</span>
@@ -162,7 +167,7 @@ export function OptionDetail({ option, open, onClose, pickLabel, picked, onPick 
                           {h.note ? ` · ${h.note}` : ""}
                         </span>
                       </span>
-                      <span className="shrink-0 rounded-full bg-white/10 px-2 py-0.5 text-[11px] font-bold">Par {h.par}</span>
+                      <span className="shrink-0 rounded-full bg-white/10 px-2 py-0.5 text-[11px] font-bold">{h.par ? `Par ${h.par}` : "Tee-off"}</span>
                     </li>
                   ))}
                 </ol>
@@ -190,6 +195,25 @@ export function OptionDetail({ option, open, onClose, pickLabel, picked, onPick 
                   {option.goodToKnow}
                 </p>
               </div>
+            )}
+            {option.sources.length > 0 && (
+              <section className="mt-6">
+                <h3 className="label text-ink-3">Sources we checked</h3>
+                <ul className="mt-2 space-y-1.5">
+                  {option.sources.map((s) => (
+                    <li key={s.url}>
+                      <a
+                        href={s.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-start gap-1.5 text-[12.5px] leading-snug text-ocean-700 underline-offset-2 hover:underline"
+                      >
+                        <ExternalLink className="mt-0.5 size-3 shrink-0" /> {s.label}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </section>
             )}
             <div className="mt-6 space-y-1 border-t border-ink/5 pt-4">
               {option.images.map((img) => (

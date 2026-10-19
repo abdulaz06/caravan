@@ -2,7 +2,7 @@
 
 import { flexibility as FLEX } from "@/content/preferences";
 import { dayLabel } from "@/lib/dates";
-import { baseSplit, tripLength, type ItineraryData } from "@/lib/itinerary";
+import { nights, tripLength, type ItineraryData } from "@/lib/itinerary";
 import type { Timeline } from "@/lib/timeline";
 import { Palm } from "../brand/illustrations";
 import { RouteMap } from "./route-map";
@@ -10,7 +10,7 @@ import { RouteMap } from "./route-map";
 /** The travel-poster summary card at the top of a review/itinerary view. */
 export function TripPoster({ name, data, timeline }: { name: string; data: ItineraryData; timeline: Timeline }) {
   const len = tripLength(data);
-  const split = baseSplit(len);
+  const nts = nights(len);
   const flex = FLEX.find((f) => f.id === data.flexibility);
   return (
     <section className="relative overflow-hidden rounded-[30px] bg-ocean-800 text-paper shadow-lift">
@@ -31,9 +31,9 @@ export function TripPoster({ name, data, timeline }: { name: string; data: Itine
             </p>
           )}
           <dl className="mt-auto grid grid-cols-2 gap-x-3 gap-y-2 pt-5">
-            <Stat label="Days" value={len} />
-            <Stat label="Colombo + Galle" value={`${split.colombo}+${split.galle}`} />
-            <Stat label="Hrs travelling" value={`~${Math.round(timeline.totalHours)}`} />
+            <Stat label="Days · nights" value={`${len}·${nts.total}`} />
+            <Stat label="Colombo + Galle" value={`${nts.colombo}+${nts.galle}`} />
+            <Stat label="Hrs on the road" value={`~${Math.round(timeline.totalHours)}`} />
             {flex && <Stat label="Dates" value={flex.id === "exact" ? "Fixed" : flex.id === "few_days" ? "± days" : "Flexi"} />}
           </dl>
         </div>
