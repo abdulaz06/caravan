@@ -10,15 +10,22 @@ import {
   transportIds,
 } from "@/content/preferences";
 import { MAX_TRIP_DAYS, TRIP_WINDOW } from "@/content";
+import { CURRENCY_CODES } from "./currency";
 import { diffDays, isValidISO } from "./dates";
 import { normalize, type ItineraryData } from "./itinerary";
 
 const isoDate = z.string().refine(isValidISO, "Invalid date");
 const text = (max: number) => z.string().trim().max(max).optional();
 
-const optionPick = z.object({ pairId: z.string().max(64), optionId: z.string().max(64) });
+const addOnIds = z.array(z.string().max(64)).max(12).optional();
+const optionPick = z.object({
+  pairId: z.string().max(64),
+  optionId: z.string().max(64),
+  addOns: addOnIds,
+  transport: z.enum(["train", "road"]).optional(),
+});
 // "chill" is the pre-Stay-in shape; normalize() upgrades it to { type: "stay" }.
-const slotPick = z.union([optionPick, z.object({ type: z.enum(["stay", "chill"]) })]);
+const slotPick = z.union([optionPick, z.object({ type: z.enum(["stay", "chill"]), addOns: addOnIds })]);
 
 export const preferencesSchema = z
   .object({
@@ -35,12 +42,13 @@ export const preferencesSchema = z
     hardNo: text(1000),
     suggestions: text(1000),
     notes: text(2000),
+    currency: z.enum(CURRENCY_CODES).optional(),
   })
   .strip();
 
 export const itinerarySchema = z
   .object({
-    version: z.literal(1),
+    version: z.union([z.literal(1), z.literal(2)]),
     startDate: isoDate.nullable(),
     endDate: isoDate.nullable(),
     flexibility: z.enum(flexibilityIds).nullable(),
@@ -55,6 +63,10 @@ export const itinerarySchema = z
       )
       .max(MAX_TRIP_DAYS),
     preferences: preferencesSchema,
+    budget: z
+      .object({ excluded: z.array(z.string().max(120)).max(300).optional(), accommodation: z.boolean().optional() })
+      .strip()
+      .optional(),
   })
   .superRefine((d, ctx) => {
     if (!!d.startDate !== !!d.endDate) {
