@@ -47,7 +47,7 @@ const html = `<!doctype html><html><head>
   .sub { margin-top: 22px; font-size: 25px; color: rgba(255,251,244,.82); font-weight: 500; }
   .right { position: relative; flex: 1; }
   .card { position: absolute; border-radius: 26px; overflow: hidden; border: 7px solid #fffbf4; box-shadow: 0 30px 60px -20px rgba(0,0,0,.6); background-size: cover; background-position: center; }
-  .c1 { width: 270px; height: 380px; left: 40px; top: 70px; transform: rotate(-7deg); background-image: url('${img("images/ella/nine-arches-little-adams-1.webp")}'); }
+  .c1 { width: 270px; height: 380px; left: 40px; top: 70px; transform: rotate(-7deg); background-image: url('${img("images/galle/galle-fort-1.webp")}'); background-position: 100% 62%; }
   .c2 { width: 250px; height: 320px; left: 270px; top: 40px; transform: rotate(6deg); background-image: url('${img("images/mirissa/mirissa-whale-watching-1.webp")}'); }
   .c3 { width: 250px; height: 300px; left: 240px; top: 300px; transform: rotate(-3deg); background-image: url('${img("images/mirissa/mirissa-beach-hop-1.webp")}'); }
   .label { position: absolute; left: 12px; bottom: 12px; background: rgba(29,25,20,.6); color: #fffbf4; font-size: 15px; font-weight: 700; padding: 5px 11px; border-radius: 999px; }
@@ -60,10 +60,10 @@ const html = `<!doctype html><html><head>
     </div>
     <div class="eyebrow">The <span style="text-transform:none;letter-spacing:.06em">10hyaya</span> group trip · Dec ’26 – Jan ’27</div>
     <h1>Build your dream <em><i>Sri Lanka</i></em> trip.</h1>
-    <div class="sub">Pick your days & nights — whales, safaris, sunrise climbs, beach parties. Takes 5 minutes.</div>
+    <div class="sub">Colombo, then Galle — whales, surf, Galle Fort &amp; beach parties. Takes 5 minutes.</div>
   </div>
   <div class="right">
-    <div class="card c1"><span class="label">Nine Arches, Ella</span></div>
+    <div class="card c1"><span class="label">Galle Fort</span></div>
     <div class="card c2"><span class="label" style="top:12px;bottom:auto">Blue whales, Mirissa</span></div>
     <div class="card c3"><span class="label">Coconut Tree Hill</span></div>
   </div>
