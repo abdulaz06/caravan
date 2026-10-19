@@ -37,52 +37,56 @@ Progress autosaves continuously as a draft (debounced). Status: `draft` → `sub
 - **Deep path:** hand-pick every slot, reorder, add notes, fill all preferences.
 Both must feel natural; never force the long path.
 
+## Two bases: Colombo, then Galle (HARD RULE)
+- Every trip has **two bases: Colombo first, then Galle.** Days split automatically at a 3:7 ratio:
+  `colomboDays = max(1, round(0.3 × tripLength))` (round half up, integer maths: `floor((3n + 5) / 10)`), the rest are Galle days. A 1-day trip is Colombo only. Examples: 4 days → 1 + 3, 5 → 2 + 3, 8 → 2 + 6, 14 → 4 + 10.
+- The day builder shows the split at the top ("Colombo · 2 days → Galle · 3 days") and a section header per base with its region photo.
+- **Fixed travel legs** (road-trip segments in the timeline, with durations):
+  - Day 1: "Land at Colombo airport (CMB) → Colombo · ~1 hr".
+  - First Galle day: "Road trip · Colombo → Galle · ~2 hrs" (Southern Expressway), with optional coast-road stops (Kosgoda turtle hatchery, Madu River at Balapitiya, Bentota beach — adds ~1.5–2 hrs).
+  - Last day: "Road trip · Galle → Colombo airport (CMB) · ~2.5 hrs" (Colombo → CMB ~1 hr if the trip never reaches Galle). The departure day says to leave ~4 hrs before the flight.
+- **Options belong to a base.** Colombo days only offer Colombo-base options (Colombo, Mount Lavinia, Negombo, plus the Kandy day trip). Galle days only offer Galle-base options (Galle Fort, Unawatuna, Hikkaduwa, Koggala/Ahangama, Weligama, Mirissa, Madiha, Hiriketiya, Bentota). Never mix. Far-away regions (Ella, Sigiriya/Dambulla, Nuwara Eliya/Horton Plains, Yala) are out.
+- Each option shows its travel time from the base ("~1 hr from Galle"); options ≥ ~45 min away show a there-and-back road-trip line.
+- Reordering days and moving single picks only works **within the same base**.
+- **Migration:** itineraries saved before the bases rule (data `version: 1`) are normalised: picks not valid for their day's base are cleared, and the user sees a friendly one-time note ("We've locked in Colombo + Galle as bases, so a few picks need redoing").
+
 ## Building days — the rules
-- Each calendar day in their range is a **day card** labeled with its real date (e.g., "Sat 26 Dec"). First day tagged "Arrival", last day tagged "Departure". All slots are optional (arrival/departure days may only have a night or day).
+- Each calendar day in their range is a **day card** labeled with its real date (e.g., "Sat 26 Dec"). First day tagged "Arrival", last day tagged "Departure". All slots are optional.
 - Each day card has two slots: **Daytime** and **Evening**.
-- Options come from a **pool of pairs** (pool, not fixed order):
-  - **Day pairs:** each pair = two daytime options, typically nature/adventure vs. a more social/city/beach option.
-  - **Night pairs:** each pair = two evening options, typically a big night out vs. a mellower social night.
-  - For any Daytime slot the user opens a sheet showing the day-pair pool, each pair displayed as a side-by-side "A vs B" matchup; they pick one option from one pair. Same for Evening with night pairs.
-  - **Full freedom:** there is no once-per-itinerary limit. The same option can be picked on as many days as people like, and both options of a pair can be used (on different days, or repeated). Repeats only show a soft, non-blocking hint on the tile ("Also on Day 3"). Quick fill may prefer variety, but manual picks are never restricted.
-  - **Every Daytime and Evening slot also offers "Stay in"** — a first-class choice, not a fallback, available any number of times. Daytime copy: "Slow morning, pool, nap, no plans." Evening copy: "Dinner and hangs at the villa." It uses the custom villa `StayInIcon` (day/night variants) and is stored as `{ type: 'stay' }` (legacy `{ type: 'chill' }` data is upgraded automatically by `normalize()`). Vibe 0, no travel.
-- **New Year's Eve:** if their range includes Dec 31, that day's Evening slot shows a dedicated **NYE pair** (plus Stay in) instead of the normal pool. The NYE pick is pinned to Dec 31.
-- **Fluid editing (critical):** users can at any time
-  - change any pick,
-  - **drag to reorder whole days** (contents move; dates stay attached to positions),
-  - move/swap a single Daytime or Evening pick to another day's same slot,
-  - clear a slot,
-  - add a short personal note to any day.
-  When reordering, the Dec 31 Evening NYE pick stays pinned to Dec 31.
-- **Balance meter:** every option has a `vibe` score from -2 (pure nature/adventure) to +2 (pure nightlife). Show a live, good-looking meter of their trip's overall nature ↔ nightlife balance as they pick. Stay in = 0.
+- Options come from a **pool of pairs**, filtered to the day's base:
+  - **Day pairs:** two daytime options, typically nature/adventure vs. a more social/city/beach option.
+  - **Night pairs:** two evening options, typically a big night out vs. a mellower social night.
+  - For any slot the user opens a sheet showing that base's pairs as side-by-side "A vs B" matchups.
+  - **Full freedom:** no once-per-itinerary limit. The same option can be picked on as many days as people like, and both options of a pair can be used. Repeats only show a soft, non-blocking hint ("Also on Day 3"). Quick fill may prefer variety; manual picks are never restricted.
+  - **Every Daytime and Evening slot also offers "Stay in"** — a first-class choice available any number of times. Daytime: "Slow morning, pool, nap, no plans." Evening: "Dinner and hangs at the villa." Custom villa `StayInIcon`; stored as `{ type: 'stay' }` (legacy `{ type: 'chill' }` is upgraded by `normalize()`). Vibe 0, no travel, costs nothing.
+- **Add-ons:** any Daytime or Evening pick (including Stay in) can carry optional add-ons — smaller extras like bowling, karaoke, arcade, spa/massage, snorkelling, sunset catamaran, cooking class. Picked as multi-select chips in the option sheet, filtered to the same base and time of day. Shown as small chips under the pick on day cards and in the timeline; they count toward the budget and export one row each in the long CSV.
+- **Kandy day trip (Colombo base):** when picked, the user chooses **Scenic train 🚂** (Colombo Fort ↔ Kandy, ~2.5 hrs each way) or **Road trip 🚐** (~3–3.5 hrs each way). Both outbound and return legs show in the timeline with custom train/van icons. Flag rail disruptions honestly.
+- **Day-of-week availability:** options can set `availableDays` (0 = Sun … 6 = Sat). Show a badge (e.g. "Fridays only") and a gentle non-blocking warning when placed on another day.
+- **New Year's Eve:** if their range includes Dec 31, that day's Evening slot shows the **NYE pair for that day's base** (Colombo or Galle), plus Stay in. The NYE pick is pinned to Dec 31.
+- **Fluid editing (critical):** users can at any time change any pick, **drag to reorder whole days within a base** (contents move; dates stay attached to positions), move/swap a single pick to another day's same slot in the same base, clear a slot, add a short note. The Dec 31 Evening NYE pick stays pinned to Dec 31.
+- **Balance meter:** every option has a `vibe` score from -2 (pure nature/adventure) to +2 (pure nightlife); live meter of the trip's nature ↔ nightlife balance. Stay in = 0. Add-ons don't affect the vibe.
 
-### Geography & road trips
-Sri Lanka is "open to travel", framed as a road trip. Every option has a `region`. When consecutive slots are in different regions (including from the airport at the start), **auto-insert a "Road trip" segment in the timeline before that slot**, showing from → to and approximate duration (e.g., "🚐 Road trip · Kandy → Ella · ~5 hrs"; mention the famous scenic train where relevant). Day 1 starts from Bandaranaike International Airport (CMB). If a day's travel gets unrealistic (e.g., daytime in Ella and evening in Colombo), show a gentle, friendly warning — never block.
-
-Regions and approximate private-van drive times live in `src/content/regions.ts` (verify and refine; these are starting values):
+### Travel times
+Regions and approximate private-van times live in `src/content/regions.ts` (symmetric matrix; verify and refine):
 | From → To | ~Hours |
 |---|---|
-| Airport → Negombo | 0.5 |
-| Airport → Colombo | 1 |
-| Colombo → Galle / Unawatuna | 2 |
-| Colombo → Mirissa / Weligama | 2.5–3 |
-| Galle → Mirissa | 1 |
-| Colombo → Kandy | 3 |
-| Kandy → Sigiriya / Dambulla | 2.5 |
-| Kandy → Nuwara Eliya | 3 |
-| Nuwara Eliya → Ella | 2.5 |
-| Kandy → Ella | 5–6 (scenic train ~7) |
-| Ella → Yala / Tissa | 2 |
-| Ella → Mirissa | 4 |
-| Airport → Sigiriya | 4 |
-Use a full symmetric matrix; fill missing pairs sensibly.
+| Airport (CMB) → Colombo | 1 |
+| Colombo → Galle | 2 |
+| Galle → Airport (CMB) | 2.5 |
+| Colombo → Negombo | 1 |
+| Colombo → Kandy | 3–3.5 by road · ~2.5 by Intercity train |
+| Galle → Hikkaduwa | 0.5 |
+| Galle → Mirissa / Weligama | 1 |
+| Galle → Bentota | 1–1.25 |
+| Galle → Hiriketiya / Dikwella | 1.5–2 |
+If a day's travel gets heavy (e.g. Kandy by road plus a far evening, or a far daytime on the transfer/departure day), show a gentle warning — never block.
 
 ## Content (researched by Claude Code, edited by Abdul)
 All activity content lives in **typed data files** in `src/content/` (no admin UI for content). Abdul will review and edit these.
 
 Research real, currently operating places/activities with the web search tool. December is peak dry season for the **south & west coast and hill country**; the **east coast (Arugam Bay, Trincomalee) is in monsoon season in December** — leave it out or flag it. Whale watching in Mirissa is in season (Nov–Apr). Verify any specific venue (clubs, bars, beach parties) is still open; prefer well-known, durable options over obscure ones.
 
-Target pool size: ~10 day pairs, ~8 night pairs, 1 NYE pair. Spread across regions (Colombo, Negombo, Galle/Unawatuna/Hikkaduwa, Mirissa/Weligama, Ella, Kandy, Sigiriya/Dambulla, Nuwara Eliya, Yala/Udawalawe).
+Target pool: per base, ~3 Colombo day pairs + ~3 Colombo night pairs, ~5 Galle day pairs + ~4 Galle night pairs, one NYE pair per base, plus add-ons per base. Main options include casino night (Colombo), scuba diving (Unawatuna/Hikkaduwa), **Pub Golf** (Colombo and Galle Fort/Unawatuna versions, each with a fun rules card), Bentota water sports, and the **Secret Jungle Party** (Hiriketiya, Fridays only).
 
 Each option:
 ```ts
@@ -91,6 +95,7 @@ Each option:
   slot: 'day' | 'night';
   title: string;            // "Sunrise at Pidurangala Rock"
   region: RegionId;
+  base: 'colombo' | 'galle';
   tagline: string;          // one punchy line
   description: string;      // 2–3 sentences, vivid but honest
   highlights: string[];     // 2–4 bullets
@@ -100,9 +105,14 @@ Each option:
   intensity?: 'easy' | 'moderate' | 'tough';
   tags: string[];           // 'hike', 'beach', 'wildlife', 'club', 'culture', ...
   images: { src: string; credit: string; source: string; license: string }[]; // see "Photos" below; first = cover
+  availableDays?: number[]; // e.g. [5] = Fridays only
+  transport?: { train: Leg; road: Leg };  // Kandy-style day trips with a train/road choice
+  rules?: { title: string; items: string[] }; // e.g. the Pub Golf rules card
 }
 ```
-Pairs: `{ id, slot, a: OptionId, b: OptionId, theme?: string }`. Keep options and pairs separate so Abdul can re-pair easily.
+Pairs: `{ id, slot: 'day' | 'night' | 'nye', base, a: OptionId, b: OptionId, theme?: string }`. Keep options and pairs separate so Abdul can re-pair easily.
+Add-ons: `{ id, base, slots: ('day' | 'night')[], title, venue, region, tagline, description, duration, estCostUsd, tags, images }` in `src/content/addons.ts`.
+All prices are stored in **USD** (`estCostUsd`, per person) — the single base currency.
 
 ### Photos (required)
 - **Every option (day, night, NYE, and "Stay in") and every region must have at least one real photo** of that actual place or activity, not a generic stock image. Prefer 2–3 photos per option (`images: Image[]`, first = cover) so the detail view can show a small swipeable gallery.
@@ -112,7 +122,7 @@ Pairs: `{ id, slot, a: OptionId, b: OptionId, theme?: string }`. Keep options an
 - If a good photo can't be found for an option, flag it in the content summary so Abdul can supply one; never leave a blank or broken image (use a styled, on-brand illustrated fallback).
 
 ## Preferences step (all optional)
-- Per-person budget excluding flights (tiers in USD)
+- Per-person budget excluding flights (tiers stored in USD, displayed in the selected currency)
 - Accommodation style (hostel / boutique hotel / villa with pool / mix) + comfort with shared rooms
 - Interests (multi-select chips: surfing, wildlife safari, hiking, beaches, tea country, food, temples & culture, photography, nightlife, wellness/spa…)
 - Energy level / early mornings (e.g., "up for 4am sunrise hikes?")
@@ -124,6 +134,18 @@ Pairs: `{ id, slot, a: OptionId, b: OptionId, theme?: string }`. Keep options an
 - Anything else for the organizer
 Design this step as quick taps first, text fields last.
 
+## Currency
+- All money in the app (option and add-on costs, budget tiers, the budget tracker) can be shown in **LKR, USD, GBP, EUR, AED, INR, SAR, QAR, CAD, AUD**.
+- Content prices are stored in USD. Live rates come from a free no-key API (open.er-api.com), fetched server-side and cached ~24 h, with a hard-coded fallback table if the API fails. Amounts show with "≈" and the rate date; numbers are formatted per currency and rounded to sensible steps.
+- A compact currency picker sits in the header. The choice is remembered per user: saved in the itinerary's `preferences.currency`, plus localStorage and a cookie for instant, flash-free rendering.
+
+## Budget tracker
+- A checklist-style **"Trip budget"** panel: a sticky summary pill on mobile that expands into a sheet; a side panel on desktop.
+- Line items grouped by day: each picked activity and add-on with its per-person cost range; there-and-back van costs for far options; fixed transfer legs (arrival, Colombo → Galle, departure) and Kandy transport split per person assuming **2 shared vans for a group of 12**; an optional accommodation estimate from their accommodation-style preference × nights per base (toggle on/off).
+- Every line can be checked/unchecked; exclusions are saved in the itinerary (`budget.excluded`, `budget.accommodation`).
+- Shows the estimated total as a low–high range in the selected currency, compares it with their budget tier ("Within your budget" / "≈ 20% over"), and notes "Excludes flights · estimates only". Updates live.
+- Computed totals are included in the admin export.
+
 ## Group features (logged-in participants only)
 - **Group overview:** responses count (joined vs submitted), **date availability heatmap** (how many people want each date — very important), most-picked options, group nature ↔ nightlife balance, popular regions.
 - **Browse itineraries:** only after you've submitted your own (keeps opinions independent). Read-only timeline view of each submitted itinerary.
@@ -131,7 +153,7 @@ Design this step as quick taps first, text fields last.
 ## Admin (`/admin`, protected by `ADMIN_PASSWORD` env var)
 - Lock / unlock edits (when locked, everyone sees a read-only banner: "Edits are closed — the final plan is coming!")
 - Participants table: name, status, last updated, number of picks; reset PIN; delete
-- Export all data as **JSON** and **CSV** (one row per person; plus a long-format CSV with one row per slot pick) for AI analysis
+- Export all data as **JSON** and **CSV** (one row per person, including budget totals; plus a long-format CSV with one row per slot pick and one per add-on) for AI analysis
 
 ## Data model (Supabase)
 - `participants` (id uuid, display_name text unique (case-insensitive), pin_hash text, failed_attempts int, locked_until timestamptz, created_at)
@@ -139,20 +161,24 @@ Design this step as quick taps first, text fields last.
 - `settings` (single row: edits_locked boolean, updated_at)
 SQL lives in `supabase/migrations/*.sql` so it can be pasted into the Supabase SQL editor.
 
-Itinerary `data` (versioned):
+Itinerary `data` (versioned; current `version: 2`, which introduced the two bases):
 ```ts
 {
-  version: 1,
+  version: 2,
   startDate: 'YYYY-MM-DD', endDate: 'YYYY-MM-DD',
   flexibility: 'exact' | 'few_days' | 'very',
   days: Array<{
     id: string;                                   // stable id for drag/reorder
-    day: { pairId: string; optionId: string } | { type: 'stay' } | null;
-    night: { pairId: string; optionId: string } | { type: 'stay' } | null;
+    day: SlotPick | null;
+    night: SlotPick | null;
     note?: string;
-  }>,                                             // dates derive from index + startDate
-  preferences: { ... },
+  }>,                                             // dates and base derive from index + startDate + length
+  preferences: { ..., currency?: CurrencyCode },
+  budget?: { excluded?: string[]; accommodation?: boolean },
 }
+type SlotPick =
+  | { pairId: string; optionId: string; addOns?: string[]; transport?: 'train' | 'road' }
+  | { type: 'stay'; addOns?: string[] };
 ```
 
 ## Design direction
