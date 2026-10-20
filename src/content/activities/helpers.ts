@@ -17,6 +17,12 @@ export function extra(slots: Slot[], where: Where[], o: Base): Activity {
   return { ...rest, kind: "extra", slots, where, images: img(photoKey ?? o.id) };
 }
 
+/** A wholesome stand-in used only by Halal mode. */
+export function halal(slots: Slot[], where: Where[], o: Base): Activity {
+  const { photoKey, ...rest } = o;
+  return { ...rest, kind: "halal", slots, where, images: img(photoKey ?? o.id) };
+}
+
 /** Source shorthand. */
 export const src = (label: string, url: string): Source => ({ label, url });
 

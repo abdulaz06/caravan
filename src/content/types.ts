@@ -58,7 +58,8 @@ export type CourseHole = { venue: string; area: string; par: number; note?: stri
  */
 export type Activity = {
   id: string;
-  kind: "option" | "extra";
+  /** "halal" = a wholesome stand-in only used by Halal mode (never in the catalog). */
+  kind: "option" | "extra" | "halal";
   /** Options have exactly one slot; extras may fit both. */
   slots: Slot[];
   where: Where[];
@@ -91,6 +92,8 @@ export type Activity = {
   course?: CourseHole[];
   /** En-route stops: km from Colombo along the coast road (A2). */
   routeKm?: number;
+  /** Nightlife items: the wholesome stand-in shown in Halal mode (an activity id). */
+  halalSwap?: string;
 };
 
 /** Kept for readability where only curated options make sense. */

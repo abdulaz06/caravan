@@ -1,8 +1,9 @@
 import { colomboDay, colomboNight } from "./activities/colombo";
 import { enrouteDay } from "./activities/enroute";
-import { extras } from "./activities/extras";
+import { extras as baseExtras } from "./activities/extras";
 import { galleDay } from "./activities/galle-day";
 import { galleNight } from "./activities/galle-night";
+import { HALAL_SWAPS, halalAlternatives, isNightlife } from "./activities/halal";
 import { nyeOptions } from "./activities/nye";
 import { photos } from "./photos.generated";
 import type { Activity, Category, Photo, Slot } from "./types";
@@ -13,9 +14,13 @@ import type { Activity, Category, Photo, Slot } from "./types";
  * vibe: -2 pure nature/adventure … 0 balanced … +2 pure nightlife.
  * Photos come from scripts/image-picks.json (run `npm run photos`).
  */
-export { colomboDay, colomboNight, enrouteDay, galleDay, galleNight, nyeOptions, extras };
+/** Attach each nightlife item's curated Halal-mode stand-in. */
+const withSwap = (a: Activity): Activity => (HALAL_SWAPS[a.id] ? { ...a, halalSwap: HALAL_SWAPS[a.id] } : a);
 
-export const options: Activity[] = [...colomboDay, ...colomboNight, ...enrouteDay, ...galleDay, ...galleNight, ...nyeOptions];
+export { colomboDay, colomboNight, enrouteDay, galleDay, galleNight, nyeOptions, halalAlternatives, isNightlife };
+
+export const options: Activity[] = [...colomboDay, ...colomboNight, ...enrouteDay, ...galleDay, ...galleNight, ...nyeOptions].map(withSwap);
+export const extras: Activity[] = baseExtras.map(withSwap);
 
 /**
  * "Stay in" — offered in every Daytime and Evening slot, as often as people

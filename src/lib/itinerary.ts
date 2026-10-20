@@ -183,7 +183,7 @@ export function itemAllowed(id: string, slot: SlotKind, where: Where | null, isN
   if (!where) return false;
   if (id === STAY_ID) return true;
   const a = activitiesById[id];
-  if (!a || !a.slots.includes(slot) || !a.where.includes(where)) return false;
+  if (!a || a.kind === "halal" || !a.slots.includes(slot) || !a.where.includes(where)) return false;
   if (isNyeOption(id)) return slot === "night" && isNyeNight;
   return true;
 }

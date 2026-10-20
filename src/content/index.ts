@@ -1,4 +1,4 @@
-import { extras, options, stayIn, type StayIn } from "./options";
+import { extras, halalAlternatives, isNightlife, options, stayIn, type StayIn } from "./options";
 import { nyePairs, pairs, pairsFor } from "./pairs";
 import { photos } from "./photos.generated";
 import type { Activity, Category, Pair } from "./types";
@@ -6,12 +6,13 @@ import type { Activity, Category, Pair } from "./types";
 export * from "./types";
 export { regions, regionList, travelHours, formatHours, stays, COAST_ROAD, COAST_ROAD_KM, LEGS } from "./regions";
 export type { Stay, FixedLeg } from "./regions";
-export { stayIn, pairs, pairsFor, nyePairs, options, extras };
+export { stayIn, pairs, pairsFor, nyePairs, options, extras, isNightlife };
 export type { StayIn };
 
 /** Options + Quick extras — everything that can sit in a slot (besides Stay in). */
 export const activities: Activity[] = [...options, ...extras];
-export const activitiesById: Record<string, Activity> = Object.fromEntries(activities.map((a) => [a.id, a]));
+/** Includes the Halal-mode stand-ins so swapped plans still resolve. */
+export const activitiesById: Record<string, Activity> = Object.fromEntries([...activities, ...halalAlternatives].map((a) => [a.id, a]));
 /** @deprecated name kept for older call sites — same as activitiesById. */
 export const optionsById = activitiesById;
 
@@ -54,6 +55,17 @@ export const CATEGORIES: { id: Category; label: string; emoji: string }[] = [
       if (!o.slots.includes(slot)) throw new Error(`Option ${id} isn't a ${slot} option but pair ${p.id} is`);
       if (!o.where.includes(p.where)) throw new Error(`Option ${id} isn't valid in ${p.where} (pair ${p.id})`);
     }
+  }
+  // Every nightlife item needs a curated Halal-mode swap: same slot, overlapping area, not nightlife itself.
+  for (const a of [...activities, ...halalAlternatives]) {
+    if (seen.has(a.id) && a.kind === "halal") throw new Error(`Halal stand-in ${a.id} clashes with an activity id`);
+    if (!isNightlife(a)) continue;
+    if (a.kind === "halal") throw new Error(`Halal stand-in ${a.id} looks like nightlife`);
+    const swap = a.halalSwap ? activitiesById[a.halalSwap] : undefined;
+    if (!swap) throw new Error(`Nightlife item ${a.id} has no halalSwap`);
+    if (isNightlife(swap)) throw new Error(`halalSwap for ${a.id} (${swap.id}) is nightlife too`);
+    if (!a.slots.every((s) => swap.slots.includes(s))) throw new Error(`halalSwap for ${a.id} doesn't fit the same slot`);
+    if (!a.where.some((w) => swap.where.includes(w))) throw new Error(`halalSwap for ${a.id} is in a different area`);
   }
   void pairsFor;
 }

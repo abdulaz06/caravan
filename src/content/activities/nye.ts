@@ -61,7 +61,7 @@ export const nyeOptions: Activity[] = [
     id: "nye-galle-fort",
     title: "NYE in Galle Fort",
     region: "galle",
-    categories: ["party", "food"],
+    categories: ["food", "culture"],
     tagline: "Dinner in the fort, midnight on the ramparts.",
     loved: "Elegant rather than wild — a long dinner, then the whole fort out on the walls at midnight.",
     description:
