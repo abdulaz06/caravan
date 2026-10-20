@@ -176,7 +176,7 @@ Design this step as quick taps first, text fields last.
 
 ### "Share my trip" images
 - Two designed, poster-quality exports — **9:16 Story (1080×1920)** and **Square (1080×1080)** — drawn on a canvas (not a page screenshot): the "Lanks by 10hyaya" lockup, their name, dates + "6 days · 5 nights", the zoomed route map, a compact day-by-day list with icons, and their balance meter.
-- Generated client-side with embedded fonts (document fonts loaded via the FontFace API before drawing), same-origin images and an SVG/Path2D map, so it works on iPhone Safari and Android Chrome. Images are pre-generated when the share sheet opens; the Share button uses the Web Share API with the PNG file (save to Photos / share to Instagram) and falls back to a download. Personal day notes are never included.
+- Generated client-side with embedded fonts (fixed-weight copies of Fraunces and Instrument Sans in `public/fonts/share/`, made by `scripts/make-share-fonts.py` and loaded via the FontFace API before drawing — WebKit's canvas ignores a variable font's weight axis), same-origin images and an SVG/Path2D map, so it works on iPhone Safari and Android Chrome. Map labels and day badges never overlap (shared placement helpers in `src/lib/routes.ts`). Images are pre-generated when the share sheet opens; the Share button uses the Web Share API with the PNG file (save to Photos / share to Instagram) and falls back to a download. Personal day notes are never included.
 
 ### Halal mode (easter egg)
 - A subtle crescent-moon "Halal" switch on the user's own review view (tucked into the vibe meter card).
