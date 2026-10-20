@@ -55,6 +55,8 @@ export function TripApp({
   // that lives only in this tab — switching back restores `data` untouched.
   const [data, setData] = useState(initialData);
   const [preview, setPreview] = useState<ItineraryData | null>(null);
+  // Halal mode: a view-only easter egg on the review page. Never saved; resets on leaving the page.
+  const [halal, setHalal] = useState(false);
   const view = preview ?? data;
   const [locked, setLocked] = useState(editsLocked);
   const [step, setStepState] = useState<Step>(() =>
@@ -78,6 +80,7 @@ export function TripApp({
   const budget = useMemo(() => computeBudget(view), [view]);
 
   const setStep = useCallback((next: Step, push = true) => {
+    setHalal(false);
     setStepState((cur) => {
       setDirection(STEPS.indexOf(next) >= STEPS.indexOf(cur) ? 1 : -1);
       return next;
@@ -124,12 +127,12 @@ export function TripApp({
   // Currency is a display preference: it always sticks, even while previewing.
   const onCurrency = useCallback(
     (code: CurrencyCode) => {
-      if (locked) return;
+      if (locked || halal) return;
       const set = (d: ItineraryData) => ({ ...d, preferences: { ...d.preferences, currency: code } });
       setData(set);
       setPreview((p) => (p ? set(p) : p));
     },
-    [locked],
+    [locked, halal],
   );
 
   const toggleLine = useCallback(
@@ -237,6 +240,8 @@ export function TripApp({
               data={view}
               previewing={previewing}
               onExitPreview={() => setLength(TRIP_DAYS)}
+              halal={halal}
+              onHalal={setHalal}
               status={status}
               updatedAt={updatedAt}
               locked={locked}
@@ -258,7 +263,7 @@ export function TripApp({
       {showBudget && (
         <BudgetSidePanel
           budget={budget}
-          locked={locked}
+          locked={locked || halal}
           onToggleLine={toggleLine}
           onToggleAccommodation={toggleAccommodation}
           onEditBudget={() => setStep("prefs")}
@@ -268,7 +273,7 @@ export function TripApp({
         open={budgetOpen}
         onClose={() => setBudgetOpen(false)}
         budget={budget}
-        locked={locked}
+        locked={locked || halal}
         onToggleLine={toggleLine}
         onToggleAccommodation={toggleAccommodation}
         onEditBudget={() => {

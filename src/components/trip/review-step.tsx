@@ -2,7 +2,7 @@
 
 import confetti from "canvas-confetti";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, CalendarDays, CheckCircle2, ChevronRight, FlaskConical, Pencil, Send, SlidersHorizontal, Users, Wallet } from "lucide-react";
+import { ArrowRight, CalendarDays, CheckCircle2, ChevronRight, FlaskConical, Moon, Pencil, Send, Share2, SlidersHorizontal, Users, Wallet, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import {
   budgets,
@@ -13,14 +13,17 @@ import {
   stays,
   transport,
 } from "@/content/preferences";
+import { halalSwapCount, halalView } from "@/lib/halal";
 import { countItems, type ItineraryData, type ItineraryStatus } from "@/lib/itinerary";
 import { balanceOf, buildTimeline } from "@/lib/timeline";
+import { cn } from "@/lib/cn";
 import { SiteFooter } from "../brand/site-footer";
 import { Lockup, Stamp } from "../brand/wordmark";
 import { Button, ButtonLink } from "../ui/button";
 import { BalanceMeter } from "./balance-meter";
 import type { Step } from "./header";
 import { ItineraryTimeline } from "./itinerary-timeline";
+import { ShareSheet } from "./share-sheet";
 import { TripPoster } from "./trip-poster";
 import { VerdictChip } from "./budget";
 import { useCurrency } from "../currency";
@@ -41,6 +44,9 @@ type Props = {
   budget: BudgetResult;
   onOpenBudget: () => void;
   onSubmit: () => Promise<boolean>;
+  /** Halal mode (view-only easter egg) — state lives in TripApp so it can lock editing everywhere. */
+  halal?: boolean;
+  onHalal?: (on: boolean) => void;
 };
 
 function ago(iso: string | null): string {
@@ -52,9 +58,29 @@ function ago(iso: string | null): string {
   return new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
 }
 
-export function ReviewStep({ name, data, status, updatedAt, locked, saveState, onEdit, onSubmit, budget, onOpenBudget, previewing, onExitPreview }: Props) {
+export function ReviewStep({
+  name,
+  data: saved,
+  status,
+  updatedAt,
+  locked,
+  saveState,
+  onEdit,
+  onSubmit,
+  budget,
+  onOpenBudget,
+  previewing,
+  onExitPreview,
+  halal = false,
+  onHalal,
+}: Props) {
+  // Halal mode only changes what's shown — `saved` is never touched.
+  const data = useMemo(() => (halal ? halalView(saved) : saved), [saved, halal]);
+  const swaps = useMemo(() => halalSwapCount(saved), [saved]);
   const timeline = useMemo(() => buildTimeline(data), [data]);
   const balance = useMemo(() => balanceOf(data), [data]);
+  const [sharing, setSharing] = useState(false);
+  const editable = !locked && !halal;
   const [busy, setBusy] = useState(false);
   const [celebrate, setCelebrate] = useState(false);
   const submitted = status === "submitted";
@@ -102,14 +128,47 @@ export function ReviewStep({ name, data, status, updatedAt, locked, saveState, o
         </p>
       </section>
 
+      {halal && (
+        <div
+          role="status"
+          className="relative z-[2] mx-3 mt-4 flex items-center gap-3 rounded-2xl bg-jungle-800 p-3 text-[13.5px] leading-snug text-paper shadow-card"
+        >
+          <Moon className="size-5 shrink-0 fill-saffron-400 text-saffron-400" />
+          <p className="flex-1">
+            <b>Halal mode: preview only, your real plan is untouched.</b>{" "}
+            <span className="text-paper/70">
+              {swaps ? `${swaps} night${swaps === 1 ? "" : "s"} out swapped for wholesome alternatives.` : "Nothing needed swapping."}
+            </span>
+          </p>
+          <button
+            onClick={() => onHalal?.(false)}
+            aria-label="Turn Halal mode off"
+            className="grid size-9 shrink-0 place-items-center rounded-full bg-white/10 hover:bg-white/20"
+          >
+            <X className="size-4" />
+          </button>
+        </div>
+      )}
+
       <div className="relative z-[1] mt-6 space-y-4 px-3">
         <TripPoster name={name} data={data} timeline={timeline} />
+        <button
+          onClick={() => setSharing(true)}
+          className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-paper text-[16px] font-bold text-ink shadow-card ring-1 ring-ink/5 transition hover:-translate-y-0.5 active:scale-[0.99]"
+        >
+          <Share2 className="size-5 text-sunset-500" /> Share my trip
+          <span className="rounded-full bg-saffron-200 px-2 py-0.5 text-[11px] font-bold text-ink">Story · Square</span>
+        </button>
         <BudgetSummary budget={budget} onOpen={onOpenBudget} />
         <div className="rounded-[26px] bg-paper p-4 shadow-card">
-          <BalanceMeter balance={balance} />
+          <BalanceMeter
+            balance={balance}
+            mode={halal ? "halal" : "normal"}
+            action={onHalal && !previewing ? <HalalSwitch on={halal} onChange={onHalal} /> : undefined}
+          />
         </div>
 
-        {!locked && (
+        {editable && (
           <div className="flex gap-2 overflow-x-auto px-1 pb-1 no-scrollbar">
             <EditChip icon={CalendarDays} label="Dates" onClick={() => onEdit("dates")} />
             <EditChip icon={Pencil} label="Days" onClick={() => onEdit("build")} />
@@ -131,7 +190,7 @@ export function ReviewStep({ name, data, status, updatedAt, locked, saveState, o
       </div>
       <SiteFooter className="relative z-[1] mt-6" />
 
-      {!locked && (
+      {editable && (
         <div className="pb-safe fixed inset-x-0 bottom-0 z-30 bg-gradient-to-t from-sand-100 via-sand-100/90 to-transparent px-4 pt-6 lg:left-auto lg:w-[480px]">
           {previewing ? (
             <div className="space-y-2">
@@ -163,6 +222,8 @@ export function ReviewStep({ name, data, status, updatedAt, locked, saveState, o
           )}
         </div>
       )}
+
+      {sharing && <ShareSheet onClose={() => setSharing(false)} name={name} data={data} />}
 
       <AnimatePresence>
         {celebrate && (
@@ -203,6 +264,28 @@ export function ReviewStep({ name, data, status, updatedAt, locked, saveState, o
         )}
       </AnimatePresence>
     </div>
+  );
+}
+
+/** The easter egg: a little crescent-moon switch tucked into the vibe card. */
+function HalalSwitch({ on, onChange }: { on: boolean; onChange: (on: boolean) => void }) {
+  return (
+    <button
+      role="switch"
+      aria-checked={on}
+      aria-label="Halal mode"
+      onClick={() => onChange(!on)}
+      className={cn(
+        "inline-flex h-7 items-center gap-1.5 rounded-full pl-2 pr-1 text-[11px] font-bold uppercase tracking-wide transition",
+        on ? "bg-jungle-800 text-saffron-400" : "bg-sand-100 text-ink-3 hover:text-ink-2",
+      )}
+    >
+      <Moon className={cn("size-3.5", on && "fill-saffron-400")} strokeWidth={2.5} />
+      Halal
+      <span className={cn("relative h-4 w-7 rounded-full transition-colors", on ? "bg-saffron-400" : "bg-sand-300")}>
+        <span className={cn("absolute top-0.5 size-3 rounded-full bg-paper shadow transition-all", on ? "left-3.5" : "left-0.5")} />
+      </span>
+    </button>
   );
 }
 

@@ -1,17 +1,29 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Leaf, Martini } from "lucide-react";
+import { Leaf, Martini, Moon } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { halalBalanceLabel } from "@/lib/halal";
 import { balanceLabel, type Balance } from "@/lib/timeline";
 
-type Props = { balance: Balance; size?: "compact" | "full"; tone?: "light" | "dark"; className?: string; title?: string };
+type Props = {
+  balance: Balance;
+  size?: "compact" | "full";
+  tone?: "light" | "dark";
+  className?: string;
+  title?: string;
+  /** Halal mode relabels the scale "Halal ↔ Haram". */
+  mode?: "normal" | "halal";
+  /** Slot for an extra control in the header (the Halal switch). */
+  action?: React.ReactNode;
+};
 
 /** Nature ↔ nightlife meter. Position = average vibe of all picks (-2 … +2). */
-export function BalanceMeter({ balance, size = "full", tone = "light", className, title = "Your vibe" }: Props) {
+export function BalanceMeter({ balance, size = "full", tone = "light", className, title = "Your vibe", mode = "normal", action }: Props) {
   const { score } = balance;
   const pos = score === null ? 50 : ((score + 2) / 4) * 100;
-  const label = balanceLabel(score);
+  const halal = mode === "halal";
+  const label = halal ? halalBalanceLabel(score) : balanceLabel(score);
   const dark = tone === "dark";
 
   return (
@@ -29,15 +41,18 @@ export function BalanceMeter({ balance, size = "full", tone = "light", className
               {label.title}
             </motion.p>
           </div>
-          <p className={cn("pb-1 text-right text-[12.5px]", dark ? "text-paper/60" : "text-ink-3")}>{label.line}</p>
+          <div className="flex flex-col items-end gap-1.5 pb-1">
+            {action}
+            <p className={cn("text-right text-[12.5px]", dark ? "text-paper/60" : "text-ink-3")}>{label.line}</p>
+          </div>
         </div>
       )}
       <div className="flex items-center gap-2.5">
         <span
           className={cn("flex items-center gap-1 text-[11.5px] font-bold uppercase tracking-wide", dark ? "text-jungle-400" : "text-jungle-600")}
         >
-          <Leaf className="size-3.5" strokeWidth={2.5} />
-          {size === "full" && "Nature"}
+          {halal ? <Moon className="size-3.5" strokeWidth={2.5} /> : <Leaf className="size-3.5" strokeWidth={2.5} />}
+          {size === "full" && (halal ? "Halal" : "Nature")}
         </span>
         <div className="relative h-3 flex-1">
           <div className="absolute inset-0 rounded-full bg-gradient-to-r from-jungle-600 via-saffron-400 to-hibiscus-500" />
@@ -52,13 +67,15 @@ export function BalanceMeter({ balance, size = "full", tone = "light", className
         <span
           className={cn("flex items-center gap-1 text-[11.5px] font-bold uppercase tracking-wide", dark ? "text-hibiscus-300" : "text-hibiscus-600")}
         >
-          {size === "full" && "Nightlife"}
+          {size === "full" && (halal ? "Haram" : "Nightlife")}
           <Martini className="size-3.5" strokeWidth={2.5} />
         </span>
       </div>
       {size === "full" && balance.count > 0 && (
         <p className={cn("mt-2.5 text-center text-[12px]", dark ? "text-paper/55" : "text-ink-3")}>
-          {balance.nature} outdoorsy · {balance.balanced} in-between · {balance.nightlife} social & nightlife
+          {halal
+            ? `${balance.nature + balance.balanced} wholesome · ${balance.nightlife} lively`
+            : `${balance.nature} outdoorsy · ${balance.balanced} in-between · ${balance.nightlife} social & nightlife`}
         </p>
       )}
     </div>
