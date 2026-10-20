@@ -3,7 +3,7 @@
 //   env: BASE (default http://localhost:3000), CHROME_PATH, VIEW (e.g. 375x667), PIN, ADMIN_PASSWORD
 //   Against a local-store server on :3100 (LANKS_LOCAL_STORE=1) it also tests the
 //   upgrade of an older (v2) itinerary by writing it straight into .data/dev-db.json.
-import { chromium } from "playwright";
+import { chromium, webkit } from "playwright";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -16,6 +16,24 @@ const NAME2 = `Friend ${stamp}`;
 const NAME3 = `Oldtimer ${stamp}`;
 const PIN = process.env.PIN ?? "4826";
 const LOCAL_DB = path.join(process.cwd(), ".data", "dev-db.json");
+const SHOTS = path.join(process.cwd(), "screenshots");
+const VIEWSUFFIX = process.env.VIEW ? `-${process.env.VIEW}` : "";
+const pngSize = (file) => {
+  const b = fs.readFileSync(file);
+  return [b.readUInt32BE(16), b.readUInt32BE(20)];
+};
+/** Save the generated share image from the open share sheet (download), into outDir and screenshots/. */
+async function saveShare(pg, format, name) {
+  const label = format === "story" ? "Story" : "Square";
+  await pg.getByRole("button", { name: `Save ${label} image` }).waitFor({ timeout: 20000 });
+  await eventually(() => pg.getByRole("button", { name: `Save ${label} image` }).isEnabled(), 20000);
+  const [dl] = await Promise.all([pg.waitForEvent("download", { timeout: 20000 }), pg.getByRole("button", { name: `Save ${label} image` }).click()]);
+  const file = path.join(outDir, `${name}.png`);
+  await dl.saveAs(file);
+  fs.mkdirSync(SHOTS, { recursive: true });
+  fs.copyFileSync(file, path.join(SHOTS, `${name}.png`));
+  return file;
+}
 fs.mkdirSync(outDir, { recursive: true });
 
 const browser = await chromium.launch(exe ? { executablePath: exe } : {});
@@ -374,6 +392,72 @@ await page.getByRole("button", { name: "Hiking" }).click();
 r = await saved(page, (x) => x.data.preferences.interests?.includes("hiking"));
 await expect(r.value?.status === "submitted", "edit after submit saved, still submitted");
 
+step("Review map: zoomed to the coast, each day highlightable");
+await page.goto(base + "/trip?step=review");
+await page.waitForTimeout(2200);
+await expect(page.getByRole("img", { name: /^Route map/ }).isVisible(), "zoomed route map on the review page");
+await expect(page.getByRole("button", { name: /^Day 3/ }).isVisible(), "a chip for each day");
+await page.getByRole("button", { name: /^Day 3/ }).click();
+await page.waitForTimeout(700);
+await expect(page.getByText(/Day 3 · Galle base/).first().isVisible(), "tapping a day highlights its route");
+await page.locator("section").filter({ has: page.getByRole("img", { name: /^Route map/ }) }).first().screenshot({ path: path.join(outDir, `${String(++n).padStart(2, "0")}-review-map-day3.png`) });
+await page.getByRole("button", { name: /^All days/ }).click();
+await page.waitForTimeout(500);
+await page.locator("section").filter({ has: page.getByRole("img", { name: /^Route map/ }) }).first().screenshot({ path: path.join(outDir, `${String(++n).padStart(2, "0")}-review-map-all.png`) });
+
+step("Share my trip: Story + Square images");
+await page.getByRole("button", { name: /Share my trip/ }).click();
+await page.waitForTimeout(500);
+const storyFile = await saveShare(page, "story", `share-story${VIEWSUFFIX}`);
+const squareFile = await saveShare(page, "square", `share-square${VIEWSUFFIX}`);
+await expect(JSON.stringify(pngSize(storyFile)) === "[1080,1920]", "Story image is 1080×1920");
+await expect(JSON.stringify(pngSize(squareFile)) === "[1080,1080]", "Square image is 1080×1080");
+await shot(page, "share-sheet", { wait: 300 });
+await closeSheet(page);
+
+step("Halal mode: view-only, never saved");
+const rowBefore = JSON.stringify(await page.request.get(base + "/api/itinerary").then((x) => x.json()));
+const fileRow = () => {
+  if (!fs.existsSync(LOCAL_DB) || !base.includes(":3100")) return null;
+  const dbj = JSON.parse(fs.readFileSync(LOCAL_DB, "utf8"));
+  const me = dbj.participants.find((x) => x.display_name === NAME);
+  return JSON.stringify(dbj.itineraries.find((x) => x.participant_id === me.id));
+};
+const fileBefore = fileRow();
+await expect(page.getByText("Pub Golf: tee off at Bellagio").first().isVisible(), "nightlife item shown normally");
+await page.getByRole("switch", { name: "Halal mode" }).click();
+await page.waitForTimeout(800);
+await expect(page.getByText("Halal mode: preview only, your real plan is untouched.").isVisible(), "Halal banner with the promise");
+await expect(page.getByText("Colombo night food & dessert crawl").first().isVisible(), "Pub Golf swapped for the dessert crawl");
+await expect(page.getByText("Pub Golf: tee off at Bellagio").filter({ visible: true }).count().then((c) => c === 0), "no nightlife left in view");
+await expect(page.getByText("Haram", { exact: true }).isVisible() && page.getByText("Halal", { exact: true }).first().isVisible(), "meter relabelled Halal ↔ Haram");
+await expect(page.getByRole("button", { name: /Edit days/ }).count().then((c) => c === 0), "editing disabled while it's on");
+await shot(page, "halal-review", { wait: 300 });
+await shot(page, "halal-review-full", { full: true });
+await page.getByRole("button", { name: /Share my trip/ }).click();
+await page.waitForTimeout(500);
+const halalStory = await saveShare(page, "story", `share-story-halal${VIEWSUFFIX}`);
+await saveShare(page, "square", `share-square-halal${VIEWSUFFIX}`);
+await expect(JSON.stringify(pngSize(halalStory)) === "[1080,1920]", "Halal-mode Story image exported");
+await closeSheet(page);
+await page.waitForTimeout(2500);
+const rowDuring = JSON.stringify(await page.request.get(base + "/api/itinerary").then((x) => x.json()));
+await expect(rowDuring === rowBefore, "DB row unchanged while Halal mode is on");
+await page.getByRole("button", { name: "Turn Halal mode off" }).click();
+await page.waitForTimeout(600);
+await expect(page.getByText("Pub Golf: tee off at Bellagio").first().isVisible(), "switching off restores the real plan");
+await page.getByRole("switch", { name: "Halal mode" }).click();
+await page.waitForTimeout(400);
+await page.getByRole("navigation", { name: "Steps" }).getByRole("button", { name: "Days" }).click();
+await page.waitForTimeout(600);
+await page.getByRole("navigation", { name: "Steps" }).getByRole("button", { name: "Review" }).click();
+await page.waitForTimeout(1200);
+await expect(page.getByRole("switch", { name: "Halal mode" }).getAttribute("aria-checked").then((v) => v === "false"), "Halal mode resets when you leave the page");
+await page.waitForTimeout(2000);
+const rowAfter = JSON.stringify(await page.request.get(base + "/api/itinerary").then((x) => x.json()));
+await expect(rowAfter === rowBefore, "DB row byte-identical after Halal mode (API)");
+if (fileBefore !== null) await expect(fileRow() === fileBefore, "DB row byte-identical after Halal mode (stored row)");
+
 // ── User 2: NYE on different days ────────────────────────────────────
 step("Second user: NYE on Day 2 (evening), Day 1 (Colombo) and Day 6 (flying)");
 const ctx2 = await browser.newContext(phone);
@@ -411,8 +495,46 @@ await shot(p2, "build-nye-day1", { full: true });
 await p2.goto(base + "/trip?step=review");
 await p2.getByRole("button", { name: /Submit my trip/ }).click();
 await p2.waitForTimeout(1200);
+
+step("More friends for the group spectrum (a party animal and a nature lover)");
+const template = (await page.request.get(base + "/api/itinerary").then((x) => x.json())).data;
+const mk = (id) => [{ key: Math.random().toString(36).slice(2, 10), id }];
+const EXTRA = [
+  { name: `Partyer ${stamp}`, day: ["galle-fort", "mirissa-beach-hop", "unawatuna-jungle-beach"], night: ["secret-jungle-party", "doctors-house-madiha", "mirissa-beach-bars"], c1: "colombo-club-night" },
+  { name: `Hiker ${stamp}`, day: ["kanneliya-trek", "sinharaja-day-trip", "kottawa-rainforest"], night: ["stay", "stay", "galle-fort-sunset-dinner"], c1: "galle-face-street-food" },
+];
+for (const u of EXTRA) {
+  const cx = await browser.newContext(phone);
+  const pu = await cx.newPage();
+  await join(pu, u.name);
+  const d = structuredClone(template);
+  d.days[0].day = mk(u.name.startsWith("Hiker") ? "negombo-lagoon" : "colombo-tuk-tuk");
+  d.days[0].night = mk(u.c1);
+  d.days[1].day = mk("madu-river-safari");
+  d.days[1].night = [];
+  for (let i = 0; i < 3; i++) {
+    d.days[2 + i].day = mk(u.day[i]);
+    d.days[2 + i].night = i === 1 ? d.days[3].night : mk(u.night[i]);
+  }
+  const res = await pu.request.put(base + "/api/itinerary", { data: { data: d, submit: true } });
+  await expect(res.ok(), `${u.name} submitted`);
+  await cx.close();
+}
 await p2.goto(base + "/group");
+await expect(p2.getByRole("region", { name: "Group spectrum" }).isVisible(), "group spectrum at the top");
+await expect(p2.getByRole("region", { name: "Group spectrum" }).getByRole("link", { name: new RegExp(`^Partyer ${stamp}`) }).isVisible(), "everyone plotted on the spectrum");
+const partyBox = await p2.getByRole("region", { name: "Group spectrum" }).getByRole("link", { name: new RegExp(`^Partyer ${stamp}`) }).boundingBox();
+const hikerBox = await p2.getByRole("region", { name: "Group spectrum" }).getByRole("link", { name: new RegExp(`^Hiker ${stamp}`) }).boundingBox();
+await expect(partyBox && hikerBox && partyBox.x > hikerBox.x, "nightlife-heavy friend sits right of the nature lover");
+await p2.waitForTimeout(1800); // avatars pop in one by one
+await p2.getByRole("region", { name: "Group spectrum" }).screenshot({ path: path.join(outDir, `${String(++n).padStart(2, "0")}-group-spectrum.png`) });
+await expect(p2.getByLabel(/Nature to nightlife/).first().isVisible(), "each trip card shows its meter");
 await shot(p2, "group-full", { full: true, wait: 1200 });
+await p2.getByRole("region", { name: "Group spectrum" }).getByRole("link", { name: new RegExp(`^Hiker ${stamp}`) }).click();
+await p2.waitForURL("**/group/**");
+await expect(p2.getByText(new RegExp(`Hiker ${stamp}'s`)).first().isVisible(), "tapping an avatar opens their trip");
+await p2.goto(base + "/group");
+await p2.waitForTimeout(800);
 await p2.getByRole("link", { name: new RegExp(NAME) }).first().click();
 await p2.waitForURL("**/group/**");
 await shot(p2, "person-view", { wait: 2000 });
@@ -534,11 +656,60 @@ await pd.goto(base + "/trip?step=build");
 await shot(pd, "desktop-build", { wait: 1800 });
 await pd.goto(base + "/trip?step=review");
 await shot(pd, "desktop-review", { wait: 2400 });
+await pd.getByRole("button", { name: /^Day 4/ }).click();
+await pd.waitForTimeout(900);
+await expect(pd.getByText(/Day 4 · Galle base/).first().isVisible(), "desktop: tapping a day highlights its route");
+await pd.locator("section").filter({ has: pd.getByRole("img", { name: /^Route map/ }) }).first().screenshot({ path: path.join(outDir, `${String(++n).padStart(2, "0")}-desktop-map-day4.png`) });
+await pd.getByRole("button", { name: /Share my trip/ }).click();
+await pd.waitForTimeout(500);
+const dStory = await saveShare(pd, "story", "share-story-desktop");
+const dSquare = await saveShare(pd, "square", "share-square-desktop");
+await expect(JSON.stringify(pngSize(dStory)) === "[1080,1920]" && JSON.stringify(pngSize(dSquare)) === "[1080,1080]", "desktop: both share images");
+await shot(pd, "desktop-share-sheet", { wait: 300 });
+await closeSheet(pd);
+const dRowBefore = JSON.stringify(await pd.request.get(base + "/api/itinerary").then((x) => x.json()));
+await pd.getByRole("switch", { name: "Halal mode" }).click();
+await pd.waitForTimeout(800);
+await expect(pd.getByText("Halal mode: preview only, your real plan is untouched.").isVisible(), "desktop: Halal banner");
+await shot(pd, "desktop-halal", { wait: 300 });
+await pd.getByRole("button", { name: /Share my trip/ }).click();
+await pd.waitForTimeout(500);
+await saveShare(pd, "story", "share-story-halal-desktop");
+await closeSheet(pd);
+await pd.getByRole("button", { name: "Turn Halal mode off" }).click();
+await pd.waitForTimeout(2500);
+await expect(JSON.stringify(await pd.request.get(base + "/api/itinerary").then((x) => x.json())) === dRowBefore, "desktop: DB row byte-identical after Halal mode");
+await pd.goto(base + "/group");
+await pd.waitForTimeout(1500);
+await expect(pd.getByRole("region", { name: "Group spectrum" }).isVisible(), "desktop: group spectrum");
+await shot(pd, "desktop-group", { wait: 600 });
+await pd.waitForTimeout(1200);
+await pd.getByRole("region", { name: "Group spectrum" }).screenshot({ path: path.join(outDir, `${String(++n).padStart(2, "0")}-desktop-group-spectrum.png`) });
 await ctxD.close();
+
+step("WebKit (Safari engine): share images render and download");
+try {
+  const wk = await webkit.launch();
+  const wctx = await wk.newContext({ ...phone, acceptDownloads: true });
+  await wctx.addCookies(await ctx.cookies());
+  const wp = await wctx.newPage();
+  wp.on("pageerror", (e) => errors.push(`webkit pageerror: ${e.message}`));
+  await wp.goto(base + "/trip?step=review");
+  await wp.waitForTimeout(2500);
+  await wp.getByRole("button", { name: /Share my trip/ }).click();
+  const wStory = await saveShare(wp, "story", `share-story-webkit${VIEWSUFFIX}`);
+  const wSquare = await saveShare(wp, "square", `share-square-webkit${VIEWSUFFIX}`);
+  await expect(JSON.stringify(pngSize(wStory)) === "[1080,1920]" && JSON.stringify(pngSize(wSquare)) === "[1080,1080]", "WebKit generates both images");
+  await wp.screenshot({ path: path.join(outDir, `${String(++n).padStart(2, "0")}-webkit-share-sheet.png`) });
+  await wk.close();
+} catch (e) {
+  errors.push(`webkit: ${e.message}`);
+  console.log("  ✗ webkit:", e.message);
+}
 
 step("Cleanup: delete the test users (never the organizer)");
 const PROTECTED = /^abdul$/i;
-const TEST = [NAME, NAME2, NAME3];
+const TEST = [NAME, NAME2, NAME3, `Partyer ${stamp}`, `Hiker ${stamp}`];
 const everyone = await pa.request.get(base + "/api/people").then((x) => x.json());
 for (const person of everyone.filter((x) => TEST.includes(x.name) && !PROTECTED.test(x.name))) {
   const res = await pa.request.delete(`${base}/api/admin/participants/${person.id}`);
