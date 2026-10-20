@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ArrowLeft, ArrowRight, Lock, Moon, Sparkles, Sun } from "lucide-react";
+import { ArrowLeft, ArrowRight, Leaf, Lock, Martini, Moon, Sparkles, Sun } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { NYE_DATE, optionsById, regions } from "@/content";
@@ -20,6 +20,7 @@ import { Photo } from "../ui/photo";
 import { BalanceMeter } from "../trip/balance-meter";
 import { RouteMap } from "../trip/route-map";
 import { StayThumb } from "../trip/day-card";
+import { GroupSpectrum, MiniMeter } from "./spectrum";
 
 type ItinCard = {
   id: string;
@@ -68,6 +69,12 @@ export function GroupView({ stats, myStatus, canBrowse, itineraries, editsLocked
         </h1>
       </div>
       <div className="relative z-[1] mt-5 space-y-4 px-3">
+        <GroupSpectrum
+          people={itineraries.map((it) => ({ id: it.id, name: it.name, isMe: it.isMe, balance: it.balance }))}
+          canBrowse={canBrowse}
+          submitted={stats.submitted}
+        />
+
         {/* Responses */}
         <section className="relative overflow-hidden rounded-[30px] bg-ocean-800 p-5 text-paper shadow-lift">
           <div className="sunburst absolute inset-0" />
@@ -208,6 +215,11 @@ export function GroupView({ stats, myStatus, canBrowse, itineraries, editsLocked
                         <span className="block truncate text-[12.5px] text-ink-3">
                           {it.startDate && it.endDate ? `${rangeLabel(it.startDate, it.endDate)} · ${it.days} days` : "No dates"} ·{" "}
                           {balanceLabel(it.balance).title}
+                        </span>
+                        <span className="mt-1.5 flex items-center gap-1.5" aria-label={`Nature to nightlife: ${balanceLabel(it.balance).title}`}>
+                          <Leaf className="size-3 shrink-0 text-jungle-600" strokeWidth={2.5} />
+                          <MiniMeter score={it.balance} className="max-w-[150px]" />
+                          <Martini className="size-3 shrink-0 text-hibiscus-600" strokeWidth={2.5} />
                         </span>
                       </span>
                       <ArrowRight className="size-4 text-ink-3" />
