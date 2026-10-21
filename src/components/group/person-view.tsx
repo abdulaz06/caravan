@@ -13,6 +13,7 @@ import { BalanceMeter } from "../trip/balance-meter";
 import { ItineraryTimeline } from "../trip/itinerary-timeline";
 import { PrefsSummary } from "../trip/review-step";
 import { TripPoster } from "../trip/trip-poster";
+import { LocalTime } from "../ui/local-time";
 
 /**
  * Read-only view of someone else's submitted itinerary (preferences stay
@@ -59,7 +60,7 @@ export function PersonView({
             <span className="font-semibold capitalize">{organizer.status === "new" ? "Not started" : organizer.status}</span>
             {organizer.stamp?.kind === "edit" && (
               <span className="text-ink-3">
-                · edited by {organizer.stamp.by} on {new Date(organizer.stamp.at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+                · edited by {organizer.stamp.by} on <LocalTime iso={organizer.stamp.at} as="date" />
               </span>
             )}
             <span className="flex-1" />

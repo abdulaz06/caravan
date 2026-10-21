@@ -20,8 +20,11 @@ fs.mkdirSync(SHOTS, { recursive: true });
 
 const browser = await chromium.launch(exe ? { executablePath: exe } : {});
 const [vw, vh] = (process.env.VIEW ?? "390x844").split("x").map(Number);
-const phone = { viewport: { width: vw, height: vh }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, acceptDownloads: true };
-const desktop = { viewport: { width: 1440, height: 900 }, acceptDownloads: true };
+// The browser sits in a different timezone from the server, so any server/client
+// text mismatch (e.g. a time formatted on the server) shows up as a page error.
+const TZ = { timezoneId: "Pacific/Auckland" };
+const phone = { viewport: { width: vw, height: vh }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, acceptDownloads: true, ...TZ };
+const desktop = { viewport: { width: 1440, height: 900 }, acceptDownloads: true, ...TZ };
 let n = 0;
 const errors = [];
 

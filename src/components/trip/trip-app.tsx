@@ -17,6 +17,7 @@ import {
 } from "@/lib/itinerary";
 import { allowedLengths, previewAvailable, previewDays, tripDays } from "@/lib/rules";
 import { AnnouncementBar, LockCountdown } from "../rules";
+import { LocalTime } from "../ui/local-time";
 import { useToast } from "../ui/toast";
 import { BudgetSheet, BudgetSidePanel } from "./budget";
 import { BuildStep } from "./build-step";
@@ -60,7 +61,6 @@ function initialStep(data: ItineraryData, status: ItineraryStatus, locked: boole
   return data.startDate ? "build" : "dates";
 }
 
-const shortDate = (iso: string) => new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
 
 export function TripApp({
   name,
@@ -257,12 +257,12 @@ export function TripApp({
               <p className="flex-1">
                 {stampNote.kind === "edit" ? (
                   <>
-                    <b className="text-ink">{stampNote.by}</b> updated your plan on {shortDate(stampNote.at)}.
+                    <b className="text-ink">{stampNote.by}</b> updated your plan on <LocalTime iso={stampNote.at} as="date" />.
                   </>
                 ) : (
                   <>
                     <b className="text-ink">The organizers changed the trip</b>
-                    {stampNote.text ? ` to ${stampNote.text}` : ""} on {shortDate(stampNote.at)}. We&apos;ve moved your plan over
+                    {stampNote.text ? ` to ${stampNote.text}` : ""} on <LocalTime iso={stampNote.at} as="date" />. We&apos;ve moved your plan over
                     {stampNote.lost ? ` — ${stampNote.lost} ${stampNote.lost === 1 ? "pick needs" : "picks need"} redoing` : ""}.
                   </>
                 )}

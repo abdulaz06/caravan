@@ -22,6 +22,7 @@ import { cn } from "@/lib/cn";
 import { SiteFooter } from "../brand/site-footer";
 import { Lockup, Stamp } from "../brand/wordmark";
 import { Button, ButtonLink } from "../ui/button";
+import { LocalTime } from "../ui/local-time";
 import { BalanceMeter } from "./balance-meter";
 import type { Step } from "./header";
 import { ItineraryTimeline } from "./itinerary-timeline";
@@ -64,6 +65,9 @@ function ago(iso: string | null): string {
   if (s < 86400) return `${Math.round(s / 3600)} hr ago`;
   return new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
 }
+
+/** Relative times depend on "now" — rendered in the browser only (see LocalTime). */
+const agoOf = (d: Date) => ago(d.toISOString());
 
 export function ReviewStep({
   name,
@@ -134,7 +138,12 @@ export function ReviewStep({
           {locked
             ? "Edits are closed. Here's what you sent in."
             : submitted
-              ? `Submitted · last updated ${ago(updatedAt)}. You can keep tweaking — changes save automatically until edits close.`
+              ? (
+                <>
+                  Submitted · last updated <LocalTime iso={updatedAt} as={agoOf} fallback="" />. You can keep tweaking — changes save
+                  automatically until edits close.
+                </>
+              )
               : "Here's your dream trip. Happy with it? Send it in — you can still change things after."}
         </p>
       </section>

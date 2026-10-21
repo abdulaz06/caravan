@@ -36,6 +36,7 @@ import { Lockup } from "../brand/wordmark";
 import { Button } from "../ui/button";
 import { ChipScroller } from "../ui/chip-scroller";
 import { PinInput } from "../ui/pin-input";
+import { LocalTime } from "../ui/local-time";
 import { Sheet } from "../ui/sheet";
 import { useToast } from "../ui/toast";
 
@@ -86,10 +87,8 @@ const TABS = [
 ] as const;
 type Tab = (typeof TABS)[number]["id"];
 
-function when(iso: string | null) {
-  if (!iso) return "—";
-  return new Date(iso).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
-}
+/** A time in the organizer's own timezone (rendered in the browser, so server and client never disagree). */
+const When = ({ iso }: { iso: string | null | undefined }) => <LocalTime iso={iso} />;
 
 async function call(url: string, init: RequestInit = {}) {
   const res = await fetch(url, { headers: { "Content-Type": "application/json" }, ...init });
@@ -216,7 +215,7 @@ export function Console({ actor, people, rules: initialRules, editsLocked, log, 
 
 // ── Bits ──────────────────────────────────────────────────────────────
 
-function Card({ title, sub, children, className, icon: Icon }: { title?: string; sub?: string; children: React.ReactNode; className?: string; icon?: typeof Users }) {
+function Card({ title, sub, children, className, icon: Icon }: { title?: string; sub?: React.ReactNode; children: React.ReactNode; className?: string; icon?: typeof Users }) {
   return (
     <section className={cn("rounded-[24px] bg-paper p-4 shadow-card", className)}>
       {title && (
@@ -246,7 +245,7 @@ export function Switch({ on, onChange, label, disabled }: { on: boolean; onChang
   );
 }
 
-function Row({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
+function Row({ title, hint, children }: { title: string; hint?: React.ReactNode; children: React.ReactNode }) {
   return (
     <div className="flex items-center gap-3 border-t border-ink/5 py-3 first:border-t-0 first:pt-0 last:pb-0">
       <div className="min-w-0 flex-1">
@@ -315,7 +314,15 @@ function Overview({
         </Row>
         <Row
           title="Auto-lock"
-          hint={rules.autoLockAt ? `Locks ${when(rules.autoLockAt)} — everyone sees a countdown.` : "No auto-lock scheduled."}
+          hint={
+            rules.autoLockAt ? (
+              <>
+                Locks <When iso={rules.autoLockAt} /> — everyone sees a countdown.
+              </>
+            ) : (
+              "No auto-lock scheduled."
+            )
+          }
         >
           <Button size="md" variant="light" onClick={() => go("rules")}>
             <CalendarClock className="size-4" /> Set
@@ -333,7 +340,17 @@ function Overview({
           </button>
         </div>
       </Card>
-      <Card title="Who still needs a nudge" icon={Users} sub={last?.updatedAt ? `Last activity: ${last.name}, ${when(last.updatedAt)}` : undefined}>
+      <Card
+        title="Who still needs a nudge"
+        icon={Users}
+        sub={
+          last?.updatedAt ? (
+            <>
+              Last activity: {last.name}, <When iso={last.updatedAt} />
+            </>
+          ) : undefined
+        }
+      >
         {fresh.length + drafting.length === 0 ? (
           <p className="text-[14px] text-ink-2">Everyone has submitted 🎉</p>
         ) : (
@@ -343,7 +360,7 @@ function Overview({
                 <Avatar name={p.name} className="size-8 text-[13px]" />
                 <span className="min-w-0 flex-1 truncate text-[14.5px] font-semibold">{p.name}</span>
                 <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-bold", STATUS[p.status].cls)}>{STATUS[p.status].label}</span>
-                <span className="hidden w-28 text-right text-[12px] text-ink-3 sm:block">{when(p.updatedAt ?? p.joinedAt)}</span>
+                <span className="hidden w-28 text-right text-[12px] text-ink-3 sm:block"><When iso={p.updatedAt ?? p.joinedAt} /></span>
               </li>
             ))}
           </ul>
@@ -405,12 +422,12 @@ function People({ actor, people }: { actor: Props["actor"]; people: ConsolePerso
                 </p>
                 <p className="mt-0.5 text-[12.5px] text-ink-3">
                   {p.startDate && p.endDate ? `${dayLabel(p.startDate)} → ${dayLabel(p.endDate)} · ${daysNightsLabel(p.days)} · ` : ""}
-                  {p.picks} picks · updated {when(p.updatedAt)}
+                  {p.picks} picks · updated <When iso={p.updatedAt} />
                   {p.peekers ? ` · 👀 ${p.peekers}` : ""}
                 </p>
                 {p.stamp?.kind === "edit" && (
                   <p className="mt-1 text-[12px] font-semibold text-ocean-700">
-                    Edited by {p.stamp.by} · {when(p.stamp.at)}
+                    Edited by {p.stamp.by} · <When iso={p.stamp.at} />
                   </p>
                 )}
               </div>
@@ -604,7 +621,7 @@ function RulesTab({
               </Button>
             )}
           </div>
-          {rules.autoLockAt && <p className="mt-1.5 text-[12.5px] font-semibold text-sunset-600">Scheduled: {when(rules.autoLockAt)}</p>}
+          {rules.autoLockAt && <p className="mt-1.5 text-[12.5px] font-semibold text-sunset-600">Scheduled: <When iso={rules.autoLockAt} /></p>}
         </div>
       </Card>
 
@@ -905,7 +922,9 @@ function LogList({ log }: { log: ConsoleLog[] }) {
           <Avatar name={e.actor_name} className="size-7 text-[11px]" />
           <span className="min-w-0 flex-1">
             <b>{e.actor_name}</b> {describe(e)}
-            <span className="block text-[12px] text-ink-3">{when(e.at)}</span>
+            <span className="block text-[12px] text-ink-3">
+              <When iso={e.at} />
+            </span>
           </span>
         </li>
       ))}
