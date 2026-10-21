@@ -1671,42 +1671,102 @@ export const photos: Record<string, Photo[]> = {
       "blurDataURL": "data:image/webp;base64,UklGRloAAABXRUJQVlA4IE4AAACwAwCdASoQABIAPu1iqk2ppaQiMAgBMB2JZwDA3B6FsKQR59JWAAD+05tV3RG/zkBEIH5wAYa7TCaE77ZGsbu2Zb/5NiA6OBa9cFV4AAA="
     }
   ],
-  "adams-peak-day-trip": [
+  "ella-little-adams-peak": [
     {
-      "src": "/images/adams-peak/adams-peak-day-trip-1.webp",
-      "credit": "Eli Solidum",
-      "source": "https://commons.wikimedia.org/wiki/File:Sunrise_from_the_top_of_Sri_Pada_(Adam%27s_Peak)_Sri_Lanka.jpg",
+      "src": "/images/ella/ella-little-adams-peak-1.webp",
+      "credit": "Thavi21",
+      "source": "https://commons.wikimedia.org/wiki/File:The_beautiful_sun_rise_in_ELLA_Srilanka.jpg",
+      "license": "CC BY-SA 4.0",
+      "width": 1600,
+      "height": 1067,
+      "blurDataURL": "data:image/webp;base64,UklGRlgAAABXRUJQVlA4IEwAAAAQAgCdASoQAAsAA4BaJYgCdAEVN2ay6CSQAP7IwPPGcQO/oHQwOzN1eamXxDaiPhgSlJULQHIQKMsElHMz0EYUbs3oTx1naMTMAAAA"
+    },
+    {
+      "src": "/images/ella/ella-little-adams-peak-2.webp",
+      "credit": "Ankur Panchbudhe from Pune, India",
+      "source": "https://commons.wikimedia.org/wiki/File:Hike_through_a_tea_estate_to_Little_Adam%27s_Peak_Ella_(22741526044).jpg",
+      "license": "CC BY 2.0",
+      "width": 1600,
+      "height": 900,
+      "blurDataURL": "data:image/webp;base64,UklGRmAAAABXRUJQVlA4IFQAAADwAQCdASoQAAkAA4BaJQBdgB9wIvDqUXAA/uiiOohx1BgzRl7IWB2KIOuxCWweG+4jGyb59Elh16rbIz30wD6ptvbiKRkFzNY5rpiRBp3iQk/bsAA="
+    },
+    {
+      "src": "/images/ella/ella-little-adams-peak-3.webp",
+      "credit": "Vyacheslav Argenberg",
+      "source": "https://commons.wikimedia.org/wiki/File:Ella_Gap_(Valley),_Sri_Lanka.jpg",
+      "license": "CC BY 4.0",
+      "width": 1600,
+      "height": 1067,
+      "blurDataURL": "data:image/webp;base64,UklGRlQAAABXRUJQVlA4IEgAAADwAQCdASoQAAsAA4BaJaAC7AELyrLWnYAA/soM4Di2rh7cscfDG5lYOQrtFP9JdvtbBEIysIQarab87QFO1NZuwSxs2KnkAAA="
+    },
+    {
+      "src": "/images/ella/ella-little-adams-peak-4.webp",
+      "credit": "Bcd4e6",
+      "source": "https://commons.wikimedia.org/wiki/File:Little_Adam%27s_Peak,_Ella,_Sri_Lanka.jpg",
       "license": "CC BY-SA 4.0",
       "width": 1600,
       "height": 1200,
-      "blurDataURL": "data:image/webp;base64,UklGRmoAAABXRUJQVlA4IF4AAAAwAgCdASoQAAwAA4BaJYgCdEf/gfYnbZyMUAD+15FjcKSPMgh9zbhtbhqrSmajdEkVZoV+kdmKx7jo5KgvXQ8svakq2XD+lB+QFtDdEjHrSQZ3XsZtyrx8d74WwAAA"
-    },
+      "blurDataURL": "data:image/webp;base64,UklGRlYAAABXRUJQVlA4IEoAAAAQAgCdASoQAAwAA4BaJaACdAEe/8DMI5fYAP7FxzYqnqhF2Bpx0ed17zgmJrlFuclbIA6j8Uvz/A/DSWEICD4ao7KIGfLY9egAAA=="
+    }
+  ],
+  "ella-nine-arches": [
     {
-      "src": "/images/adams-peak/adams-peak-day-trip-2.webp",
-      "credit": "Iuherath",
-      "source": "https://commons.wikimedia.org/wiki/File:Sripada_night_sky.jpg",
-      "license": "CC BY-SA 4.0",
-      "width": 1600,
-      "height": 1003,
-      "blurDataURL": "data:image/webp;base64,UklGRkIAAABXRUJQVlA4IDYAAADwAQCdASoQAAoAA4BaJYwCdAEPDDuSOAAA/uz0Z3VQSikNt/ndlKpPnvrCxSEv0Mh8V94KYAA="
-    },
-    {
-      "src": "/images/adams-peak/adams-peak-day-trip-3.webp",
-      "credit": "Anton F",
-      "source": "https://commons.wikimedia.org/wiki/File:Temple_at_the_Top_of_sri_Pada.JPG",
-      "license": "CC BY-SA 3.0",
+      "src": "/images/ella/ella-nine-arches-1.webp",
+      "credit": "V. Epiney",
+      "source": "https://commons.wikimedia.org/wiki/File:Demodara_Nine_Arch_Bridge_(35564604554).jpg",
+      "license": "CC BY-SA 2.0",
       "width": 1600,
       "height": 1067,
-      "blurDataURL": "data:image/webp;base64,UklGRlIAAABXRUJQVlA4IEYAAADwAQCdASoQAAsAA4BaJZQAAohWkfNmqAAA/Iv44xiSvDFFvVjVPCd4hAAvykgD0h5DaV44E6qVcdP+Ht90BQxBgwJ3wAAA"
+      "blurDataURL": "data:image/webp;base64,UklGRlQAAABXRUJQVlA4IEgAAACQAQCdASoQAAsAA4BaJQBOgA/uuAAA/sIke0eNh/AnHCsIKS7/Ko/DuTb7F851xzoHt1MPk16cNqL7EPSVnTKqAOcC0XMAAAA="
     },
     {
-      "src": "/images/adams-peak/adams-peak-day-trip-4.webp",
-      "credit": "Nilaan097",
-      "source": "https://commons.wikimedia.org/wiki/File:Triangle_Shadow_Of_Adam%27s_Peek.jpg",
+      "src": "/images/ella/ella-nine-arches-2.webp",
+      "credit": "Dr.S.Rajivraja",
+      "source": "https://commons.wikimedia.org/wiki/File:Nine_Arch_Bridge,_Demodara_Ella.jpg",
       "license": "CC BY-SA 4.0",
-      "width": 1500,
+      "width": 1600,
+      "height": 1067,
+      "blurDataURL": "data:image/webp;base64,UklGRmQAAABXRUJQVlA4IFgAAADwAQCdASoQAAsAA4BaJZACdADXB2LwWoAA/ob9S8iU3/y9Cop2fUIKrkVQua9phQdzn67upx/EU1Cz0O6cL3OtzZM+QbTaziQyL5bhCxYCIc/SVZBruaAA"
+    }
+  ],
+  "ella-ravana-falls": [
+    {
+      "src": "/images/ella/ella-ravana-falls-1.webp",
+      "credit": "A-wiki-guest-user",
+      "source": "https://commons.wikimedia.org/wiki/File:Ravana_Falls_(Ella).jpg",
+      "license": "CC BY-SA 4.0",
+      "width": 1333,
       "height": 2000,
-      "blurDataURL": "data:image/webp;base64,UklGRmIAAABXRUJQVlA4IFYAAACQAwCdASoQABUAPu1oqk6ppiQiMAgBMB2JQAALfWBRvpUcmcN0AP7zavA1WfParUhnweo5LW2mD27Zyv91fDwe0Myb8a8gp1KrZdqBlhmRy/p/uVfAAA=="
+      "blurDataURL": "data:image/webp;base64,UklGRqIAAABXRUJQVlA4IJYAAAAwBACdASoQABgAPu1iqU2ppaOiMAgBMB2JYwCdAYxstfT2nmu4pHo+v5AA/obOH6DaT3wq/VXKVOqSfR1UtMeY5a2kSrV6JqlY7w95S0xYnS86B7EGAelevLrus+XlnYqmxQ7Dau10MBo56uXAQkBPSZOem72RVHRvs7IRMCVbXC0HUdrTpdDlBkkibnIio+QU8eQAAAA="
+    },
+    {
+      "src": "/images/ella/ella-ravana-falls-2.webp",
+      "credit": "Pamuditha2000",
+      "source": "https://commons.wikimedia.org/wiki/File:Ravana_falls.jpg",
+      "license": "CC BY-SA 4.0",
+      "width": 1125,
+      "height": 2000,
+      "blurDataURL": "data:image/webp;base64,UklGRrQAAABXRUJQVlA4IKgAAABwBACdASoQABwAPu1iqU2ppaQiMAgBMB2JYwCdAYwSiCjur89jMhkh6Cm3kAD8IUOJytffSpn+q8f1TvUqdoSzPWyGG4uydzfNenjAhZ7ehjmYZV4ZZogS/fsyD0m6uG4Pou+l3LBtUtz59+0psaG8Y67E162EtugsR3vnhIaw+uZ3AxjAZ9APMehoAvaKCmWnqhmKPtqIIgTC63rZ0pEV6DThLDnryAA="
+    }
+  ],
+  "ella-98-acres": [
+    {
+      "src": "/images/ella/ella-98-acres-1.webp",
+      "credit": "Alexey Komarov",
+      "source": "https://commons.wikimedia.org/wiki/File:View_from_98_acres_Resort_2023-04-24.jpg",
+      "license": "CC BY-SA 4.0",
+      "width": 1600,
+      "height": 1068,
+      "blurDataURL": "data:image/webp;base64,UklGRlIAAABXRUJQVlA4IEYAAAAQAgCdASoQAAsAA4BaJYwCdAENpiwc+fQAAP7KDsGLBhBKyJiUuaFD2VBxxgYPrAW4DjJHtZ4Ed0I3aZla3MKA89MpIwAA"
+    },
+    {
+      "src": "/images/ella/ella-98-acres-2.webp",
+      "credit": "briandemel",
+      "source": "https://commons.wikimedia.org/wiki/File:98_Acres_Resort_%26_Spa.jpg",
+      "license": "CC BY-SA 4.0",
+      "width": 1600,
+      "height": 1200,
+      "blurDataURL": "data:image/webp;base64,UklGRl4AAABXRUJQVlA4IFIAAADwAQCdASoQAAwAA4BaJYwAD42L1Tb8iDwA8BHy3Xi3nswxr1Z+Zh6eda/AxHXdYvQoq4Zu0WlonV5PDMmD15wS9pIHIKN+e1T/8mSarv8YgAAA"
     }
   ]
 };

@@ -558,13 +558,34 @@
       "File:Tern in flight, Weligama Beach, Sri Lanka.jpg"
     ]
   },
-  "adams-peak-day-trip": {
-    "dir": "adams-peak",
+  "ella-little-adams-peak": {
+    "dir": "ella",
     "files": [
-      "File:Sunrise from the top of Sri Pada (Adam's Peak) Sri Lanka.jpg",
-      "File:Sripada night sky.jpg",
-      "File:Temple at the Top of sri Pada.JPG",
-      "File:Triangle Shadow Of Adam's Peek.jpg"
+      "File:The beautiful sun rise in ELLA Srilanka.jpg",
+      "File:Hike through a tea estate to Little Adam's Peak Ella (22741526044).jpg",
+      "File:Ella Gap (Valley), Sri Lanka.jpg",
+      "File:Little Adam's Peak, Ella, Sri Lanka.jpg"
+    ]
+  },
+  "ella-nine-arches": {
+    "dir": "ella",
+    "files": [
+      "File:Demodara Nine Arch Bridge (35564604554).jpg",
+      "File:Nine Arch Bridge, Demodara Ella.jpg"
+    ]
+  },
+  "ella-ravana-falls": {
+    "dir": "ella",
+    "files": [
+      "File:Ravana Falls (Ella).jpg",
+      "File:Ravana falls.jpg"
+    ]
+  },
+  "ella-98-acres": {
+    "dir": "ella",
+    "files": [
+      "File:View from 98 acres Resort 2023-04-24.jpg",
+      "File:98 Acres Resort & Spa.jpg"
     ]
   }
 }

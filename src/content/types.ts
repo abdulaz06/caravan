@@ -23,7 +23,7 @@ export type RegionId =
   | "kanneliya"
   | "sinharaja"
   | "udawalawe"
-  | "adams-peak";
+  | "ella";
 
 /**
  * Where an activity can be picked:
@@ -95,15 +95,19 @@ export type Activity = {
   routeKm?: number;
   /** Nightlife items: the wholesome stand-in shown in Halal mode (an activity id). */
   halalSwap?: string;
-  /** Only placeable on days with this role (Adam's Peak: Galle days 3–5). */
+  /** Only placeable on days with this role (the Ella day trip: Galle days 3–5). */
   onlyRole?: "galle";
   /** Ways to do it the user picks between (stored as SlotItem.variant). First = default. */
   variants?: ActivityVariant[];
   /** What to pack (detail sheet). */
   bring?: string[];
+  /** Extras that only make sense alongside another pick in the same slot (Ella extras need the Ella day trip). */
+  onlyWith?: string;
+  /** A quoted private-van price for the round trip (per van), used instead of the hourly estimate. */
+  vanRoundTripUsd?: [number, number];
 };
 
-/** One way of doing a multi-variant option (Adam's Peak: sunrise summit vs calm morning climb). */
+/** One way of doing a multi-variant option (Ella: sunrise at Little Adam's Peak vs an easy morning). */
 export type ActivityVariant = {
   id: string;
   title: string;
@@ -112,15 +116,17 @@ export type ActivityVariant = {
   summary: string;
   /** Times through the day, shown as a little schedule. */
   schedule: { time: string; text: string }[];
-  /** Hours on the mountain (the drives come from the travel model). */
+  /** Hours there (the drives come from the travel model). */
   hours: number;
-  /** Door to door, e.g. "~18 hrs". */
+  /** When the van leaves Galle, e.g. "~12:30am". */
+  leave: string;
+  /** Door to door, e.g. "~14 hrs". */
   total: string;
   /** Honest trade-offs. */
   honest: string[];
-  /** The previous evening gets a locked overnight-drive item. */
-  overnight?: { title: string; detail: string; leave: string };
-  /** A note on the same day's evening (recovery / back late). */
+  /** A soft note on the previous evening (no lock), e.g. an early night before a very early start. */
+  eveBefore?: string;
+  /** A note on the same day's evening (rest / back late). */
   eveningNote: string;
 };
 

@@ -46,7 +46,7 @@ export const regions: Record<RegionId, Region> = {
   kanneliya: R("kanneliya", "Kanneliya Forest Reserve", "Kanneliya", 6.252, 80.343, "UNESCO biosphere rainforest with waterfalls.", "kanneliya-trek"),
   sinharaja: R("sinharaja", "Sinharaja (Deniyaya side)", "Sinharaja", 6.385, 80.555, "Sri Lanka's last great rainforest, a World Heritage Site.", "sinharaja-day-trip"),
   udawalawe: R("udawalawe", "Udawalawe National Park", "Udawalawe", 6.474, 80.898, "Open grassland where elephant herds are almost guaranteed.", "udawalawe-safari"),
-  "adams-peak": R("adams-peak", "Adam's Peak (Sri Pada) · Dalhousie", "Adam's Peak", 6.8096, 80.4994, "Sri Lanka's sacred 2,243 m summit, climbed by night for the sunrise.", "adams-peak-day-trip"),
+  ella: R("ella", "Ella", "Ella", 6.8667, 81.0466, "Hill-country village of tea estates, Little Adam's Peak and the Nine Arches Bridge.", "ella-little-adams-peak"),
 };
 
 export const regionList = Object.values(regions);
@@ -67,8 +67,8 @@ const KNOWN: [RegionId, RegionId, number][] = [
   ["galle", "hiriketiya", 1.75],
   ["galle", "sinharaja", 2.75],
   ["galle", "udawalawe", 2.5],
-  // ~234 km via the Southern Expressway and the hill roads through Hatton (the one exception to the ~2.5 hr rule)
-  ["galle", "adams-peak", 5.5],
+  // ~200 km via the Southern Expressway and Wellawaya — the one exception to the ~2.5 hr rule
+  ["galle", "ella", 3.75],
 ];
 
 const key = (a: RegionId, b: RegionId) => (a < b ? `${a}|${b}` : `${b}|${a}`);
