@@ -40,6 +40,8 @@ Both must feel natural; never force the long path.
 ## Trip length & day structure (HARD RULE)
 The group voted: **6 days · 5 nights — 1 night in Colombo, then 4 in Galle.** Show nights next to days everywhere trip length appears (calendar, day builder header, review, exports).
 
+These are the **defaults of the live Trip rules** (see Organizers): organizers can change the Colombo / Galle nights split, whether only full-length plans can be submitted, whether the 5-day preview exists and the date window — without a redeploy. Code reads the structure from the rules (`src/lib/rules.ts`, applied per request on the server and from page props on the client), never from hard-coded constants, and all copy ("6 days · 5 nights", "Galle · 4 nights") is generated from it. With more than one Colombo night, Days 1…n are Colombo days, the next day is the road trip, then the Galle days.
+
 | Day | Name | Travel leg | Daytime | Evening | Night in |
 |---|---|---|---|---|---|
 | 1 | Land in Colombo | "CMB → Colombo · ~1 hr" | Colombo options | Colombo options | Colombo |
@@ -73,9 +75,17 @@ Itineraries saved before this structure (`version` 1 or 2) keep their start date
   - **Full freedom:** the same option can be picked on as many days as people like. Repeats only show a soft hint ("Also on Day 3").
   - **Stay in** ("Slow morning, pool, nap, no plans." / "Dinner and hangs at the villa.") is a first-class item, any number of times. Vibe 0, no travel, costs nothing.
 - **Day-of-week availability:** options can set `availableDays` (0 = Sun … 6 = Sat) — many south-coast parties run on specific nights. Show a badge ("Fridays only", "Wed & Sat") and a gentle non-blocking warning when placed on another day.
-- **Big day trips:** a few standout options up to ~2.5 hrs from Galle are allowed; they're tagged "Big day trip · ~2.5 hrs each way".
+- **Big day trips:** a few standout options up to ~2.5 hrs from Galle are allowed; they're tagged "Big day trip · ~2.5 hrs each way". **The only exception to the ~2.5 hr rule is Adam's Peak** (~5–6 hrs each way, below).
 - **Fluid editing:** change, add, reorder or remove items; drag Galle days to reorder; move single items between compatible slots (see the structure rules); add a short note to any day.
 - **Balance meter:** every option has a `vibe` from -2 (pure nature/adventure) to +2 (pure nightlife); the meter averages all items. Stay in = 0; Quick extras count with their own vibe.
+
+### Adam's Peak (Sri Pada) — the one long exception
+One "Big day trip" option (`adams-peak`, region `adams-peak` at Dalhousie/Nallathanniya) with **two variants** the user picks between when they select it (stored as `variant` on the slot item). Galle **Days 3–5 only** (never Day 2's en-route daytime, never a Colombo day; with a custom split: Galle days whose previous evening is in Galle). Facts (verified Oct 2026, keep the sources on the option): Galle → Dalhousie ~234 km, **~5–6 hrs each way**; summit **2,243 m**, **~5,500 steps** over ~7 km; climb **~3–4 hrs up, ~2–3 down** (5+ hrs on busy nights); December sunrise **~6:15am** (first light ~5:50); summit 0–8°C before dawn; the climb is free (donations at shrines, tea stalls LKR 100–500).
+- **A · "Sunrise summit":** leave Galle ~9pm the night before, overnight drive, climb from ~2–2.5am, sunrise at the top, descend, drive back — Galle mid-afternoon. Picking it gives the **previous evening** a locked "🚐 Overnight drive to Adam's Peak · leave ~9pm" item (derived from the plan, not stored). If that evening already has plans, a friendly, non-blocking prompt offers: keep the early ones / move them to another evening / clear them. That day's evening suggests **Stay in** (recovery night).
+- **B · "Calm morning climb":** leave Galle ~3:30–4am, climb in daylight from ~9:30am, back in Galle late evening (~10–11pm). Honest copy: still an early start, hotter, and the summit is often in cloud by midday. No previous-evening lock; that day's evening is marked "Back late · Stay in suggested".
+- Timeline, budget and map show the full road-trip legs both ways with durations; full-day time total; "tough" badge; custom mountain/sunrise icon; what to bring (warm layers, torch, cash); credited photos (summit sunrise, lit path, summit shrine). Cost per person = shared van there and back (2 vans for 12) + donations, tea and snacks.
+- **Season & crowds:** the pilgrimage season opens on **Unduvap Poya — Wed 23 Dec 2026** (Central Bank of Sri Lanka holiday list). A climb before that shows a clear warning (path lights off, tea stalls closed, higher chance of rain). Poya days (23 Dec 2026, 22 Jan 2027) and weekends are extremely crowded (5+ hr climbs) — warn, and list the poya days in their window. Poya dates live in `src/content`.
+- Halal mode leaves it as it is (nature). Budget, exports and the group overview all include it.
 
 ### Travel times
 Regions (towns) live in `src/content/regions.ts` with coordinates. Drive times between towns come from a small table of known pairs, falling back to an estimate from distance (south-coast road speeds). Verify and refine:
@@ -165,9 +175,11 @@ Design this step as quick taps first, text fields last.
 
 ## Group features (logged-in participants only)
 - **Group overview:** responses count (joined vs submitted), **date availability heatmap** (how many people want each date — very important), most-picked options, group nature ↔ nightlife balance, popular regions.
-- **Browse itineraries:** only after you've submitted your own (keeps opinions independent). Read-only timeline view of each submitted itinerary.
+- **Browse itineraries:** by default only after you've submitted your own (keeps opinions independent); organizers can switch this to always or off. Read-only timeline view of each submitted itinerary.
 - **Everyone's scale:** each card in the "Everyone's trips" list shows that person's Nature ↔ Nightlife meter.
 - **Group spectrum:** a strip at the top of the group screen — one horizontal Nature ↔ Nightlife line with everyone's avatar/initials plotted where they land (overlaps stack neatly; tap an avatar to open their trip). Like browsing, it unlocks once you've submitted your own. Always labelled "Nature ↔ Nightlife" here (Halal wording only ever appears in Halal mode).
+- **Organizer badge:** a small "Organizer" badge next to admins' and the owner's names (group screen, browse, spectrum).
+- **👀 Peek:** anyone logged in can peek at anyone else's plan — drafts too ("Still cooking…"), even before submitting their own — from a "👀 Peek" button on each person's card. It's a keyhole, not a normal view: the screen goes dark and a keyhole spotlight the user drags (finger or mouse) reveals a small part of the plan at a time; never the whole plan clearly at once. A creak/peek opening animation and a quip ("Nosy, aren't we?"); reduced-motion gets a simple small moving reveal window. Shows only picks (daytime/evening activities), dates and the balance meter — never private answers (budget, dietary, free text) or day notes. Copy-resistant: one non-interactive layer, no buttons/links/details/"use this", `user-select: none`, long-press and context menu suppressed, no exports (screenshots are fine). Data comes from its own endpoint that returns only those fields. No attempt limits. Each person sees an anonymous "👀 3 people peeked at your plan" on their own plan (unique peekers, never who); organizers see who peeked in the console activity log. Respects the "peek" rule; Halal mode doesn't apply.
 
 ## Route map, share images & Halal mode
 ### Zoomed route map (review + person view)
@@ -185,24 +197,41 @@ Design this step as quick taps first, text fields last.
 - It never changes saved data: no autosave, no DB writes, no effect on the group overview, browsing, admin export or budget. Editing and submitting are disabled while it's on, and it resets when they leave the page.
 - Share images made in Halal mode use the swapped itinerary and look completely normal: no banner, no "Halal" label, normal Nature ↔ Nightlife wording, no personal notes.
 
-## Admin (`/admin`, protected by `ADMIN_PASSWORD` env var)
-- Lock / unlock edits (when locked, everyone sees a read-only banner: "Edits are closed — the final plan is coming!")
-- Participants table: name, status, last updated, number of picks; reset PIN; delete
-- Export all data as **JSON** and **CSV** (one row per person, including days · nights and budget totals; plus a long-format CSV with one row per item in every slot) for AI analysis
+## Organizers & the console (`/admin`)
+### Roles
+- `participants.role`: **owner**, **admin** or **member** (default). Abdul is the owner; Aadil was made admin by the roles migration because he had already joined (never auto-grant by name otherwise — anyone could register a name first; the owner promotes people from the console).
+- **Owner-only:** make/remove admins, delete an admin, reset an admin's or the owner's PIN. Nobody can demote or delete the owner. Admins get every other control.
+- Every `/api/admin/*` endpoint checks the role **server-side** (members get 403); hiding things in the UI is never the protection.
+
+### Access
+- Admins log in with their normal name + PIN and get an **Organizer** button in the header. Opening the console asks them to **re-confirm their PIN**; the console session (signed httpOnly cookie, tied to their participant id, role re-checked on every request) lasts ~12 hours.
+- `ADMIN_PASSWORD` stays as an **owner-level break-glass** login on `/admin`.
+- Admin names show an "Organizer" badge to everyone. The preferences step says "Only the organizers (Abdul & Aadil) see these answers", built from the real owner/admin list.
+
+### Console (one page, sections: Overview · People · Trip rules · Content · Announcement · Data · Activity)
+- **Overview:** joined vs submitted, who hasn't started / hasn't submitted, last activity, quick links.
+- **People:** status, role + badge; view any itinerary **including private answers**; **edit any itinerary on their behalf in the normal day builder** (works even when edits are locked), stamped "Edited by <admin>" — the person sees a subtle, dismissible "Aadil updated your plan on 21 Oct"; reset PIN; delete; owner only: make/remove admin.
+- **Trip rules** (stored in `settings.rules`, applied live, enforced server-side): edits lock on/off + a scheduled **auto-lock** date/time (countdown shown to everyone); require full length to submit / allow the 5-day length; 5-day preview on/off; date window (earliest start / latest end); base structure (Colombo nights / Galle nights, default 1 / 4) and base-area filtering on/off; browse others: after submitting / always / off; peek on/off; group spectrum on/off; Halal button on/off; default currency. A change that would invalidate saved itineraries (nights split, date window) first shows an **impact preview** ("4 itineraries will need re-picks") and needs confirmation, then migrates them the way earlier migrations did (picks kept by day role and order, the rest cleared) and the people affected see a one-time note.
+- **Content:** hide/disable any option or Quick extra (people who already picked it see "No longer available" on that item — never silently deleted; new picks of it are refused); flag "re-check closer to the date"; pin/feature an option (shown first in matchups and the catalog).
+- **Announcement:** a banner message shown to everyone, with an on/off switch.
+- **Data:** JSON and CSV exports (one row per person incl. days · nights, budget totals, role and edit stamp; plus a long-format CSV, one row per item in every slot) for AI analysis.
+- **Activity log:** every admin action (who, what, when) and who peeked at whom.
 
 ## Data model (Supabase)
-- `participants` (id uuid, display_name text unique (case-insensitive), pin_hash text, failed_attempts int, locked_until timestamptz, created_at)
-- `itineraries` (participant_id uuid PK/FK, data jsonb, status text, submitted_at, updated_at)
-- `settings` (single row: edits_locked boolean, updated_at)
+- `participants` (id uuid, display_name text unique (case-insensitive), pin_hash text, failed_attempts int, locked_until timestamptz, role text owner|admin|member (one owner max), created_at)
+- `itineraries` (participant_id uuid PK/FK, data jsonb, status text, submitted_at, updated_at, stamp jsonb — the last organizer edit or rules migration: `{ kind, by, at, seen }`)
+- `settings` (single row: edits_locked boolean, rules jsonb — the live Trip rules, content controls and announcement, updated_at)
+- `activity_log` (id, at, actor_id, actor_name, action, target_id, target_name, details jsonb)
+- `peeks` (peeker_id, target_id, first_at, last_at, count; PK peeker+target) — unique peekers per plan
 SQL lives in `supabase/migrations/*.sql` so it can be pasted into the Supabase SQL editor.
 
-Itinerary `data` (versioned; current `version: 3`, which introduced the fixed 6-day structure and multi-item slots):
+Itinerary `data` (versioned; current `version: 3`, which introduced the fixed day structure and multi-item slots; the length follows the Trip rules):
 ```ts
 {
   version: 3,
   startDate: 'YYYY-MM-DD', endDate: 'YYYY-MM-DD',   // always 6 days (endDate = startDate + 5)
   flexibility: 'exact' | 'few_days' | 'very',
-  days: Array<{                                     // always 6 entries; Day 6 slots stay empty
+  days: Array<{                                     // one per day (6 by default); the fly-home day's slots stay empty
     id: string;                                     // stable id for drag/reorder
     day: SlotItem[];
     night: SlotItem[];
@@ -211,8 +240,9 @@ Itinerary `data` (versioned; current `version: 3`, which introduced the fixed 6-
   preferences: { ..., currency?: CurrencyCode },
   budget?: { excluded?: string[]; accommodation?: boolean },
 }
-type SlotItem = { key: string; id: string; pairId?: string };
-// id = an option id, a Quick extra id, or 'stay'; pairId = the matchup it was picked from
+type SlotItem = { key: string; id: string; pairId?: string; variant?: string };
+// id = an option id, a Quick extra id, or 'stay'; pairId = the matchup it was picked from;
+// variant = the chosen variant of an option that has them (Adam's Peak: 'sunrise' | 'morning')
 ```
 The 5-day preview lives only in the browser and is never saved.
 
