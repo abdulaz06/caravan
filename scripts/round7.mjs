@@ -1,4 +1,4 @@
-// End-to-end checks for Adam's Peak, the map day tabs, organizer roles + the
+// End-to-end checks for the Ella day trip, the map day tabs, organizer roles + the
 // console, and 👀 peek. Runs against the local-store server (LANKS_LOCAL_STORE=1).
 // Usage: node --env-file=.env.local scripts/round7.mjs <outDir>
 //   env: BASE (default http://localhost:3100), CHROME_PATH, VIEW (e.g. 375x667), ADMIN_PASSWORD
@@ -37,6 +37,7 @@ const N = {
   peeker: `Pip ${stamp}`,
   spare: `Zed ${stamp}`,
   owner: `Olive ${stamp}`,
+  migrated: `Mig ${stamp}`,
 };
 
 function step(label) {
@@ -103,97 +104,197 @@ const ids = (list) => (list ?? []).map((x) => x.id);
 const row = (page, i) => page.locator("ol > li").nth(i);
 const sheet = (page) => page.getByRole("dialog").last();
 
-// ═══ Adam's Peak ═══════════════════════════════════════════════════════
-step("Adam's Peak: sunrise on Day 3 (mid-December, before pilgrim season) with an evening clash");
+// ═══ Ella day trip · Little Adam's Peak ════════════════════════════════
+const ELLA = "ella-little-adams-peak";
+step("Ella: sunrise on Day 3 — soft early-night note + late-party heads-up on Day 2 (no lock)");
 const climber = await person(N.climber);
 {
   const res = await put(
     climber,
     plan("2026-12-14", [
       [mk("colombo-tuk-tuk"), mk("galle-face-street-food")],
-      [mk("madu-river-safari"), mk("galle-fort-sunset-dinner")],
+      [mk("madu-river-safari"), mk("mirissa-beach-bars")],
       [[], []],
       [mk("galle-fort"), []],
       [[], []],
       [[], []],
     ]),
   );
-  await expect(res.ok(), "climber plan saved (14–19 Dec)");
+  await expect(res.ok(), "climber plan saved (14–19 Dec), Day 2 evening has a beach-bar crawl");
 }
 const cp = climber.page;
 await cp.goto(base + "/trip?step=build");
 await cp.waitForTimeout(1500);
 await row(cp, 2).getByRole("button", { name: "Pick your daytime" }).click();
 await cp.waitForTimeout(900);
-await sheet(cp).getByRole("button", { name: /^Pick Big day trip: Adam's Peak/ }).click();
+await sheet(cp).getByRole("button", { name: /^Pick Ella day trip · Little Adam's Peak/ }).click();
 await cp.waitForTimeout(1100);
-await expect(cp.getByText("How do you want to climb?").isVisible(), "picking Adam's Peak asks sunrise or morning");
-await expect(cp.getByText(/Before pilgrim season/).first().isVisible(), "out-of-season warning before choosing (14–19 Dec)");
-await shot(cp, "ap-variant-sheet", { keep: true });
-await cp.getByRole("button", { name: "Choose Sunrise summit" }).click();
-await cp.waitForTimeout(900);
-await expect(cp.getByText("Tonight's plans meet the overnight drive").isVisible(), "conflict prompt: Day 2 evening already has plans");
-await shot(cp, "ap-clash-sheet", { keep: true });
-await cp.getByRole("button", { name: /Move them to another evening/ }).click();
-await cp.waitForTimeout(1500);
+await expect(cp.getByText("How do you want to do Ella?").isVisible(), "picking the Ella trip asks sunrise or easy morning");
+await expect(sheet(cp).getByText(/Day 2's evening has/).isVisible(), "variant sheet: soft heads-up about Day 2's late night");
+await expect(sheet(cp).getByText("What to bring").isVisible(), "variant sheet: what to bring");
+await expect(sheet(cp).getByText(/A torch for the sunrise walk/).isVisible(), "…a torch for the sunrise");
+await shot(cp, "ella-variant-sheet", { keep: true });
+await cp.getByRole("button", { name: "Choose Sunrise at Little Adam's Peak" }).click();
+await cp.waitForTimeout(700);
+await expect(cp.getByText(/Heads-up: Day 2's evening has Mirissa beach-bar crawl/).isVisible(), "toast: gentle late-party heads-up (not a block)");
 let d = await eventually(async () => {
   const x = await getPlan(climber);
-  return x?.days[2].day[0]?.id === "adams-peak" ? x : null;
+  return x?.days[2].day[0]?.id === ELLA ? x : null;
 });
-await expect(d?.days[2].day[0]?.variant === "sunrise", "Day 3 daytime: Adam's Peak · sunrise saved");
-await expect(d && d.days[1].night.length === 0 && d.days.some((x, i) => i !== 1 && ids(x.night).includes("galle-fort-sunset-dinner")), "the clashing dinner moved to another evening");
-await expect(cp.getByLabel(/Overnight drive to Adam's Peak · leave ~9pm \(locked\)/).first().isVisible(), "Day 2 evening shows the locked overnight drive");
-await expect(row(cp, 2).getByText(/Full day · ~18–19 hrs/).isVisible(), "Day 3 shows a full-day total");
-await expect(row(cp, 2).getByText(/Recovery night — Stay in suggested/).isVisible(), "Day 3 evening suggests Stay in");
-await expect(row(cp, 2).getByText(/Before pilgrim season/).isVisible(), "Day 3 card: season warning");
+await expect(d?.days[2].day[0]?.variant === "sunrise", "Day 3 daytime: Ella · sunrise saved");
+await expect(ids(d?.days[1].night).includes("mirissa-beach-bars"), "Day 2 evening kept as is (no lock, nothing moved)");
+await expect(row(cp, 1).getByText("Early night: leaving ~12:30am for Ella").isVisible(), "Day 2 evening: soft early-night note");
+await expect(row(cp, 1).getByText(/Early start tonight — the van leaves ~12:30am for Ella, and Mirissa beach-bar crawl & fire shows usually runs late/).isVisible(), "Day 2: gentle late-party warning");
+await expect(row(cp, 1).getByRole("button", { name: "Add another to evening" }).isVisible(), "Day 2 evening still editable");
+await expect(row(cp, 2).getByText(/Full day · ~14 hrs door to door/).isVisible(), "Day 3 shows a full-day total");
+await expect(row(cp, 2).getByText("Long day — Stay in or something light suggested").isVisible(), "Day 3 evening suggests Stay in or something light");
+await expect(row(cp, 2).getByText("Ella day trip").first().isVisible(), "Day 3 card tag: Ella day trip");
+await expect(row(cp, 2).getByText(/Road trip · Galle → Ella · ~3\.5–4 hrs/).isVisible(), "Day 3: road trip leg there with duration");
+await expect(row(cp, 2).getByText("Leave Galle ~12:30am").isVisible(), "…and the departure time");
+await expect(row(cp, 2).getByText(/Back to Galle · ~3\.5–4 hrs/).isVisible(), "Day 3: the drive back with duration");
+await expect(cp.getByText(/Overnight drive/).count().then((c) => c === 0), "no overnight-drive item anywhere");
 await row(cp, 1).scrollIntoViewIfNeeded();
-await shot(cp, "ap-day2-locked-day3", { keep: true });
+await shot(cp, "ella-day2-early-night", { keep: true });
+await row(cp, 2).scrollIntoViewIfNeeded();
+await shot(cp, "ella-day3-sunrise", { keep: true });
 await row(cp, 2).getByRole("button", { name: "+ Stay in" }).click();
 await cp.waitForTimeout(1300);
 d = await eventually(async () => {
   const x = await getPlan(climber);
   return ids(x?.days[2].night).includes("stay") ? x : null;
 });
-await expect(!!d, "one tap adds the recovery Stay in");
+await expect(!!d, "one tap adds Stay in on the Ella evening");
 
-step("Adam's Peak: calm morning climb on Day 5 from the catalog");
+step("Ella extras appear only alongside the trip");
+await row(cp, 3).getByRole("button", { name: "Add another to daytime" }).click();
+await cp.waitForTimeout(900);
+await sheet(cp).getByLabel("Search activities").fill("Nine Arches");
+await cp.waitForTimeout(400);
+await expect(sheet(cp).getByRole("button", { name: /^Add Nine Arches Bridge/ }).count().then((c) => c === 0), "Day 4 (no Ella trip): no Nine Arches in the catalog");
+await sheet(cp).getByLabel("Search activities").fill("Ella");
+await cp.waitForTimeout(400);
+await expect(sheet(cp).getByRole("button", { name: /^Add (Ravana Falls|Flying Ravana|98 Acres)/ }).count().then((c) => c === 0), "Day 4: no Ella extras at all");
+await cp.keyboard.press("Escape");
+await cp.waitForTimeout(500);
+await row(cp, 2).getByRole("button", { name: "Add another to daytime" }).click();
+await cp.waitForTimeout(900);
+const extrasShown = await sheet(cp).getByRole("button", { name: /^Add (Nine Arches Bridge|98 Acres viewpoint|Flying Ravana zipline|Ravana Falls)/ }).count();
+await expect(extrasShown === 4, `Day 3 (with the trip): all four Ella extras offered (${extrasShown})`);
+await shot(cp, "ella-extras-catalog", { keep: true });
+await sheet(cp).getByLabel("Search activities").fill("Nine Arches");
+await cp.waitForTimeout(400);
+await expect(sheet(cp).getByText(/Trains ~6:30/).count().then(() => true), "Nine Arches lists train times (detail)");
+await sheet(cp).getByRole("button", { name: /^Add Nine Arches Bridge/ }).click();
+await cp.waitForTimeout(1300);
+d = await eventually(async () => {
+  const x = await getPlan(climber);
+  return ids(x?.days[2].day).includes("ella-nine-arches") ? x : null;
+});
+await expect(!!d, "Nine Arches added to Day 3 with the trip");
+await expect(row(cp, 2).getByText("In Ella · with your day trip").first().isVisible(), "extra labelled 'In Ella · with your day trip'");
+{
+  // An Ella extra without the trip is dropped by the server.
+  const cur = await getPlan(climber);
+  cur.days[3].day = [...cur.days[3].day, ...mk("ella-ravana-falls")];
+  await put(climber, cur);
+  const x = await getPlan(climber);
+  await expect(!ids(x?.days[3].day).includes("ella-ravana-falls"), "an Ella extra on a day without the trip isn't kept");
+}
+
+step("Ella: easy morning on Day 5 from the catalog, then switch variants on Day 3 and Day 5");
+await cp.goto(base + "/trip?step=build");
+await cp.waitForTimeout(1500);
 await row(cp, 4).getByRole("button", { name: /or browse everything/ }).first().click();
 await cp.waitForTimeout(900);
-await sheet(cp).getByLabel("Search activities").fill("Adam");
+await sheet(cp).getByLabel("Search activities").fill("Ella");
 await cp.waitForTimeout(400);
-await sheet(cp).getByRole("button", { name: /^Add Big day trip: Adam's Peak/ }).click();
+await sheet(cp).getByRole("button", { name: /^Add Ella day trip · Little Adam's Peak/ }).click();
 await cp.waitForTimeout(1000);
-await cp.getByRole("button", { name: "Choose Calm morning climb" }).click();
+await cp.getByRole("button", { name: "Choose Easy morning in Ella" }).click();
 await cp.waitForTimeout(1500);
 d = await eventually(async () => {
   const x = await getPlan(climber);
-  return x?.days[4].day.some((i) => i.id === "adams-peak") ? x : null;
+  return x?.days[4].day.some((i) => i.id === ELLA) ? x : null;
 });
-await expect(d?.days[4].day.find((i) => i.id === "adams-peak")?.variant === "morning", "Day 5: calm morning climb saved");
-await expect(row(cp, 4).getByText(/Back late \(~10–11pm\)/).isVisible(), "Day 5 evening: back late, Stay in suggested");
-await expect(row(cp, 3).getByLabel(/Overnight drive/).count().then((c) => c === 0), "no overnight lock before a morning climb");
+await expect(d?.days[4].day.find((i) => i.id === ELLA)?.variant === "calm", "Day 5: easy morning saved");
+await expect(row(cp, 4).getByText("Back ~8pm — Stay in or a chill dinner suggested").isVisible(), "Day 5 evening: back ~8pm note");
+await expect(row(cp, 4).getByText(/Full day · ~15 hrs/).isVisible(), "Day 5: full-day total");
+await expect(row(cp, 3).getByText(/Early night/).count().then((c) => c === 0), "no early-night note before an easy morning");
 await row(cp, 4).scrollIntoViewIfNeeded();
-await shot(cp, "ap-day5-morning", { keep: true });
-await expect(cp.getByText(/Overnight drive · Galle → Adam's Peak · ~5–6 hrs/).first().isVisible(), "road trip legs show ~5–6 hrs");
-
-step("Adam's Peak: Day 3 on Unduvap Poya (23 Dec) shows the poya crowd warning");
-{
-  const cur = await getPlan(climber);
-  const res = await put(climber, { ...cur, startDate: "2026-12-21", endDate: "2026-12-26" });
-  await expect(res.ok(), "moved the window to 21–26 Dec");
-}
-await cp.goto(base + "/trip?step=build");
+await shot(cp, "ella-day5-calm", { keep: true });
+// Day 5 → sunrise
+await row(cp, 4).getByRole("button", { name: /^Daytime: Ella day trip/ }).click();
+await cp.waitForTimeout(800);
+await sheet(cp).getByRole("button", { name: /Switch to Sunrise at Little Adam's Peak/ }).click();
+await cp.waitForTimeout(900);
+await cp.getByRole("button", { name: "Choose Sunrise at Little Adam's Peak" }).click();
 await cp.waitForTimeout(1500);
-await expect(row(cp, 2).getByText(/Unduvap Poya — one of the busiest climbs/).isVisible(), "poya warning on the climb day");
-await expect(row(cp, 2).getByText(/Before pilgrim season/).count().then((c) => c === 0), "no season warning once the season is open");
-await row(cp, 2).scrollIntoViewIfNeeded();
-await shot(cp, "ap-poya-warning", { keep: true });
-await cp.goto(base + "/trip?step=dates");
-await cp.waitForTimeout(1200);
-await expect(cp.getByText(/🌕 Unduvap Poya Wed 23/).isVisible(), "dates step lists the poya day in the window");
-await expect(cp.getByRole("button", { name: /Wed 23 Dec.*Unduvap Poya/ }).isVisible(), "calendar marks the poya day");
+d = await eventually(async () => {
+  const x = await getPlan(climber);
+  return x?.days[4].day.find((i) => i.id === ELLA)?.variant === "sunrise" ? x : null;
+});
+await expect(!!d, "Day 5 switched to sunrise");
+await expect(row(cp, 3).getByText("Early night: leaving ~12:30am for Ella").isVisible(), "Day 4 evening now gets the early-night note");
+// Day 3 → easy morning (keeps its Ella extra)
+await row(cp, 2).getByRole("button", { name: /^Daytime: Ella day trip/ }).click();
+await cp.waitForTimeout(800);
+await sheet(cp).getByRole("button", { name: /Switch to Easy morning in Ella/ }).click();
+await cp.waitForTimeout(900);
+await cp.getByRole("button", { name: "Choose Easy morning in Ella" }).click();
+await cp.waitForTimeout(1500);
+d = await eventually(async () => {
+  const x = await getPlan(climber);
+  return x?.days[2].day.find((i) => i.id === ELLA)?.variant === "calm" ? x : null;
+});
+await expect(!!d && ids(d.days[2].day).includes("ella-nine-arches"), "Day 3 switched to easy morning, Nine Arches still with it");
+await expect(row(cp, 1).getByText(/Early night/).count().then((c) => c === 0), "Day 2's early-night note is gone");
+await expect(row(cp, 2).getByText("Back ~8pm — Stay in or a chill dinner suggested").isVisible(), "Day 3 evening: back ~8pm note");
+await row(cp, 3).scrollIntoViewIfNeeded();
+await shot(cp, "ella-day4-early-day5-sunrise", { keep: true });
 
-step("Map: day tabs reach Day 6, the map fits Adam's Peak, exports include it");
+step("Budget: shared van to Ella + extras");
+await cp.getByRole("button", { name: "Open trip budget" }).first().click();
+await cp.waitForTimeout(900);
+await expect(sheet(cp).getByText("Shared van · Galle ⇄ Ella").first().isVisible(), "budget: shared van line for the Ella trip");
+await expect(sheet(cp).getByText(/Nine Arches Bridge/).first().isVisible(), "budget: the Ella extra has a line");
+await sheet(cp).getByText("Shared van · Galle ⇄ Ella").first().scrollIntoViewIfNeeded();
+await shot(cp, "ella-budget", { keep: true });
+await cp.keyboard.press("Escape");
+await cp.waitForTimeout(400);
+
+step("Migration: an old Adam's Peak plan (both variants) becomes the Ella trip");
+const mig = await person(N.migrated);
+{
+  await put(mig, plan("2026-12-26", [[mk("colombo-tuk-tuk"), []], [[], mk("galle-fort-sunset-dinner")], [[], []], [mk("galle-fort"), []], [[], []], [[], []]]));
+  // Write the pre-swap shape straight into the local store (the API would already convert it).
+  const dbj = JSON.parse(fs.readFileSync(LOCAL_DB, "utf8"));
+  const r = dbj.itineraries.find((x) => x.participant_id === mig.id);
+  r.data.days[2].day = [{ key: "apsun01", id: "adams-peak", variant: "sunrise" }];
+  r.data.days[4].day = [{ key: "apmor01", id: "adams-peak", variant: "morning" }];
+  // A stray stored "overnight drive" item (there never was one, but prove it can't survive).
+  r.data.days[1].night = [...r.data.days[1].night, { key: "apdrv01", id: "adams-peak-overnight-drive" }];
+  fs.writeFileSync(LOCAL_DB, JSON.stringify(dbj, null, 2));
+}
+const mp = mig.page;
+await mp.goto(base + "/trip?step=build");
+await mp.waitForTimeout(1800);
+await expect(mp.getByText("We swapped Adam's Peak for Little Adam's Peak in Ella.").isVisible(), "one-time note shows");
+await expect(mp.getByText(/Easier hike, same sunrise/).isVisible(), "…'Easier hike, same sunrise'");
+await shot(mp, "ella-migration-note", { keep: true });
+d = await eventually(async () => {
+  const x = JSON.parse(fs.readFileSync(LOCAL_DB, "utf8")).itineraries.find((y) => y.participant_id === mig.id)?.data;
+  return x && !JSON.stringify(x).includes('"adams-peak') ? x : null;
+}, 12000);
+await expect(d?.days[2].day[0]?.id === ELLA && d.days[2].day[0].variant === "sunrise", "Sunrise summit → Little Adam's Peak sunrise, same day (saved)");
+await expect(d?.days[4].day[0]?.id === ELLA && d.days[4].day[0].variant === "calm", "Calm morning climb → Easy morning in Ella, same day (saved)");
+await expect(d && ids(d.days[1].night).join() === "galle-fort-sunset-dinner", "the overnight-drive item is gone, the dinner stays");
+await expect(mp.getByText(/Overnight drive/).count().then((c) => c === 0), "no overnight-drive text on the page");
+await expect(row(mp, 1).getByText("Early night: leaving ~12:30am for Ella").isVisible(), "migrated sunrise gives Day 2 the soft early-night note");
+await mp.reload();
+await mp.waitForTimeout(1800);
+await expect(mp.getByText("We swapped Adam's Peak for Little Adam's Peak in Ella.").count().then((c) => c === 0), "the note is one-time (gone after reload)");
+
+step("Map: day tabs reach Day 6, the map fits the Ella route, exports include it");
 await cp.goto(base + "/trip?step=review");
 await cp.waitForTimeout(2200);
 const tabs = cp.getByRole("group", { name: "Highlight a day" });
@@ -215,21 +316,38 @@ await tabs.getByRole("button", { name: /^Day 3/ }).click();
 await cp.waitForTimeout(1400);
 const dayBox = await cp.getByRole("img", { name: /^Route map/ }).evaluate((el) => el.getAttribute("viewBox"));
 await expect(dayBox && dayBox !== allBox, "selecting a day fits the map to its route");
-await expect(cp.getByText(/Day 3 · Galle base — 1\. Adam's Peak/).isVisible(), "Day 3's route lists Adam's Peak");
-const mapShot = path.join(outDir, `${String(++n).padStart(2, "0")}-map-day3-peak.png`);
+await expect(cp.getByText(/Day 3 · Galle base — 1\. Ella/).isVisible(), "Day 3's route lists the Ella trip");
+await expect(
+  cp.getByRole("img", { name: /^Route map/ }).evaluate((svg) => {
+    const vb = svg.getAttribute("viewBox").split(" ").map(Number);
+    const t = [...svg.querySelectorAll("text")].find((x) => x.textContent.trim() === "Ella");
+    if (!t) return false;
+    const x = Number(t.getAttribute("x"));
+    const y = Number(t.getAttribute("y"));
+    return x >= vb[0] && x <= vb[0] + vb[2] && y >= vb[1] && y <= vb[1] + vb[3];
+  }),
+  "the Ella label sits inside the fitted map",
+);
+const mapShot = path.join(outDir, `${String(++n).padStart(2, "0")}-map-day3-ella.png`);
 await cp.locator("section").filter({ has: cp.getByRole("img", { name: /^Route map/ }) }).first().screenshot({ path: mapShot });
-fs.copyFileSync(mapShot, path.join(SHOTS, `r7-map-day3-peak${VIEWSUFFIX}.png`));
+fs.copyFileSync(mapShot, path.join(SHOTS, `r7-map-day3-ella${VIEWSUFFIX}.png`));
+await tabs.getByRole("button", { name: /^All days/ }).click();
+await cp.waitForTimeout(900);
+const allShot = path.join(outDir, `${String(++n).padStart(2, "0")}-map-all-ella.png`);
+await cp.locator("section").filter({ has: cp.getByRole("img", { name: /^Route map/ }) }).first().screenshot({ path: allShot });
+fs.copyFileSync(allShot, path.join(SHOTS, `r7-map-all-ella${VIEWSUFFIX}.png`));
+await expect(cp.getByText(/Road trip · Galle → Ella/).first().isVisible(), "review timeline shows the Ella road-trip leg");
 await cp.getByRole("button", { name: /Share my trip/ }).click();
 for (const label of ["Story", "Square"]) {
   const btn = cp.getByRole("button", { name: `Save ${label} image` });
   await btn.waitFor({ timeout: 20000 });
   await eventually(() => btn.isEnabled(), 20000);
   const [dl] = await Promise.all([cp.waitForEvent("download"), btn.click()]);
-  const file = path.join(outDir, `share-${label.toLowerCase()}-peak${VIEWSUFFIX}.png`);
+  const file = path.join(outDir, `share-${label.toLowerCase()}-ella${VIEWSUFFIX}.png`);
   await dl.saveAs(file);
-  fs.copyFileSync(file, path.join(SHOTS, `r7-share-${label.toLowerCase()}-peak${VIEWSUFFIX}.png`));
+  fs.copyFileSync(file, path.join(SHOTS, `r7-share-${label.toLowerCase()}-ella${VIEWSUFFIX}.png`));
   const b = fs.readFileSync(file);
-  await expect(b.readUInt32BE(16) === 1080, `${label} export with Adam's Peak`);
+  await expect(b.readUInt32BE(16) === 1080, `${label} export with the Ella trip`);
 }
 await cp.keyboard.press("Escape");
 await cp.waitForTimeout(400);
@@ -554,7 +672,7 @@ await member.page.waitForTimeout(1000);
 await expect(member.page.getByText(new RegExp(`Only the organizers \\(.*${N.admin}.*\\) see these answers`)).isVisible(), "prefs privacy line names the organizers");
 
 // ═══ Desktop ══════════════════════════════════════════════════════════
-step("Desktop: console, peek, Adam's Peak map");
+step("Desktop: console, peek, Ella map");
 {
   const ctxD = await browser.newContext(desktop);
   await ctxD.addCookies(await admin.ctx.cookies());
@@ -582,7 +700,7 @@ step("Desktop: console, peek, Adam's Peak map");
   await pc.waitForTimeout(2000);
   await pc.getByRole("group", { name: "Highlight a day" }).getByRole("button", { name: /^Day 3/ }).click();
   await pc.waitForTimeout(1400);
-  await shot(pc, "desktop-map-peak", { keep: true });
+  await shot(pc, "desktop-map-ella", { keep: true });
   await ctxC.close();
 }
 

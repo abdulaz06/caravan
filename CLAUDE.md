@@ -51,7 +51,7 @@ These are the **defaults of the live Trip rules** (see Organizers): organizers c
 
 - Day 1 makes it obvious it's the **only Colombo day**. Day 6 has no slots and isn't editable: just the drive, "leave ~4 hrs before your flight" and a send-off.
 - Header: "Colombo · 1 night → Galle · 4 nights" (Galle · 3 in preview).
-- Options declare where they're valid (`where: ('colombo' | 'enroute' | 'galle')[]`); an option can be valid in more than one context (e.g. Hikkaduwa turtles: en-route and Galle). Far-away regions (Ella, Sigiriya, Nuwara Eliya, Yala, Kandy) are out. The Kandy day trip and its train/road choice are gone.
+- Options declare where they're valid (`where: ('colombo' | 'enroute' | 'galle')[]`); an option can be valid in more than one context (e.g. Hikkaduwa turtles: en-route and Galle). Far-away regions (Sigiriya, Nuwara Eliya, Yala, Kandy) are out; Ella appears only as the one Ella day trip (below). The Kandy day trip and its train/road choice are gone.
 - **Moving things:** Galle days 3–5 reorder freely (whole days or single items). Day 2 Evening items can move to/from Galle evenings. Day 1 items and Day 2 Daytime (en-route) items stay where they are. Day 6 is fixed.
 - **New Year's Eve:** the NYE pair follows whichever day Dec 31 lands on — Colombo NYE pair on Day 1, Galle NYE pair on Day 2 evening or Days 3–5. If Dec 31 is Day 6, say so gently ("you'd fly home on New Year's Eve"). The whole Dec 31 evening stays pinned to Dec 31 when days are reordered.
 
@@ -75,17 +75,18 @@ Itineraries saved before this structure (`version` 1 or 2) keep their start date
   - **Full freedom:** the same option can be picked on as many days as people like. Repeats only show a soft hint ("Also on Day 3").
   - **Stay in** ("Slow morning, pool, nap, no plans." / "Dinner and hangs at the villa.") is a first-class item, any number of times. Vibe 0, no travel, costs nothing.
 - **Day-of-week availability:** options can set `availableDays` (0 = Sun … 6 = Sat) — many south-coast parties run on specific nights. Show a badge ("Fridays only", "Wed & Sat") and a gentle non-blocking warning when placed on another day.
-- **Big day trips:** a few standout options up to ~2.5 hrs from Galle are allowed; they're tagged "Big day trip · ~2.5 hrs each way". **The only exception to the ~2.5 hr rule is Adam's Peak** (~5–6 hrs each way, below).
+- **Big day trips:** a few standout options up to ~2.5 hrs from Galle are allowed; they're tagged "Big day trip · ~2.5 hrs each way". **The only exception to the ~2.5 hr rule is the Ella day trip** (Little Adam's Peak, ~3.5–4 hrs each way, below).
 - **Fluid editing:** change, add, reorder or remove items; drag Galle days to reorder; move single items between compatible slots (see the structure rules); add a short note to any day.
 - **Balance meter:** every option has a `vibe` from -2 (pure nature/adventure) to +2 (pure nightlife); the meter averages all items. Stay in = 0; Quick extras count with their own vibe.
 
-### Adam's Peak (Sri Pada) — the one long exception
-One "Big day trip" option (`adams-peak`, region `adams-peak` at Dalhousie/Nallathanniya) with **two variants** the user picks between when they select it (stored as `variant` on the slot item). Galle **Days 3–5 only** (never Day 2's en-route daytime, never a Colombo day; with a custom split: Galle days whose previous evening is in Galle). Facts (verified Oct 2026, keep the sources on the option): Galle → Dalhousie ~234 km, **~5–6 hrs each way**; summit **2,243 m**, **~5,500 steps** over ~7 km; climb **~3–4 hrs up, ~2–3 down** (5+ hrs on busy nights); December sunrise **~6:15am** (first light ~5:50); summit 0–8°C before dawn; the climb is free (donations at shrines, tea stalls LKR 100–500).
-- **A · "Sunrise summit":** leave Galle ~9pm the night before, overnight drive, climb from ~2–2.5am, sunrise at the top, descend, drive back — Galle mid-afternoon. Picking it gives the **previous evening** a locked "🚐 Overnight drive to Adam's Peak · leave ~9pm" item (derived from the plan, not stored). If that evening already has plans, a friendly, non-blocking prompt offers: keep the early ones / move them to another evening / clear them. That day's evening suggests **Stay in** (recovery night).
-- **B · "Calm morning climb":** leave Galle ~3:30–4am, climb in daylight from ~9:30am, back in Galle late evening (~10–11pm). Honest copy: still an early start, hotter, and the summit is often in cloud by midday. No previous-evening lock; that day's evening is marked "Back late · Stay in suggested".
-- Timeline, budget and map show the full road-trip legs both ways with durations; full-day time total; "tough" badge; custom mountain/sunrise icon; what to bring (warm layers, torch, cash); credited photos (summit sunrise, lit path, summit shrine). Cost per person = shared van there and back (2 vans for 12) + donations, tea and snacks.
-- **Season & crowds:** the pilgrimage season opens on **Unduvap Poya — Wed 23 Dec 2026** (Central Bank of Sri Lanka holiday list). A climb before that shows a clear warning (path lights off, tea stalls closed, higher chance of rain). Poya days (23 Dec 2026, 22 Jan 2027) and weekends are extremely crowded (5+ hr climbs) — warn, and list the poya days in their window. Poya dates live in `src/content`.
-- Halal mode leaves it as it is (nature). Budget, exports and the group overview all include it.
+### Ella day trip · Little Adam's Peak — the one long exception
+One "Big day trip" option (`ella-little-adams-peak`, region `ella`) with **two variants** the user picks between when they select it (stored as `variant` on the slot item). Galle **Days 3–5 only** (never Day 2's en-route daytime, never a Colombo day). Difficulty **easy**. Facts (verified Oct 2026, keep the sources on the option): Galle → Ella ~200 km, **~3.5–4 hrs each way** by van; Little Adam's Peak **1,141 m**, ~2 km from Ella town, the last **~30–45 min** on a path and steps through a tea estate; free; December sunrise **~6:10–6:15am** over Ella Gap; cool before dawn. (This replaced Adam's Peak / Sri Pada, which was the wrong mountain — see Migration.)
+- **A · "Sunrise at Little Adam's Peak":** leave Galle ~12:30am, arrive ~4:30am, walk up by torchlight, sunrise at the top, breakfast in Ella, back in Galle ~2:30pm. The previous evening is **not locked**: it gets a soft note "Early night: leaving ~12:30am for Ella" and a gentle warning if it has late-night party items (never blocks). That day's evening suggests **Stay in** or something light.
+- **B · "Easy morning in Ella":** leave Galle ~5am, hike mid-morning, explore, back in Galle ~8pm. That day's evening: "Back ~8pm — Stay in or a chill dinner suggested". Honest copy: midday is hotter on the open summit and busier.
+- **Ella extras** (Quick extras with `onlyWith: 'ella-little-adams-peak'`): Nine Arches Bridge (with typical train times), 98 Acres viewpoint & café, Flying Ravana zipline, Ravana Falls. They show in the "+ Add another" catalog **only when the Ella trip is in that same Daytime slot**, are dropped if the trip leaves the slot, and travel with it when it moves to another Galle day.
+- Timeline, budget and map show the road-trip legs both ways with durations; full-day time total; custom hill/sunrise icon (`HillSunIcon`); what to bring (light jacket, torch for sunrise, cash); credited photos. Cost per person = shared full-day van split (2 vans for 12, `vanRoundTripUsd`) + extras. Map bounds and the Story/Square export maps fit Galle → Ella.
+- Halal mode leaves it as it is (nature). Budget, exports, peek and the group overview all include it.
+- **Migration:** saved `adams-peak` picks become the Ella trip on the same day (sunrise → sunrise, morning → calm). There was never a stored overnight-drive item. The user sees a one-time note: "We swapped Adam's Peak for Little Adam's Peak in Ella. Easier hike, same sunrise."
 
 ### Travel times
 Regions (towns) live in `src/content/regions.ts` with coordinates. Drive times between towns come from a small table of known pairs, falling back to an estimate from distance (south-coast road speeds). Verify and refine:
@@ -99,6 +100,7 @@ Regions (towns) live in `src/content/regions.ts` with coordinates. Drive times b
 | Galle → Ahangama / Weligama / Mirissa | 0.6 / 0.75 / 1 |
 | Galle → Hiriketiya / Dikwella | 1.5–2 |
 | Galle → inland rainforests (Kottawa / Hiyare / Kanneliya) | 0.5 / 0.5 / 1.25–1.5 |
+| Galle → Ella (the one exception) | 3.5–4 |
 If a day's travel gets heavy (a big day trip plus a far evening), show a gentle warning — never block.
 
 ## Content (researched by Claude Code, edited by Abdul)
@@ -183,7 +185,7 @@ Design this step as quick taps first, text fields last.
 
 ## Route map, share images & Halal mode
 ### Zoomed route map (review + person view)
-- The trip poster's map is zoomed to the south-west coast (CMB airport → Colombo → down the coast to Hiriketiya; it grows to include inland day trips like Udawalawe or Sinharaja) using a full-resolution SVG coastline.
+- The trip poster's map is zoomed to the south-west coast (CMB airport → Colombo → down the coast to Hiriketiya; it grows to include inland day trips like Udawalawe, Sinharaja or Ella) using a full-resolution SVG coastline.
 - Each day's route is drawn in its own colour along the coast road (parallel lines where days overlap), with numbered stops and travel legs. Tapping a day chip (or its route) highlights that day — its stops get numbered in visiting order and its legs show drive times.
 
 ### "Share my trip" images
@@ -242,7 +244,7 @@ Itinerary `data` (versioned; current `version: 3`, which introduced the fixed da
 }
 type SlotItem = { key: string; id: string; pairId?: string; variant?: string };
 // id = an option id, a Quick extra id, or 'stay'; pairId = the matchup it was picked from;
-// variant = the chosen variant of an option that has them (Adam's Peak: 'sunrise' | 'morning')
+// variant = the chosen variant of an option that has them (the Ella day trip: 'sunrise' | 'calm')
 ```
 The 5-day preview lives only in the browser and is never saved.
 
