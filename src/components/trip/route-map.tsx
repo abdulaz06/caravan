@@ -34,6 +34,7 @@ const LABEL: Record<RegionId, "r" | "l" | "b" | "t" | "none"> = {
   kanneliya: "r",
   sinharaja: "r",
   udawalawe: "r",
+  "adams-peak": "r",
 };
 
 type Props = {

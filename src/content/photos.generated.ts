@@ -1670,5 +1670,43 @@ export const photos: Record<string, Photo[]> = {
       "height": 1762,
       "blurDataURL": "data:image/webp;base64,UklGRloAAABXRUJQVlA4IE4AAACwAwCdASoQABIAPu1iqk2ppaQiMAgBMB2JZwDA3B6FsKQR59JWAAD+05tV3RG/zkBEIH5wAYa7TCaE77ZGsbu2Zb/5NiA6OBa9cFV4AAA="
     }
+  ],
+  "adams-peak-day-trip": [
+    {
+      "src": "/images/adams-peak/adams-peak-day-trip-1.webp",
+      "credit": "Eli Solidum",
+      "source": "https://commons.wikimedia.org/wiki/File:Sunrise_from_the_top_of_Sri_Pada_(Adam%27s_Peak)_Sri_Lanka.jpg",
+      "license": "CC BY-SA 4.0",
+      "width": 1600,
+      "height": 1200,
+      "blurDataURL": "data:image/webp;base64,UklGRmoAAABXRUJQVlA4IF4AAAAwAgCdASoQAAwAA4BaJYgCdEf/gfYnbZyMUAD+15FjcKSPMgh9zbhtbhqrSmajdEkVZoV+kdmKx7jo5KgvXQ8svakq2XD+lB+QFtDdEjHrSQZ3XsZtyrx8d74WwAAA"
+    },
+    {
+      "src": "/images/adams-peak/adams-peak-day-trip-2.webp",
+      "credit": "Iuherath",
+      "source": "https://commons.wikimedia.org/wiki/File:Sripada_night_sky.jpg",
+      "license": "CC BY-SA 4.0",
+      "width": 1600,
+      "height": 1003,
+      "blurDataURL": "data:image/webp;base64,UklGRkIAAABXRUJQVlA4IDYAAADwAQCdASoQAAoAA4BaJYwCdAEPDDuSOAAA/uz0Z3VQSikNt/ndlKpPnvrCxSEv0Mh8V94KYAA="
+    },
+    {
+      "src": "/images/adams-peak/adams-peak-day-trip-3.webp",
+      "credit": "Anton F",
+      "source": "https://commons.wikimedia.org/wiki/File:Temple_at_the_Top_of_sri_Pada.JPG",
+      "license": "CC BY-SA 3.0",
+      "width": 1600,
+      "height": 1067,
+      "blurDataURL": "data:image/webp;base64,UklGRlIAAABXRUJQVlA4IEYAAADwAQCdASoQAAsAA4BaJZQAAohWkfNmqAAA/Iv44xiSvDFFvVjVPCd4hAAvykgD0h5DaV44E6qVcdP+Ht90BQxBgwJ3wAAA"
+    },
+    {
+      "src": "/images/adams-peak/adams-peak-day-trip-4.webp",
+      "credit": "Nilaan097",
+      "source": "https://commons.wikimedia.org/wiki/File:Triangle_Shadow_Of_Adam%27s_Peek.jpg",
+      "license": "CC BY-SA 4.0",
+      "width": 1500,
+      "height": 2000,
+      "blurDataURL": "data:image/webp;base64,UklGRmIAAABXRUJQVlA4IFYAAACQAwCdASoQABUAPu1oqk6ppiQiMAgBMB2JQAALfWBRvpUcmcN0AP7zavA1WfParUhnweo5LW2mD27Zyv91fDwe0Myb8a8gp1KrZdqBlhmRy/p/uVfAAA=="
+    }
   ]
 };

@@ -33,6 +33,7 @@ export const pairs: Pair[] = [
   { id: "paddle-or-folk", slot: "day", where: "galle", a: "koggala-kayak", b: "martin-wickramasinghe-museum", theme: "Sunrise paddle or village stories" },
   { id: "elephants-or-cove", slot: "day", where: "galle", a: "udawalawe-safari", b: "hiriketiya-day", theme: "Big day: elephants or the coolest cove" },
   { id: "rainforest-or-rock", slot: "day", where: "galle", a: "sinharaja-day-trip", b: "mulkirigala-climb", theme: "Big day: rainforest or rock temple" },
+  { id: "summit-or-whales", slot: "day", where: "galle", a: "adams-peak", b: "mirissa-whale-watching", theme: "Epic early start: sacred summit or blue whales" },
 
   // ── Galle · evening ──────────────────────────────────────────────
   { id: "unawatuna-nights", slot: "night", where: "galle", a: "unawatuna-beach-party", b: "galle-fort-sunset-dinner", theme: "Beach party or fort sunset" },

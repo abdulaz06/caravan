@@ -21,12 +21,23 @@ export const pairsById: Record<string, Pair> = Object.fromEntries(allPairs.map((
 
 export const heroPhotos = photos["hero"] ?? [];
 
-/** The window everyone can place their trip in. */
-export const TRIP_WINDOW = { start: "2026-12-01", end: "2027-01-31" } as const;
 export const NYE_DATE = "2026-12-31";
-/** The group voted: 6 days · 5 nights. 5 days is a preview-only sandbox. */
-export const TRIP_DAYS = 6;
-export const PREVIEW_DAYS = 5;
+
+/**
+ * Full-moon Poya holidays around the trip (Central Bank of Sri Lanka bank-holiday
+ * lists for 2026 and 2027). Bars and liquor shops close by law; temples — and
+ * Adam's Peak — are packed.
+ */
+export const POYA_DAYS = [
+  { date: "2026-11-24", name: "Il Poya" },
+  { date: "2026-12-23", name: "Unduvap Poya" },
+  { date: "2027-01-22", name: "Duruthu Poya" },
+  { date: "2027-02-20", name: "Navam Poya" },
+] as const;
+export const poyaOn = (date: string | null) => (date ? (POYA_DAYS.find((p) => p.date === date) ?? null) : null);
+/** The Adam's Peak pilgrimage season (lights on, tea stalls open) starts on Unduvap Poya. */
+export const ADAMS_PEAK_SEASON_START = "2026-12-23";
+// Trip length, nights split and the date window are live Trip rules — see lib/rules.ts.
 
 export const CATEGORIES: { id: Category; label: string; emoji: string }[] = [
   { id: "adventure", label: "Adventure", emoji: "🥾" },

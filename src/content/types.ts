@@ -22,7 +22,8 @@ export type RegionId =
   | "hiyare"
   | "kanneliya"
   | "sinharaja"
-  | "udawalawe";
+  | "udawalawe"
+  | "adams-peak";
 
 /**
  * Where an activity can be picked:
@@ -94,6 +95,33 @@ export type Activity = {
   routeKm?: number;
   /** Nightlife items: the wholesome stand-in shown in Halal mode (an activity id). */
   halalSwap?: string;
+  /** Only placeable on days with this role (Adam's Peak: Galle days 3–5). */
+  onlyRole?: "galle";
+  /** Ways to do it the user picks between (stored as SlotItem.variant). First = default. */
+  variants?: ActivityVariant[];
+  /** What to pack (detail sheet). */
+  bring?: string[];
+};
+
+/** One way of doing a multi-variant option (Adam's Peak: sunrise summit vs calm morning climb). */
+export type ActivityVariant = {
+  id: string;
+  title: string;
+  emoji: string;
+  /** One line under the title in the chooser. */
+  summary: string;
+  /** Times through the day, shown as a little schedule. */
+  schedule: { time: string; text: string }[];
+  /** Hours on the mountain (the drives come from the travel model). */
+  hours: number;
+  /** Door to door, e.g. "~18 hrs". */
+  total: string;
+  /** Honest trade-offs. */
+  honest: string[];
+  /** The previous evening gets a locked overnight-drive item. */
+  overnight?: { title: string; detail: string; leave: string };
+  /** A note on the same day's evening (recovery / back late). */
+  eveningNote: string;
 };
 
 /** Kept for readability where only curated options make sense. */
