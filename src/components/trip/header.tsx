@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { Check, CloudOff, Loader2, Lock, LogOut, Users } from "lucide-react";
+import { ArrowLeft, Check, CloudOff, Loader2, Lock, LogOut, ShieldCheck, Users } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -25,11 +25,28 @@ type Props = {
   locked: boolean;
   beforeLeave: () => Promise<unknown>;
   onCurrency?: (c: CurrencyCode) => void;
-  /** Shows a "5-day preview" chip that switches back to 6 days. */
-  preview?: { onExit: () => void } | null;
+  /** Shows a "5-day preview" chip that switches back to the full plan. */
+  preview?: { onExit: () => void; label: string } | null;
+  /** Owner/admin: an "Organizer" button that opens the console. */
+  organizer?: boolean;
+  /** An organizer editing someone's plan: a way back to the console instead of the account menu. */
+  admin?: { targetName: string } | null;
 };
 
-export function TripHeader({ name, step, canVisit, onStep, saveState, submitted, locked, beforeLeave, onCurrency, preview }: Props) {
+export function TripHeader({
+  name,
+  step,
+  canVisit,
+  onStep,
+  saveState,
+  submitted,
+  locked,
+  beforeLeave,
+  onCurrency,
+  preview,
+  organizer,
+  admin,
+}: Props) {
   const [menu, setMenu] = useState(false);
   const router = useRouter();
   const ref = useRef<HTMLDivElement>(null);
@@ -57,13 +74,33 @@ export function TripHeader({ name, step, canVisit, onStep, saveState, submitted,
           {preview && (
             <button
               onClick={preview.onExit}
-              aria-label="Previewing 5 days — switch back to 6 days"
+              aria-label={`${preview.label} — switch back to the full trip`}
               className="shrink-0 rounded-full bg-saffron-400 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-ink shadow-card"
             >
-              5-day preview
+              {preview.label}
             </button>
           )}
+          {organizer && (
+            <Link
+              href="/admin"
+              onClick={() => void beforeLeave()}
+              className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-jungle-800 px-3 text-[12.5px] font-bold text-paper shadow-card transition hover:bg-jungle-700"
+            >
+              <ShieldCheck className="size-4 text-saffron-400" /> Organizer
+            </Link>
+          )}
           <CurrencyPicker onPick={onCurrency} />
+          {admin ? (
+            <Link
+              href="/admin#people"
+              onClick={() => void beforeLeave()}
+              aria-label="Back to the console"
+              className="relative inline-flex h-9 items-center gap-1.5 rounded-full bg-ink px-3 text-[12.5px] font-bold text-paper"
+            >
+              <ArrowLeft className="size-4" /> Console
+              <SaveDot state={saveState} />
+            </Link>
+          ) : (
           <div className="relative" ref={ref}>
             <button
               onClick={() => setMenu((m) => !m)}
@@ -105,6 +142,7 @@ export function TripHeader({ name, step, canVisit, onStep, saveState, submitted,
               )}
             </AnimatePresence>
           </div>
+          )}
         </div>
         <nav className="flex items-center gap-1 px-3 pb-2" aria-label="Steps">
         {(Object.keys(LABELS) as Step[]).map((s) => {

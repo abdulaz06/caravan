@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, BedDouble, Building2, Check, Home, Shuffle } from "lucide-react";
+import { ArrowRight, BedDouble, Building2, Check, Home, LockKeyhole, Shuffle } from "lucide-react";
 import {
   budgets,
   dietary,
@@ -21,12 +21,20 @@ type Props = {
   data: ItineraryData;
   update: (fn: (d: ItineraryData) => ItineraryData) => void;
   locked: boolean;
+  /** Owner + admin names — the only people who see these answers. */
+  organizers: string[];
   onNext: () => void;
 };
 
+/** "Abdul", "Abdul & Aadil", "Abdul, Aadil & Sam". */
+export function namesList(names: string[]): string {
+  if (names.length <= 1) return names[0] ?? "the organizers";
+  return `${names.slice(0, -1).join(", ")} & ${names.at(-1)}`;
+}
+
 const STAY_ICONS = { hostel: BedDouble, boutique: Building2, villa: Home, mix: Shuffle } as const;
 
-export function PrefsStep({ data, update, locked, onNext }: Props) {
+export function PrefsStep({ data, update, locked, organizers, onNext }: Props) {
   const p = data.preferences;
   const { money, code } = useCurrency();
   const tierLabel = (id: string) => {
@@ -61,6 +69,10 @@ export function PrefsStep({ data, update, locked, onNext }: Props) {
           A few <span className="italic text-ocean-700">extras</span>
         </h1>
         <p className="mt-3 text-[15px] text-ink-2">All optional. Tap what&apos;s true, skip the rest — it all helps plan.</p>
+        <p className="mt-3 inline-flex items-center gap-2 rounded-full bg-paper px-3 py-1.5 text-[12.5px] font-semibold text-ink-2 shadow-card">
+          <LockKeyhole className="size-3.5 text-jungle-600" />
+          {organizers.length ? `Only the organizers (${namesList(organizers)}) see these answers` : "Only the organizers see these answers"}
+        </p>
       </section>
 
       <fieldset disabled={locked} className="relative z-[1] mt-7 space-y-5 px-3">
@@ -165,7 +177,7 @@ export function PrefsStep({ data, update, locked, onNext }: Props) {
               area
               max={1000}
             />
-            <TextField label="Anything else for Abdul?" value={p.notes} onChange={(v) => set("notes", v)} placeholder="Say hi 👋" area max={2000} />
+            <TextField label={`Anything else for ${namesList(organizers)}?`} value={p.notes} onChange={(v) => set("notes", v)} placeholder="Say hi 👋" area max={2000} />
           </div>
         </Card>
       </fieldset>

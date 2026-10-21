@@ -1,14 +1,14 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Leaf, Lock, Martini } from "lucide-react";
+import { Leaf, Lock, Martini, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/cn";
 import { balanceLabel } from "@/lib/timeline";
 import { Avatar } from "../avatar";
 
-type Person = { id: string; name: string; isMe: boolean; balance: number | null };
+type Person = { id: string; name: string; isMe: boolean; balance: number | null; organizer?: boolean };
 
 const AVATAR = 36; // px
 const LANE = 44; // px between lanes
@@ -96,10 +96,15 @@ export function GroupSpectrum({ people, canBrowse, submitted }: { people: Person
             >
               <Link
                 href={`/group/${d.id}`}
-                aria-label={`${d.name}${d.isMe ? " (you)" : ""} — ${balanceLabel(d.balance).title}. Open their trip`}
+                aria-label={`${d.name}${d.isMe ? " (you)" : ""}${d.organizer ? " · organizer" : ""} — ${balanceLabel(d.balance).title}. Open their trip`}
                 className="absolute block -translate-x-1/2 rounded-full transition hover:scale-110 active:scale-95"
               >
                 <Avatar name={d.name} className={cn("size-9 text-[14px] shadow-card", d.isMe ? "ring-[3px] ring-saffron-500" : "ring-2 ring-paper")} />
+                {d.organizer && (
+                  <span className="absolute -bottom-1 -right-1 grid size-4 place-items-center rounded-full bg-jungle-800 ring-2 ring-paper" title="Organizer">
+                    <ShieldCheck className="size-2.5 text-saffron-400" />
+                  </span>
+                )}
               </Link>
             </motion.div>
           ))}

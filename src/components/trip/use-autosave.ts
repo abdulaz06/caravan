@@ -7,9 +7,9 @@ export type SaveState = "idle" | "saving" | "saved" | "error";
 
 type Result = { ok: true; status: ItineraryStatus; updatedAt: string } | { ok: false; error: string; code: number };
 
-async function put(data: ItineraryData, submit: boolean, keepalive = false): Promise<Result> {
+async function put(url: string, data: ItineraryData, submit: boolean, keepalive = false): Promise<Result> {
   try {
-    const res = await fetch("/api/itinerary", {
+    const res = await fetch(url, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ data, submit }),
@@ -29,7 +29,14 @@ async function put(data: ItineraryData, submit: boolean, keepalive = false): Pro
  */
 export function useAutosave(
   data: ItineraryData,
-  opts: { enabled: boolean; onLocked: () => void; onSignedOut: () => void; saveOnMount?: boolean },
+  opts: {
+    enabled: boolean;
+    onLocked: () => void;
+    onSignedOut: () => void;
+    saveOnMount?: boolean;
+    /** Where to save — an organizer editing someone else's plan uses the admin endpoint. */
+    url?: string;
+  },
 ) {
   const [state, setState] = useState<SaveState>("idle");
   const [status, setStatus] = useState<ItineraryStatus | null>(null);
@@ -65,7 +72,7 @@ export function useAutosave(
       if (!d) return true;
       pending.current = null;
       setState("saving");
-      const r = await put(d, false, keepalive);
+      const r = await put(optsRef.current.url ?? "/api/itinerary", d, false, keepalive);
       if (!r.ok && r.code === 0 && !keepalive) {
         // Offline / flaky connection: keep the change and try again shortly.
         pending.current ??= d;
@@ -105,7 +112,7 @@ export function useAutosave(
       if (timer.current) clearTimeout(timer.current);
       pending.current = null;
       setState("saving");
-      const r = await put(d, true);
+      const r = await put(optsRef.current.url ?? "/api/itinerary", d, true);
       handle(r);
       return r;
     },

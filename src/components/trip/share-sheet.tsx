@@ -3,7 +3,8 @@
 import { Download, Loader2, Share2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import type { Photo } from "@/content";
-import type { ItineraryData } from "@/lib/itinerary";
+import { daysNightsLabel, type ItineraryData } from "@/lib/itinerary";
+import { tripDays } from "@/lib/rules";
 import { dayRoutes } from "@/lib/routes";
 import { renderShareImage, type ShareFormat, type ShareModel } from "@/lib/share-image";
 import { balanceOf, buildTimeline } from "@/lib/timeline";
@@ -94,7 +95,7 @@ export function ShareSheet({ onClose, name, data }: { onClose: () => void; name:
     if (!img) return;
     const file = new File([img.blob], filename(f), { type: "image/png" });
     try {
-      await navigator.share({ files: [file], title: `${name}'s Sri Lanka`, text: "My Sri Lanka trip — 6 days · 5 nights" });
+      await navigator.share({ files: [file], title: `${name}'s Sri Lanka`, text: `My Sri Lanka trip — ${daysNightsLabel(data.days.length || tripDays())}` });
     } catch (e) {
       if ((e as DOMException)?.name !== "AbortError") download(img.url, filename(f));
     }

@@ -351,7 +351,7 @@ function ReturningForm({ people, preselect }: { people: PersonLite[]; preselect:
             ) : (
               msg && <p className="mt-3 text-sm font-semibold text-sunset-600">{msg}</p>
             )}
-            <p className="mt-6 text-[13px] text-ink-3">Forgot your PIN? Ask Abdul to reset it for you.</p>
+            <p className="mt-6 text-[13px] text-ink-3">Forgot your PIN? Ask an organizer to reset it for you.</p>
           </motion.div>
         )}
       </AnimatePresence>

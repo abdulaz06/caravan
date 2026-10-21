@@ -1,13 +1,20 @@
 import Image from "next/image";
 import { heroPhotos } from "@/content";
+import { DEFAULT_RULES, tripDays } from "@/lib/rules";
+import { loadRules } from "@/lib/server/rules";
 import { Lockup, Stamp } from "@/components/brand/wordmark";
 
 /**
  * Participant pages live in a phone-width column. On desktop the column sits
  * on the right of a big travel-poster panel.
  */
-export default function AppLayout({ children }: { children: React.ReactNode }) {
+export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const hero = heroPhotos[1] ?? heroPhotos[0];
+  // The trip shape comes from the live Trip rules (6 days · 5 nights, Colombo 1 + Galle 4 by default).
+  const { rules } = await loadRules().catch(() => ({ rules: DEFAULT_RULES }));
+  const days = tripDays(rules);
+  const word = ["zero", "a night", "two nights", "three nights"][rules.colomboNights] ?? `${rules.colomboNights} nights`;
+  const galle = ["zero", "one", "two", "three", "four", "five", "six"][rules.galleNights] ?? String(rules.galleNights);
   return (
     <div className="min-h-dvh lg:grid lg:grid-cols-[minmax(0,1fr)_480px]">
       <aside className="sticky top-0 hidden h-dvh overflow-hidden bg-ocean-900 lg:block">
@@ -36,7 +43,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               <span className="italic text-saffron-400">your way.</span>
             </h2>
             <p className="mt-5 max-w-md text-lg text-paper/80">
-              6 days · 5 nights: a night in Colombo, then four in Galle — rainforests, whales, surf and beach parties. Build your
+              {days} days · {days - 1} nights: {word} in Colombo, then {galle} in Galle — rainforests, whales, surf and beach parties. Build your
               dream version, then we&apos;ll plan the trip together.
             </p>
             {hero && (

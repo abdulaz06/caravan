@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ArrowRight, CalendarHeart, Lock, Swords, PartyPopper } from "lucide-react";
+import { ArrowRight, CalendarHeart, Lock, Megaphone, Swords, PartyPopper } from "lucide-react";
 import Link from "next/link";
 import { heroPhotos, optionsById } from "@/content";
 import { Photo } from "./ui/photo";
@@ -27,23 +27,30 @@ const MARQUEE = [
   "pub-golf-galle",
 ].map((id) => optionsById[id]);
 
-const STEPS = [
-  {
-    icon: CalendarHeart,
-    title: "Place your 6 days",
-    body: "The group voted 6 days · 5 nights. Slide the window anywhere from 1 Dec to 31 Jan — over New Year's, maybe?",
-  },
-  {
-    icon: Swords,
-    title: "Build your days",
-    body: "One night in Colombo, four in Galle. Pick A vs B for each daytime and evening, add extras, or tap Quick fill.",
-  },
-  {
-    icon: PartyPopper,
-    title: "Submit & compare",
-    body: "See which dates work for everyone, what's most popular, and peek at the crew's picks.",
-  },
-];
+const WORDS = ["zero", "one", "two", "three", "four", "five", "six", "seven"];
+const shortDay = (iso: string) => new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" });
+
+/** The three steps, worded from the live trip shape (6 days · 5 nights by default). */
+function steps(t: PublicCounts["trip"]) {
+  const nights = (n: number) => `${WORDS[n] ?? n} ${n === 1 ? "night" : "nights"}`;
+  return [
+    {
+      icon: CalendarHeart,
+      title: `Place your ${t.days} days`,
+      body: `The group voted ${t.days} days · ${t.days - 1} nights. Slide the window anywhere from ${shortDay(t.start)} to ${shortDay(t.end)} — over New Year's, maybe?`,
+    },
+    {
+      icon: Swords,
+      title: "Build your days",
+      body: `${nights(t.colombo).replace(/^./, (c) => c.toUpperCase())} in Colombo, ${nights(t.galle).replace(" nights", "").replace(" night", "")} in Galle. Pick A vs B for each daytime and evening, add extras, or tap Quick fill.`,
+    },
+    {
+      icon: PartyPopper,
+      title: "Submit & compare",
+      body: "See which dates work for everyone, what's most popular, and peek at the crew's picks.",
+    },
+  ];
+}
 
 const rise = {
   hidden: { opacity: 0, y: 24 },
@@ -122,6 +129,16 @@ export function Welcome({ counts }: { counts: PublicCounts }) {
             )}
           </motion.div>
 
+          {counts.announcement && (
+            <motion.p
+              variants={rise}
+              role="status"
+              aria-label="Announcement"
+              className="mt-5 flex items-start gap-2 rounded-2xl bg-white/12 px-4 py-3 text-[14px] font-medium leading-snug ring-1 ring-white/20 backdrop-blur-md"
+            >
+              <Megaphone className="mt-0.5 size-4 shrink-0 text-saffron-400" /> <span className="whitespace-pre-line">{counts.announcement}</span>
+            </motion.p>
+          )}
           {counts.locked && (
             <motion.p
               variants={rise}
@@ -164,7 +181,7 @@ export function Welcome({ counts }: { counts: PublicCounts }) {
           Your trip, <span className="italic text-ocean-700">your way.</span>
         </h2>
         <ol className="mt-7 space-y-3">
-          {STEPS.map((s, i) => (
+          {steps(counts.trip).map((s, i) => (
             <motion.li
               key={s.title}
               initial={{ opacity: 0, y: 20 }}

@@ -1,13 +1,15 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ArrowLeft, ArrowRight, Leaf, Lock, Martini, Moon, Sparkles, Sun } from "lucide-react";
+import { ArrowLeft, ArrowRight, Leaf, Lock, Martini, Moon, ShieldCheck, Sparkles, Sun } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { NYE_DATE, optionsById, regions } from "@/content";
 import { flexibility as FLEX } from "@/content/preferences";
 import { cn } from "@/lib/cn";
 import { dayLabel, monthName, parseISO, rangeLabel } from "@/lib/dates";
+import { daysNightsLabel } from "@/lib/itinerary";
+import { tripDays, tripWindow } from "@/lib/rules";
 import { balanceLabel } from "@/lib/timeline";
 import type { GroupStats } from "@/lib/server/group";
 import { Avatar } from "../avatar";
@@ -20,6 +22,7 @@ import { Photo } from "../ui/photo";
 import { BalanceMeter } from "../trip/balance-meter";
 import { RouteMap } from "../trip/route-map";
 import { StayThumb } from "../trip/day-card";
+import { AnnouncementBar, LockCountdown, useRules } from "../rules";
 import { GroupSpectrum, MiniMeter } from "./spectrum";
 
 type ItinCard = {
@@ -33,18 +36,35 @@ type ItinCard = {
   balance: number | null;
 };
 
+/** Everyone, for the cards (peek works on drafts too). */
+export type Member = { id: string; name: string; isMe: boolean; status: "new" | "draft" | "submitted"; organizer: boolean };
+
 type Props = {
   stats: GroupStats;
   myStatus: "new" | "draft" | "submitted";
   canBrowse: boolean;
   itineraries: ItinCard[];
+  members: Member[];
   editsLocked: boolean;
+  isOrganizer?: boolean;
 };
+
+/** A small "Organizer" badge next to admins' and the owner's names. */
+export function OrganizerBadge({ className }: { className?: string }) {
+  return (
+    <span className={cn("inline-flex shrink-0 items-center gap-0.5 rounded-full bg-jungle-800 px-1.5 py-px text-[10px] font-bold text-paper", className)}>
+      <ShieldCheck className="size-2.5 text-saffron-400" /> Organizer
+    </span>
+  );
+}
 
 const rise = { initial: { opacity: 0, y: 20 }, whileInView: { opacity: 1, y: 0 }, viewport: { once: true, margin: "-30px" } };
 
-export function GroupView({ stats, myStatus, canBrowse, itineraries, editsLocked }: Props) {
+export function GroupView({ stats, myStatus, canBrowse, itineraries, members, editsLocked, isOrganizer }: Props) {
+  const rules = useRules();
   const pct = stats.joined ? stats.submitted / stats.joined : 0;
+  const org = new Set(members.filter((m) => m.organizer).map((m) => m.id));
+  const card = new Map(itineraries.map((it) => [it.id, it]));
   return (
     <div className="grain min-h-dvh">
       <header className="sticky top-0 z-40 flex h-16 items-center gap-3 border-b border-ink/[0.06] bg-sand-100/85 px-4 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
@@ -52,9 +72,16 @@ export function GroupView({ stats, myStatus, canBrowse, itineraries, editsLocked
           <ArrowLeft className="size-4" /> My trip
         </Link>
         <span className="flex-1" />
+        {isOrganizer && (
+          <Link href="/admin" className="inline-flex h-9 items-center gap-1.5 rounded-full bg-jungle-800 px-3 text-[12.5px] font-bold text-paper">
+            <ShieldCheck className="size-4 text-saffron-400" /> Organizer
+          </Link>
+        )}
         <CurrencyPicker />
         <Lockup size="sm" />
       </header>
+      <AnnouncementBar />
+      <LockCountdown />
 
       {editsLocked && (
         <div className="flex items-center gap-2.5 bg-ocean-800 px-4 py-3 text-[14px] font-medium text-paper">
@@ -69,11 +96,13 @@ export function GroupView({ stats, myStatus, canBrowse, itineraries, editsLocked
         </h1>
       </div>
       <div className="relative z-[1] mt-5 space-y-4 px-3">
-        <GroupSpectrum
-          people={itineraries.map((it) => ({ id: it.id, name: it.name, isMe: it.isMe, balance: it.balance }))}
-          canBrowse={canBrowse}
-          submitted={stats.submitted}
-        />
+        {rules.spectrum && (
+          <GroupSpectrum
+            people={itineraries.map((it) => ({ id: it.id, name: it.name, isMe: it.isMe, balance: it.balance, organizer: org.has(it.id) }))}
+            canBrowse={canBrowse}
+            submitted={stats.submitted}
+          />
+        )}
 
         {/* Responses */}
         <section className="relative overflow-hidden rounded-[30px] bg-ocean-800 p-5 text-paper shadow-lift">
@@ -107,6 +136,7 @@ export function GroupView({ stats, myStatus, canBrowse, itineraries, editsLocked
                 >
                   <Avatar name={p.name} className="size-6 text-[11px] ring-0" />
                   {p.name}
+                  {org.has(p.id) && <ShieldCheck aria-label="Organizer" className="size-3.5 text-saffron-500" />}
                   {p.status === "submitted" && <span className="text-jungle-600">✓</span>}
                 </li>
               ))}
@@ -195,53 +225,75 @@ export function GroupView({ stats, myStatus, canBrowse, itineraries, editsLocked
           </motion.section>
         )}
 
-        {/* Browse */}
+        {/* Everyone: open submitted trips (if browsing is unlocked) and 👀 peek at anyone */}
         <motion.section {...rise} className="rounded-[26px] bg-sand-50 p-4 shadow-card ring-1 ring-ink/[0.03]">
           <h2 className="font-display text-[24px] font-semibold">Everyone&apos;s trips</h2>
-          {canBrowse ? (
-            itineraries.length ? (
-              <ul className="mt-3 grid gap-2">
-                {itineraries.map((it) => (
-                  <li key={it.id}>
-                    <Link
-                      href={`/group/${it.id}`}
-                      className="flex items-center gap-3 rounded-2xl bg-paper p-3 shadow-card transition hover:-translate-y-0.5"
-                    >
-                      <Avatar name={it.name} className="size-11 text-lg ring-0" />
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate text-[15.5px] font-semibold">
-                          {it.name} {it.isMe && <span className="text-ink-3">(you)</span>}
-                        </span>
-                        <span className="block truncate text-[12.5px] text-ink-3">
-                          {it.startDate && it.endDate ? `${rangeLabel(it.startDate, it.endDate)} · ${it.days} days` : "No dates"} ·{" "}
-                          {balanceLabel(it.balance).title}
-                        </span>
-                        <span className="mt-1.5 flex items-center gap-1.5" aria-label={`Nature to nightlife: ${balanceLabel(it.balance).title}`}>
-                          <Leaf className="size-3 shrink-0 text-jungle-600" strokeWidth={2.5} />
-                          <MiniMeter score={it.balance} className="max-w-[150px]" />
-                          <Martini className="size-3 shrink-0 text-hibiscus-600" strokeWidth={2.5} />
-                        </span>
-                      </span>
-                      <ArrowRight className="size-4 text-ink-3" />
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="mt-2 text-ink-2">Nobody else has submitted yet.</p>
-            )
-          ) : (
+          {!canBrowse && rules.browse !== "off" && (
             <div className="mt-3 rounded-2xl bg-ocean-800 p-5 text-paper">
               <Lock className="size-6 text-saffron-400" />
               <p className="font-display mt-2 text-[20px] font-semibold leading-tight">Submit yours to unlock everyone&apos;s trips</p>
               <p className="mt-1.5 text-[14px] text-paper/70">
-                Keeps everyone&apos;s picks independent — no copying the cool kids.
+                Keeps everyone&apos;s picks independent — no copying the cool kids.{rules.peek ? " (A sneaky peek is allowed though 👀)" : ""}
               </p>
               <ButtonLink href={myStatus === "new" ? "/trip" : "/trip?step=review"} variant="primary" size="md" className="mt-4">
                 Finish my trip <ArrowRight className="size-4" />
               </ButtonLink>
             </div>
           )}
+          {rules.browse === "off" && (
+            <p className="mt-2 text-[13.5px] text-ink-3">The organizers have switched off browsing for now.{rules.peek ? " Peeking still works 👀" : ""}</p>
+          )}
+          <ul className="mt-3 grid gap-2" aria-label="Everyone">
+            {members.map((m) => {
+              const it = card.get(m.id);
+              const open = canBrowse && !!it;
+              const label = it ? `${it.startDate && it.endDate ? `${rangeLabel(it.startDate, it.endDate)} · ${it.days} days` : "No dates"} · ${balanceLabel(it.balance).title}` : null;
+              return (
+                <li key={m.id} className="flex items-center gap-3 rounded-2xl bg-paper p-3 shadow-card">
+                  <Avatar name={m.name} className="size-11 text-lg ring-0" />
+                  <span className="min-w-0 flex-1">
+                    <span className="flex items-center gap-1.5 text-[15.5px] font-semibold">
+                      {open ? (
+                        <Link href={`/group/${m.id}`} className="truncate hover:underline">
+                          {m.name}
+                        </Link>
+                      ) : (
+                        <span className="truncate">{m.name}</span>
+                      )}
+                      {m.isMe && <span className="text-ink-3">(you)</span>}
+                      {m.organizer && <OrganizerBadge />}
+                    </span>
+                    <span className="block truncate text-[12.5px] text-ink-3">
+                      {open && label
+                        ? label
+                        : m.status === "submitted"
+                          ? "Submitted ✓"
+                          : m.status === "draft"
+                            ? "Still cooking…"
+                            : "Hasn't started yet"}
+                    </span>
+                    {open && it && (
+                      <span className="mt-1.5 flex items-center gap-1.5" aria-label={`Nature to nightlife: ${balanceLabel(it.balance).title}`}>
+                        <Leaf className="size-3 shrink-0 text-jungle-600" strokeWidth={2.5} />
+                        <MiniMeter score={it.balance} className="max-w-[150px]" />
+                        <Martini className="size-3 shrink-0 text-hibiscus-600" strokeWidth={2.5} />
+                      </span>
+                    )}
+                  </span>
+                  {rules.peek && !m.isMe && m.status !== "new" && (
+                    <Link
+                      href={`/group/peek/${m.id}`}
+                      aria-label={`Peek at ${m.name}'s plan`}
+                      className="inline-flex h-9 shrink-0 items-center gap-1 rounded-full bg-dusk-900 px-3 text-[13px] font-bold text-paper shadow-card transition hover:-translate-y-0.5 active:scale-95"
+                    >
+                      <span aria-hidden="true">👀</span> Peek
+                    </Link>
+                  )}
+                  {open && !rules.peek && <ArrowRight className="size-4 shrink-0 text-ink-3" />}
+                </li>
+              );
+            })}
+          </ul>
         </motion.section>
       </div>
       <SiteFooter className="relative z-[1] mt-4" />
@@ -250,6 +302,21 @@ export function GroupView({ stats, myStatus, canBrowse, itineraries, editsLocked
 }
 
 // ── Date availability heatmap ────────────────────────────────────────
+
+function months(start: string, end: string) {
+  const out: { y: number; m: number }[] = [];
+  let y = Number(start.slice(0, 4));
+  let m = Number(start.slice(5, 7)) - 1;
+  const last = Number(end.slice(0, 4)) * 12 + Number(end.slice(5, 7)) - 1;
+  while (y * 12 + m <= last) {
+    out.push({ y, m });
+    if (++m > 11) {
+      m = 0;
+      y++;
+    }
+  }
+  return out;
+}
 
 const WEEK = ["M", "T", "W", "T", "F", "S", "S"];
 
@@ -293,10 +360,7 @@ function Heatmap({ stats }: { stats: GroupStats }) {
       )}
 
       <div className="mt-4 space-y-5">
-        {[
-          { y: 2026, m: 11 },
-          { y: 2027, m: 0 },
-        ].map(({ y, m }) => {
+        {months(tripWindow().start, tripWindow().end).map(({ y, m }) => {
           const first = new Date(Date.UTC(y, m, 1));
           const lead = (first.getUTCDay() + 6) % 7;
           const days = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
@@ -356,7 +420,7 @@ function Heatmap({ stats }: { stats: GroupStats }) {
       {flexEntries.length > 0 && (
         <p className="mt-3 text-[12.5px] text-ink-3">
           {flexEntries.map((f) => `${stats.flexibility[f.id]} ${f.label.toLowerCase()}`).join(" · ")}
-          {stats.avgLength ? " · everyone's window is 6 days · 5 nights" : ""}
+          {stats.avgLength ? ` · everyone's window is ${daysNightsLabel(tripDays())}` : ""}
         </p>
       )}
     </motion.section>

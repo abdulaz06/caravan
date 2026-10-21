@@ -14,7 +14,9 @@ import {
   transport,
 } from "@/content/preferences";
 import { halalSwapCount, halalView } from "@/lib/halal";
-import { countItems, type ItineraryData, type ItineraryStatus } from "@/lib/itinerary";
+import { countItems, daysNightsLabel, type ItineraryData, type ItineraryStatus } from "@/lib/itinerary";
+import { tripDays } from "@/lib/rules";
+import { useRules } from "../rules";
 import { balanceOf, buildTimeline } from "@/lib/timeline";
 import { cn } from "@/lib/cn";
 import { SiteFooter } from "../brand/site-footer";
@@ -38,9 +40,14 @@ type Props = {
   locked: boolean;
   saveState: SaveState;
   onEdit: (s: Step) => void;
-  /** The 5-day preview sandbox can't be submitted. */
+  /** The shorter preview sandbox can't be submitted — unless the rules allow it. */
   previewing?: boolean;
+  canSubmitPreview?: boolean;
   onExitPreview?: () => void;
+  /** Unique people who peeked at this plan (anonymous). */
+  peekCount?: number;
+  /** An organizer editing on someone's behalf: no submitting, no Halal mode. */
+  adminMode?: boolean;
   budget: BudgetResult;
   onOpenBudget: () => void;
   onSubmit: () => Promise<boolean>;
@@ -70,10 +77,14 @@ export function ReviewStep({
   budget,
   onOpenBudget,
   previewing,
+  canSubmitPreview = false,
   onExitPreview,
+  peekCount = 0,
+  adminMode = false,
   halal = false,
   onHalal,
 }: Props) {
+  const rules = useRules();
   // Halal mode only changes what's shown — `saved` is never touched.
   const data = useMemo(() => (halal ? halalView(saved) : saved), [saved, halal]);
   const swaps = useMemo(() => halalSwapCount(saved), [saved]);
@@ -164,9 +175,15 @@ export function ReviewStep({
           <BalanceMeter
             balance={balance}
             mode={halal ? "halal" : "normal"}
-            action={onHalal && !previewing ? <HalalSwitch on={halal} onChange={onHalal} /> : undefined}
+            action={onHalal && !previewing && rules.halalButton ? <HalalSwitch on={halal} onChange={onHalal} /> : undefined}
           />
         </div>
+        {peekCount > 0 && (
+          <p aria-label="Peek counter" className="flex items-center justify-center gap-2 rounded-2xl bg-dusk-900 px-4 py-3 text-[14px] font-semibold text-paper shadow-card">
+            <span aria-hidden="true" className="text-[18px]">👀</span>
+            {peekCount} {peekCount === 1 ? "person" : "people"} peeked at your plan
+          </p>
+        )}
 
         {editable && (
           <div className="flex gap-2 overflow-x-auto px-1 pb-1 no-scrollbar">
@@ -190,15 +207,25 @@ export function ReviewStep({
       </div>
       <SiteFooter className="relative z-[1] mt-6" />
 
-      {editable && (
+      {editable && !adminMode && (
         <div className="pb-safe fixed inset-x-0 bottom-0 z-30 bg-gradient-to-t from-sand-100 via-sand-100/90 to-transparent px-4 pt-6 lg:left-auto lg:w-[480px]">
-          {previewing ? (
+          {previewing && canSubmitPreview ? (
             <div className="space-y-2">
               <div className="flex items-center gap-2 rounded-2xl bg-saffron-100 px-3 py-2 text-[13px] font-semibold leading-snug text-ink shadow-card ring-1 ring-saffron-200">
                 <FlaskConical className="size-4 shrink-0 text-sunset-600" />
-                <span className="flex-1">The group voted 6 days. Switch back to submit.</span>
+                <span className="flex-1">The organizers allow shorter trips — submitting makes this your plan.</span>
+              </div>
+              <Button size="lg" block onClick={submit} disabled={busy || !data.startDate}>
+                {busy ? "Sending…" : `Submit my ${daysNightsLabel(data.days.length).split(" · ")[0]} trip`} <Send className="size-[18px]" strokeWidth={2.5} />
+              </Button>
+            </div>
+          ) : previewing ? (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 rounded-2xl bg-saffron-100 px-3 py-2 text-[13px] font-semibold leading-snug text-ink shadow-card ring-1 ring-saffron-200">
+                <FlaskConical className="size-4 shrink-0 text-sunset-600" />
+                <span className="flex-1">The group voted {tripDays()} days. Switch back to submit.</span>
                 <button onClick={onExitPreview} className="shrink-0 rounded-full bg-ink px-3 py-1.5 text-[12px] font-bold text-paper">
-                  Back to 6 days
+                  Back to {tripDays()} days
                 </button>
               </div>
               <Button size="lg" block disabled>
