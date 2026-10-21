@@ -1,12 +1,12 @@
 "use client";
 
-import { Lock, Moon, Sun } from "lucide-react";
+import { Moon, MoonStar, Sun } from "lucide-react";
 import { useState } from "react";
 import { formatHours, type Activity, type Where } from "@/content";
 import { cn } from "@/lib/cn";
 import { nights, type ItineraryData, type SlotKind } from "@/lib/itinerary";
 import type { SlotView, Timeline } from "@/lib/timeline";
-import { Firework, SummitIcon } from "../brand/illustrations";
+import { Firework, HillSunIcon } from "../brand/illustrations";
 import { RoadTrip, Tip, Warning } from "./bits";
 import { ItemRow } from "./day-card";
 import { OptionDetail } from "./option-detail";
@@ -54,12 +54,11 @@ export function ItineraryTimeline({ data, timeline }: { data: ItineraryData; tim
                       <Firework className="size-3.5" /> New Year&apos;s Eve
                     </span>
                   )}
-                  {t.tags.includes("summit") && (
+                  {t.tags.includes("daytrip") && (
                     <span className="inline-flex items-center gap-1 text-[12px] font-bold text-jungle-700">
-                      <SummitIcon className="size-4" /> Adam&apos;s Peak
+                      <HillSunIcon className="size-4" /> Ella day trip
                     </span>
                   )}
-                  {t.tags.includes("poya") && <span className="text-[12px] font-bold text-saffron-600">🌕 Poya</span>}
                 </div>
               </div>
               <div className="mt-2.5 space-y-2">
@@ -95,19 +94,14 @@ export function ItineraryTimeline({ data, timeline }: { data: ItineraryData; tim
 
 function SlotRows({ kind, view, date, onOpen }: { kind: SlotKind; view: SlotView; date: string | null; onOpen: (a: Activity) => void }) {
   const night = kind === "night";
-  if (!view.items.length && view.locked) {
-    return (
-      <div className="space-y-1">
-        <p className="label flex items-center gap-1.5 pl-1 text-dusk-700">Evening</p>
-        <LockedDrive locked={view.locked} />
-      </div>
-    );
-  }
   if (!view.items.length) {
     return (
-      <div className={cn("flex h-12 items-center gap-2.5 rounded-2xl px-3 text-[13.5px] font-medium", night ? "bg-dusk-900/[0.06] text-ink-3" : "bg-sand-200/50 text-ink-3")}>
-        {night ? <Moon className="size-4" /> : <Sun className="size-4" />}
-        {night ? "Free evening" : view.where === "enroute" ? "Straight down the expressway" : "Free daytime"}
+      <div className="space-y-1">
+        <SlotNotes notes={view.notes} />
+        <div className={cn("flex h-12 items-center gap-2.5 rounded-2xl px-3 text-[13.5px] font-medium", night ? "bg-dusk-900/[0.06] text-ink-3" : "bg-sand-200/50 text-ink-3")}>
+          {night ? <Moon className="size-4" /> : <Sun className="size-4" />}
+          {night ? "Free evening" : view.where === "enroute" ? "Straight down the expressway" : "Free daytime"}
+        </div>
       </div>
     );
   }
@@ -117,7 +111,7 @@ function SlotRows({ kind, view, date, onOpen }: { kind: SlotKind; view: SlotView
         {night ? "Evening" : view.where === "enroute" ? "On the way" : "Daytime"}
         <span className="font-sans normal-case tracking-normal text-ink-3">· {view.fullDay ? `Full day, ${view.fullDay}` : formatHours(view.plannedHours)}</span>
       </p>
-      {view.note && <p className="rounded-xl bg-dusk-900 px-3 py-2 text-[12.5px] font-semibold text-paper">😴 {view.note.text}</p>}
+      <SlotNotes notes={view.notes} />
       {view.items.map((it) => (
         <div key={it.item.key}>
           {it.before && <RoadTrip seg={it.before} />}
@@ -132,25 +126,24 @@ function SlotRows({ kind, view, date, onOpen }: { kind: SlotKind; view: SlotView
         </div>
       ))}
       {view.after && <RoadTrip seg={view.after} />}
-      {view.locked && <LockedDrive locked={view.locked} />}
     </div>
   );
 }
 
-/** The sunrise climb's overnight drive, locked onto the evening before. */
-function LockedDrive({ locked }: { locked: NonNullable<SlotView["locked"]> }) {
+/** Soft evening notes: "Early night: leaving ~12:30am for Ella" / "Back ~8pm — Stay in…". */
+function SlotNotes({ notes }: { notes: SlotView["notes"] }) {
+  if (!notes?.length) return null;
   return (
-    <div className="flex items-center gap-3 rounded-2xl bg-ocean-900 p-2 pr-3 text-paper">
-      <span className="grid size-[44px] shrink-0 place-items-center rounded-xl bg-dusk-900">
-        <SummitIcon className="size-9" night />
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block text-[13.5px] font-semibold leading-tight">
-          {locked.title} · leave {locked.leave}
-        </span>
-        <span className="block text-[11.5px] text-paper/60">{locked.detail}</span>
-      </span>
-      <Lock className="size-4 shrink-0 text-saffron-400" />
-    </div>
+    <>
+      {notes.map((n) => (
+        <p
+          key={n.text}
+          className={cn("flex items-center gap-2 rounded-xl px-3 py-2 text-[12.5px] font-semibold text-paper", n.tone === "early" ? "bg-dusk-800" : "bg-dusk-900")}
+        >
+          {n.tone === "early" ? <MoonStar className="size-4 shrink-0 text-saffron-400" /> : <span aria-hidden="true">😴</span>}
+          {n.text}
+        </p>
+      ))}
+    </>
   );
 }

@@ -1,16 +1,16 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { AlertTriangle, Ban, LayoutGrid, Lock, Moon, MoreHorizontal, NotebookPen, Plus, Sun } from "lucide-react";
+import { AlertTriangle, Ban, LayoutGrid, Moon, MoonStar, MoreHorizontal, NotebookPen, Plus, Sun } from "lucide-react";
 import type { CSSProperties } from "react";
 import { formatHours } from "@/content";
 import { cn } from "@/lib/cn";
 import { parseISO } from "@/lib/dates";
 import type { DayEntry, SlotKind } from "@/lib/itinerary";
 import { currentRules, isHidden } from "@/lib/rules";
-import { peakVariant } from "@/lib/adams-peak";
+import { tripVariant } from "@/lib/day-trip";
 import { distanceLabel, type ItemView, type SlotView as SlotViewT, type TimelineDay } from "@/lib/timeline";
-import { Firework, StayInIcon, SummitIcon, Van } from "../brand/illustrations";
+import { Firework, HillSunIcon, StayInIcon, Van } from "../brand/illustrations";
 import { Photo } from "../ui/photo";
 import { DaysBadge, RoadTrip, Tip, VibeDots, Warning } from "./bits";
 
@@ -60,7 +60,7 @@ type CardProps = {
   onAdd: (slot: SlotKind) => void;
   onItem: (slot: SlotKind, key: string) => void;
   onNote: () => void;
-  /** One tap "Stay in" for a recovery evening after Adam's Peak. */
+  /** One tap "Stay in" for the evening of the Ella day trip. */
   onStayIn?: () => void;
 };
 
@@ -91,12 +91,11 @@ export function DayCard({ entry, index, t, locked, drag, onFirst, onAdd, onItem,
           <span className="label whitespace-nowrap text-ink-3">Day {index + 1}</span>
           <Tag className={tag.className}>{tag.label}</Tag>
           {nye && <Tag className="bg-dusk-900 text-saffron-400">NYE ✦</Tag>}
-          {t.tags.includes("summit") && (
+          {t.tags.includes("daytrip") && (
             <Tag className="inline-flex items-center gap-1 bg-jungle-800 text-saffron-400">
-              <SummitIcon className="size-3.5" /> Adam&apos;s Peak
+              <HillSunIcon className="size-4" /> Ella day trip
             </Tag>
           )}
-          {t.tags.includes("poya") && <Tag className="bg-saffron-200 text-ink">🌕 Poya</Tag>}
         </div>
         {!locked && (
           <button
@@ -136,13 +135,7 @@ export function DayCard({ entry, index, t, locked, drag, onFirst, onAdd, onItem,
         view={t.night}
         date={t.date}
         empty={
-          nye
-            ? "Pick your New Year's Eve"
-            : t.night.locked
-              ? `Anything before the ${t.night.locked.leave.replace("~", "")} drive?`
-              : t.role === "colombo"
-                ? "Pick your Colombo night"
-                : "Pick your evening"
+          nye ? "Pick your New Year's Eve" : t.role === "colombo" ? "Pick your Colombo night" : "Pick your evening"
         }
         locked={locked}
         nye={nye}
@@ -239,16 +232,23 @@ function SlotBlock({
           </span>
         )}
       </div>
-      {view.note && (
-        <div className="mb-1.5 flex items-center gap-2 rounded-xl bg-dusk-900/90 px-3 py-2 text-[12.5px] font-semibold text-paper">
-          <span className="flex-1">😴 {view.note.text}</span>
-          {view.note.suggestStay && !locked && onStayIn && (
+      {view.notes?.map((n) => (
+        <div
+          key={n.text}
+          className={cn(
+            "mb-1.5 flex items-center gap-2 rounded-xl px-3 py-2 text-[12.5px] font-semibold",
+            n.tone === "early" ? "bg-dusk-800 text-paper" : "bg-dusk-900/90 text-paper",
+          )}
+        >
+          {n.tone === "early" ? <MoonStar className="size-4 shrink-0 text-saffron-400" /> : <span aria-hidden="true">😴</span>}
+          <span className="flex-1">{n.text}</span>
+          {n.suggestStay && !locked && onStayIn && (
             <button onClick={onStayIn} className="shrink-0 rounded-full bg-saffron-400 px-2.5 py-1 text-[11.5px] font-bold text-ink">
               + Stay in
             </button>
           )}
         </div>
-      )}
+      ))}
       {view.items.length === 0 ? (
         <>
           <EmptySlot kind={kind} label={empty} nye={nye} locked={locked} onClick={onFirst} />
@@ -281,23 +281,6 @@ function SlotBlock({
             </li>
           )}
         </ul>
-      )}
-      {view.locked && (
-        <div
-          aria-label={`${view.locked.title} · leave ${view.locked.leave} (locked)`}
-          className="mt-1.5 flex items-center gap-3 rounded-2xl bg-ocean-900 p-2 pr-3 text-paper ring-1 ring-saffron-400/40"
-        >
-          <span className="grid size-[52px] shrink-0 place-items-center rounded-xl bg-dusk-900">
-            <SummitIcon className="size-10" night />
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="block text-[14px] font-semibold leading-tight">
-              {view.locked.title} · leave {view.locked.leave}
-            </span>
-            <span className="mt-0.5 block text-[11.5px] text-paper/60">{view.locked.detail} · for Day {view.locked.forDay + 1}&apos;s sunrise</span>
-          </span>
-          <Lock className="size-4 shrink-0 text-saffron-400" />
-        </div>
       )}
       {view.after && <RoadTrip seg={view.after} className="mt-1" />}
     </div>
@@ -356,7 +339,7 @@ export function ItemRow({
   const extra = a?.kind === "extra";
   const offDay = !!a?.availableDays && !!date && !a.availableDays.includes(parseISO(date).getUTCDay());
   const gone = !!a && isHidden(a.id);
-  const variant = a?.variants ? peakVariant(view.item.variant) : undefined;
+  const variant = a?.variants ? tripVariant(view.item.variant) : undefined;
   return (
     <motion.button
       layout="position"

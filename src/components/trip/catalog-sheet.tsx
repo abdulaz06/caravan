@@ -45,6 +45,8 @@ export function CatalogSheet({ open, onClose, data, index, slot, mode = "add", o
     return activities
       .filter((a) => itemAllowed(a.id, slot, where, isNye) && !isHidden(a.id))
       .filter((a) => !a.onlyRole || a.onlyRole === roleAt(data, index))
+      // Ella extras only alongside the Ella day trip, in this same slot.
+      .filter((a) => !a.onlyWith || inSlot.has(a.onlyWith))
       .filter((a) => cat === "all" || a.categories.includes(cat))
       .filter(
         (a) =>
@@ -53,6 +55,7 @@ export function CatalogSheet({ open, onClose, data, index, slot, mode = "add", o
           a.region.includes(term),
       )
       .sort((a, b) => {
+        if (!!a.onlyWith !== !!b.onlyWith) return a.onlyWith ? -1 : 1;
         if (isFeatured(a.id) !== isFeatured(b.id)) return isFeatured(a.id) ? -1 : 1;
         if (a.kind !== b.kind) return a.kind === "option" ? -1 : 1;
         if (where === "enroute") return (a.routeKm ?? 0) - (b.routeKm ?? 0);

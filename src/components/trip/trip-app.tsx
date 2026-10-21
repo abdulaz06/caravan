@@ -18,6 +18,7 @@ import {
 import { allowedLengths, previewAvailable, previewDays, tripDays } from "@/lib/rules";
 import { AnnouncementBar, LockCountdown } from "../rules";
 import { LocalTime } from "../ui/local-time";
+import { HillSunIcon } from "../brand/illustrations";
 import { useToast } from "../ui/toast";
 import { BudgetSheet, BudgetSidePanel } from "./budget";
 import { BuildStep } from "./build-step";
@@ -42,6 +43,8 @@ type Props = {
   /** Picks cleared when an older itinerary moved onto the day structure (-1 = no upgrade). */
   migratedPicks?: number;
   needsUpgradeSave?: boolean;
+  /** The saved plan had Adam's Peak, now swapped for the Ella day trip (one-time note). */
+  swappedPeak?: boolean;
   /** Owner + admin names for the privacy line ("Abdul & Aadil"). */
   organizers: string[];
   isOrganizer?: boolean;
@@ -71,6 +74,7 @@ export function TripApp({
   requestedStep,
   migratedPicks = -1,
   needsUpgradeSave = false,
+  swappedPeak = false,
   organizers,
   isOrganizer = false,
   peekCount = 0,
@@ -96,6 +100,7 @@ export function TripApp({
   const [direction, setDirection] = useState(1);
   const [budgetOpen, setBudgetOpen] = useState(false);
   const [notice, setNotice] = useState(migratedPicks >= 0 && !admin);
+  const [peakNote, setPeakNote] = useState(swappedPeak && !admin);
   const [stampNote, setStampNote] = useState(admin ? null : stamp);
 
   const save = useAutosave(data, {
@@ -245,6 +250,22 @@ export function TripApp({
                 Everything else is just as you left it.
               </p>
               <button onClick={() => setNotice(false)} aria-label="Dismiss" className="-mr-1 -mt-1 grid size-8 place-items-center rounded-full hover:bg-saffron-200">
+                <X className="size-4" />
+              </button>
+            </div>
+          </motion.div>
+        )}
+        {peakNote && (
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+            <div role="status" aria-label="Plan update" className="mx-3 mb-0.5 mt-3 flex items-start gap-3 rounded-2xl bg-jungle-100 p-3.5 text-[14px] leading-snug text-ink-2 ring-1 ring-jungle-400/40">
+              <span className="grid size-9 shrink-0 place-items-center overflow-hidden rounded-xl bg-dusk-800">
+                <HillSunIcon className="size-8 translate-y-0.5" rising />
+              </span>
+              <p className="flex-1">
+                <b className="text-ink">We swapped Adam&apos;s Peak for Little Adam&apos;s Peak in Ella.</b> Easier hike, same sunrise. It&apos;s on the same day
+                in your plan.
+              </p>
+              <button onClick={() => setPeakNote(false)} aria-label="Dismiss" className="-mr-1 -mt-1 grid size-8 place-items-center rounded-full hover:bg-jungle-400/20">
                 <X className="size-4" />
               </button>
             </div>

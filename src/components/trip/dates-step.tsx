@@ -3,13 +3,12 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, ChevronLeft, ChevronRight, FlaskConical, Hand, Moon, Vote } from "lucide-react";
 import { useCallback, useEffect, useRef } from "react";
-import { NYE_DATE, poyaOn } from "@/content";
+import { NYE_DATE } from "@/content";
 import { flexibility as FLEX } from "@/content/preferences";
 import { cn } from "@/lib/cn";
 import { addDays, dayLabel, diffDays, monthName, parseISO } from "@/lib/dates";
 import { clampStart, dayRole, daysNightsLabel, setStart, type Flexibility, type ItineraryData } from "@/lib/itinerary";
 import { allowedLengths, previewAvailable, previewDays, tripDays, tripWindow } from "@/lib/rules";
-import { poyaDaysIn } from "@/lib/adams-peak";
 import { Firework } from "../brand/illustrations";
 import { Button } from "../ui/button";
 
@@ -219,7 +218,6 @@ export function DatesStep({ data, update, locked, onNext, length, onLength }: Pr
                   const nye = d === NYE_DATE;
                   const idx = on ? diffDays(start!, d) : -1;
                   const out = d < win.start || d > win.end;
-                  const poya = poyaOn(d);
                   return (
                     <div key={d} className="relative h-[52px]" data-date={d}>
                       {on && (
@@ -254,7 +252,7 @@ export function DatesStep({ data, update, locked, onNext, length, onLength }: Pr
                           }
                         }}
                         disabled={locked || out}
-                        aria-label={`${dayLabel(d)}${nye ? ", New Year's Eve" : ""}${poya ? `, ${poya.name}` : ""}${on ? `, day ${idx + 1} of your trip` : ""}`}
+                        aria-label={`${dayLabel(d)}${nye ? ", New Year's Eve" : ""}${on ? `, day ${idx + 1} of your trip` : ""}`}
                         aria-pressed={on}
                         className={cn(
                           "relative mx-auto flex h-full w-full flex-col items-center justify-center rounded-xl text-[15px] font-semibold tabular-nums transition",
@@ -269,13 +267,6 @@ export function DatesStep({ data, update, locked, onNext, length, onLength }: Pr
                         )}
                         {nye && (
                           <Firework className={cn("absolute right-0.5 top-0.5 size-4", on ? "text-saffron-200" : "text-hibiscus-500")} />
-                        )}
-                        {poya && (
-                          <span
-                            aria-hidden="true"
-                            title={`${poya.name} (full moon)`}
-                            className={cn("absolute right-1 top-1 size-2.5 rounded-full ring-2", on ? "bg-paper ring-saffron-200" : "bg-saffron-200 ring-saffron-500/50")}
-                          />
                         )}
                       </button>
                       {/* night marker between this day and the next */}
@@ -293,9 +284,6 @@ export function DatesStep({ data, update, locked, onNext, length, onLength }: Pr
               </div>
               {months.indexOf(months.find((x) => x.m === m && x.y === y)!) === 0 && (
                 <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 px-2 text-[12px] font-medium text-ink-3">
-                  <span className="inline-flex items-center gap-1.5">
-                    <span className="size-2.5 rounded-full bg-saffron-200 ring-2 ring-saffron-500/50" /> Poya (full moon): dry night, busy temples
-                  </span>
                   <span className="inline-flex items-center gap-1.5">
                     <Firework className="size-3.5 text-hibiscus-500" /> 31 Dec has its own NYE picks
                   </span>
@@ -386,7 +374,6 @@ export function DatesStep({ data, update, locked, onNext, length, onLength }: Pr
                             ? "You'd fly home on New Year's Eve"
                             : `🎆 NYE on Day ${nyeDay + 1} · ${NYE_PLACE[dayRole(nyeDay, length)]}`
                           : "No New Year's Eve in this window"}
-                        {poyaDaysIn({ startDate: start, endDate: end }).map((p) => ` · 🌕 ${p.name} ${dayLabel(p.date).split(" ").slice(0, 2).join(" ")}`)}
                       </p>
                     </>
                   ) : (

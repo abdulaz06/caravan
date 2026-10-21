@@ -270,26 +270,42 @@ export function StayInIcon({ variant = "night", className }: P & { variant?: "da
 }
 
 /**
- * Adam's Peak mark: the pointed summit with its zig-zag pilgrim path and a
- * rising sun (or a crescent for the night-before drive).
+ * Ella day-trip mark: Little Adam's Peak's rounded tea-covered hills with the
+ * sun coming up through Ella Gap (`rising`) or riding high for the easy morning.
  */
-export function SummitIcon({ className, night = false }: P & { night?: boolean }) {
+export function HillSunIcon({ className, rising = false }: P & { rising?: boolean }) {
+  const sun = rising ? { cx: 24, cy: 27, r: 7 } : { cx: 34, cy: 14, r: 5.5 };
   return (
     <svg viewBox="0 0 48 48" className={className} aria-hidden="true">
-      {night ? (
-        <path d="M33 7a7 7 0 1 0 7.5 9.4A5.6 5.6 0 0 1 33 7Z" fill="#f7ba5c" />
-      ) : (
-        <g>
-          <circle cx="35" cy="17" r="6" fill="#f2a33a" />
-          {Array.from({ length: 7 }, (_, i) => (
-            <rect key={i} x="34.2" y="6" width="1.6" height="3.4" rx=".8" fill="#f2a33a" transform={`rotate(${-90 + i * 30} 35 17)`} />
-          ))}
-        </g>
-      )}
-      <path d="M2 42 17 14l7 11 4-5 18 22Z" fill="#2b6a48" />
-      <path d="M17 14l3.6 5.6-2.1-.7-1.5 2.4-1.6-2.4-2 .8Z" fill="#fffbf4" />
-      <path d="M17.5 40c-3-3 4-5 1-8s3-4 0-7 2-3-.6-6" fill="none" stroke="#f7ba5c" strokeWidth="1.4" strokeLinecap="round" strokeDasharray="0.1 2.4" />
-      <path d="M24 25 2 42h44L28 20Z" fill="#1f5238" opacity=".55" />
+      {rising && <circle cx="24" cy="27" r="14" fill="#f7ba5c" opacity=".28" />}
+      <g>
+        <circle {...sun} fill="#f2a33a" />
+        {Array.from({ length: 7 }, (_, i) => (
+          <rect
+            key={i}
+            x={sun.cx - 0.8}
+            y={sun.cy - sun.r - 5}
+            width="1.6"
+            height="3.2"
+            rx=".8"
+            fill="#f2a33a"
+            transform={`rotate(${-90 + i * 30} ${sun.cx} ${sun.cy})`}
+          />
+        ))}
+      </g>
+      {/* Ella Rock and Little Adam's Peak either side of the gap */}
+      <path d="M0 40 C4 24 12 19 19 28 C21 31 22 33 24 34 L0 44 Z" fill="#1e5139" />
+      <path d="M48 40 C45 27 38 22 31 29 C28 32 26 33 24 34 L48 44 Z" fill="#2b6a48" />
+      {/* tea-estate hill in front, with its rows */}
+      <path d="M0 48 V38 C9 30 19 31 27 36 C34 33 42 33 48 37 V48 Z" fill="#6aa06a" />
+      <path
+        d="M3 41 C10 36 17 36 24 39 M5 45 C13 40 21 40 28 43 M29 40 C35 37 41 37 46 39 M32 45 C37 42 42 42 47 43"
+        fill="none"
+        stroke="#2b6a48"
+        strokeWidth="1.3"
+        strokeLinecap="round"
+        opacity=".7"
+      />
     </svg>
   );
 }

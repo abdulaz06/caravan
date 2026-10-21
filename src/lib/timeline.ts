@@ -7,7 +7,6 @@ import {
   LEGS,
   formatHours,
   isNightlife,
-  poyaOn,
   regions,
   stays,
   travelHours,
@@ -16,7 +15,7 @@ import {
   type RegionId,
   type Where,
 } from "@/content";
-import { PEAK_ID, overnightFrom, peakOn, peakWarnings } from "./adams-peak";
+import { ELLA_ID, earlyNightBefore, lateNightItems, tripOn } from "./day-trip";
 import {
   dateAt,
   dayName,
@@ -33,8 +32,7 @@ import {
 import { dayLabel, parseISO } from "./dates";
 
 export type TravelSegment = {
-  /** "overnight": Adam's Peak sunrise — the drive left Galle the evening before. */
-  kind: "fixed" | "excursion" | "hop" | "return" | "overnight";
+  kind: "fixed" | "excursion" | "hop" | "return";
   from: RegionId;
   to: RegionId;
   title: string;
@@ -61,15 +59,16 @@ export type SlotView = {
   overpacked: boolean;
   /** Getting back to base after the slot, if it's far. */
   after: TravelSegment | null;
-  /** Evening: the locked overnight drive to Adam's Peak (the next day is a sunrise climb). */
-  locked?: { title: string; detail: string; leave: string; hours: number; forDay: number } | null;
-  /** Evening: "Recovery night — Stay in suggested" / "Back late…". */
-  note?: { text: string; suggestStay: boolean } | null;
+  /**
+   * Evening: soft notes — "Early night: leaving ~12:30am for Ella" (the Ella
+   * sunrise trip is tomorrow) and "Back ~8pm — Stay in…" (Ella today).
+   */
+  notes?: { text: string; suggestStay: boolean; tone: "early" | "rest" }[];
   /** Daytime: a full-day trip replaces the hours total ("~18–19 hrs door to door"). */
   fullDay?: string | null;
 };
 
-export type DayTag = "arrival" | "transfer" | "departure" | "nye" | "summit" | "poya";
+export type DayTag = "arrival" | "transfer" | "departure" | "nye" | "daytrip";
 
 export type TimelineDay = {
   index: number;
@@ -114,14 +113,11 @@ export function hoursFrom(a: Activity, where: Where): number {
   return travelHours(homeOf(where === "enroute" ? "colombo" : where), a.region);
 }
 
-/** Drive time label — Adam's Peak reads "~5–6 hrs" rather than a single number. */
-export const driveLabel = (h: number) => (h === 5.5 ? "~5–6 hrs" : formatHours(h));
-
 /** "In Galle", "~1 hr from Galle", "On the way · 62 km", "Big day trip · ~2.5 hrs each way". */
 export function distanceLabel(a: Activity, where: Where): string {
   if (where === "enroute") return a.routeKm ? `On the way · km ${a.routeKm}` : "On the way";
   const h = travelHours(homeOf(where), a.region);
-  if (h >= 4) return `Big day trip · ${driveLabel(h)} each way`;
+  if (a.onlyWith) return `In ${regions[a.region].short} · with your day trip`;
   const home = stays[where === "colombo" ? "colombo" : "galle"].name;
   if (h === 0) return `In ${home}`;
   if (h <= 0.25) return `~15 min from ${home}`;
@@ -144,7 +140,7 @@ function segment(kind: TravelSegment["kind"], from: RegionId, to: RegionId, home
         ? `Back to ${regions[to].short}`
         : `${regions[from].short} → ${regions[to].short}`;
   void home;
-  return { kind, from, to, title, hours: h, label: driveLabel(h) };
+  return { kind, from, to, title, hours: h, label: formatHours(h) };
 }
 
 /** Coast-road leg for Day 2, listing the picked stops in route order. */
@@ -173,11 +169,10 @@ export function buildTimeline(data: ItineraryData): Timeline {
     const date = dateAt(data, index);
     const weekday = date ? parseISO(date).getUTCDay() : null;
     const tags: DayTag[] = [];
-    const peak = peakOn(data, index);
-    const overnight = overnightFrom(data, index);
+    const trip = role === "galle" ? tripOn(data, index) : null;
+    const earlyNight = earlyNightBefore(data, index);
     if (index === 0) tags.push("arrival");
-    if (peak && role === "galle") tags.push("summit");
-    if (poyaOn(date)) tags.push("poya");
+    if (trip) tags.push("daytrip");
     if (role === "transfer") tags.push("transfer");
     if (role === "departure") tags.push("departure");
     if (index === nye) tags.push("nye");
@@ -224,11 +219,7 @@ export function buildTimeline(data: ItineraryData): Timeline {
           if (a.region !== here) {
             const kind = here === home ? "excursion" : "hop";
             const seg = segment(kind, here, a.region, home);
-            if (a.id === PEAK_ID && peak?.variant.overnight) {
-              seg.kind = "overnight";
-              seg.title = `Overnight drive · ${regions[here].short} → ${regions[a.region].short}`;
-              seg.detail = `Left ${regions[here].short} ${peak.variant.overnight.leave} last night · sleep in the van`;
-            }
+            if (a.id === ELLA_ID && trip) seg.detail = `Leave ${regions[here].short} ${trip.variant.leave}`;
             if (kind === "hop" || seg.hours >= 0.75) before = seg;
             planned += seg.hours;
             total += seg.hours;
@@ -252,8 +243,8 @@ export function buildTimeline(data: ItineraryData): Timeline {
           );
         }
       }
-      // A full-day trip (Adam's Peak) is long by design — no "packed" nag, a door-to-door total instead.
-      const fullDay = slot === "day" && peak ? peak.variant.total : null;
+      // The Ella day trip is long by design — no "packed" nag, a door-to-door total instead.
+      const fullDay = slot === "day" && trip ? trip.variant.total : null;
       const overpacked = !fullDay && planned > SLOT_LIMIT[slot];
       if (overpacked) {
         warnings.push(
@@ -261,26 +252,29 @@ export function buildTimeline(data: ItineraryData): Timeline {
         );
       }
       views[slot] = { slot, where, items, plannedHours: planned, overpacked, after: null, fullDay };
-      // Adam's Peak: the long drive back belongs to the daytime — the evening starts back in Galle.
-      if (slot === "day" && peak && here !== home) {
+      // The Ella day trip: the long drive back belongs to the daytime — the evening starts back in Galle.
+      if (slot === "day" && trip && here !== home) {
         const back = segment("return", here, home, home);
         views.day.after = back;
         total += back.hours;
         here = home;
       }
     }
-    // Adam's Peak: tonight's locked overnight drive, and the climb day's evening note.
-    if (overnight?.overnight) {
-      const h = travelHours("galle", "adams-peak");
-      views.night.locked = { title: overnight.overnight.title, detail: overnight.overnight.detail, leave: overnight.overnight.leave, hours: h, forDay: index + 1 };
-      if (views.night.items.length) {
-        warnings.push(`Tonight's plans run into the overnight drive to Adam's Peak (leave ${overnight.overnight.leave}) — keep them early.`);
+    // The Ella day trip: a soft early-night note the evening before a sunrise trip (never a lock),
+    // a gentle warning if that evening has late-night plans, and a rest note on the trip day itself.
+    const notes: NonNullable<SlotView["notes"]> = [];
+    const hasStay = views.night.items.some((v) => v.resolved.kind === "stay");
+    if (earlyNight?.eveBefore) {
+      notes.push({ text: earlyNight.eveBefore, suggestStay: false, tone: "early" });
+      const late = lateNightItems(data, index);
+      if (late.length) {
+        warnings.push(
+          `Early start tonight — the van leaves ~${earlyNight.leave.replace("~", "")} for Ella, and ${late[0].title.split(":")[0]} usually runs late. Maybe keep it short, or move it to another night.`,
+        );
       }
     }
-    if (peak && role === "galle") {
-      views.night.note = { text: peak.variant.eveningNote, suggestStay: !views.night.items.some((v) => v.resolved.kind === "stay") };
-      warnings.push(...peakWarnings(data, index));
-    }
+    if (trip) notes.push({ text: trip.variant.eveningNote, suggestStay: !hasStay, tone: "rest" });
+    if (notes.length) views.night.notes = notes;
     // Head home at the end of the day if we're far away.
     if (here !== home) {
       const back = segment("return", here, home, home);
@@ -308,12 +302,10 @@ export function buildTimeline(data: ItineraryData): Timeline {
       legsBefore.reduce((s, l) => s + l.hours, 0) +
       [...views.day.items, ...views.night.items].reduce((s, v) => s + (v.before?.hours ?? 0), 0) +
       (views.night.after?.hours ?? views.day.after?.hours ?? 0);
-    if (travelToday > 6 && !peak) warnings.push(`That's about ${Math.round(travelToday)} hrs on the road today — doable, but a long one.`);
-    if (poyaOn(date) && nightActs.some((a) => isNightlife(a))) {
-      tips.push(`${poyaOn(date)!.name} (full moon) — bars and liquor shops close by law, so tonight may be a dry one.`);
-    }
+    if (travelToday > 6 && !trip) warnings.push(`That's about ${Math.round(travelToday)} hrs on the road today — doable, but a long one.`);
     const next = data.days[index + 1];
-    if (next && nightActs.some((a) => a.vibe >= 2)) {
+    // (Before an Ella sunrise trip the specific early-start warning above covers it.)
+    if (next && !earlyNight && nightActs.some((a) => a.vibe >= 2)) {
       const early = next.day
         .map((x) => activityOf(resolve(x, "day", slotWhere(dayRole(index + 1, n), "day"))))
         .find((a) => a && (a.tags.includes("early") || a.tags.includes("big day trip") || a.id === "mirissa-whale-watching"));

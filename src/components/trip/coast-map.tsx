@@ -1,8 +1,7 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
-import { regions, type RegionId } from "@/content";
-import { driveLabel } from "@/lib/timeline";
+import { formatHours, regions, type RegionId } from "@/content";
 import { cn } from "@/lib/cn";
 import { project } from "@/lib/map-data";
 import { badgeStop, COAST_DETAIL, dayBox, laneFor, legMidpoint, onCoastRoad, onSouthCoast, placeBadge, placeLabel, routeBox, routePoints, smoothPath, type DayRoute, type LabelSpot, type Rect } from "@/lib/routes";
@@ -16,12 +15,12 @@ type Props = {
 };
 
 /** Which place names get first claim on map space (west coast: label to the east, south coast: above). */
-const LABEL_PRIORITY: RegionId[] = ["colombo", "galle", "airport", "mirissa", "hiriketiya", "bentota", "hikkaduwa", "weligama", "negombo", "udawalawe", "sinharaja", "kanneliya", "mulkirigala", "ambalangoda", "kalutara"];
+const LABEL_PRIORITY: RegionId[] = ["colombo", "galle", "airport", "ella", "mirissa", "hiriketiya", "bentota", "hikkaduwa", "weligama", "negombo", "udawalawe", "sinharaja", "kanneliya", "mulkirigala", "ambalangoda", "kalutara"];
 
 /** The trip's south-west coast, each day's route in its own colour. */
 export function CoastMap({ routes, active, onActive, className }: Props) {
   const reduce = useReducedMotion();
-  // All days: the south-west coast (grown for inland trips like Adam's Peak). One day: fit to its route.
+  // All days: the south-west coast (grown for inland trips like Ella). One day: fit to its route.
   const full = routeBox(routes);
   const focus = active === null ? null : (routes.find((d) => d.index === active) ?? null);
   const box = focus ? dayBox(focus, full) : full;
@@ -76,7 +75,7 @@ export function CoastMap({ routes, active, onActive, className }: Props) {
       tagged.add(pair);
       const both = activeRoute.legs.some((o) => o !== leg && o.from === leg.to && o.to === leg.from);
       const [mx, my] = legMidpoint(leg);
-      const text = `${driveLabel(leg.hours)}${both ? " each way" : ""}`;
+      const text = `${formatHours(leg.hours)}${both ? " each way" : ""}`;
       const w = textW(text, font * 0.82) + font * 0.9;
       const coastal = onCoastRoad(leg.from) && onCoastRoad(leg.to);
       const south = onSouthCoast(leg.from) && onSouthCoast(leg.to);

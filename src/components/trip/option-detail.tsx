@@ -2,12 +2,12 @@
 
 import { Backpack, Ban, Check, Clock, ExternalLink, Flag, Gauge, Heart, Info, MapPin, RefreshCw, Wallet } from "lucide-react";
 import { useRef, useState } from "react";
-import { COAST_ROAD_KM, regions, type Activity, type Photo as PhotoT, type Where } from "@/content";
+import { COAST_ROAD_KM, extras, regions, type Activity, type Photo as PhotoT, type Where } from "@/content";
 import { cn } from "@/lib/cn";
 import { isHidden } from "@/lib/rules";
 import { distanceLabel } from "@/lib/timeline";
 import { useRules } from "../rules";
-import { VariantCard } from "./peak";
+import { VariantCard } from "./day-trip";
 import { useCurrency } from "../currency";
 import { Button } from "../ui/button";
 import { Photo, PhotoCredit } from "../ui/photo";
@@ -170,6 +170,28 @@ export function OptionDetail({ option, where, open, onClose, pickLabel, picked, 
                     <VariantCard key={v.id} variant={v} />
                   ))}
                 </div>
+              </section>
+            )}
+            {extras.some((x) => x.onlyWith === option.id) && (
+              <section className="mt-5" aria-label="While you're there">
+                <h3 className="font-display text-[20px] font-semibold">While you&apos;re in {regions[option.region].short}</h3>
+                <p className="mt-1 text-[13px] text-ink-3">Add these with “+ Add another” once the trip is in your day.</p>
+                <ul className="mt-2.5 grid gap-2">
+                  {extras
+                    .filter((x) => x.onlyWith === option.id)
+                    .map((x) => (
+                      <li key={x.id} className="flex items-center gap-3 rounded-2xl bg-paper px-3 py-2.5 shadow-card">
+                        <span className="text-[22px] leading-none" aria-hidden="true">
+                          {x.emoji}
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-[14px] font-bold leading-tight">{x.title}</span>
+                          <span className="block text-[12.5px] leading-snug text-ink-3">{x.tagline}</span>
+                        </span>
+                        <span className="shrink-0 text-[11.5px] font-semibold text-ink-3">{x.duration}</span>
+                      </li>
+                    ))}
+                </ul>
               </section>
             )}
             {option.bring && (

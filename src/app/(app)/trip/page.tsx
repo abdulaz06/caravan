@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { CurrencyProvider } from "@/components/currency";
 import { RulesProvider } from "@/components/rules";
 import { TripApp } from "@/components/trip/trip-app";
-import { emptyItinerary, migrationLoss, normalize } from "@/lib/itinerary";
+import { emptyItinerary, hadReplacedPick, migrationLoss, normalize } from "@/lib/itinerary";
 import { initialCurrency } from "@/lib/server/currency-pref";
 import { db } from "@/lib/server/db";
 import { pageContext } from "@/lib/server/page-context";
@@ -25,6 +25,8 @@ export default async function TripPage({ searchParams }: PageProps<"/trip">) {
   const data = row ? normalize(row.data) : emptyItinerary();
   // Itineraries saved before the fixed day structure are moved over; -1 = already current.
   const migrated = row ? migrationLoss(row.data) : -1;
+  // Adam's Peak picks become the Ella day trip; saving the upgraded plan makes the note one-time.
+  const swappedPeak = row ? hadReplacedPick(row.data) : false;
   const currency = await initialCurrency(data.preferences.currency, ctx.rules.defaultCurrency);
   const stamp = row?.stamp && !row.stamp.seen ? row.stamp : null;
   return (
@@ -38,7 +40,8 @@ export default async function TripPage({ searchParams }: PageProps<"/trip">) {
           editsLocked={ctx.locked}
           requestedStep={typeof sp.step === "string" ? sp.step : undefined}
           migratedPicks={migrated}
-          needsUpgradeSave={migrated >= 0}
+          needsUpgradeSave={migrated >= 0 || swappedPeak}
+          swappedPeak={swappedPeak}
           organizers={ctx.organizers}
           isOrganizer={ctx.isOrganizer}
           peekCount={peekCount}

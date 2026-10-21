@@ -1,11 +1,12 @@
 // The "Trip budget" tracker: per-person cost estimates grouped by day, with
 // shared transport split across the group and an optional accommodation
 // estimate. Pure, so the server export uses exactly the same numbers.
-import { LEGS, formatHours, type FixedLeg } from "@/content";
+import { LEGS, activitiesById, formatHours, regions, travelHours, type FixedLeg } from "@/content";
 import { ACCOMMODATION, BUDGET_BOUNDS, GROUP_SIZE, VANS, VAN_RATE_PER_HOUR } from "@/content/costs";
 import { budgets as BUDGET_TIERS, stays as STAY_STYLES } from "@/content/preferences";
 import { addDays, dayLabel } from "./dates";
 import { nights as nightsFor, type ItineraryData, type SlotKind } from "./itinerary";
+import { ELLA_ID } from "./day-trip";
 import { buildTimeline, coastLeg } from "./timeline";
 
 export type Range = [number, number];
@@ -77,12 +78,14 @@ export function computeBudget(data: ItineraryData): BudgetResult {
     }
     if (driving >= 0.75) {
       const id = `${d.id}:van`;
-      const peak = t.tags.includes("summit");
+      // The Ella day trip is a full-day van hire (its own quote); any other driving that day is on top.
+      const trip = t.tags.includes("daytrip") ? activitiesById[ELLA_ID] : undefined;
+      const rest = trip ? Math.max(0, driving - 2 * travelHours("galle", trip.region)) : driving;
       lines.push({
         id,
-        label: peak ? "Shared van · Galle ⇄ Adam's Peak" : "Shared van for the day's trips",
-        detail: `${formatHours(driving)} of driving`,
-        range: vanFor(driving),
+        label: trip ? `Shared van · Galle ⇄ ${regions[trip.region].short}` : "Shared van for the day's trips",
+        detail: trip ? `Day hire · ${formatHours(driving)} of driving` : `${formatHours(driving)} of driving`,
+        range: trip?.vanRoundTripUsd ? add(perPerson(trip.vanRoundTripUsd), rest >= 0.75 ? vanFor(rest) : [0, 0]) : vanFor(driving),
         kind: "transport",
         included: !excluded.has(id),
       });

@@ -194,8 +194,9 @@ export const activityOf = (item: Pick<SlotItem, "id">): Activity | null => activ
 
 /**
  * Can this id sit in this slot? NYE options only on 31 Dec's evening; with
- * base-area filtering off (a Trip rule) any area's option fits any slot.
- * Options with their own placement rule (Adam's Peak) are checked in `placeable`.
+ * base-area filtering off (a Trip rule) any area's option fits any slot. Picks
+ * with their own rules (the Ella day trip's Galle days, Ella extras needing the
+ * trip in the same slot) are checked in cleanList.
  */
 export function itemAllowed(id: string, slot: SlotKind, where: Where | null, isNyeNight: boolean): boolean {
   if (!where) return false;
@@ -257,6 +258,29 @@ export function itemCounts(data: ItineraryData): Map<string, number> {
 
 // ── Normalising & migration ────────────────────────────────────────────
 
+/**
+ * Picks of options that were replaced: the Sri Pada climb became the Ella day
+ * trip (Little Adam's Peak) — sunrise stays sunrise, the morning climb becomes
+ * the easy morning.
+ */
+const REPLACED: Record<string, { id: string; variants: Record<string, string> }> = {
+  "adams-peak": { id: "ella-little-adams-peak", variants: { sunrise: "sunrise", morning: "calm" } },
+};
+
+function replaced(it: SlotItem): SlotItem {
+  const r = REPLACED[it.id];
+  if (!r) return it;
+  const next: SlotItem = { key: it.key, id: r.id };
+  const v = it.variant ? r.variants[it.variant] : undefined;
+  if (v) next.variant = v;
+  return next;
+}
+
+/** Did a saved plan still have a replaced pick? (Drives the one-time "we swapped…" note.) */
+export function hadReplacedPick(raw: ItineraryData | null | undefined): boolean {
+  return !!raw?.days?.some((d) => [d?.day, d?.night].some((slot) => Array.isArray(slot) && slot.some((x) => x && REPLACED[(x as SlotItem).id])));
+}
+
 /** Turn any saved slot shape (v3 list, or v1/v2 single pick + add-ons) into a list. */
 function toItems(raw: unknown): SlotItem[] {
   if (!raw) return [];
@@ -268,7 +292,7 @@ function toItems(raw: unknown): SlotItem[] {
         const it: SlotItem = { key: typeof x.key === "string" && x.key ? x.key.slice(0, 16) : newId(), id: String(x.id).slice(0, 64) };
         if (typeof x.pairId === "string") it.pairId = x.pairId.slice(0, 64);
         if (typeof x.variant === "string") it.variant = x.variant.slice(0, 32);
-        return it;
+        return replaced(it);
       });
   }
   if (typeof raw !== "object") return [];
@@ -293,6 +317,9 @@ function cleanList(items: SlotItem[], slot: SlotKind, where: Where | null, isNye
     if (!itemAllowed(it.id, slot, where, isNyeNight)) continue;
     const only = activitiesById[it.id]?.onlyRole;
     if (only && only !== role) continue;
+    // Extras tied to a pick (Ella extras → the Ella day trip) need it in the same slot.
+    const withId = activitiesById[it.id]?.onlyWith;
+    if (withId && !items.some((x) => x.id === withId)) continue;
     const key = keys.has(it.key) ? newId() : it.key;
     keys.add(key);
     const next: SlotItem = { key, id: it.id };
@@ -433,7 +460,7 @@ export function replaceItem(
   });
 }
 
-/** Change the variant of a pick in place (e.g. Adam's Peak sunrise ↔ morning). */
+/** Change the variant of a pick in place (e.g. the Ella trip: sunrise ↔ easy morning). */
 export function setVariant(input: ItineraryData, index: number, slot: SlotKind, key: string, variant: string): ItineraryData {
   return edit(input, (d) => {
     const it = d.days[index][slot].find((x) => x.key === key);
@@ -510,6 +537,9 @@ export function canMoveItem(data: ItineraryData, slot: SlotKind, from: number, t
   const b = slotWhere(roleAt(data, to), slot);
   if (!a || a !== b || a !== "galle") return false;
   if (isNyeOption(id)) return false;
+  // An Ella extra can only join a slot that has the Ella day trip.
+  const withId = activitiesById[id]?.onlyWith;
+  if (withId && !data.days[to][slot].some((x) => x.id === withId)) return false;
   return itemAllowed(id, slot, b, slot === "night" && to === nyeIndex(data));
 }
 
@@ -518,8 +548,10 @@ export function moveItem(input: ItineraryData, slot: SlotKind, from: number, key
   const it = input.days[from]?.[slot].find((x) => x.key === key);
   if (!it || !canMoveItem(input, slot, from, to, it.id)) return input;
   return edit(input, (d) => {
-    d.days[from][slot] = d.days[from][slot].filter((x) => x.key !== key);
-    d.days[to][slot].push(it);
+    // Extras tied to this pick (Ella extras with the Ella trip) travel with it.
+    const going = d.days[from][slot].filter((x) => x.key === key || activitiesById[x.id]?.onlyWith === it.id);
+    d.days[from][slot] = d.days[from][slot].filter((x) => !going.includes(x));
+    d.days[to][slot].push(...going);
   });
 }
 

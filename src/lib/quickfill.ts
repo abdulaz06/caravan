@@ -62,7 +62,7 @@ function fill(input: ItineraryData, rng: Rng, onlyEmpty: boolean): ItineraryData
     let top: { a: Activity; pair: Pair; s: number } | null = null;
     for (const pair of pairs) {
       for (const a of pairOptions(pair)) {
-        // Never auto-pick something hidden by the organizers, or a trip that needs a decision (Adam's Peak).
+        // Never auto-pick something hidden by the organizers, or a trip that needs a decision (the Ella day trip).
         if (used.has(a.id) || isHidden(a.id) || a.variants) continue;
         const s = score(a);
         if (s === null) continue;

@@ -11,7 +11,9 @@ export const DAY_COLORS = ["#1a8e9c", "#ec6437", "#3f8f5f", "#d6467a", "#f2a33a"
 
 /** order: 1, 2, 3… for places visited; 0 for the airport and the nights' bases. */
 export type RouteStop = { region: RegionId; order: number; kind: "airport" | "base" | "stop"; labels: string[] };
-export type RouteLeg = { from: RegionId; to: RegionId; hours: number; via: RegionId[] };
+/** A point a leg passes through: a town, or a bare [lat, lng] on an inland road. */
+export type Waypoint = RegionId | [number, number];
+export type RouteLeg = { from: RegionId; to: RegionId; hours: number; via: Waypoint[] };
 export type DayRoute = { index: number; color: string; stops: RouteStop[]; legs: RouteLeg[] };
 
 /** Towns along the west and south coast roads, in order. Legs between two of them follow the coast. */
@@ -20,9 +22,20 @@ const CHAIN: RegionId[] = [
   "hikkaduwa", "galle", "unawatuna", "koggala", "ahangama", "weligama", "mirissa", "madiha", "hiriketiya",
 ];
 
-function via(a: RegionId, b: RegionId): RegionId[] {
+/**
+ * Inland roads from Galle drawn as driven, not as the crow flies ([lat, lng]
+ * waypoints in order from Galle), keyed by the far town.
+ */
+const ROADS: Partial<Record<RegionId, [number, number][]>> = {
+  // Galle → Ella: the Southern Expressway east past Matara, then north via Thanamalwila and Wellawaya.
+  ella: [[6.06, 80.26], [5.99, 80.55], [6.08, 80.83], [6.24, 81.06], [6.44, 81.13], [6.74, 81.1]],
+};
+
+function via(a: RegionId, b: RegionId): Waypoint[] {
   const i = CHAIN.indexOf(a);
   const j = CHAIN.indexOf(b);
+  if (a === "galle" && ROADS[b]) return [a, ...ROADS[b]!, b];
+  if (b === "galle" && ROADS[a]) return [a, ...[...ROADS[a]!].reverse(), b];
   if (i < 0 || j < 0) return [a, b];
   return i <= j ? CHAIN.slice(i, j + 1) : CHAIN.slice(j, i + 1).reverse();
 }
@@ -86,7 +99,10 @@ export type Box = { x: number; y: number; w: number; h: number };
 /** The south-west coast (CMB → Colombo → Hiriketiya), grown to include any inland day trip. */
 export function routeBox(routes: DayRoute[], pad = 6): Box {
   const pts: [number, number][] = [project(7.26, 79.74), project(5.9, 80.78)];
-  for (const r of routes) for (const s of r.stops) pts.push(project(regions[s.region].lat, regions[s.region].lng));
+  for (const r of routes) {
+    for (const s of r.stops) pts.push(project(regions[s.region].lat, regions[s.region].lng));
+    for (const l of r.legs) for (const w of l.via) if (typeof w !== "string") pts.push(project(w[0], w[1]));
+  }
   const xs = pts.map((p) => p[0]);
   const ys = pts.map((p) => p[1]);
   const x = Math.min(...xs) - pad;
@@ -94,7 +110,7 @@ export function routeBox(routes: DayRoute[], pad = 6): Box {
   return { x, y, w: Math.max(...xs) - x + pad, h: Math.max(...ys) - y + pad };
 }
 
-const pt = (r: RegionId) => project(regions[r].lat, regions[r].lng);
+const pt = (r: Waypoint) => (typeof r === "string" ? project(regions[r].lat, regions[r].lng) : project(r[0], r[1]));
 
 /**
  * Frame one day's route: its towns and legs with some breathing room, never
