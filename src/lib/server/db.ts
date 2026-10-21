@@ -10,13 +10,29 @@ import type { ItineraryData, ItineraryStatus } from "@/lib/itinerary";
 // key can read nothing). In local development without Supabase credentials a
 // JSON file under .data/ stands in for the database.
 
+export type Role = "owner" | "admin" | "member";
+
 export type ParticipantRow = {
   id: string;
   display_name: string;
   pin_hash: string;
   failed_attempts: number;
   locked_until: string | null;
+  /** Missing on rows read before the roles migration ran → member. */
+  role?: Role;
   created_at: string;
+};
+
+/** The last organizer edit or rules migration of someone's plan, shown to them once. */
+export type Stamp = {
+  kind: "edit" | "rules";
+  by: string;
+  byId?: string | null;
+  at: string;
+  seen?: boolean;
+  /** Rules migrations: picks that needed clearing. */
+  lost?: number;
+  text?: string;
 };
 
 export type ItineraryRow = {
@@ -25,9 +41,28 @@ export type ItineraryRow = {
   status: ItineraryStatus;
   submitted_at: string | null;
   updated_at: string;
+  stamp?: Stamp | null;
 };
 
-export type SettingsRow = { edits_locked: boolean; updated_at: string };
+/** A save writes these fields only — never the organizer stamp, unless given. */
+export type ItinerarySave = Omit<ItineraryRow, "stamp"> & { stamp?: Stamp | null };
+
+export type SettingsRow = { edits_locked: boolean; rules?: unknown; updated_at: string };
+
+export type LogEntry = {
+  id: string;
+  at: string;
+  actor_id: string | null;
+  actor_name: string;
+  action: string;
+  target_id: string | null;
+  target_name: string | null;
+  details: Record<string, unknown> | null;
+};
+export type NewLogEntry = Omit<LogEntry, "id" | "at">;
+
+export const roleOf = (p: Pick<ParticipantRow, "role"> | null | undefined): Role => p?.role ?? "member";
+export const isOrganizerRole = (r: Role) => r === "owner" || r === "admin";
 
 export interface Store {
   listParticipants(): Promise<ParticipantRow[]>;
@@ -37,14 +72,22 @@ export interface Store {
   createParticipant(name: string, pinHash: string): Promise<ParticipantRow | null>;
   updateParticipant(
     id: string,
-    patch: Partial<Pick<ParticipantRow, "pin_hash" | "failed_attempts" | "locked_until">>,
+    patch: Partial<Pick<ParticipantRow, "pin_hash" | "failed_attempts" | "locked_until" | "role">>,
   ): Promise<void>;
   deleteParticipant(id: string): Promise<void>;
   getItinerary(participantId: string): Promise<ItineraryRow | null>;
-  saveItinerary(row: ItineraryRow): Promise<ItineraryRow>;
+  /** Upserts only the fields given (a person's own save never touches the organizer stamp). */
+  saveItinerary(row: ItinerarySave): Promise<ItineraryRow>;
+  setStamp(participantId: string, stamp: Stamp | null): Promise<void>;
   listItineraries(): Promise<ItineraryRow[]>;
   getSettings(): Promise<SettingsRow>;
   setEditsLocked(locked: boolean): Promise<void>;
+  setRules(rules: unknown): Promise<void>;
+  addLog(entry: NewLogEntry): Promise<void>;
+  listLog(limit: number): Promise<LogEntry[]>;
+  /** Counts a peek; `first` = this person had never peeked at that plan before. */
+  recordPeek(peekerId: string, targetId: string): Promise<{ first: boolean }>;
+  countPeekers(targetId: string): Promise<number>;
 }
 
 // ── Supabase ──────────────────────────────────────────────────────────
@@ -113,7 +156,7 @@ class SupabaseStore implements Store {
     return (data as ItineraryRow) ?? null;
   }
 
-  async saveItinerary(row: ItineraryRow) {
+  async saveItinerary(row: ItinerarySave) {
     const { data, error } = await this.sb
       .from("itineraries")
       .upsert(row, { onConflict: "participant_id" })
@@ -123,6 +166,11 @@ class SupabaseStore implements Store {
     return data as ItineraryRow;
   }
 
+  async setStamp(participantId: string, stamp: Stamp | null) {
+    const { error } = await this.sb.from("itineraries").update({ stamp }).eq("participant_id", participantId);
+    this.fail(error);
+  }
+
   async listItineraries() {
     const { data, error } = await this.sb.from("itineraries").select("*");
     this.fail(error);
@@ -130,11 +178,8 @@ class SupabaseStore implements Store {
   }
 
   async getSettings() {
-    const { data, error } = await this.sb
-      .from("settings")
-      .select("edits_locked, updated_at")
-      .eq("id", 1)
-      .maybeSingle();
+    // "*" so this keeps working whichever optional columns exist.
+    const { data, error } = await this.sb.from("settings").select("*").eq("id", 1).maybeSingle();
     this.fail(error);
     return (data as SettingsRow) ?? { edits_locked: false, updated_at: new Date(0).toISOString() };
   }
@@ -145,14 +190,66 @@ class SupabaseStore implements Store {
       .upsert({ id: 1, edits_locked: locked, updated_at: new Date().toISOString() });
     this.fail(error);
   }
+
+  async setRules(rules: unknown) {
+    const { error } = await this.sb
+      .from("settings")
+      .upsert({ id: 1, rules, updated_at: new Date().toISOString() });
+    this.fail(error);
+  }
+
+  async addLog(entry: NewLogEntry) {
+    const { error } = await this.sb.from("activity_log").insert(entry);
+    this.fail(error);
+  }
+
+  async listLog(limit: number) {
+    const { data, error } = await this.sb.from("activity_log").select("*").order("at", { ascending: false }).limit(limit);
+    this.fail(error);
+    return (data ?? []) as LogEntry[];
+  }
+
+  async recordPeek(peekerId: string, targetId: string) {
+    const now = new Date().toISOString();
+    const { data: existing, error } = await this.sb
+      .from("peeks")
+      .select("count")
+      .eq("peeker_id", peekerId)
+      .eq("target_id", targetId)
+      .maybeSingle();
+    this.fail(error);
+    if (existing) {
+      const res = await this.sb
+        .from("peeks")
+        .update({ count: (existing as { count: number }).count + 1, last_at: now })
+        .eq("peeker_id", peekerId)
+        .eq("target_id", targetId);
+      this.fail(res.error);
+      return { first: false };
+    }
+    const res = await this.sb.from("peeks").insert({ peeker_id: peekerId, target_id: targetId, first_at: now, last_at: now, count: 1 });
+    if (res.error?.code === "23505") return { first: false }; // a parallel first peek got there first
+    this.fail(res.error);
+    return { first: true };
+  }
+
+  async countPeekers(targetId: string) {
+    const { count, error } = await this.sb.from("peeks").select("*", { count: "exact", head: true }).eq("target_id", targetId);
+    this.fail(error);
+    return count ?? 0;
+  }
 }
 
 // ── Local JSON file (development only) ────────────────────────────────
+
+type PeekRow = { peeker_id: string; target_id: string; first_at: string; last_at: string; count: number };
 
 type FileDb = {
   participants: ParticipantRow[];
   itineraries: ItineraryRow[];
   settings: SettingsRow;
+  log?: LogEntry[];
+  peeks?: PeekRow[];
 };
 
 class FileStore implements Store {
@@ -202,6 +299,7 @@ class FileStore implements Store {
         pin_hash: pinHash,
         failed_attempts: 0,
         locked_until: null,
+        role: "member",
         created_at: new Date().toISOString(),
       };
       db.participants.push(row);
@@ -218,16 +316,25 @@ class FileStore implements Store {
     return this.mutate((db) => {
       db.participants = db.participants.filter((p) => p.id !== id);
       db.itineraries = db.itineraries.filter((i) => i.participant_id !== id);
+      db.peeks = (db.peeks ?? []).filter((p) => p.peeker_id !== id && p.target_id !== id);
     });
   }
   async getItinerary(participantId: string) {
     return (await this.read()).itineraries.find((i) => i.participant_id === participantId) ?? null;
   }
-  saveItinerary(row: ItineraryRow) {
+  saveItinerary(row: ItinerarySave) {
     return this.mutate((db) => {
+      const prev = db.itineraries.find((i) => i.participant_id === row.participant_id);
+      const next = { ...prev, ...row } as ItineraryRow;
       db.itineraries = db.itineraries.filter((i) => i.participant_id !== row.participant_id);
-      db.itineraries.push(row);
-      return row;
+      db.itineraries.push(next);
+      return next;
+    });
+  }
+  setStamp(participantId: string, stamp: Stamp | null) {
+    return this.mutate((db) => {
+      const it = db.itineraries.find((i) => i.participant_id === participantId);
+      if (it) it.stamp = stamp;
     });
   }
   async listItineraries() {
@@ -238,8 +345,38 @@ class FileStore implements Store {
   }
   setEditsLocked(locked: boolean) {
     return this.mutate((db) => {
-      db.settings = { edits_locked: locked, updated_at: new Date().toISOString() };
+      db.settings = { ...db.settings, edits_locked: locked, updated_at: new Date().toISOString() };
     });
+  }
+  setRules(rules: unknown) {
+    return this.mutate((db) => {
+      db.settings = { ...db.settings, rules, updated_at: new Date().toISOString() };
+    });
+  }
+  addLog(entry: NewLogEntry) {
+    return this.mutate((db) => {
+      db.log = [{ ...entry, id: randomUUID(), at: new Date().toISOString() }, ...(db.log ?? [])].slice(0, 2000);
+    });
+  }
+  async listLog(limit: number) {
+    return ((await this.read()).log ?? []).slice(0, limit);
+  }
+  recordPeek(peekerId: string, targetId: string) {
+    return this.mutate((db) => {
+      db.peeks ??= [];
+      const now = new Date().toISOString();
+      const row = db.peeks.find((p) => p.peeker_id === peekerId && p.target_id === targetId);
+      if (row) {
+        row.count++;
+        row.last_at = now;
+        return { first: false };
+      }
+      db.peeks.push({ peeker_id: peekerId, target_id: targetId, first_at: now, last_at: now, count: 1 });
+      return { first: true };
+    });
+  }
+  async countPeekers(targetId: string) {
+    return ((await this.read()).peeks ?? []).filter((p) => p.target_id === targetId).length;
   }
 }
 

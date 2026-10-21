@@ -1,17 +1,16 @@
 // Itinerary data model + pure, immutable editing helpers. Shared by the
 // client (editor) and the server (validation/normalisation).
 //
-// The trip is fixed at 6 days · 5 nights (group vote):
+// The structure comes from the live Trip rules (lib/rules.ts). By default
+// (group vote) it's 6 days · 5 nights:
 //   Day 1 · Land in Colombo      — Colombo daytime + evening (only Colombo day)
 //   Day 2 · Road trip to Galle   — en-route stops (daytime) + Galle evening
 //   Days 3–5 · Galle base        — Galle daytime + evening
 //   Day 6 · Check out & fly home — no slots
-// A 5-day preview (Day 5 removed) exists only in the browser.
+// The shorter preview (the last Galle day removed) is a browser-only sandbox
+// unless the rules allow submitting it.
 import {
   NYE_DATE,
-  PREVIEW_DAYS,
-  TRIP_DAYS,
-  TRIP_WINDOW,
   activitiesById,
   allPairs,
   nyePairs,
@@ -23,6 +22,7 @@ import {
 } from "@/content";
 import { isCurrency, type CurrencyCode } from "./currency";
 import { addDays, diffDays } from "./dates";
+import { allowedLengths, applyRules, currentRules, previewDays, tripDays, tripWindow, type TripRules } from "./rules";
 
 export const DATA_VERSION = 3;
 export const MAX_ITEMS = 8;
@@ -30,8 +30,8 @@ export const MAX_ITEMS = 8;
 export type Flexibility = "exact" | "few_days" | "very";
 export type SlotKind = "day" | "night";
 
-/** One activity in a slot: an option id, a Quick extra id, or "stay". */
-export type SlotItem = { key: string; id: string; pairId?: string };
+/** One activity in a slot: an option id, a Quick extra id, or "stay"; `variant` for options that have them. */
+export type SlotItem = { key: string; id: string; pairId?: string; variant?: string };
 
 export type DayEntry = {
   id: string; // stable id for drag/reorder
@@ -90,12 +90,15 @@ const clone = <T,>(x: T): T => structuredClone(x);
 
 export type DayRole = "colombo" | "transfer" | "galle" | "departure";
 
-export function dayRole(index: number, length: number): DayRole {
-  if (index === 0) return "colombo";
-  if (index === length - 1) return "departure";
-  if (index === 1) return "transfer";
+/** Colombo days first (Colombo nights), then the road trip, the Galle days and the fly-home day. */
+export function roleWith(index: number, length: number, colomboNights: number): DayRole {
+  if (length > 1 && index === length - 1) return "departure";
+  if (index < colomboNights) return "colombo";
+  if (index === colomboNights) return "transfer";
   return "galle";
 }
+
+export const dayRole = (index: number, length: number): DayRole => roleWith(index, length, currentRules().colomboNights);
 
 export const roleAt = (data: Pick<ItineraryData, "days">, index: number) => dayRole(index, data.days.length);
 
@@ -105,6 +108,9 @@ export const DAY_NAMES: Record<DayRole, string> = {
   galle: "Galle base",
   departure: "Check out & fly home",
 };
+
+/** "Land in Colombo" on Day 1, "Colombo day" for any later Colombo days, else the role's name. */
+export const dayName = (index: number, role: DayRole) => (role === "colombo" && index > 0 ? "Colombo day" : DAY_NAMES[role]);
 
 /** Which pool a slot draws from, or null for Day 6 (no slots). */
 export function slotWhere(role: DayRole, slot: SlotKind): Where | null {
@@ -116,15 +122,23 @@ export function slotWhere(role: DayRole, slot: SlotKind): Where | null {
 
 export const hasSlots = (role: DayRole) => role !== "departure";
 
-/** Nights per place: Colombo 1, Galle the rest (4 — or 3 in the preview). */
+/** Nights per place: the Colombo nights from the rules, Galle the rest (4 — or 3 in the preview — by default). */
 export function nights(length: number): { colombo: number; galle: number; total: number } {
   if (length <= 1) return { colombo: 0, galle: 0, total: 0 };
-  return { colombo: 1, galle: length - 2, total: length - 1 };
+  const colombo = Math.min(currentRules().colomboNights, length - 1);
+  return { colombo, galle: length - 1 - colombo, total: length - 1 };
+}
+
+/** "Colombo · 1 night → Galle · 4 nights" */
+export function nightsLine(length: number): string {
+  const n = nights(length);
+  const w = (x: number) => `${x} ${x === 1 ? "night" : "nights"}`;
+  return `Colombo · ${w(n.colombo)} → Galle · ${w(n.galle)}`;
 }
 
 export const daysNightsLabel = (n: number) => `${n} ${n === 1 ? "day" : "days"} · ${n - 1} ${n - 1 === 1 ? "night" : "nights"}`;
 
-export const isPreviewLength = (n: number) => n === PREVIEW_DAYS;
+export const isPreviewLength = (n: number) => n === previewDays();
 
 // ── Dates ──────────────────────────────────────────────────────────────
 
@@ -138,15 +152,15 @@ export function tripLength(data: Pick<ItineraryData, "startDate" | "endDate">): 
 }
 
 /** Latest start date that keeps a window of `len` days inside the trip window. */
-export const lastStart = (len: number) => addDays(TRIP_WINDOW.end, -(len - 1));
+export const lastStart = (len: number) => addDays(tripWindow().end, -(len - 1));
 
 export function clampStart(start: string, len: number): string {
-  if (start < TRIP_WINDOW.start) return TRIP_WINDOW.start;
+  if (start < tripWindow().start) return tripWindow().start;
   const last = lastStart(len);
   return start > last ? last : start;
 }
 
-export const canPlace = (start: string, len: number) => start >= TRIP_WINDOW.start && start <= lastStart(len);
+export const canPlace = (start: string, len: number) => start >= tripWindow().start && start <= lastStart(len);
 
 /** Index of 31 Dec inside the trip, or -1. */
 export function nyeIndex(data: Pick<ItineraryData, "startDate" | "days">): number {
@@ -178,17 +192,36 @@ export function resolve(item: Pick<SlotItem, "id">, slot: SlotKind, where?: Wher
 
 export const activityOf = (item: Pick<SlotItem, "id">): Activity | null => activitiesById[item.id] ?? null;
 
-/** Can this id sit in this slot? NYE options only on 31 Dec's evening. */
+/**
+ * Can this id sit in this slot? NYE options only on 31 Dec's evening; with
+ * base-area filtering off (a Trip rule) any area's option fits any slot.
+ * Options with their own placement rule (Adam's Peak) are checked in `placeable`.
+ */
 export function itemAllowed(id: string, slot: SlotKind, where: Where | null, isNyeNight: boolean): boolean {
   if (!where) return false;
   if (id === STAY_ID) return true;
   const a = activitiesById[id];
-  if (!a || a.kind === "halal" || !a.slots.includes(slot) || !a.where.includes(where)) return false;
+  if (!a || a.kind === "halal" || !a.slots.includes(slot)) return false;
+  if (a.onlyRole) return where === "galle";
+  if (currentRules().baseFiltering && !a.where.includes(where)) return false;
   if (isNyeOption(id)) return slot === "night" && isNyeNight;
   return true;
 }
 
-export const makeItem = (id: string, pairId?: string): SlotItem => (pairId ? { key: newId(), id, pairId } : { key: newId(), id });
+/** A pick with a variant keeps it only if the option defines that variant (otherwise its first). */
+function cleanVariant(id: string, variant: unknown): string | undefined {
+  const vs = activitiesById[id]?.variants;
+  if (!vs?.length) return undefined;
+  return typeof variant === "string" && vs.some((v) => v.id === variant) ? variant : vs[0].id;
+}
+
+export function makeItem(id: string, pairId?: string, variant?: string): SlotItem {
+  const it: SlotItem = { key: newId(), id };
+  if (pairId) it.pairId = pairId;
+  const v = cleanVariant(id, variant);
+  if (v) it.variant = v;
+  return it;
+}
 
 export function countItems(data: Pick<ItineraryData, "days">): number {
   return data.days.reduce((n, d) => n + d.day.length + d.night.length, 0);
@@ -234,6 +267,7 @@ function toItems(raw: unknown): SlotItem[] {
       .map((x) => {
         const it: SlotItem = { key: typeof x.key === "string" && x.key ? x.key.slice(0, 16) : newId(), id: String(x.id).slice(0, 64) };
         if (typeof x.pairId === "string") it.pairId = x.pairId.slice(0, 64);
+        if (typeof x.variant === "string") it.variant = x.variant.slice(0, 32);
         return it;
       });
   }
@@ -252,14 +286,18 @@ const legacyCount = (raw: unknown) => {
   return (o.type || o.optionId ? 1 : 0) + (Array.isArray(o.addOns) ? o.addOns.length : 0);
 };
 
-function cleanList(items: SlotItem[], slot: SlotKind, where: Where | null, isNyeNight: boolean): SlotItem[] {
+function cleanList(items: SlotItem[], slot: SlotKind, where: Where | null, isNyeNight: boolean, role: DayRole): SlotItem[] {
   const keys = new Set<string>();
   const out: SlotItem[] = [];
   for (const it of items) {
     if (!itemAllowed(it.id, slot, where, isNyeNight)) continue;
+    const only = activitiesById[it.id]?.onlyRole;
+    if (only && only !== role) continue;
     const key = keys.has(it.key) ? newId() : it.key;
     keys.add(key);
     const next: SlotItem = { key, id: it.id };
+    const variant = cleanVariant(it.id, it.variant);
+    if (variant) next.variant = variant;
     const pair = it.pairId ? pairsById[it.pairId] : undefined;
     if (pair && (pair.a === it.id || pair.b === it.id)) next.pairId = pair.id;
     else if (it.pairId) {
@@ -279,8 +317,13 @@ function cleanList(items: SlotItem[], slot: SlotKind, where: Where | null, isNye
  * item valid for its day's slot, NYE options only on 31 Dec's evening, nothing
  * on the fly-home day. Older (v1/v2) shapes are upgraded on the way through.
  */
-export function normalize(input: ItineraryData, length: number = TRIP_DAYS): ItineraryData {
+export function normalize(input: ItineraryData, length?: number): ItineraryData {
   const data = clone(input) as ItineraryData;
+  // Keep a saved length the rules allow (e.g. a submitted 5-day plan); otherwise the full trip.
+  if (length === undefined) {
+    const saved = input.startDate && input.endDate ? diffDays(input.startDate, input.endDate) + 1 : (input.days?.length ?? 0);
+    length = allowedLengths().includes(saved) ? saved : tripDays();
+  }
   data.version = DATA_VERSION;
   data.preferences = data.preferences ?? {};
   if (!data.startDate) {
@@ -300,8 +343,8 @@ export function normalize(input: ItineraryData, length: number = TRIP_DAYS): Iti
     const role = dayRole(i, n);
     const entry: DayEntry = {
       id: typeof d?.id === "string" && d.id ? d.id.slice(0, 40) : newId(),
-      day: cleanList(toItems(d?.day), "day", slotWhere(role, "day"), false),
-      night: cleanList(toItems(d?.night), "night", slotWhere(role, "night"), i === nye),
+      day: cleanList(toItems(d?.day), "day", slotWhere(role, "day"), false, role),
+      night: cleanList(toItems(d?.night), "night", slotWhere(role, "night"), i === nye, role),
     };
     const note = typeof d?.note === "string" ? d.note.slice(0, 280) : "";
     if (note.trim()) entry.note = note;
@@ -337,7 +380,7 @@ export function migrationLoss(raw: ItineraryData): number {
  * Place the window. Picks stay on the same trip day (Day 1…6); the 31 Dec
  * evening's NYE pick follows 31 Dec if it's still inside the window.
  */
-export function setStart(input: ItineraryData, start: string, length: number = TRIP_DAYS): ItineraryData {
+export function setStart(input: ItineraryData, start: string, length: number = input.days.length || tripDays()): ItineraryData {
   const data = clone(input);
   const oldNye = nyeIndex(data);
   const carried = oldNye >= 0 ? data.days[oldNye].night.filter((x) => isNyeOption(x.id)) : [];
@@ -350,35 +393,51 @@ export function setStart(input: ItineraryData, start: string, length: number = T
   return normalize(data, length);
 }
 
-function edit(input: ItineraryData, fn: (d: ItineraryData) => void, length = input.days.length || TRIP_DAYS): ItineraryData {
+function edit(input: ItineraryData, fn: (d: ItineraryData) => void, length = input.days.length || tripDays()): ItineraryData {
   const data = clone(input);
   fn(data);
   return normalize(data, length);
 }
 
 /** Matchup pick: replaces the slot's first item (or starts the list). */
-export function pickFirst(input: ItineraryData, index: number, slot: SlotKind, id: string, pairId?: string): ItineraryData {
+export function pickFirst(input: ItineraryData, index: number, slot: SlotKind, id: string, pairId?: string, variant?: string): ItineraryData {
   return edit(input, (d) => {
     const list = d.days[index][slot];
-    const item = makeItem(id, pairId);
+    const item = makeItem(id, pairId, variant);
     if (list.length) list[0] = { ...item, key: list[0].key };
     else list.push(item);
   });
 }
 
 /** "+ Add another": appends to the slot. */
-export function addItem(input: ItineraryData, index: number, slot: SlotKind, id: string, pairId?: string): ItineraryData {
+export function addItem(input: ItineraryData, index: number, slot: SlotKind, id: string, pairId?: string, variant?: string): ItineraryData {
   return edit(input, (d) => {
-    d.days[index][slot].push(makeItem(id, pairId));
+    d.days[index][slot].push(makeItem(id, pairId, variant));
   });
 }
 
 /** Swap one item for another in place (keeps its position). */
-export function replaceItem(input: ItineraryData, index: number, slot: SlotKind, key: string, id: string, pairId?: string): ItineraryData {
+export function replaceItem(
+  input: ItineraryData,
+  index: number,
+  slot: SlotKind,
+  key: string,
+  id: string,
+  pairId?: string,
+  variant?: string,
+): ItineraryData {
   return edit(input, (d) => {
     const list = d.days[index][slot];
     const at = list.findIndex((x) => x.key === key);
-    if (at >= 0) list[at] = { ...makeItem(id, pairId), key };
+    if (at >= 0) list[at] = { ...makeItem(id, pairId, variant), key };
+  });
+}
+
+/** Change the variant of a pick in place (e.g. Adam's Peak sunrise ↔ morning). */
+export function setVariant(input: ItineraryData, index: number, slot: SlotKind, key: string, variant: string): ItineraryData {
+  return edit(input, (d) => {
+    const it = d.days[index][slot].find((x) => x.key === key);
+    if (it) it.variant = variant;
   });
 }
 
@@ -470,16 +529,58 @@ export function clearAllPicks(input: ItineraryData): ItineraryData {
   return data;
 }
 
-// ── 5-day preview (browser-only sandbox) ───────────────────────────────
+// ── The shorter preview (browser-only sandbox unless the rules allow it) ──
 
-/** Copy of the 6-day plan with Day 5 (the last full Galle day) removed. */
+/** Copy of the full plan with the last full Galle day removed. */
 export function makePreview(full: ItineraryData): ItineraryData {
   const data = clone(full);
-  if (data.days.length === TRIP_DAYS) data.days = [...data.days.slice(0, 4), data.days[5]];
-  if (data.startDate) data.endDate = addDays(data.startDate, PREVIEW_DAYS - 1);
-  return normalize(data, PREVIEW_DAYS);
+  const len = data.days.length;
+  if (len >= 3) data.days = [...data.days.slice(0, len - 2), data.days[len - 1]];
+  if (data.startDate) data.endDate = addDays(data.startDate, previewDays() - 1);
+  return normalize(data, previewDays());
 }
 
-/** Only 6-day plans can be submitted (the server checks too). */
+/** A saved short plan back to the full length: an empty Galle day goes back in before the fly-home day. */
+export function expandToFull(data: ItineraryData): ItineraryData {
+  const next = clone(data);
+  const len = tripDays();
+  while (next.days.length < len) next.days.splice(next.days.length - 1, 0, emptyDay());
+  if (next.startDate) next.endDate = addDays(next.startDate, len - 1);
+  return normalize(next, len);
+}
+
+/** Full-length plans can be submitted — and the shorter one if the rules allow it (the server checks too). */
 export const isSubmittable = (data: ItineraryData) =>
-  !!data.startDate && tripLength(data) === TRIP_DAYS && data.days.length === TRIP_DAYS;
+  !!data.startDate && allowedLengths().includes(tripLength(data)) && data.days.length === tripLength(data);
+
+// ── Rules changes (console) ────────────────────────────────────────────
+
+export type Restructured = { data: ItineraryData; lost: number; changed: boolean };
+
+/**
+ * Move a plan from one set of Trip rules to another (nights split, date
+ * window, allowed lengths): Colombo days map to Colombo days, the road trip to
+ * the road trip and Galle days to Galle days, in order; picks with no home
+ * (and NYE picks that no longer land on 31 Dec) are cleared and counted.
+ * Leaves `to` as the rules in force.
+ */
+export function restructure(input: ItineraryData, from: TripRules, to: TripRules): Restructured {
+  applyRules(from);
+  const before = normalize(input);
+  const oldLen = before.days.length;
+  const buckets: Record<DayRole, DayEntry[]> = { colombo: [], transfer: [], galle: [], departure: [] };
+  before.days.forEach((d, i) => buckets[roleWith(i, oldLen, from.colomboNights)].push(d));
+  const wasShort = !!before.startDate && oldLen === previewDays(from);
+
+  applyRules(to);
+  if (!before.startDate) return { data: normalize(before), lost: 0, changed: false };
+  const len = wasShort && allowedLengths(to).includes(previewDays(to)) ? previewDays(to) : tripDays(to);
+  const days: DayEntry[] = Array.from({ length: len }, (_, i) => buckets[roleWith(i, len, to.colomboNights)].shift() ?? emptyDay());
+  const next: ItineraryData = { ...clone(before), days };
+  next.startDate = clampStart(before.startDate, len);
+  next.endDate = addDays(next.startDate, len - 1);
+  const data = normalize(next, len);
+  const lost = Math.max(0, countItems(before) - countItems(data));
+  const changed = lost > 0 || data.startDate !== before.startDate || data.days.length !== oldLen;
+  return { data, lost, changed };
+}

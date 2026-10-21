@@ -3,6 +3,7 @@
 // (big day trips are rare), respects day-of-week options, and tries a few
 // attempts with a little randomness so everyone's isn't identical.
 import { activitiesById, pairsFor, type Activity, type Pair } from "@/content";
+import { isHidden } from "./rules";
 import { parseISO } from "./dates";
 import {
   STAY_ID,
@@ -61,7 +62,8 @@ function fill(input: ItineraryData, rng: Rng, onlyEmpty: boolean): ItineraryData
     let top: { a: Activity; pair: Pair; s: number } | null = null;
     for (const pair of pairs) {
       for (const a of pairOptions(pair)) {
-        if (used.has(a.id)) continue;
+        // Never auto-pick something hidden by the organizers, or a trip that needs a decision (Adam's Peak).
+        if (used.has(a.id) || isHidden(a.id) || a.variants) continue;
         const s = score(a);
         if (s === null) continue;
         const total = s + (pairUses.get(pair.id) ?? 0) * 2 + rng();

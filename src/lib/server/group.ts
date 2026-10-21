@@ -1,13 +1,17 @@
 import "server-only";
-import { TRIP_DAYS, activitiesById, regions, TRIP_WINDOW, type RegionId } from "@/content";
+import { activitiesById, regions, type RegionId } from "@/content";
 import { dateRange } from "@/lib/dates";
 import { STAY_ID, countItems, normalize, tripLength, type ItineraryData } from "@/lib/itinerary";
+import { tripDays, tripWindow } from "@/lib/rules";
 import { balanceOf } from "@/lib/timeline";
-import { db, type ItineraryRow, type ParticipantRow } from "./db";
+import { db, roleOf, type ItineraryRow, type ParticipantRow, type Role, type Stamp } from "./db";
+import { loadRules } from "./rules";
 
 export type Person = {
   id: string;
   name: string;
+  role: Role;
+  stamp: Stamp | null;
   status: "new" | "draft" | "submitted";
   joinedAt: string;
   updatedAt: string | null;
@@ -16,7 +20,9 @@ export type Person = {
   data: ItineraryData | null;
 };
 
+/** Everyone and their (normalised) plans. Puts the live Trip rules in force first. */
 export async function loadPeople(): Promise<Person[]> {
+  await loadRules();
   const [participants, itineraries] = await Promise.all([
     db().listParticipants(),
     db().listItineraries(),
@@ -29,6 +35,8 @@ export async function loadPeople(): Promise<Person[]> {
     return {
       id: p.id,
       name: p.display_name,
+      role: roleOf(p),
+      stamp: it?.stamp ?? null,
       status: it ? it.status : "new",
       joinedAt: p.created_at,
       updatedAt: it?.updated_at ?? null,
@@ -56,7 +64,7 @@ export type GroupStats = {
 };
 
 export function computeStats(people: Person[]): GroupStats {
-  const dates = dateRange(TRIP_WINDOW.start, TRIP_WINDOW.end);
+  const dates = dateRange(tripWindow().start, tripWindow().end);
   const dateCounts: Record<string, number> = Object.fromEntries(dates.map((d) => [d, 0]));
   const optionCounts = new Map<string, number>();
   const regionCounts = new Map<RegionId, number>();
@@ -91,11 +99,11 @@ export function computeStats(people: Person[]): GroupStats {
     if (b !== null) balances.push(b);
   }
 
-  // Sweet spot: the 6-day window (the voted trip length) where the most people
-  // can make every single day; ties go to the busier window.
+  // Sweet spot: the full-length window (6 days by default) where the most
+  // people can make every single day; ties go to the busier window.
   let sweetSpot: GroupStats["sweetSpot"] = null;
   let bestSum = -1;
-  for (const len of [TRIP_DAYS]) {
+  for (const len of [tripDays()]) {
     for (let i = 0; i + len <= dates.length; i++) {
       const window = dates.slice(i, i + len);
       const counts = window.map((d) => dateCounts[d]);
@@ -136,19 +144,32 @@ export function computeStats(people: Person[]): GroupStats {
   };
 }
 
-/** Counts shown on the public welcome page (no names). */
-export type PublicCounts = { joined: number; submitted: number; initials: string[]; locked: boolean };
+/** Counts shown on the public welcome page (no names), plus the trip shape and any announcement. */
+export type PublicCounts = {
+  joined: number;
+  submitted: number;
+  initials: string[];
+  locked: boolean;
+  trip: { days: number; colombo: number; galle: number; start: string; end: string };
+  announcement: string | null;
+};
+
+const DEFAULT_TRIP = { days: 6, colombo: 1, galle: 4, start: "2026-12-01", end: "2027-01-31" };
 
 export async function publicCounts(): Promise<PublicCounts> {
   try {
-    const [people, settings] = await Promise.all([loadPeople(), db().getSettings()]);
+    const people = await loadPeople();
+    const live = await loadRules();
+    const r = live.rules;
     return {
       joined: people.length,
       submitted: people.filter((p) => p.status === "submitted").length,
       initials: people.slice(-5).map((p) => p.name.trim()[0]?.toUpperCase() ?? "?"),
-      locked: settings.edits_locked,
+      locked: live.locked,
+      trip: { days: tripDays(r), colombo: r.colomboNights, galle: r.galleNights, start: r.window.start, end: r.window.end },
+      announcement: r.announcement.on && r.announcement.text.trim() ? r.announcement.text : null,
     };
   } catch {
-    return { joined: 0, submitted: 0, initials: [], locked: false };
+    return { joined: 0, submitted: 0, initials: [], locked: false, trip: DEFAULT_TRIP, announcement: null };
   }
 }

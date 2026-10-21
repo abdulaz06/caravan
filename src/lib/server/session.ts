@@ -2,11 +2,13 @@ import "server-only";
 import { cookies } from "next/headers";
 import { SignJWT, jwtVerify } from "jose";
 import { timingSafeEqual, createHash } from "node:crypto";
-import { db, type ParticipantRow } from "./db";
+import { db, isOrganizerRole, roleOf, type ParticipantRow, type Role } from "./db";
 
 const SESSION_COOKIE = "lanks_session";
-const ADMIN_COOKIE = "lanks_admin";
+/** The organizer console: a short session on top of the normal one (or the owner's break-glass password). */
+const CONSOLE_COOKIE = "lanks_console";
 const YEAR = 60 * 60 * 24 * 365;
+const CONSOLE_HOURS = 12;
 
 function secret(): Uint8Array {
   const s = process.env.SESSION_SECRET;
@@ -36,7 +38,9 @@ export async function startSession(participantId: string) {
 }
 
 export async function endSession() {
-  (await cookies()).delete(SESSION_COOKIE);
+  const jar = await cookies();
+  jar.delete(SESSION_COOKIE);
+  jar.delete(CONSOLE_COOKIE);
 }
 
 async function sessionParticipantId(): Promise<string | null> {
@@ -50,14 +54,14 @@ async function sessionParticipantId(): Promise<string | null> {
   }
 }
 
-/** The signed-in participant, or null (also null if the admin deleted them). */
+/** The signed-in participant, or null (also null if an organizer deleted them). */
 export async function currentParticipant(): Promise<ParticipantRow | null> {
   const pid = await sessionParticipantId();
   if (!pid) return null;
   return db().getParticipant(pid);
 }
 
-// ── Admin ─────────────────────────────────────────────────────────────
+// ── Organizer console ─────────────────────────────────────────────────
 
 function sameSecret(a: string, b: string): boolean {
   const ha = createHash("sha256").update(a).digest();
@@ -65,32 +69,64 @@ function sameSecret(a: string, b: string): boolean {
   return timingSafeEqual(ha, hb);
 }
 
+/** The owner's break-glass password (ADMIN_PASSWORD). */
 export function checkAdminPassword(password: string): boolean {
   const expected = process.env.ADMIN_PASSWORD;
   if (!expected) return process.env.NODE_ENV !== "production" && password === "admin";
   return sameSecret(password, expected);
 }
 
-export async function startAdminSession() {
-  const token = await new SignJWT({ role: "admin" })
+/** After an organizer re-confirms their PIN (pid), or the break-glass password (pid null = owner level). */
+export async function startConsoleSession(pid: string | null) {
+  const token = await new SignJWT(pid ? { pid } : { bg: true })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
-    .setExpirationTime("12h")
+    .setExpirationTime(`${CONSOLE_HOURS}h`)
     .sign(secret());
-  (await cookies()).set(ADMIN_COOKIE, token, { ...cookieBase, maxAge: 60 * 60 * 12 });
+  (await cookies()).set(CONSOLE_COOKIE, token, { ...cookieBase, maxAge: 60 * 60 * CONSOLE_HOURS });
 }
 
-export async function endAdminSession() {
-  (await cookies()).delete(ADMIN_COOKIE);
+export async function endConsoleSession() {
+  (await cookies()).delete(CONSOLE_COOKIE);
 }
 
-export async function isAdmin(): Promise<boolean> {
-  const token = (await cookies()).get(ADMIN_COOKIE)?.value;
-  if (!token) return false;
+export type Actor = { id: string | null; name: string; role: Role; breakGlass: boolean };
+
+/**
+ * Who is using the console right now, or null. The role is re-read from the
+ * database on every request (a demoted admin loses access at once), and a PIN
+ * console session must belong to the person who is signed in.
+ */
+export async function consoleActor(): Promise<Actor | null> {
+  const token = (await cookies()).get(CONSOLE_COOKIE)?.value;
+  if (!token) return null;
   try {
     const { payload } = await jwtVerify(token, secret());
-    return payload.role === "admin";
+    if (payload.bg === true) return { id: null, name: "Organizer (password)", role: "owner", breakGlass: true };
+    if (typeof payload.pid !== "string") return null;
+    if ((await sessionParticipantId()) !== payload.pid) return null;
+    const p = await db().getParticipant(payload.pid);
+    const role = roleOf(p);
+    if (!p || !isOrganizerRole(role)) return null;
+    return { id: p.id, name: p.display_name, role, breakGlass: false };
   } catch {
-    return false;
+    return null;
   }
+}
+
+export type Gate = { ok: true; actor: Actor } | { ok: false; status: 401 | 403; code: "signin" | "confirm_pin" | "forbidden" };
+
+/**
+ * Server-side role check for every /api/admin/* route. Members get 403;
+ * organizers who haven't re-confirmed their PIN get 401 "confirm_pin".
+ */
+export async function organizerGate(level: "admin" | "owner" = "admin"): Promise<Gate> {
+  const actor = await consoleActor();
+  if (actor) {
+    if (level === "owner" && actor.role !== "owner") return { ok: false, status: 403, code: "forbidden" };
+    return { ok: true, actor };
+  }
+  const me = await currentParticipant();
+  if (!me) return { ok: false, status: 401, code: "signin" };
+  return isOrganizerRole(roleOf(me)) ? { ok: false, status: 401, code: "confirm_pin" } : { ok: false, status: 403, code: "forbidden" };
 }

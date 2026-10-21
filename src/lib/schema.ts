@@ -9,16 +9,20 @@ import {
   stayIds,
   transportIds,
 } from "@/content/preferences";
-import { TRIP_DAYS, TRIP_WINDOW } from "@/content";
 import { CURRENCY_CODES } from "./currency";
 import { diffDays, isValidISO } from "./dates";
 import { MAX_ITEMS, normalize, type ItineraryData } from "./itinerary";
+import { allowedLengths, tripDays, tripWindow } from "./rules";
 
 const isoDate = z.string().refine(isValidISO, "Invalid date");
 const text = (max: number) => z.string().trim().max(max).optional();
 
 const slotItems = z
-  .array(z.object({ key: z.string().min(1).max(16), id: z.string().min(1).max(64), pairId: z.string().max(64).optional() }).strip())
+  .array(
+    z
+      .object({ key: z.string().min(1).max(16), id: z.string().min(1).max(64), pairId: z.string().max(64).optional(), variant: z.string().max(32).optional() })
+      .strip(),
+  )
   .max(MAX_ITEMS);
 
 export const preferencesSchema = z
@@ -55,7 +59,7 @@ export const itinerarySchema = z
           note: z.string().max(280).optional(),
         }),
       )
-      .max(TRIP_DAYS),
+      .max(12),
     preferences: preferencesSchema,
     budget: z
       .object({ excluded: z.array(z.string().max(120)).max(300).optional(), accommodation: z.boolean().optional() })
@@ -69,12 +73,12 @@ export const itinerarySchema = z
     }
     if (d.startDate && d.endDate) {
       const len = diffDays(d.startDate, d.endDate) + 1;
-      if (d.startDate < TRIP_WINDOW.start || d.endDate > TRIP_WINDOW.end) {
+      if (d.startDate < tripWindow().start || d.endDate > tripWindow().end) {
         ctx.addIssue({ code: "custom", message: "Dates are outside the trip window" });
       }
-      // The group voted 6 days · 5 nights — the 5-day preview is never saved.
-      if (len !== TRIP_DAYS || d.days.length !== TRIP_DAYS) {
-        ctx.addIssue({ code: "custom", message: "The trip is 6 days · 5 nights" });
+      // The Trip rules decide the length (6 days · 5 nights by default); the preview is only saved if allowed.
+      if (!allowedLengths().includes(len) || d.days.length !== len) {
+        ctx.addIssue({ code: "custom", message: `The trip is ${tripDays()} days` });
       }
     }
   });
@@ -83,7 +87,7 @@ export const itinerarySchema = z
 export function parseItinerary(input: unknown): ItineraryData | null {
   const res = itinerarySchema.safeParse(input);
   if (!res.success) return null;
-  return normalize(res.data as ItineraryData, TRIP_DAYS);
+  return normalize(res.data as ItineraryData);
 }
 
 export const nameSchema = z

@@ -2,9 +2,11 @@ import "server-only";
 import { activitiesById, regions, stayIn } from "@/content";
 import { computeBudget } from "@/lib/budget";
 import { addDays } from "@/lib/dates";
-import { DAY_NAMES, STAY_ID, dayRole, daysNightsLabel, nights, slotWhere, tripLength, type SlotItem } from "@/lib/itinerary";
+import { STAY_ID, dayName, dayRole, daysNightsLabel, nights, slotWhere, tripLength, type SlotItem } from "@/lib/itinerary";
 import { balanceOf, buildTimeline, type SlotView } from "@/lib/timeline";
+import { tripDays } from "@/lib/rules";
 import type { Person } from "./group";
+import type { LiveSettings } from "./rules";
 
 const csvCell = (v: unknown): string => {
   if (v === null || v === undefined) return "";
@@ -18,7 +20,13 @@ const toCsv = (rows: Record<string, unknown>[]): string => {
   return [headers.join(","), ...rows.map((r) => headers.map((h) => csvCell(r[h])).join(","))].join("\n");
 };
 
-const titleOf = (x: SlotItem) => (x.id === STAY_ID ? stayIn.day.title : (activitiesById[x.id]?.title ?? x.id));
+function titleOf(x: SlotItem): string {
+  if (x.id === STAY_ID) return stayIn.day.title;
+  const a = activitiesById[x.id];
+  if (!a) return x.id;
+  const v = x.variant ? a.variants?.find((y) => y.id === x.variant) : undefined;
+  return v ? `${a.title} (${v.title})` : a.title;
+}
 
 function summarizeSlot(v: SlotView) {
   return {
@@ -83,15 +91,19 @@ function summary(p: Person) {
   };
 }
 
-export function exportJson(people: Person[], editsLocked: boolean) {
+export function exportJson(people: Person[], live: LiveSettings) {
+  const len = tripDays();
+  const n = nights(len);
   return {
     exportedAt: new Date().toISOString(),
-    editsLocked,
-    notes:
-      "Trip is 6 days · 5 nights (1 night Colombo, 4 nights Galle). All money is per person in USD (the app's base currency). Budget totals exclude flights.",
+    editsLocked: live.locked,
+    rules: live.rules,
+    notes: `Trip is ${daysNightsLabel(len)} (${n.colombo} ${n.colombo === 1 ? "night" : "nights"} Colombo, ${n.galle} nights Galle). All money is per person in USD (the app's base currency). Budget totals exclude flights.`,
     participants: people.map((p) => ({
       id: p.id,
       name: p.name,
+      role: p.role,
+      editStamp: p.stamp,
       status: p.status,
       joinedAt: p.joinedAt,
       updatedAt: p.updatedAt,
@@ -118,14 +130,17 @@ export function exportWideCsv(people: Person[]): string {
               const role = dayRole(i, d.days.length);
               const slot = (xs: SlotItem[]) => (xs.length ? xs.map(titleOf).join(" + ") : "—");
               return role === "departure"
-                ? `${date} (Day ${i + 1} · ${DAY_NAMES[role]})`
-                : `${date} (Day ${i + 1} · ${DAY_NAMES[role]}): ${slot(day.day)} / ${slot(day.night)}${day.note ? ` (note: ${day.note})` : ""}`;
+                ? `${date} (Day ${i + 1} · ${dayName(i, role)})`
+                : `${date} (Day ${i + 1} · ${dayName(i, role)}): ${slot(day.day)} / ${slot(day.night)}${day.note ? ` (note: ${day.note})` : ""}`;
             })
             .join(" | ")
         : "";
       return {
         name: p.name,
+        role: p.role,
         status: p.status,
+        edited_by: p.stamp?.kind === "edit" ? p.stamp.by : "",
+        edited_at: p.stamp?.kind === "edit" ? p.stamp.at : "",
         joined_at: p.joinedAt,
         updated_at: p.updatedAt,
         submitted_at: p.submittedAt,
@@ -176,6 +191,7 @@ const LONG_HEADERS = {
   kind: "",
   item_id: "",
   item_title: "",
+  variant: "",
   pair_id: "",
   region: "",
   vibe: "",
@@ -207,13 +223,14 @@ export function exportLongCsv(people: Person[]): string {
             status: p.status,
             date,
             day_number: i + 1,
-            day_name: DAY_NAMES[role],
+            day_name: dayName(i, role),
             where: slotWhere(role, key) ?? "",
             slot,
             position: pos + 1,
             kind: stay ? "stay" : a!.kind,
             item_id: x.id,
             item_title: stay ? stayIn.day.title : a!.title,
+            variant: x.variant ? (a?.variants?.find((v) => v.id === x.variant)?.title ?? x.variant) : "",
             pair_id: x.pairId ?? "",
             region: a ? regions[a.region].name : "",
             vibe: stay ? 0 : a!.vibe,

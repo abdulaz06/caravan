@@ -1,7 +1,7 @@
 import { json } from "@/lib/server/http";
-import { endAdminSession } from "@/lib/server/session";
+import { endConsoleSession } from "@/lib/server/session";
 
 export async function POST() {
-  await endAdminSession();
+  await endConsoleSession();
   return json({ ok: true });
 }
