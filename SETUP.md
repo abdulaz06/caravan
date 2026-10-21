@@ -24,7 +24,7 @@ npm run dev
 
 Open http://localhost:3000.
 
-Without Supabase settings, the app automatically uses a **local test database** (a file at `.data/dev-db.json`, ignored by git) so you can click around straight away. The organizer page is at http://localhost:3000/admin and, until you set `ADMIN_PASSWORD`, the local password is `admin`.
+Without Supabase settings, the app automatically uses a **local test database** (a file at `.data/dev-db.json`, ignored by git) so you can click around straight away. The organizer console is at http://localhost:3000/admin: until you set `ADMIN_PASSWORD`, the local emergency password is `admin` (locally nobody is the owner yet, so that password is how you make someone an admin).
 
 > The local test database only works on your computer. The live site always needs Supabase.
 
@@ -46,7 +46,8 @@ Without Supabase settings, the app automatically uses a **local test database** 
 2. Click **New query** (or the **+**).
 3. Open the file [`supabase/migrations/20261018000000_init.sql`](supabase/migrations/20261018000000_init.sql) from this repo, copy **all** of it, and paste it into the editor.
 4. Click **Run** (bottom right, or Ctrl/Cmd + Enter). You should see *"Success. No rows returned"*.
-5. Check it worked: open **Table Editor** in the left sidebar — you should see `participants`, `itineraries` and `settings`. Each one shows an "RLS enabled" badge. That's intended: it means nobody can read the data with the public key; only the app's server can.
+5. Do the same with every other file in [`supabase/migrations/`](supabase/migrations/), **in date order** — currently [`20261021000000_organizers_rules_peek.sql`](supabase/migrations/20261021000000_organizers_rules_peek.sql) (roles, live trip rules, activity log and peeks). It's safe to run more than once; its last line lists who's an organizer. The person named **Abdul** becomes the owner, and **Aadil** becomes an admin only if he has already joined.
+6. Check it worked: open **Table Editor** in the left sidebar — you should see `participants`, `itineraries`, `settings`, `activity_log` and `peeks`. Each one shows an "RLS enabled" badge. That's intended: it means nobody can read the data with the public key; only the app's server can.
 
 > If Supabase shows a warning like *"this query has destructive operations"*, that's because of the `revoke` lines. It's safe — click **Run** again to confirm.
 
@@ -121,16 +122,21 @@ Vercel → project → **Settings → Environment Variables** → edit → then 
 ## 7. Before you share the link
 
 - Open the live link on your phone and join once to test it.
-- Visit `/admin` on the live site and log in with your `ADMIN_PASSWORD`.
+- Sign in with your name + PIN and tap **Organizer** in the header (or visit `/admin`); it asks for your PIN once more. `ADMIN_PASSWORD` is the owner's emergency way in.
 - Paste the link into a WhatsApp chat with yourself to check the preview card (image + title). WhatsApp caches previews, so if you change it later, add `?v=2` to the link.
 - If you made test accounts, delete them from `/admin` before sharing.
 
 ## Organizer cheat sheet (`/admin`)
 
-- **Lock edits** — when you're ready to plan, flip the switch. Everyone sees *"Edits are closed — the final plan is coming!"* and nothing can change. Flip it back any time.
-- **Reset PIN** — tap the key icon next to someone and set a new 4-digit PIN for them (also clears a lockout).
-- **Delete** — removes a person and their itinerary.
-- **Export** — *Everything (JSON)* is best for AI analysis; *One row per person* and *One row per pick* are CSVs for spreadsheets.
+Organizers (the **owner** and any **admins**) sign in like everyone else, then tap **Organizer** and confirm their PIN; the console stays open for 12 hours. Only the owner can make or remove admins; nobody can demote or delete the owner.
+
+- **Overview** — who's joined, submitted, still drafting or not started, and the latest activity.
+- **People** — view anyone's full plan (private answers included), **Edit plan** in the normal day builder (stamped "Edited by you"; works even while edits are locked), reset a PIN, delete, and (owner) **Make admin**.
+- **Trip rules** — lock edits now or schedule an **auto-lock** (everyone sees a countdown); Colombo/Galle nights, the date window and whether the shorter trip can be submitted (you'll see how many plans need re-picks before anything changes); preview, area filtering, browsing, 👀 peek, the spectrum, the Halal button and the default currency.
+- **Content** — hide an option (people who picked it see "No longer available"), flag it to re-check, or feature it.
+- **Announcement** — a banner for everyone, on or off.
+- **Data** — *JSON* is best for AI analysis; the two CSVs are for spreadsheets.
+- **Activity** — every organizer action, and who peeked at whom.
 
 ## Editing content
 
@@ -148,4 +154,5 @@ Photos come from `scripts/image-picks.json` (Wikimedia Commons file names). Afte
 - **"Supabase is not configured"** on the live site → an environment variable is missing or misspelled in Vercel. Fix it and redeploy.
 - **"Database error: … relation does not exist"** → the SQL in step 3 wasn't run (or was run in a different project).
 - **Everyone got logged out** → `SESSION_SECRET` changed. Keep it stable once people have joined.
-- **Someone forgot their PIN** → `/admin` → key icon → set a new one and tell them.
+- **Someone forgot their PIN** → console → People → **Reset PIN** → set a new one and tell them.
+- **"column … role does not exist"** or the console won't open → the organizers migration (section 3, item 5) wasn't run.
