@@ -6,10 +6,11 @@ import { regions } from "@/content";
 import { flexibility as FLEX } from "@/content/preferences";
 import { cn } from "@/lib/cn";
 import { dayLabel } from "@/lib/dates";
-import { DAY_NAMES, nights, tripLength, type ItineraryData } from "@/lib/itinerary";
+import { nights, tripLength, type ItineraryData } from "@/lib/itinerary";
 import { dayRoutes } from "@/lib/routes";
 import type { Timeline } from "@/lib/timeline";
 import { Palm } from "../brand/illustrations";
+import { ChipScroller } from "../ui/chip-scroller";
 import { CoastMap } from "./coast-map";
 
 /** The travel-poster summary card at the top of a review/itinerary view, with the day-by-day route map. */
@@ -49,7 +50,7 @@ export function TripPoster({ name, data, timeline }: { name: string; data: Itine
           <div className="overflow-hidden rounded-[22px] ring-1 ring-white/10">
             <CoastMap routes={routes} active={active} onActive={setActive} />
           </div>
-          <div className="no-scrollbar -mx-3 mt-3 flex gap-1.5 overflow-x-auto px-3 pb-1" role="group" aria-label="Highlight a day">
+          <ChipScroller label="Highlight a day" activeKey={active ?? "all"} className="-mx-3 mt-3">
             <DayChip label="All days" on={active === null} onClick={() => setActive(null)} />
             {routes.map((r) => (
               <DayChip
@@ -61,7 +62,7 @@ export function TripPoster({ name, data, timeline }: { name: string; data: Itine
                 onClick={() => setActive(active === r.index ? null : r.index)}
               />
             ))}
-          </div>
+          </ChipScroller>
           <AnimatePresence mode="wait" initial={false}>
             {activeRoute && activeDay && (
               <motion.p
@@ -72,7 +73,7 @@ export function TripPoster({ name, data, timeline }: { name: string; data: Itine
                 className="mt-1.5 px-1 text-[12.5px] leading-snug text-paper/80"
               >
                 <b className="text-paper">
-                  Day {active! + 1} · {DAY_NAMES[activeDay.role]}
+                  Day {active! + 1} · {activeDay.name}
                 </b>
                 {activeRoute.stops.some((s) => s.kind === "stop")
                   ? ` — ${activeRoute.stops
@@ -96,6 +97,7 @@ function DayChip({ label, sub, color, on, onClick }: { label: string; sub?: stri
     <button
       onClick={onClick}
       aria-pressed={on}
+      data-active={on}
       className={cn(
         "inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3 text-[12.5px] font-bold transition active:scale-95",
         on ? "bg-paper text-ink" : "bg-white/10 text-paper/85 hover:bg-white/15",

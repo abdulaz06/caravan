@@ -1,10 +1,11 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
-import { formatHours, regions, type RegionId } from "@/content";
+import { regions, type RegionId } from "@/content";
+import { driveLabel } from "@/lib/timeline";
 import { cn } from "@/lib/cn";
 import { project } from "@/lib/map-data";
-import { badgeStop, COAST_DETAIL, laneFor, legMidpoint, onCoastRoad, onSouthCoast, placeBadge, placeLabel, routeBox, routePoints, smoothPath, type DayRoute, type LabelSpot, type Rect } from "@/lib/routes";
+import { badgeStop, COAST_DETAIL, dayBox, laneFor, legMidpoint, onCoastRoad, onSouthCoast, placeBadge, placeLabel, routeBox, routePoints, smoothPath, type DayRoute, type LabelSpot, type Rect } from "@/lib/routes";
 
 type Props = {
   routes: DayRoute[];
@@ -20,7 +21,11 @@ const LABEL_PRIORITY: RegionId[] = ["colombo", "galle", "airport", "mirissa", "h
 /** The trip's south-west coast, each day's route in its own colour. */
 export function CoastMap({ routes, active, onActive, className }: Props) {
   const reduce = useReducedMotion();
-  const box = routeBox(routes);
+  // All days: the south-west coast (grown for inland trips like Adam's Peak). One day: fit to its route.
+  const full = routeBox(routes);
+  const focus = active === null ? null : (routes.find((d) => d.index === active) ?? null);
+  const box = focus ? dayBox(focus, full) : full;
+  // Sizes follow the zoom so lines and labels stay the same size on screen.
   const H = box.h;
   const stroke = H * 0.0085;
   const gap = H * 0.0062;
@@ -62,10 +67,16 @@ export function CoastMap({ routes, active, onActive, className }: Props) {
   const legTags: { key: number; text: string; x: number; y: number; w: number }[] = [];
   if (activeRoute) {
     const tagFont = font * 0.9;
+    const tagged = new Set<string>();
     activeRoute.legs.forEach((leg, i) => {
       if (leg.hours < 0.5 || leg.from === leg.to) return;
+      // Out and back along the same road gets one tag: "~5–6 hrs each way".
+      const pair = [leg.from, leg.to].sort().join("|");
+      if (tagged.has(pair)) return;
+      tagged.add(pair);
+      const both = activeRoute.legs.some((o) => o !== leg && o.from === leg.to && o.to === leg.from);
       const [mx, my] = legMidpoint(leg);
-      const text = formatHours(leg.hours);
+      const text = `${driveLabel(leg.hours)}${both ? " each way" : ""}`;
       const w = textW(text, font * 0.82) + font * 0.9;
       const coastal = onCoastRoad(leg.from) && onCoastRoad(leg.to);
       const south = onSouthCoast(leg.from) && onSouthCoast(leg.to);
@@ -108,8 +119,11 @@ export function CoastMap({ routes, active, onActive, className }: Props) {
   const drawOrder = [...routes].sort((a, b) => (a.index === active ? 1 : 0) - (b.index === active ? 1 : 0));
 
   return (
-    <svg
-      viewBox={`${box.x} ${box.y} ${box.w} ${box.h}`}
+    <motion.svg
+      initial={false}
+      animate={{ viewBox: `${box.x} ${box.y} ${box.w} ${box.h}` }}
+      transition={reduce ? { duration: 0 } : { type: "spring", stiffness: 140, damping: 24 }}
+      viewBox={`${full.x} ${full.y} ${full.w} ${full.h}`}
       className={cn("block h-auto w-full", className)}
       role="img"
       aria-label={`Route map: ${routes.map((d) => `day ${d.index + 1} ${d.stops.map((s) => regions[s.region].short).join(", ")}`).join("; ")}`}
@@ -127,11 +141,11 @@ export function CoastMap({ routes, active, onActive, className }: Props) {
           <feDropShadow dx="0" dy={H * 0.004} stdDeviation={H * 0.006} floodColor="#021c22" floodOpacity="0.45" />
         </filter>
       </defs>
-      <rect x={box.x} y={box.y} width={box.w} height={box.h} fill="url(#cm-sea)" />
+      <rect x={full.x} y={full.y} width={full.w} height={full.h} fill="url(#cm-sea)" />
       {/* faint latitude lines */}
       {[7, 6.5, 6].map((lat) => {
         const [, y] = project(lat, 80);
-        return <line key={lat} x1={box.x} x2={box.x + box.w} y1={y} y2={y} stroke="#ffffff" strokeOpacity="0.06" strokeWidth={H * 0.002} strokeDasharray={`${H * 0.01} ${H * 0.012}`} />;
+        return <line key={lat} x1={full.x} x2={full.x + full.w} y1={y} y2={y} stroke="#ffffff" strokeOpacity="0.06" strokeWidth={H * 0.002} strokeDasharray={`${H * 0.01} ${H * 0.012}`} />;
       })}
       <path d={COAST_DETAIL} fill="url(#cm-land)" stroke="#fffbf4" strokeWidth={H * 0.003} filter="url(#cm-shadow)" />
 
@@ -248,6 +262,6 @@ export function CoastMap({ routes, active, onActive, className }: Props) {
           </text>
         </g>
       ))}
-    </svg>
+    </motion.svg>
   );
 }

@@ -96,6 +96,33 @@ export function routeBox(routes: DayRoute[], pad = 6): Box {
 
 const pt = (r: RegionId) => project(regions[r].lat, regions[r].lng);
 
+/**
+ * Frame one day's route: its towns and legs with some breathing room, never
+ * smaller than ~40% of the full map, in the same aspect ratio as `full` (so the
+ * map keeps its size on screen) and kept inside it where it fits.
+ */
+export function dayBox(route: DayRoute, full: Box): Box {
+  const pts = [...route.stops.map((s) => pt(s.region)), ...routePoints(route, 0)];
+  if (!pts.length) return full;
+  const xs = pts.map((p) => p[0]);
+  const ys = pts.map((p) => p[1]);
+  const minX = Math.min(...xs);
+  const minY = Math.min(...ys);
+  let w = Math.max(...xs) - minX;
+  let h = Math.max(...ys) - minY;
+  const cx = minX + w / 2;
+  const cy = minY + h / 2;
+  const aspect = full.w / full.h;
+  w = Math.max(w * 1.5 + 12, full.w * 0.4);
+  h = Math.max(h * 1.5 + 12, full.h * 0.4);
+  if (w / h < aspect) w = h * aspect;
+  else h = w / aspect;
+  if (w >= full.w || h >= full.h) return full;
+  const x = Math.min(Math.max(cx - w / 2, full.x), full.x + full.w - w);
+  const y = Math.min(Math.max(cy - h / 2, full.y), full.y + full.h - h);
+  return { x, y, w, h };
+}
+
 /** Screen points for a day: legs along the coast chain, with the day's lane offset. */
 export function routePoints(route: DayRoute, lane: number): [number, number][] {
   const raw: [number, number][] = [];
