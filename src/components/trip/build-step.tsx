@@ -14,9 +14,10 @@ import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { motion } from "framer-motion";
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowRightLeft, ArrowUp, Eye, GripVertical, Repeat2, Sparkles, Trash2, Wand2 } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowRightLeft, ArrowUp, Eye, GripVertical, Mountain, Repeat2, Sparkles, Trash2, Wand2 } from "lucide-react";
 import { useMemo, useState } from "react";
-import { stays, type Activity } from "@/content";
+import { activitiesById, stays, type Activity } from "@/content";
+import { PEAK_ID, eveningClash, peakPlaceable, peakVariant, peakVariants, resolveClash, type ClashChoice } from "@/lib/adams-peak";
 import type { BudgetResult } from "@/lib/budget";
 import { cn } from "@/lib/cn";
 import { dayLabel } from "@/lib/dates";
@@ -41,6 +42,7 @@ import {
   resolve,
   roleAt,
   setNote,
+  setVariant,
   slotWhere,
   type DayEntry,
   type ItineraryData,
@@ -59,6 +61,7 @@ import { CatalogSheet } from "./catalog-sheet";
 import { DateStub, DayCard, StayThumb, type DragBits } from "./day-card";
 import { MatchupSheet } from "./matchup-sheet";
 import { OptionDetail } from "./option-detail";
+import { ClashSheet, VariantSheet } from "./peak";
 
 type Props = {
   data: ItineraryData;
@@ -72,6 +75,8 @@ type Props = {
 
 type SlotRef = { index: number; slot: SlotKind };
 type ItemRef = SlotRef & { key: string };
+/** Adam's Peak needs a variant before it's placed (or when switching). */
+type PeakAsk = SlotRef & { mode: "first" | "add" | "replace" | "switch"; pairId?: string; key?: string; current?: string };
 
 export function BuildStep({ data, update, locked, budget, onOpenBudget, onBack, onNext }: Props) {
   const toast = useToast();
@@ -91,6 +96,8 @@ export function BuildStep({ data, update, locked, budget, onOpenBudget, onBack, 
   const [noteText, setNoteText] = useState("");
   const [fillAsk, setFillAsk] = useState(false);
   const [fillKey, setFillKey] = useState(0);
+  const [peakAsk, setPeakAsk] = useState<PeakAsk | null>(null);
+  const [clashFor, setClashFor] = useState<number | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
@@ -98,7 +105,50 @@ export function BuildStep({ data, update, locked, budget, onOpenBudget, onBack, 
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
-  const galleIdx = data.days.map((_, i) => i).filter((i) => roleAt(data, i) === "galle");
+  const all = data.days.map((_, i) => i);
+  const colomboIdx = all.filter((i) => roleAt(data, i) === "colombo");
+  const transferIdx = all.filter((i) => roleAt(data, i) === "transfer");
+  const galleIdx = all.filter((i) => roleAt(data, i) === "galle");
+
+  /** Options with variants (Adam's Peak) ask how first; everything else goes straight in. */
+  function needsVariant(id: string, ask: PeakAsk): boolean {
+    if (!activitiesById[id]?.variants) return false;
+    const ok = peakPlaceable(data, ask.index);
+    if (!ok.ok) {
+      toast(ok.reason);
+      return true;
+    }
+    setPeakAsk(ask);
+    return true;
+  }
+
+  function choosePeak(variant: string) {
+    const ask = peakAsk;
+    setPeakAsk(null);
+    if (!ask) return;
+    const ok = peakPlaceable(data, ask.index, variant);
+    if (!ok.ok) {
+      toast(ok.reason);
+      return;
+    }
+    update((d) => {
+      if (ask.mode === "first") return pickFirst(d, ask.index, ask.slot, PEAK_ID, ask.pairId, variant);
+      if (ask.mode === "add") return addItem(d, ask.index, ask.slot, PEAK_ID, undefined, variant);
+      if (ask.mode === "replace") return replaceItem(d, ask.index, ask.slot, ask.key!, PEAK_ID, undefined, variant);
+      return setVariant(d, ask.index, ask.slot, ask.key!, variant);
+    });
+    const v = peakVariant(variant);
+    toast(`${v?.emoji ?? "⛰"} Adam's Peak · ${v?.title} on Day ${ask.index + 1}`);
+    if (v?.overnight && eveningClash(data, ask.index).length) setClashFor(ask.index);
+  }
+
+  function resolvePeakClash(choice: ClashChoice) {
+    const i = clashFor;
+    setClashFor(null);
+    if (i === null) return;
+    update((d) => resolveClash(d, i, choice));
+    toast(choice === "keep" ? "Kept — wrap up by ~8:30pm" : choice === "move" ? "Moved to another evening" : "Evening cleared for the drive");
+  }
 
   function onDragEnd(e: DragEndEvent) {
     if (!e.over || e.active.id === e.over.id) return;
@@ -137,6 +187,11 @@ export function BuildStep({ data, update, locked, budget, onOpenBudget, onBack, 
     locked,
     onFirst: (slot: SlotKind) => !locked && setMatchup({ index: i, slot }),
     onAdd: (slot: SlotKind) => !locked && setCatalog({ index: i, slot }),
+    onStayIn: () => {
+      if (locked) return;
+      update((d) => (d.days[i].night.length ? addItem(d, i, "night", STAY_ID) : pickFirst(d, i, "night", STAY_ID)));
+      toast(`Stay in added to Day ${i + 1}'s evening`);
+    },
     onItem: (slot: SlotKind, key: string) => {
       if (locked) return;
       setMoving(false);
@@ -181,8 +236,8 @@ export function BuildStep({ data, update, locked, budget, onOpenBudget, onBack, 
           Build your <span className="italic text-ocean-700">days</span>
         </h1>
         <p className="mt-3 text-[15px] text-ink-2">
-          {n} days · {nts.total} nights: one night in Colombo, then down the coast to Galle. Pick a daytime and an evening — and add as
-          much to each as you like.
+          {n} days · {nts.total} nights: {nts.colombo === 1 ? "one night" : `${nts.colombo} nights`} in Colombo, then down the coast to Galle.
+          Pick a daytime and an evening — and add as much to each as you like.
         </p>
         <StaysBanner colombo={nts.colombo} galle={nts.galle} className="mt-4" />
         {!locked && (
@@ -219,20 +274,23 @@ export function BuildStep({ data, update, locked, budget, onOpenBudget, onBack, 
         </div>
       </div>
 
-      {/* Colombo · Day 1 */}
+      {/* Colombo · Day 1 (… or more Colombo days, per the Trip rules) */}
       <section className="relative z-[1] mt-5" aria-label="Colombo">
-        <SectionHeader stay="colombo" kicker={`Day 1 · ${nts.colombo} night`} />
+        <SectionHeader
+          stay="colombo"
+          kicker={colomboIdx.length > 1 ? `Days 1–${colomboIdx.length} · ${nts.colombo} nights` : `Day 1 · ${nts.colombo} night`}
+        />
         <ol key={`c${fillKey}`} className="mt-3 space-y-3 px-3">
-          {row(0)}
+          {colomboIdx.map((i) => row(i))}
         </ol>
       </section>
 
-      {/* Galle · Days 2 … n */}
+      {/* Galle · the road trip, the Galle days and the fly-home day */}
       {n > 1 && (
         <section className="relative z-[1] mt-6" aria-label="Galle">
-          <SectionHeader stay="galle" kicker={`Days 2–${n} · ${nts.galle} nights`} />
+          <SectionHeader stay="galle" kicker={`Days ${colomboIdx.length + 1}–${n} · ${nts.galle} nights`} />
           <ol key={`r${fillKey}`} className="mt-3 space-y-3 px-3">
-            {row(1)}
+            {transferIdx.map((i) => row(i))}
           </ol>
           {galleIdx.length > 0 && (
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd} modifiers={[restrictToVerticalAxis]}>
@@ -266,7 +324,10 @@ export function BuildStep({ data, update, locked, budget, onOpenBudget, onBack, 
           data={data}
           index={matchup.index}
           slot={matchup.slot}
-          onPick={(id, pairId) => update((d) => pickFirst(d, matchup.index, matchup.slot, id, pairId))}
+          onPick={(id, pairId) => {
+            if (needsVariant(id, { index: matchup.index, slot: matchup.slot, mode: "first", pairId })) return;
+            update((d) => pickFirst(d, matchup.index, matchup.slot, id, pairId));
+          }}
           onStay={() => update((d) => pickFirst(d, matchup.index, matchup.slot, STAY_ID))}
         />
       )}
@@ -280,6 +341,7 @@ export function BuildStep({ data, update, locked, budget, onOpenBudget, onBack, 
           mode={catalog.replace ? "replace" : "add"}
           onChoose={(id) => {
             const c = catalog;
+            if (needsVariant(id, { index: c.index, slot: c.slot, mode: c.replace ? "replace" : "add", key: c.replace })) return;
             update((d) => (c.replace ? replaceItem(d, c.index, c.slot, c.replace, id) : addItem(d, c.index, c.slot, id)));
             toast(c.replace ? "Swapped" : `Added to Day ${c.index + 1}`);
           }}
@@ -299,6 +361,17 @@ export function BuildStep({ data, update, locked, budget, onOpenBudget, onBack, 
         {itemRef && it && !moving && (
           <div className="grid gap-2 px-4 pb-10 pt-1">
             {itActivity && <ActionRow icon={Eye} label="See details" onClick={() => setDetail(itActivity)} />}
+            {it.id === PEAK_ID && (
+              <ActionRow
+                icon={Mountain}
+                label={`Switch to ${peakVariants().find((v) => v.id !== peakVariant(it.variant)?.id)?.title ?? "the other climb"}`}
+                onClick={() => {
+                  const ref = itemRef;
+                  closeItem();
+                  setPeakAsk({ index: ref.index, slot: ref.slot, mode: "switch", key: ref.key, current: peakVariant(it.variant)?.id });
+                }}
+              />
+            )}
             {itCount > 1 && (
               <div className="grid grid-cols-2 gap-2">
                 <ActionRow
@@ -369,6 +442,13 @@ export function BuildStep({ data, update, locked, budget, onOpenBudget, onBack, 
           </div>
         )}
       </Sheet>
+
+      {peakAsk && (
+        <VariantSheet open data={data} index={peakAsk.index} current={peakAsk.current} onClose={() => setPeakAsk(null)} onChoose={choosePeak} />
+      )}
+      {clashFor !== null && (
+        <ClashSheet open data={data} climbIndex={clashFor} onClose={() => setClashFor(null)} onResolve={resolvePeakClash} />
+      )}
 
       <OptionDetail
         open={!!detail}

@@ -1,12 +1,13 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowDownUp, Check, Info, MapPin, Repeat2 } from "lucide-react";
+import { ArrowDownUp, Ban, Check, Info, MapPin, Repeat2, Star } from "lucide-react";
 import { useMemo, useState } from "react";
 import { activitiesById, pairsFor, regions, stayIn, type Activity, type Pair, type Where } from "@/content";
 import { cn } from "@/lib/cn";
 import { dayLabel, parseISO } from "@/lib/dates";
 import { STAY_ID, alsoOn, dateAt, nyeIndex, nyePairAt, roleAt, slotWhere, type ItineraryData } from "@/lib/itinerary";
+import { isFeatured, isHidden } from "@/lib/rules";
 import { distanceLabel, hoursFrom } from "@/lib/timeline";
 import { Firework, StayInIcon } from "../brand/illustrations";
 import { Photo } from "../ui/photo";
@@ -49,11 +50,13 @@ export function MatchupSheet({ open, onClose, data, index, slot, onPick, onStay 
   const enroute = where === "enroute";
 
   const pairs = useMemo(() => {
-    const list = nye ? [nyePairAt(data)!] : pairsFor(where, slot);
-    if (sort === "all") return list;
+    // Organizers can hide options (both hidden = the matchup goes) and feature them (shown first).
+    const list = (nye ? [nyePairAt(data)!] : pairsFor(where, slot)).filter((p) => !(isHidden(p.a) && isHidden(p.b)));
+    const featured = (p: Pair) => (isFeatured(p.a) || isFeatured(p.b) ? 0 : 1);
+    if (sort === "all") return [...list].sort((a, b) => featured(a) - featured(b));
     const key = (a: Option) => (enroute ? (a.routeKm ?? 0) : hoursFrom(a, where));
     const dist = (p: Pair) => Math.min(key(activitiesById[p.a]), key(activitiesById[p.b]));
-    return [...list].sort((a, b) => dist(a) - dist(b));
+    return [...list].sort((a, b) => featured(a) - featured(b) || dist(a) - dist(b));
   }, [data, nye, where, slot, sort, enroute]);
 
   function choose(pair: Pair, option: Option) {
@@ -214,6 +217,18 @@ function OptionTile({
   onInfo: () => void;
 }) {
   const offDay = !!option.availableDays && weekday !== null && !option.availableDays.includes(weekday);
+  const gone = isHidden(option.id);
+  if (gone) {
+    return (
+      <div className="relative grid aspect-[3/4.1] w-full place-items-center overflow-hidden rounded-[20px] bg-sand-200 p-3 text-center text-ink-3" aria-label={`${option.title} — no longer available`}>
+        <span>
+          <Ban className="mx-auto size-6" />
+          <span className="mt-2 block text-[13px] font-semibold leading-tight">{option.title}</span>
+          <span className="mt-1 block text-[11.5px] font-bold uppercase tracking-wide">No longer available</span>
+        </span>
+      </div>
+    );
+  }
   return (
     <motion.div
       animate={state === "won" ? { scale: 1.04, zIndex: 2 } : state === "lost" ? { scale: 0.94, opacity: 0.35 } : { scale: 1, opacity: 1 }}
@@ -231,6 +246,11 @@ function OptionTile({
         <Photo photo={option.images[0]} alt={option.title} sizes="(min-width: 1024px) 220px, 46vw" />
         <span className="absolute inset-0 bg-gradient-to-t from-ink/90 via-ink/25 to-transparent" />
         <span className="absolute left-2 right-11 top-2 flex flex-wrap gap-1">
+          {isFeatured(option.id) && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-saffron-400 px-2 py-0.5 text-[10.5px] font-bold text-ink">
+              <Star className="size-3 fill-ink" /> Featured
+            </span>
+          )}
           <span className="rounded-full bg-ink/45 px-2 py-0.5 text-[10.5px] font-bold text-white backdrop-blur-md">
             {distanceLabel(option, where)}
           </span>

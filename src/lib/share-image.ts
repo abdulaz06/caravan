@@ -484,7 +484,8 @@ function dayList(ctx: Ctx, f: Fonts, m: ShareModel, x: number, y: number, w: num
     icon(ctx, "sun", tx, line1 - iconPx + 3 * k, iconPx, C.saffron400);
     ctx.fillText(fit(ctx, titlesFor(t, "day") || "Free daytime", tx + tw - textX), textX, line1);
     icon(ctx, "moon", tx, line2 - iconPx + 3 * k, iconPx, C.hibiscusLight);
-    ctx.fillText(fit(ctx, titlesFor(t, "night") || "Free evening", tx + tw - textX), textX, line2);
+    const night = titlesFor(t, "night") || (t.night.locked ? "Overnight drive to Adam's Peak" : "Free evening");
+    ctx.fillText(fit(ctx, night, tx + tw - textX), textX, line2);
   }
 }
 

@@ -1,12 +1,12 @@
 "use client";
 
-import { Moon, Sun } from "lucide-react";
+import { Lock, Moon, Sun } from "lucide-react";
 import { useState } from "react";
 import { formatHours, type Activity, type Where } from "@/content";
 import { cn } from "@/lib/cn";
-import type { ItineraryData, SlotKind } from "@/lib/itinerary";
+import { nights, type ItineraryData, type SlotKind } from "@/lib/itinerary";
 import type { SlotView, Timeline } from "@/lib/timeline";
-import { Firework } from "../brand/illustrations";
+import { Firework, SummitIcon } from "../brand/illustrations";
 import { RoadTrip, Tip, Warning } from "./bits";
 import { ItemRow } from "./day-card";
 import { OptionDetail } from "./option-detail";
@@ -14,6 +14,8 @@ import { OptionDetail } from "./option-detail";
 /** Read-only, beautiful vertical timeline of a whole itinerary. */
 export function ItineraryTimeline({ data, timeline }: { data: ItineraryData; timeline: Timeline }) {
   const [detail, setDetail] = useState<{ a: Activity; where: Where | null } | null>(null);
+  const n = nights(timeline.days.length);
+  const w = (x: number) => `${x} ${x === 1 ? "night" : "nights"}`;
   return (
     <>
       <ol className="relative">
@@ -21,8 +23,8 @@ export function ItineraryTimeline({ data, timeline }: { data: ItineraryData; tim
         {timeline.days.map((t) => {
           const nye = t.tags.includes("nye");
           const note = data.days[t.index]?.note;
-          const galleNights = timeline.days.length - 2;
-          const section = t.role === "colombo" ? "Colombo · 1 night" : t.role === "transfer" ? `Galle · ${galleNights} nights` : null;
+          const firstColombo = t.role === "colombo" && t.index === 0;
+          const section = firstColombo ? `Colombo · ${w(n.colombo)}` : t.role === "transfer" ? `Galle · ${w(n.galle)}` : null;
           return (
             <li key={t.index} className="relative pb-6 pl-12">
               {section && (
@@ -52,6 +54,12 @@ export function ItineraryTimeline({ data, timeline }: { data: ItineraryData; tim
                       <Firework className="size-3.5" /> New Year&apos;s Eve
                     </span>
                   )}
+                  {t.tags.includes("summit") && (
+                    <span className="inline-flex items-center gap-1 text-[12px] font-bold text-jungle-700">
+                      <SummitIcon className="size-4" /> Adam&apos;s Peak
+                    </span>
+                  )}
+                  {t.tags.includes("poya") && <span className="text-[12px] font-bold text-saffron-600">🌕 Poya</span>}
                 </div>
               </div>
               <div className="mt-2.5 space-y-2">
@@ -87,6 +95,14 @@ export function ItineraryTimeline({ data, timeline }: { data: ItineraryData; tim
 
 function SlotRows({ kind, view, date, onOpen }: { kind: SlotKind; view: SlotView; date: string | null; onOpen: (a: Activity) => void }) {
   const night = kind === "night";
+  if (!view.items.length && view.locked) {
+    return (
+      <div className="space-y-1">
+        <p className="label flex items-center gap-1.5 pl-1 text-dusk-700">Evening</p>
+        <LockedDrive locked={view.locked} />
+      </div>
+    );
+  }
   if (!view.items.length) {
     return (
       <div className={cn("flex h-12 items-center gap-2.5 rounded-2xl px-3 text-[13.5px] font-medium", night ? "bg-dusk-900/[0.06] text-ink-3" : "bg-sand-200/50 text-ink-3")}>
@@ -99,8 +115,9 @@ function SlotRows({ kind, view, date, onOpen }: { kind: SlotKind; view: SlotView
     <div className="space-y-1">
       <p className={cn("label flex items-center gap-1.5 pl-1", night ? "text-dusk-700" : "text-sunset-600")}>
         {night ? "Evening" : view.where === "enroute" ? "On the way" : "Daytime"}
-        <span className="font-sans normal-case tracking-normal text-ink-3">· {formatHours(view.plannedHours)}</span>
+        <span className="font-sans normal-case tracking-normal text-ink-3">· {view.fullDay ? `Full day, ${view.fullDay}` : formatHours(view.plannedHours)}</span>
       </p>
+      {view.note && <p className="rounded-xl bg-dusk-900 px-3 py-2 text-[12.5px] font-semibold text-paper">😴 {view.note.text}</p>}
       {view.items.map((it) => (
         <div key={it.item.key}>
           {it.before && <RoadTrip seg={it.before} />}
@@ -115,6 +132,25 @@ function SlotRows({ kind, view, date, onOpen }: { kind: SlotKind; view: SlotView
         </div>
       ))}
       {view.after && <RoadTrip seg={view.after} />}
+      {view.locked && <LockedDrive locked={view.locked} />}
+    </div>
+  );
+}
+
+/** The sunrise climb's overnight drive, locked onto the evening before. */
+function LockedDrive({ locked }: { locked: NonNullable<SlotView["locked"]> }) {
+  return (
+    <div className="flex items-center gap-3 rounded-2xl bg-ocean-900 p-2 pr-3 text-paper">
+      <span className="grid size-[44px] shrink-0 place-items-center rounded-xl bg-dusk-900">
+        <SummitIcon className="size-9" night />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-[13.5px] font-semibold leading-tight">
+          {locked.title} · leave {locked.leave}
+        </span>
+        <span className="block text-[11.5px] text-paper/60">{locked.detail}</span>
+      </span>
+      <Lock className="size-4 shrink-0 text-saffron-400" />
     </div>
   );
 }

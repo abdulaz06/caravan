@@ -7,6 +7,7 @@ import { CATEGORIES, activities, stayIn, type Activity, type Category, type Wher
 import { cn } from "@/lib/cn";
 import { dayLabel, parseISO } from "@/lib/dates";
 import { STAY_ID, dateAt, itemAllowed, nyeIndex, roleAt, slotWhere, type ItineraryData, type SlotKind } from "@/lib/itinerary";
+import { isFeatured, isHidden } from "@/lib/rules";
 import { distanceLabel, hoursFrom } from "@/lib/timeline";
 import { useCurrency } from "../currency";
 import { StayInIcon } from "../brand/illustrations";
@@ -42,7 +43,8 @@ export function CatalogSheet({ open, onClose, data, index, slot, mode = "add", o
   const list = useMemo(() => {
     const term = q.trim().toLowerCase();
     return activities
-      .filter((a) => itemAllowed(a.id, slot, where, isNye))
+      .filter((a) => itemAllowed(a.id, slot, where, isNye) && !isHidden(a.id))
+      .filter((a) => !a.onlyRole || a.onlyRole === roleAt(data, index))
       .filter((a) => cat === "all" || a.categories.includes(cat))
       .filter(
         (a) =>
@@ -51,11 +53,12 @@ export function CatalogSheet({ open, onClose, data, index, slot, mode = "add", o
           a.region.includes(term),
       )
       .sort((a, b) => {
+        if (isFeatured(a.id) !== isFeatured(b.id)) return isFeatured(a.id) ? -1 : 1;
         if (a.kind !== b.kind) return a.kind === "option" ? -1 : 1;
         if (where === "enroute") return (a.routeKm ?? 0) - (b.routeKm ?? 0);
         return hoursFrom(a, where) - hoursFrom(b, where);
       });
-  }, [q, cat, slot, where, isNye]);
+  }, [q, cat, slot, where, isNye, data, index]);
 
   const showStay = (cat === "all" || cat === "chill") && (!q.trim() || "stay in villa chill".includes(q.trim().toLowerCase()));
   const stay = where === "enroute" ? stayIn.enroute : stayIn[slot];
@@ -135,7 +138,7 @@ export function CatalogSheet({ open, onClose, data, index, slot, mode = "add", o
                     night={night}
                     title={a.title}
                     subtitle={a.tagline}
-                    meta={`${distanceLabel(a, where)} · ${range(a.estCostUsd)}`}
+                    meta={`${isFeatured(a.id) ? "★ Featured · " : ""}${distanceLabel(a, where)} · ${range(a.estCostUsd)}`}
                     badges={
                       <>
                         {a.kind === "extra" && (

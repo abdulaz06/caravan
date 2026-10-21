@@ -5,7 +5,7 @@ import { LEGS, formatHours, type FixedLeg } from "@/content";
 import { ACCOMMODATION, BUDGET_BOUNDS, GROUP_SIZE, VANS, VAN_RATE_PER_HOUR } from "@/content/costs";
 import { budgets as BUDGET_TIERS, stays as STAY_STYLES } from "@/content/preferences";
 import { addDays, dayLabel } from "./dates";
-import { DAY_NAMES, nights as nightsFor, type ItineraryData, type SlotKind } from "./itinerary";
+import { nights as nightsFor, type ItineraryData, type SlotKind } from "./itinerary";
 import { buildTimeline, coastLeg } from "./timeline";
 
 export type Range = [number, number];
@@ -77,9 +77,10 @@ export function computeBudget(data: ItineraryData): BudgetResult {
     }
     if (driving >= 0.75) {
       const id = `${d.id}:van`;
+      const peak = t.tags.includes("summit");
       lines.push({
         id,
-        label: "Shared van for the day's trips",
+        label: peak ? "Shared van · Galle ⇄ Adam's Peak" : "Shared van for the day's trips",
         detail: `${formatHours(driving)} of driving`,
         range: vanFor(driving),
         kind: "transport",
@@ -91,7 +92,7 @@ export function computeBudget(data: ItineraryData): BudgetResult {
       groups.push({
         id: d.id,
         title: `Day ${i + 1}`,
-        subtitle: `${data.startDate ? `${dayLabel(addDays(data.startDate, i))} · ` : ""}${DAY_NAMES[t.role]}`,
+        subtitle: `${data.startDate ? `${dayLabel(addDays(data.startDate, i))} · ` : ""}${t.name}`,
         lines,
       });
     }

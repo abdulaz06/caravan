@@ -1,14 +1,16 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { AlertTriangle, LayoutGrid, Moon, MoreHorizontal, NotebookPen, Plus, Sun } from "lucide-react";
+import { AlertTriangle, Ban, LayoutGrid, Lock, Moon, MoreHorizontal, NotebookPen, Plus, Sun } from "lucide-react";
 import type { CSSProperties } from "react";
 import { formatHours } from "@/content";
 import { cn } from "@/lib/cn";
 import { parseISO } from "@/lib/dates";
 import type { DayEntry, SlotKind } from "@/lib/itinerary";
+import { currentRules, isHidden } from "@/lib/rules";
+import { peakVariant } from "@/lib/adams-peak";
 import { distanceLabel, type ItemView, type SlotView as SlotViewT, type TimelineDay } from "@/lib/timeline";
-import { Firework, StayInIcon, Van } from "../brand/illustrations";
+import { Firework, StayInIcon, SummitIcon, Van } from "../brand/illustrations";
 import { Photo } from "../ui/photo";
 import { DaysBadge, RoadTrip, Tip, VibeDots, Warning } from "./bits";
 
@@ -58,6 +60,8 @@ type CardProps = {
   onAdd: (slot: SlotKind) => void;
   onItem: (slot: SlotKind, key: string) => void;
   onNote: () => void;
+  /** One tap "Stay in" for a recovery evening after Adam's Peak. */
+  onStayIn?: () => void;
 };
 
 const ROLE_TAG: Record<TimelineDay["role"], { label: string; className: string }> = {
@@ -67,7 +71,7 @@ const ROLE_TAG: Record<TimelineDay["role"], { label: string; className: string }
   departure: { label: "Fly home", className: "bg-sunset-100 text-sunset-700" },
 };
 
-export function DayCard({ entry, index, t, locked, drag, onFirst, onAdd, onItem, onNote }: CardProps) {
+export function DayCard({ entry, index, t, locked, drag, onFirst, onAdd, onItem, onNote, onStayIn }: CardProps) {
   const nye = t.tags.includes("nye");
   const tag = ROLE_TAG[t.role];
 
@@ -82,11 +86,18 @@ export function DayCard({ entry, index, t, locked, drag, onFirst, onAdd, onItem,
         drag?.isDragging && "z-20 rotate-[0.6deg] border-transparent shadow-lift ring-2 ring-saffron-400",
       )}
     >
-      <div className="flex items-center gap-1.5">
-        <span className="label text-ink-3">Day {index + 1}</span>
-        <Tag className={tag.className}>{tag.label}</Tag>
-        {nye && <Tag className="bg-dusk-900 text-saffron-400">NYE ✦</Tag>}
-        <span className="flex-1" />
+      <div className="flex items-start gap-1.5">
+        <div className="flex min-h-8 min-w-0 flex-1 flex-wrap items-center gap-1.5">
+          <span className="label whitespace-nowrap text-ink-3">Day {index + 1}</span>
+          <Tag className={tag.className}>{tag.label}</Tag>
+          {nye && <Tag className="bg-dusk-900 text-saffron-400">NYE ✦</Tag>}
+          {t.tags.includes("summit") && (
+            <Tag className="inline-flex items-center gap-1 bg-jungle-800 text-saffron-400">
+              <SummitIcon className="size-3.5" /> Adam&apos;s Peak
+            </Tag>
+          )}
+          {t.tags.includes("poya") && <Tag className="bg-saffron-200 text-ink">🌕 Poya</Tag>}
+        </div>
         {!locked && (
           <button
             onClick={onNote}
@@ -98,9 +109,11 @@ export function DayCard({ entry, index, t, locked, drag, onFirst, onAdd, onItem,
         )}
         {!locked && drag?.handle}
       </div>
-      {t.role === "colombo" && (
+      {t.role === "colombo" && index === 0 && (
         <p className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-saffron-100 px-2.5 py-1 text-[11.5px] font-bold text-ink ring-1 ring-saffron-200">
-          ★ Our only Colombo day · 1 night in the city
+          {currentRules().colomboNights === 1
+            ? "★ Our only Colombo day · 1 night in the city"
+            : `★ Colombo · ${currentRules().colomboNights} nights in the city`}
         </p>
       )}
 
@@ -122,12 +135,21 @@ export function DayCard({ entry, index, t, locked, drag, onFirst, onAdd, onItem,
         kind="night"
         view={t.night}
         date={t.date}
-        empty={nye ? "Pick your New Year's Eve" : t.role === "colombo" ? "Pick your Colombo night" : "Pick your evening"}
+        empty={
+          nye
+            ? "Pick your New Year's Eve"
+            : t.night.locked
+              ? `Anything before the ${t.night.locked.leave.replace("~", "")} drive?`
+              : t.role === "colombo"
+                ? "Pick your Colombo night"
+                : "Pick your evening"
+        }
         locked={locked}
         nye={nye}
         onFirst={() => onFirst("night")}
         onAdd={() => onAdd("night")}
         onItem={(k) => onItem("night", k)}
+        onStayIn={onStayIn}
         className="mt-3"
       />
       {entry.note && (
@@ -173,7 +195,7 @@ function SendOffCard({ index, t }: { index: number; t: TimelineDay }) {
 }
 
 function Tag({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <span className={cn("rounded-full px-2 py-0.5 text-[10.5px] font-bold", className)}>{children}</span>;
+  return <span className={cn("whitespace-nowrap rounded-full px-2 py-0.5 text-[10.5px] font-bold", className)}>{children}</span>;
 }
 
 /** A Daytime/Evening slot: an ordered list of items with hops between them. */
@@ -187,6 +209,7 @@ function SlotBlock({
   onFirst,
   onAdd,
   onItem,
+  onStayIn,
   className,
 }: {
   kind: SlotKind;
@@ -198,6 +221,7 @@ function SlotBlock({
   onFirst: () => void;
   onAdd: () => void;
   onItem: (key: string) => void;
+  onStayIn?: () => void;
   className?: string;
 }) {
   const night = kind === "night";
@@ -211,10 +235,20 @@ function SlotBlock({
         {view.items.length > 0 && (
           <span className={cn("inline-flex items-center gap-1 text-[11px] font-semibold", view.overpacked ? "text-sunset-600" : "text-ink-3")}>
             {view.overpacked && <AlertTriangle className="size-3" strokeWidth={2.5} />}
-            {formatHours(view.plannedHours)} planned
+            {view.fullDay ? `Full day · ${view.fullDay}` : `${formatHours(view.plannedHours)} planned`}
           </span>
         )}
       </div>
+      {view.note && (
+        <div className="mb-1.5 flex items-center gap-2 rounded-xl bg-dusk-900/90 px-3 py-2 text-[12.5px] font-semibold text-paper">
+          <span className="flex-1">😴 {view.note.text}</span>
+          {view.note.suggestStay && !locked && onStayIn && (
+            <button onClick={onStayIn} className="shrink-0 rounded-full bg-saffron-400 px-2.5 py-1 text-[11.5px] font-bold text-ink">
+              + Stay in
+            </button>
+          )}
+        </div>
+      )}
       {view.items.length === 0 ? (
         <>
           <EmptySlot kind={kind} label={empty} nye={nye} locked={locked} onClick={onFirst} />
@@ -247,6 +281,23 @@ function SlotBlock({
             </li>
           )}
         </ul>
+      )}
+      {view.locked && (
+        <div
+          aria-label={`${view.locked.title} · leave ${view.locked.leave} (locked)`}
+          className="mt-1.5 flex items-center gap-3 rounded-2xl bg-ocean-900 p-2 pr-3 text-paper ring-1 ring-saffron-400/40"
+        >
+          <span className="grid size-[52px] shrink-0 place-items-center rounded-xl bg-dusk-900">
+            <SummitIcon className="size-10" night />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-[14px] font-semibold leading-tight">
+              {view.locked.title} · leave {view.locked.leave}
+            </span>
+            <span className="mt-0.5 block text-[11.5px] text-paper/60">{view.locked.detail} · for Day {view.locked.forDay + 1}&apos;s sunrise</span>
+          </span>
+          <Lock className="size-4 shrink-0 text-saffron-400" />
+        </div>
       )}
       {view.after && <RoadTrip seg={view.after} className="mt-1" />}
     </div>
@@ -304,6 +355,8 @@ export function ItemRow({
   const title = stay ? r.stay.title : a!.title;
   const extra = a?.kind === "extra";
   const offDay = !!a?.availableDays && !!date && !a.availableDays.includes(parseISO(date).getUTCDay());
+  const gone = !!a && isHidden(a.id);
+  const variant = a?.variants ? peakVariant(view.item.variant) : undefined;
   return (
     <motion.button
       layout="position"
@@ -318,6 +371,7 @@ export function ItemRow({
         extra ? "p-1.5 pr-2" : "p-2 pr-2.5",
         night ? "dusk text-paper" : "bg-sand-100 text-ink",
         !first && !extra && (night ? "ring-1 ring-white/10" : "ring-1 ring-sand-200"),
+        gone && "opacity-70 grayscale",
       )}
     >
       {stay ? (
@@ -340,6 +394,16 @@ export function ItemRow({
             </>
           ) : (
             <>
+              {gone && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-sunset-600 px-1.5 py-px text-[10px] font-bold text-white">
+                  <Ban className="size-2.5" /> No longer available
+                </span>
+              )}
+              {variant && (
+                <span className={cn("rounded-full px-1.5 py-px text-[10px] font-bold", night ? "bg-white/10" : "bg-jungle-800 text-saffron-400")}>
+                  {variant.emoji} {variant.title}
+                </span>
+              )}
               {extra && <span className={cn("rounded-full px-1.5 py-px text-[10px] font-bold", night ? "bg-white/10" : "bg-saffron-200 text-ink")}>Quick extra</span>}
               <span className="truncate">{where ? distanceLabel(a!, where) : a!.duration}</span>
               {!extra && <VibeDots vibe={a!.vibe} />}

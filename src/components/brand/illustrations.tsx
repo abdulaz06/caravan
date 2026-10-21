@@ -268,3 +268,28 @@ export function StayInIcon({ variant = "night", className }: P & { variant?: "da
     </svg>
   );
 }
+
+/**
+ * Adam's Peak mark: the pointed summit with its zig-zag pilgrim path and a
+ * rising sun (or a crescent for the night-before drive).
+ */
+export function SummitIcon({ className, night = false }: P & { night?: boolean }) {
+  return (
+    <svg viewBox="0 0 48 48" className={className} aria-hidden="true">
+      {night ? (
+        <path d="M33 7a7 7 0 1 0 7.5 9.4A5.6 5.6 0 0 1 33 7Z" fill="#f7ba5c" />
+      ) : (
+        <g>
+          <circle cx="35" cy="17" r="6" fill="#f2a33a" />
+          {Array.from({ length: 7 }, (_, i) => (
+            <rect key={i} x="34.2" y="6" width="1.6" height="3.4" rx=".8" fill="#f2a33a" transform={`rotate(${-90 + i * 30} 35 17)`} />
+          ))}
+        </g>
+      )}
+      <path d="M2 42 17 14l7 11 4-5 18 22Z" fill="#2b6a48" />
+      <path d="M17 14l3.6 5.6-2.1-.7-1.5 2.4-1.6-2.4-2 .8Z" fill="#fffbf4" />
+      <path d="M17.5 40c-3-3 4-5 1-8s3-4 0-7 2-3-.6-6" fill="none" stroke="#f7ba5c" strokeWidth="1.4" strokeLinecap="round" strokeDasharray="0.1 2.4" />
+      <path d="M24 25 2 42h44L28 20Z" fill="#1f5238" opacity=".55" />
+    </svg>
+  );
+}

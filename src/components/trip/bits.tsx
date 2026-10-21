@@ -4,7 +4,7 @@ import { AlertTriangle, CalendarClock, Plane, Sparkles } from "lucide-react";
 import { COAST_ROAD_KM, type Activity as Option } from "@/content";
 import { cn } from "@/lib/cn";
 import { daysLabel, type TravelSegment } from "@/lib/timeline";
-import { Van } from "../brand/illustrations";
+import { Van, SummitIcon } from "../brand/illustrations";
 
 /** A travel line: fixed legs, road trips from base, hops between items and the way back. */
 export function RoadTrip({ seg, tone = "light", className }: { seg: TravelSegment; tone?: "light" | "dark"; className?: string }) {
@@ -25,6 +25,8 @@ export function RoadTrip({ seg, tone = "light", className }: { seg: TravelSegmen
           <span className={cn("grid size-5 place-items-center rounded-full", dark ? "bg-white/10 text-ocean-100" : "bg-ocean-600 text-white")}>
             <Plane className="size-3 -rotate-45" strokeWidth={2.5} />
           </span>
+        ) : seg.to === "adams-peak" || seg.from === "adams-peak" ? (
+          <SummitIcon className="size-6" night={seg.kind === "overnight"} />
         ) : (
           <Van className={cn(small ? "h-4 w-6" : "h-5 w-8", dark ? "text-ocean-300" : "text-ocean-600")} />
         )}
@@ -33,7 +35,7 @@ export function RoadTrip({ seg, tone = "light", className }: { seg: TravelSegmen
         <p className={cn("font-semibold leading-snug", small ? "text-[11.5px]" : "text-[12.5px]", dark ? "text-ocean-100" : "text-ocean-700")}>
           {seg.title} <span className={dark ? "text-paper/60" : "text-ink-3"}>· {seg.label}</span>
         </p>
-        {fixed && seg.detail && <p className={cn("mt-0.5 text-[11.5px] leading-snug", dark ? "text-paper/55" : "text-ink-3")}>{seg.detail}</p>}
+        {(fixed || seg.kind === "overnight") && seg.detail && <p className={cn("mt-0.5 text-[11.5px] leading-snug", dark ? "text-paper/55" : "text-ink-3")}>{seg.detail}</p>}
         {seg.stops && seg.stops.length > 0 && <RouteStrip stops={seg.stops} dark={dark} className="mt-2" />}
       </div>
     </div>

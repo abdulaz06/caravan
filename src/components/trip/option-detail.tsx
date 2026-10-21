@@ -1,10 +1,13 @@
 "use client";
 
-import { Check, Clock, ExternalLink, Flag, Gauge, Heart, Info, MapPin, Wallet } from "lucide-react";
+import { Backpack, Ban, Check, Clock, ExternalLink, Flag, Gauge, Heart, Info, MapPin, RefreshCw, Wallet } from "lucide-react";
 import { useRef, useState } from "react";
 import { COAST_ROAD_KM, regions, type Activity, type Photo as PhotoT, type Where } from "@/content";
 import { cn } from "@/lib/cn";
+import { isHidden } from "@/lib/rules";
 import { distanceLabel } from "@/lib/timeline";
+import { useRules } from "../rules";
+import { VariantCard } from "./peak";
 import { useCurrency } from "../currency";
 import { Button } from "../ui/button";
 import { Photo, PhotoCredit } from "../ui/photo";
@@ -62,13 +65,16 @@ export function Gallery({ images, alt, className }: { images: PhotoT[]; alt: str
 
 export function OptionDetail({ option, where, open, onClose, pickLabel, picked, onPick }: Props) {
   const { range, rateNote } = useCurrency();
+  const rules = useRules();
+  const gone = !!option && isHidden(option.id, rules);
+  const recheck = !!option && rules.recheck.includes(option.id);
   return (
     <Sheet
       open={open && !!option}
       onClose={onClose}
       bare
       footer={
-        onPick && option ? (
+        onPick && option && !gone ? (
           <Button size="lg" block onClick={onPick} variant={picked ? "ocean" : "primary"}>
             {picked ? (
               <>
@@ -96,6 +102,16 @@ export function OptionDetail({ option, where, open, onClose, pickLabel, picked, 
               <VibeDots vibe={option.vibe} className="rounded-full bg-sand-200 px-2.5 py-1 text-ink-2" />
               <DaysBadge option={option} className="px-2.5 py-1 text-[12px]" />
             </div>
+            {gone && (
+              <p className="mt-3 flex items-center gap-2 rounded-2xl bg-sand-200 px-3.5 py-2.5 text-[13.5px] font-semibold text-ink-2">
+                <Ban className="size-4 shrink-0 text-sunset-600" /> No longer available — the organizers have taken this off the list.
+              </p>
+            )}
+            {recheck && !gone && (
+              <p className="mt-3 flex items-center gap-2 rounded-2xl bg-saffron-100 px-3.5 py-2.5 text-[13px] text-ink-2 ring-1 ring-saffron-200">
+                <RefreshCw className="size-4 shrink-0 text-sunset-600" /> The organizers will re-check this one closer to the date.
+              </p>
+            )}
             <h2 className="font-display mt-3 text-[30px] font-semibold leading-[1.05] tracking-[-0.02em]">{option.title}</h2>
             <p className="font-display mt-2 text-[18px] italic leading-snug text-ocean-700">{option.tagline}</p>
             {option.loved && (
@@ -145,6 +161,32 @@ export function OptionDetail({ option, where, open, onClose, pickLabel, picked, 
                 </li>
               ))}
             </ul>
+            {option.variants && (
+              <section className="mt-6" aria-label="Two ways to do it">
+                <h3 className="font-display text-[22px] font-semibold">Two ways to do it</h3>
+                <p className="mt-1 text-[13.5px] text-ink-3">You choose when you pick it — and can switch later.</p>
+                <div className="mt-3 grid gap-3">
+                  {option.variants.map((v) => (
+                    <VariantCard key={v.id} variant={v} />
+                  ))}
+                </div>
+              </section>
+            )}
+            {option.bring && (
+              <section className="mt-5 rounded-[22px] bg-paper p-4 shadow-card">
+                <h3 className="flex items-center gap-2 text-[15px] font-bold">
+                  <Backpack className="size-4 text-ocean-600" /> What to bring
+                </h3>
+                <ul className="mt-2 space-y-1.5">
+                  {option.bring.map((b) => (
+                    <li key={b} className="flex gap-2 text-[13.5px] leading-snug text-ink-2">
+                      <span aria-hidden="true">·</span>
+                      {b}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
             {option.course && (
               <section className="mt-6 overflow-hidden rounded-[22px] bg-jungle-800 text-paper">
                 <div className="flex items-center gap-2 px-4 pb-2 pt-4">
