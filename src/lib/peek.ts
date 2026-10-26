@@ -1,13 +1,11 @@
-// What a 👀 peek may show: picks (titles, area, cover photo), dates and the
-// balance meter. Never ids, details, day notes or private answers.
+// What a 👀 peek returns: the person's plan as a read-only itinerary — picks
+// and dates only (see privacy.peekPlan). Never day notes or private answers.
+import type { ItineraryData } from "./itinerary";
 
-export type PeekItem = { title: string; area: string | null; photo: string | null; emoji: string | null };
-export type PeekDay = { label: string; name: string; day: PeekItem[]; night: PeekItem[] };
-export type PeekPlan = {
+export type PeekResponse = {
   name: string;
+  role: "owner" | "admin" | "member";
+  /** "new" = hasn't started a plan yet. */
   status: "new" | "draft" | "submitted";
-  dates: string | null;
-  length: string | null;
-  days: PeekDay[];
-  balance: { score: number | null; title: string };
+  data: ItineraryData | null;
 };

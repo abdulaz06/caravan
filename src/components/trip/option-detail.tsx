@@ -6,6 +6,7 @@ import { COAST_ROAD_KM, extras, regions, type Activity, type Photo as PhotoT, ty
 import { cn } from "@/lib/cn";
 import { isHidden } from "@/lib/rules";
 import { distanceLabel } from "@/lib/timeline";
+import { PopularBadge, usePopular } from "../popular";
 import { useRules } from "../rules";
 import { VariantCard } from "./day-trip";
 import { useCurrency } from "../currency";
@@ -68,6 +69,8 @@ export function OptionDetail({ option, where, open, onClose, pickLabel, picked, 
   const rules = useRules();
   const gone = !!option && isHidden(option.id, rules);
   const recheck = !!option && rules.recheck.includes(option.id);
+  const popular = usePopular();
+  const popularCount = option ? popular(option.id) : null;
   return (
     <Sheet
       open={open && !!option}
@@ -101,6 +104,7 @@ export function OptionDetail({ option, where, open, onClose, pickLabel, picked, 
               {option.kind === "extra" && <span className="rounded-full bg-saffron-200 px-2.5 py-1 text-ink">Quick extra</span>}
               <VibeDots vibe={option.vibe} className="rounded-full bg-sand-200 px-2.5 py-1 text-ink-2" />
               <DaysBadge option={option} className="px-2.5 py-1 text-[12px]" />
+              {popularCount !== null && <PopularBadge count={popularCount} className="py-1 pr-2.5 text-[12px]" />}
             </div>
             {gone && (
               <p className="mt-3 flex items-center gap-2 rounded-2xl bg-sand-200 px-3.5 py-2.5 text-[13.5px] font-semibold text-ink-2">

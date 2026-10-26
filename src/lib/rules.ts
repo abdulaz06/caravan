@@ -25,6 +25,8 @@ export type TripRules = {
   peek: boolean;
   spectrum: boolean;
   halalButton: boolean;
+  /** 🔥 "Popular · 7 picked" badges on the most-picked options. */
+  popularBadges: boolean;
   defaultCurrency: CurrencyCode;
   announcement: { on: boolean; text: string };
   /** Content controls (activity ids). */
@@ -45,6 +47,7 @@ export const DEFAULT_RULES: TripRules = {
   peek: true,
   spectrum: true,
   halalButton: true,
+  popularBadges: true,
   defaultCurrency: DEFAULT_CURRENCY,
   announcement: { on: false, text: "" },
   hidden: [],
@@ -73,6 +76,7 @@ export const rulesPatchSchema = z
     peek: z.boolean(),
     spectrum: z.boolean(),
     halalButton: z.boolean(),
+    popularBadges: z.boolean(),
     defaultCurrency: z.enum(CURRENCY_CODES),
     announcement: z.object({ on: z.boolean(), text: z.string().trim().max(280) }),
     hidden: ids,

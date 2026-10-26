@@ -3,6 +3,7 @@ import { activitiesById, regions, type RegionId } from "@/content";
 import { dateRange } from "@/lib/dates";
 import { STAY_ID, countItems, normalize, tripLength, type ItineraryData } from "@/lib/itinerary";
 import { tripDays, tripWindow } from "@/lib/rules";
+import { isTestName } from "@/lib/test-users";
 import { balanceOf } from "@/lib/timeline";
 import { db, roleOf, type ItineraryRow, type ParticipantRow, type Role, type Stamp } from "./db";
 import { loadRules } from "./rules";
@@ -19,6 +20,9 @@ export type Person = {
   picks: number;
   data: ItineraryData | null;
 };
+
+/** Everyone except "zz-test-" users — what every count and list is built from. */
+export const realPeople = (people: Person[]) => people.filter((p) => !isTestName(p.name));
 
 /** Everyone and their (normalised) plans. Puts the live Trip rules in force first. */
 export async function loadPeople(): Promise<Person[]> {
@@ -85,11 +89,14 @@ export function computeStats(people: Person[]): GroupStats {
       }
     }
     if (d.flexibility) flexibility[d.flexibility] = (flexibility[d.flexibility] ?? 0) + 1;
+    // "Most picked" counts people (each once per option), like the 🔥 popular badges.
+    const mine = new Set<string>();
     for (const day of d.days) {
       for (const x of [...day.day, ...day.night]) {
         const o = activitiesById[x.id];
         if (!o) continue;
-        optionCounts.set(o.id, (optionCounts.get(o.id) ?? 0) + 1);
+        if (!mine.has(o.id)) optionCounts.set(o.id, (optionCounts.get(o.id) ?? 0) + 1);
+        mine.add(o.id);
         regionCounts.set(o.region, (regionCounts.get(o.region) ?? 0) + 1);
       }
       if (day.day.some((x) => x.id === STAY_ID)) stayCount.day++;
@@ -158,7 +165,7 @@ const DEFAULT_TRIP = { days: 6, colombo: 1, galle: 4, start: "2026-12-01", end: 
 
 export async function publicCounts(): Promise<PublicCounts> {
   try {
-    const people = await loadPeople();
+    const people = realPeople(await loadPeople());
     const live = await loadRules();
     const r = live.rules;
     return {

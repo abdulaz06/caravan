@@ -6,7 +6,6 @@ import {
   COAST_ROAD,
   LEGS,
   formatHours,
-  isNightlife,
   regions,
   stays,
   travelHours,

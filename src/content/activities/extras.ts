@@ -14,6 +14,11 @@ export const extras: Activity[] = [
   // ── Colombo ───────────────────────────────────────────────────────
   extra(["day", "night"], ["colombo"], {
     id: "playdium-bowling",
+    /** Halal mode shows these words instead (no bars or drinks). */
+    halalText: {
+      description: "Playdium on the ground floor of One Galle Face has six Brunswick lanes, an arcade next door and a food court upstairs.",
+      highlights: ["6 lanes", "Arcade next door"],
+    },
     title: "Bowling",
     venue: "Playdium, One Galle Face Mall",
     emoji: "🎳",

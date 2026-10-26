@@ -5,6 +5,7 @@ import { addDays } from "@/lib/dates";
 import { STAY_ID, dayName, dayRole, daysNightsLabel, nights, slotWhere, tripLength, type SlotItem } from "@/lib/itinerary";
 import { balanceOf, buildTimeline, type SlotView } from "@/lib/timeline";
 import { tripDays } from "@/lib/rules";
+import { roommateBoard, type RoommateBoard } from "@/lib/roommates";
 import type { Person } from "./group";
 import type { LiveSettings } from "./rules";
 
@@ -91,14 +92,23 @@ function summary(p: Person) {
   };
 }
 
+const boardOf = (people: Person[]) => roommateBoard(people.map((p) => ({ id: p.id, name: p.name, picks: p.data?.preferences.roommates })));
+
+/** "A (their 1st), B (their 2nd)" — the people this person matched with both ways. */
+function mutualFor(board: RoommateBoard, id: string): string[] {
+  return board.mutual.flatMap((m) => (m.a.id === id ? [m.b.name] : m.b.id === id ? [m.a.name] : []));
+}
+
 export function exportJson(people: Person[], live: LiveSettings) {
+  const board = boardOf(people);
   const len = tripDays();
   const n = nights(len);
   return {
     exportedAt: new Date().toISOString(),
     editsLocked: live.locked,
     rules: live.rules,
-    notes: `Trip is ${daysNightsLabel(len)} (${n.colombo} ${n.colombo === 1 ? "night" : "nights"} Colombo, ${n.galle} nights Galle). All money is per person in USD (the app's base currency). Budget totals exclude flights.`,
+    notes: `Trip is ${daysNightsLabel(len)} (${n.colombo} ${n.colombo === 1 ? "night" : "nights"} Colombo, ${n.galle} nights Galle). All money is per person in USD (the app's base currency). Budget totals exclude flights. Roommate picks are just for fun, not binding.`,
+    roommates: board,
     participants: people.map((p) => ({
       id: p.id,
       name: p.name,
@@ -109,6 +119,8 @@ export function exportJson(people: Person[], live: LiveSettings) {
       updatedAt: p.updatedAt,
       submittedAt: p.submittedAt,
       itinerary: p.data,
+      roommates: (p.data?.preferences.roommates ?? []).map((r, i) => ({ rank: i + 1, name: r.name, participantId: r.id ?? null })),
+      mutualRoommates: mutualFor(board, p.id),
       summary: summary(p),
     })),
   };
@@ -116,6 +128,7 @@ export function exportJson(people: Person[], live: LiveSettings) {
 
 /** One row per person. */
 export function exportWideCsv(people: Person[]): string {
+  const board = boardOf(people);
   return toCsv(
     people.map((p) => {
       const d = p.data;
@@ -174,6 +187,10 @@ export function exportWideCsv(people: Person[]): string {
         hard_no: pr.hardNo,
         suggestions: pr.suggestions,
         notes: pr.notes,
+        roommate_1: pr.roommates?.[0]?.name ?? "",
+        roommate_2: pr.roommates?.[1]?.name ?? "",
+        roommate_3: pr.roommates?.[2]?.name ?? "",
+        mutual_roommates: mutualFor(board, p.id),
       };
     }),
   );

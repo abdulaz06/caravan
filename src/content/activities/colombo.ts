@@ -13,7 +13,7 @@ export const colomboDay: Activity[] = [
     region: "negombo",
     categories: ["nature", "water"],
     tagline: "Mangroves and fishermen, minutes from the airport.",
-    loved: "Recent reviewers rave about pelicans, monkeys and jumping fish — and guides who waited when flights were late.",
+    loved: "Recent reviewers love the pelicans, monkeys and jumping fish — and guides who waited when flights were late.",
     description:
       "Glide through Negombo's lagoon and the old Dutch canal in a small boat, past fishermen casting nets, outrigger canoes and wading birds. It's right by the airport, so it works straight off the plane before the hour into Colombo.",
     highlights: ["Mangrove channels & birdlife", "Hamilton Canal & outrigger 'oruwa' boats", "Lellama fish market", "Next to the airport — easy on landing day"],
@@ -73,6 +73,10 @@ export const colomboDay: Activity[] = [
   }),
   option("day", ["colombo"], {
     id: "mount-lavinia-beach",
+    /** Halal mode shows these words instead (no bars or drinks). */
+    halalText: {
+      description: "Half an hour south of the city, the Mount Lavinia Hotel started life as a British governor's residence in 1806. Spend the afternoon by its sea-view pool or on the public beach below, lunch at the seafood shacks, and stay for a king coconut as the sun drops.",
+    },
     title: "Mount Lavinia: colonial hotel & beach day",
     region: "mount-lavinia",
     categories: ["chill", "water"],
@@ -192,6 +196,10 @@ export const colomboNight: Activity[] = [
   }),
   option("night", ["colombo"], {
     id: "ministry-of-crab",
+    /** Halal mode shows these words instead (no bars or drinks). */
+    halalText: {
+      highlights: ["Signature garlic-chilli crab", "17th-century Dutch Hospital setting", "On Asia's 50 Best (extended list, 2025)", "Galle Face Green stroll after"],
+    },
     title: "Ministry of Crab feast",
     region: "colombo",
     categories: ["food"],

@@ -247,3 +247,14 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* Halal mode (the trip app sets data-halal on <html>): swap the few words that live outside the app tree. */
+.halal-only {
+  display: none;
+}
+:root[data-halal="on"] .halal-only {
+  display: inline;
+}
+:root[data-halal="on"] .halal-hide {
+  display: none;
+}

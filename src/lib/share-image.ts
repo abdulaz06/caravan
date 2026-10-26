@@ -6,6 +6,7 @@ import { formatHours, regions, type Activity, type Photo } from "@/content";
 import { dayLabel } from "./dates";
 import { DAY_NAMES, daysNightsLabel, nights, tripLength, type ItineraryData } from "./itinerary";
 import { badgeStop, COAST_DETAIL, laneFor, onCoastRoad, onSouthCoast, placeBadge, placeLabel, routeBox, routePoints, type DayRoute, type Rect } from "./routes";
+import { HIGHLIGHT_ICONS, highlightsTitle, type Highlight, type HighlightKind } from "./highlights";
 import { balanceLabel, type Balance, type Timeline } from "./timeline";
 import { project } from "./map-data";
 
@@ -19,6 +20,8 @@ export type ShareModel = {
   routes: DayRoute[];
   balance: Balance;
   photos: { photo: Photo; title: string }[];
+  /** Halal mode: the trip's highlights take the vibe meter's place (and nothing says "Halal"). */
+  highlights?: Highlight[];
 };
 
 const C = {
@@ -543,6 +546,84 @@ function vibe(ctx: Ctx, f: Fonts, b: Balance, x: number, y: number, w: number, h
   ctx.restore();
 }
 
+/** A highlight's icon on its round tile — the same path data the page draws. */
+function highlightIcon(ctx: Ctx, kind: HighlightKind, x: number, y: number, size: number) {
+  const art = HIGHLIGHT_ICONS[kind];
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(x + size / 2, y + size / 2, size / 2, 0, Math.PI * 2);
+  ctx.fillStyle = art.tile;
+  ctx.fill();
+  ctx.translate(x, y);
+  ctx.scale(size / 32, size / 32);
+  ctx.translate(4, 4);
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  for (const p of art.parts) {
+    const path = new Path2D(p.d);
+    if (p.fill) {
+      ctx.fillStyle = p.fill;
+      ctx.fill(path);
+    }
+    if (p.stroke) {
+      ctx.strokeStyle = p.stroke;
+      ctx.lineWidth = p.w ?? 1.5;
+      ctx.stroke(path);
+    }
+  }
+  ctx.restore();
+}
+
+/** "Trip highlights": icon + count + label tiles in a grid, in the vibe card's place. */
+function highlightsCard(ctx: Ctx, f: Fonts, items: Highlight[], x: number, y: number, w: number, h: number, scale = 1, cols = 3) {
+  ctx.save();
+  roundRect(ctx, x, y, w, h, 32 * scale);
+  ctx.fillStyle = "rgba(255,255,255,0.07)";
+  ctx.fill();
+  ctx.strokeStyle = "rgba(255,255,255,0.1)";
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  const pad = 34 * scale;
+  ctx.fillStyle = C.saffron400;
+  ctx.font = `700 ${20 * scale}px ${f.body}`;
+  spaced(ctx, "TRIP HIGHLIGHTS", x + pad, y + pad + 16 * scale, 3 * scale);
+  ctx.fillStyle = C.paper;
+  ctx.font = `600 ${46 * scale}px ${f.display}`;
+  ctx.fillText(fit(ctx, highlightsTitle(items), w - pad * 2), x + pad, y + pad + 66 * scale);
+
+  const top = y + pad + 96 * scale;
+  const bottom = y + h - pad * 0.7;
+  if (!items.length) {
+    ctx.font = `500 ${24 * scale}px ${f.body}`;
+    ctx.fillStyle = "rgba(255,251,244,0.72)";
+    ctx.fillText("Pick a few things to see them here.", x + pad, top + 30 * scale);
+    ctx.restore();
+    return;
+  }
+  const rows = Math.max(1, Math.floor((bottom - top) / (62 * scale)));
+  const n = Math.min(items.length, cols * rows);
+  const colW = (w - pad * 2) / cols;
+  const rowH = (bottom - top) / Math.max(1, Math.ceil(n / cols));
+  const iconPx = Math.min(56 * scale, rowH - 8 * scale);
+  for (let i = 0; i < n; i++) {
+    const it = items[i];
+    const cx = x + pad + (i % cols) * colW;
+    const cy = top + Math.floor(i / cols) * rowH + (rowH - iconPx) / 2;
+    highlightIcon(ctx, it.kind, cx, cy, iconPx);
+    const tx = cx + iconPx + 14 * scale;
+    const base = cy + iconPx / 2 + 13 * scale;
+    ctx.fillStyle = C.paper;
+    ctx.font = `600 ${40 * scale}px ${f.display}`;
+    const count = String(it.count);
+    ctx.fillText(count, tx, base);
+    const lx = tx + ctx.measureText(count).width + 9 * scale;
+    ctx.font = `600 ${22 * scale}px ${f.body}`;
+    ctx.fillStyle = "rgba(255,251,244,0.8)";
+    ctx.fillText(fit(ctx, it.label, cx + colW - lx - 8 * scale), lx, base - 2 * scale);
+  }
+  ctx.restore();
+}
+
 async function loadImage(src: string): Promise<HTMLImageElement | null> {
   return new Promise((resolve) => {
     const img = new Image();
@@ -621,8 +702,9 @@ async function drawStory(ctx: Ctx, f: Fonts, m: ShareModel) {
   dayList(ctx, f, m, M + mapW + 34, top + 2, W - M * 2 - mapW - 34, rowH, 1);
 
   const vibeY = top + listH + 32;
-  const vibeH = 252;
-  vibe(ctx, f, m.balance, M, vibeY, W - M * 2, vibeH);
+  const vibeH = m.highlights ? 300 : 252;
+  if (m.highlights) highlightsCard(ctx, f, m.highlights, M, vibeY, W - M * 2, vibeH);
+  else vibe(ctx, f, m.balance, M, vibeY, W - M * 2, vibeH);
 
   // photo strip
   const py = vibeY + vibeH + 28;
@@ -654,7 +736,9 @@ async function drawSquare(ctx: Ctx, f: Fonts, m: ShareModel) {
   const mapW = W - mapX - M;
   const mapH = 716;
   drawMap(ctx, f, m.routes, mapX, M, mapW, mapH);
-  vibe(ctx, f, m.balance, mapX, M + mapH + 24, mapW, H - M - (M + mapH + 24), 0.78);
+  const boxY = M + mapH + 24;
+  if (m.highlights) highlightsCard(ctx, f, m.highlights, mapX, boxY, mapW, H - M - boxY, 0.78, 2);
+  else vibe(ctx, f, m.balance, mapX, boxY, mapW, H - M - boxY, 0.78);
 
   ctx.font = `600 17px ${f.body}`;
   ctx.fillStyle = "rgba(255,251,244,0.5)";

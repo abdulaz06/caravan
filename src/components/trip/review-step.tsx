@@ -24,6 +24,7 @@ import { Lockup, Stamp } from "../brand/wordmark";
 import { Button, ButtonLink } from "../ui/button";
 import { LocalTime } from "../ui/local-time";
 import { BalanceMeter } from "./balance-meter";
+import { HighlightsCard } from "./highlights-card";
 import type { Step } from "./header";
 import { ItineraryTimeline } from "./itinerary-timeline";
 import { ShareSheet } from "./share-sheet";
@@ -157,7 +158,7 @@ export function ReviewStep({
           <p className="flex-1">
             <b>Halal mode: preview only, your real plan is untouched.</b>{" "}
             <span className="text-paper/70">
-              {swaps ? `${swaps} night${swaps === 1 ? "" : "s"} out swapped for wholesome alternatives.` : "Nothing needed swapping."}
+              {swaps ? `${swaps} ${swaps === 1 ? "pick" : "picks"} swapped for wholesome alternatives.` : "Nothing needed swapping."}
             </span>
           </p>
           <button
@@ -181,11 +182,15 @@ export function ReviewStep({
         </button>
         <BudgetSummary budget={budget} onOpen={onOpenBudget} />
         <div className="rounded-[26px] bg-paper p-4 shadow-card">
-          <BalanceMeter
-            balance={balance}
-            mode={halal ? "halal" : "normal"}
-            action={onHalal && !previewing && rules.halalButton ? <HalalSwitch on={halal} onChange={onHalal} /> : undefined}
-          />
+          {/* Halal mode: no Nature ↔ Nightlife scale at all — the plan's highlights instead. */}
+          {halal ? (
+            <HighlightsCard data={data} action={onHalal ? <HalalSwitch on={halal} onChange={onHalal} /> : undefined} />
+          ) : (
+            <BalanceMeter
+              balance={balance}
+              action={onHalal && !previewing && rules.halalButton ? <HalalSwitch on={halal} onChange={onHalal} /> : undefined}
+            />
+          )}
         </div>
         {peekCount > 0 && (
           <p aria-label="Peek counter" className="flex items-center justify-center gap-2 rounded-2xl bg-dusk-900 px-4 py-3 text-[14px] font-semibold text-paper shadow-card">
@@ -209,10 +214,11 @@ export function ReviewStep({
               You haven&apos;t picked anything yet — <b className="text-ink">try Quick fill</b>, it takes a second.
             </button>
           )}
-          <ItineraryTimeline data={data} timeline={timeline} />
+          <ItineraryTimeline data={data} timeline={timeline} hideNotes={halal} />
         </section>
 
-        <PrefsSummary data={data} />
+        {/* Their own free-text answers can say anything — Halal mode leaves them out. */}
+        {!halal && <PrefsSummary data={data} />}
       </div>
       <SiteFooter className="relative z-[1] mt-6" />
 
@@ -259,7 +265,7 @@ export function ReviewStep({
         </div>
       )}
 
-      {sharing && <ShareSheet onClose={() => setSharing(false)} name={name} data={data} />}
+      {sharing && <ShareSheet onClose={() => setSharing(false)} name={name} data={data} halal={halal} />}
 
       <AnimatePresence>
         {celebrate && (
@@ -349,6 +355,7 @@ export function PrefsSummary({ data, title = "Your extras" }: { data: ItineraryD
     ["Hard no", p.hardNo],
     ["Ideas", p.suggestions],
     ["Notes", p.notes],
+    ["Roommates", p.roommates?.map((r, i) => `${i + 1}. ${r.name}${r.id ? "" : " (not joined yet)"}`).join("\n")],
   ];
   const shown = rows.filter(([, v]) => v && v.trim());
   if (!shown.length) return null;

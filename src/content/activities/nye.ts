@@ -59,6 +59,10 @@ export const nyeOptions: Activity[] = [
   }),
   option("night", ["galle"], {
     id: "nye-galle-fort",
+    /** Halal mode shows these words instead (no bars or drinks). */
+    halalText: {
+      description: "A long NYE dinner in one of the fort's colonial hotels or courtyard restaurants, live jazz, then out onto the ramparts at midnight as fireworks pop along the beaches.",
+    },
     title: "NYE in Galle Fort",
     region: "galle",
     categories: ["food", "culture"],

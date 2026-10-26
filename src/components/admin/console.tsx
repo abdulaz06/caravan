@@ -31,6 +31,7 @@ import { CURRENCIES, type CurrencyCode } from "@/lib/currency";
 import { dayLabel } from "@/lib/dates";
 import { daysNightsLabel } from "@/lib/itinerary";
 import { NIGHTS_LIMITS, type RulesPatch, type TripRules } from "@/lib/rules";
+import type { RoommateBoard } from "@/lib/roommates";
 import { Avatar } from "../avatar";
 import { Lockup } from "../brand/wordmark";
 import { Button } from "../ui/button";
@@ -54,6 +55,8 @@ export type ConsolePerson = {
   pickedIds: string[];
   stamp: { kind: "edit" | "rules"; by: string; at: string } | null;
   peekers: number;
+  /** A "zz-test-…" user: listed (so it can be deleted) but never counted. */
+  test?: boolean;
 };
 
 export type ConsoleLog = {
@@ -74,11 +77,13 @@ type Props = {
   editsLocked: boolean;
   log: ConsoleLog[];
   localStore: boolean;
+  roommates: RoommateBoard;
 };
 
 const TABS = [
   { id: "overview", label: "Overview" },
   { id: "people", label: "People" },
+  { id: "roommates", label: "Roommates" },
   { id: "rules", label: "Trip rules" },
   { id: "content", label: "Content" },
   { id: "announce", label: "Announcement" },
@@ -96,7 +101,9 @@ async function call(url: string, init: RequestInit = {}) {
   return { ok: res.ok, status: res.status, body };
 }
 
-export function Console({ actor, people, rules: initialRules, editsLocked, log, localStore }: Props) {
+export function Console({ actor, people, rules: initialRules, editsLocked, log, localStore, roommates }: Props) {
+  // Test users ("zz-test-…") are listed under People but never counted.
+  const real = useMemo(() => people.filter((p) => !p.test), [people]);
   const router = useRouter();
   const toast = useToast();
   const [tab, setTab] = useState<Tab>("overview");
@@ -199,10 +206,11 @@ export function Console({ actor, people, rules: initialRules, editsLocked, log, 
         )}
         <AnimatePresence mode="wait" initial={false}>
           <motion.div key={tab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="mt-5 space-y-4">
-            {tab === "overview" && <Overview people={people} locked={locked} rules={rules} log={log} onLock={setLock} go={go} />}
+            {tab === "overview" && <Overview people={real} locked={locked} rules={rules} log={log} onLock={setLock} go={go} />}
             {tab === "people" && <People actor={actor} people={people} />}
+            {tab === "roommates" && <RoommatesTab board={roommates} />}
             {tab === "rules" && <RulesTab rules={rules} locked={locked} onLock={setLock} onPatch={patchRules} onRules={setRules} />}
-            {tab === "content" && <ContentTab rules={rules} people={people} onPatch={patchRules} />}
+            {tab === "content" && <ContentTab rules={rules} people={real} onPatch={patchRules} />}
             {tab === "announce" && <AnnounceTab rules={rules} onPatch={patchRules} />}
             {tab === "data" && <DataTab />}
             {tab === "activity" && <ActivityTab log={log} />}
@@ -419,6 +427,7 @@ function People({ actor, people }: { actor: Props["actor"]; people: ConsolePerso
                   <span className="text-[16px] font-bold">{p.name}</span>
                   <RoleBadge role={p.role} />
                   <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-bold", STATUS[p.status].cls)}>{STATUS[p.status].label}</span>
+                  {p.test && <span className="rounded-full bg-sand-300 px-2 py-0.5 text-[11px] font-bold text-ink-2">Test user · not counted</span>}
                 </p>
                 <p className="mt-0.5 text-[12.5px] text-ink-3">
                   {p.startDate && p.endDate ? `${dayLabel(p.startDate)} → ${dayLabel(p.endDate)} · ${daysNightsLabel(p.days)} · ` : ""}
@@ -688,11 +697,14 @@ function RulesTab({
             ))}
           </div>
         </div>
-        <Row title="👀 Peek" hint="Keyhole peeks at anyone's plan, drafts included.">
+        <Row title="👀 Peek" hint="Anyone's full plan, read-only, drafts included (no notes or private answers).">
           <Switch on={rules.peek} onChange={(v) => onPatch({ peek: v }, v ? "Peek on" : "Peek off")} label="Peek" />
         </Row>
         <Row title="Group spectrum" hint="Everyone on one Nature ↔ Nightlife line.">
           <Switch on={rules.spectrum} onChange={(v) => onPatch({ spectrum: v }, v ? "Spectrum on" : "Spectrum off")} label="Group spectrum" />
+        </Row>
+        <Row title="🔥 Popular badges" hint="“Popular · 7 picked” on the most-picked options (counts only, never who).">
+          <Switch on={rules.popularBadges} onChange={(v) => onPatch({ popularBadges: v }, v ? "Popular badges on" : "Popular badges off")} label="Popular badges" />
         </Row>
         <Row title="Halal button" hint="The crescent-moon easter egg on the review page.">
           <Switch on={rules.halalButton} onChange={(v) => onPatch({ halalButton: v }, v ? "Halal button on" : "Halal button off")} label="Halal button" />
@@ -946,5 +958,82 @@ function ActivityTab({ log }: { log: ConsoleLog[] }) {
       </div>
       <LogList log={list} />
     </Card>
+  );
+}
+
+// ── Roommates (just for fun) ──────────────────────────────────────────
+
+const RANKS = ["1st", "2nd", "3rd"];
+
+function RoommatesTab({ board }: { board: RoommateBoard }) {
+  return (
+    <>
+      <p className="inline-flex -rotate-1 items-center rounded-full bg-saffron-200 px-3 py-1 text-[12px] font-bold text-ink ring-1 ring-saffron-400/40">
+        Just for fun · not binding · organizers only
+      </p>
+      <Card title="Mutual matches 🤝" sub="They picked each other.">
+        {board.mutual.length ? (
+          <ul className="grid gap-2" aria-label="Mutual matches">
+            {board.mutual.map((m) => (
+              <li key={`${m.a.id}-${m.b.id}`} className="flex items-center gap-3 rounded-2xl bg-saffron-100/70 p-2.5 ring-1 ring-saffron-200">
+                <span className="flex -space-x-2">
+                  <Avatar name={m.a.name} />
+                  <Avatar name={m.b.name} />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-[15px] font-bold">
+                    {m.a.name} <span aria-hidden="true">🤝</span> {m.b.name}
+                  </span>
+                  <span className="block text-[12px] text-ink-3">
+                    {m.a.name}&apos;s {RANKS[m.a.rank - 1]} · {m.b.name}&apos;s {RANKS[m.b.rank - 1]}
+                  </span>
+                </span>
+                {m.a.rank === 1 && m.b.rank === 1 && <span className="shrink-0 rounded-full bg-hibiscus-500 px-2 py-0.5 text-[11px] font-bold text-white">Both #1</span>}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-[14px] text-ink-3">No mutual picks yet.</p>
+        )}
+      </Card>
+      {board.wanted.length > 0 && (
+        <Card title="Most wanted" sub="How many people picked them.">
+          <div className="flex flex-wrap gap-2">
+            {board.wanted.slice(0, 8).map((w) => (
+              <span key={w.id ?? w.name} className="inline-flex items-center gap-2 rounded-full bg-sand-100 py-1 pl-1 pr-3 text-[13.5px] font-semibold">
+                <Avatar name={w.name} className="size-7 text-[12px] ring-0" />
+                {w.name}
+                <span className="rounded-full bg-ink px-1.5 text-[11px] font-bold text-paper tabular-nums">{w.count}</span>
+                {!w.id && <span className="text-[11px] font-semibold text-ink-3">not joined</span>}
+              </span>
+            ))}
+          </div>
+        </Card>
+      )}
+      <Card title="Who picked whom" sub={`${board.rows.length} ${board.rows.length === 1 ? "person has" : "people have"} picked.`}>
+        {board.rows.length ? (
+          <ul className="divide-y divide-ink/5" aria-label="Who picked whom">
+            {board.rows.map((r) => (
+              <li key={r.id} className="flex flex-wrap items-center gap-x-3 gap-y-1.5 py-2.5">
+                <span className="flex w-36 shrink-0 items-center gap-2 text-[14px] font-bold">
+                  <Avatar name={r.name} className="size-7 text-[12px]" />
+                  <span className="truncate">{r.name}</span>
+                </span>
+                <span className="flex flex-wrap gap-1.5">
+                  {r.picks.map((k) => (
+                    <span key={k.rank} className="inline-flex items-center gap-1 rounded-full bg-sand-100 px-2.5 py-1 text-[12.5px] font-semibold">
+                      <span className="text-ink-3">{RANKS[k.rank - 1]}</span> {k.name}
+                      {!k.joined && <span className="text-[11px] text-ink-3">· not joined</span>}
+                    </span>
+                  ))}
+                </span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-[14px] text-ink-3">Nobody has picked roommates yet.</p>
+        )}
+      </Card>
+    </>
   );
 }

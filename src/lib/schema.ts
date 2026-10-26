@@ -11,7 +11,7 @@ import {
 } from "@/content/preferences";
 import { CURRENCY_CODES } from "./currency";
 import { diffDays, isValidISO } from "./dates";
-import { MAX_ITEMS, normalize, type ItineraryData } from "./itinerary";
+import { MAX_ITEMS, MAX_ROOMMATES, normalize, type ItineraryData } from "./itinerary";
 import { allowedLengths, tripDays, tripWindow } from "./rules";
 
 const isoDate = z.string().refine(isValidISO, "Invalid date");
@@ -41,6 +41,11 @@ export const preferencesSchema = z
     suggestions: text(1000),
     notes: text(2000),
     currency: z.enum(CURRENCY_CODES).optional(),
+    roommates: z
+      // A longer list isn't worth refusing the whole save over — the server keeps the first MAX_ROOMMATES.
+      .array(z.object({ id: z.string().min(1).max(64).optional(), name: z.string().trim().min(1).max(40) }).strip())
+      .max(MAX_ROOMMATES * 4)
+      .optional(),
   })
   .strip();
 

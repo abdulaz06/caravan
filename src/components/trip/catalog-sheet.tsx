@@ -3,13 +3,15 @@
 import { motion } from "framer-motion";
 import { Check, Plus, Search, X } from "lucide-react";
 import { useMemo, useState } from "react";
-import { CATEGORIES, activities, stayIn, type Activity, type Category, type Where } from "@/content";
+import { CATEGORIES, activities, isNightlife, stayIn, type Activity, type Category, type Where } from "@/content";
 import { cn } from "@/lib/cn";
 import { dayLabel, parseISO } from "@/lib/dates";
 import { STAY_ID, dateAt, itemAllowed, nyeIndex, roleAt, slotWhere, type ItineraryData, type SlotKind } from "@/lib/itinerary";
 import { isFeatured, isHidden } from "@/lib/rules";
 import { distanceLabel, hoursFrom } from "@/lib/timeline";
 import { useCurrency } from "../currency";
+import { useHalal } from "../halal";
+import { Flame, PopularBadge, usePopular } from "../popular";
 import { StayInIcon } from "../brand/illustrations";
 import { Photo } from "../ui/photo";
 import { Sheet } from "../ui/sheet";
@@ -30,15 +32,18 @@ type Props = {
 /** Everything valid for one day's slot — options, Quick extras and Stay in — with filters and search. */
 export function CatalogSheet({ open, onClose, data, index, slot, mode = "add", onChoose }: Props) {
   const { range } = useCurrency();
-  const [cat, setCat] = useState<Category | "all">("all");
+  const [cat, setCat] = useState<Category | "all" | "popular">("all");
   const [q, setQ] = useState("");
   const [detail, setDetail] = useState<Activity | null>(null);
   const where: Where = slotWhere(roleAt(data, index), slot) ?? "galle";
   const date = dateAt(data, index);
   const weekday = date ? parseISO(date).getUTCDay() : null;
   const isNye = slot === "night" && nyeIndex(data) === index;
-  const inSlot = new Set(data.days[index]?.[slot].map((x) => x.id) ?? []);
+  const slotIds = (data.days[index]?.[slot] ?? []).map((x) => x.id).join(",");
+  const inSlot = useMemo(() => new Set(slotIds ? slotIds.split(",") : []), [slotIds]);
   const night = slot === "night";
+  const halal = useHalal();
+  const popular = usePopular();
 
   const list = useMemo(() => {
     const term = q.trim().toLowerCase();
@@ -47,7 +52,8 @@ export function CatalogSheet({ open, onClose, data, index, slot, mode = "add", o
       .filter((a) => !a.onlyRole || a.onlyRole === roleAt(data, index))
       // Ella extras only alongside the Ella day trip, in this same slot.
       .filter((a) => !a.onlyWith || inSlot.has(a.onlyWith))
-      .filter((a) => cat === "all" || a.categories.includes(cat))
+      .filter((a) => !halal || !isNightlife(a))
+      .filter((a) => cat === "all" || (cat === "popular" ? popular(a.id) !== null : a.categories.includes(cat)))
       .filter(
         (a) =>
           !term ||
@@ -56,12 +62,18 @@ export function CatalogSheet({ open, onClose, data, index, slot, mode = "add", o
       )
       .sort((a, b) => {
         if (!!a.onlyWith !== !!b.onlyWith) return a.onlyWith ? -1 : 1;
+        if (cat === "popular") return (popular(b.id) ?? 0) - (popular(a.id) ?? 0);
         if (isFeatured(a.id) !== isFeatured(b.id)) return isFeatured(a.id) ? -1 : 1;
         if (a.kind !== b.kind) return a.kind === "option" ? -1 : 1;
         if (where === "enroute") return (a.routeKm ?? 0) - (b.routeKm ?? 0);
         return hoursFrom(a, where) - hoursFrom(b, where);
       });
-  }, [q, cat, slot, where, isNye, data, index]);
+  }, [q, cat, slot, where, isNye, data, index, halal, inSlot, popular]);
+  // The 🔥 filter only shows when something in this slot's pool is popular.
+  const anyPopular = useMemo(
+    () => activities.some((a) => popular(a.id) !== null && itemAllowed(a.id, slot, where, isNye) && !isHidden(a.id) && (!a.onlyWith || inSlot.has(a.onlyWith))),
+    [popular, slot, where, isNye, inSlot],
+  );
 
   const showStay = (cat === "all" || cat === "chill") && (!q.trim() || "stay in villa chill".includes(q.trim().toLowerCase()));
   const stay = where === "enroute" ? stayIn.enroute : stayIn[slot];
@@ -97,7 +109,11 @@ export function CatalogSheet({ open, onClose, data, index, slot, mode = "add", o
             )}
           </label>
           <div className="no-scrollbar -mx-4 mt-3 flex gap-1.5 overflow-x-auto px-4 pb-1" role="group" aria-label="Categories">
-            {[{ id: "all" as const, label: "All", emoji: "✨" }, ...CATEGORIES].map((c) => {
+            {[
+              { id: "all" as const, label: "All", icon: <span aria-hidden="true">✨</span> },
+              ...(anyPopular ? [{ id: "popular" as const, label: "Popular", icon: <Flame className="-ml-0.5 size-[18px]" /> }] : []),
+              ...CATEGORIES.filter((c) => !halal || c.id !== "party").map((c) => ({ id: c.id, label: c.label, icon: <span aria-hidden="true">{c.emoji}</span> })),
+            ].map((c) => {
               const on = cat === c.id;
               return (
                 <button
@@ -109,7 +125,7 @@ export function CatalogSheet({ open, onClose, data, index, slot, mode = "add", o
                     on ? (night ? "bg-saffron-400 text-ink" : "bg-ink text-paper") : night ? "bg-white/10 text-paper/85" : "bg-paper text-ink-2 shadow-card",
                   )}
                 >
-                  <span aria-hidden="true">{c.emoji}</span> {c.label}
+                  {c.icon} {c.label}
                 </button>
               );
             })}
@@ -147,6 +163,7 @@ export function CatalogSheet({ open, onClose, data, index, slot, mode = "add", o
                         {a.kind === "extra" && (
                           <span className={cn("rounded-full px-1.5 py-px text-[10px] font-bold", night ? "bg-white/15" : "bg-saffron-200 text-ink")}>Quick extra</span>
                         )}
+                        {popular(a.id) !== null && <PopularBadge count={popular(a.id)!} tone={night ? "dark" : "light"} />}
                         <VibeDots vibe={a.vibe} />
                         <DaysBadge option={a} warn={offDay} />
                       </>

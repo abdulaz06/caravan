@@ -1,5 +1,5 @@
 import "server-only";
-import { daysNightsLabel, isSubmittable, normalize, type ItineraryData } from "@/lib/itinerary";
+import { MAX_ROOMMATES, daysNightsLabel, isSubmittable, normalize, type ItineraryData, type RoommatePick } from "@/lib/itinerary";
 import { currentRules, isHidden, tripDays } from "@/lib/rules";
 import { parseItinerary } from "@/lib/schema";
 import { db, type ParticipantRow } from "./db";
@@ -24,6 +24,34 @@ function dropNewlyHidden(data: ItineraryData, before: ItineraryData | null): Iti
 }
 
 /**
+ * Roommate picks, made safe: an app version that doesn't know about them sends
+ * none, so a missing list keeps what's saved. Participant picks must be real
+ * people other than yourself (their current name is stored); a pick of someone
+ * who's gone is kept as a typed name. No duplicates, at most three.
+ */
+async function cleanRoommates(p: ParticipantRow, data: ItineraryData, before: ItineraryData | null): Promise<ItineraryData> {
+  const sent = data.preferences.roommates;
+  if (sent === undefined) {
+    const kept = before?.preferences?.roommates;
+    return kept ? { ...data, preferences: { ...data.preferences, roommates: kept } } : data;
+  }
+  const people = sent.some((r) => r.id) ? await db().listParticipants() : [];
+  const out: RoommatePick[] = [];
+  const seen = new Set<string>();
+  for (const r of sent) {
+    const person = r.id ? people.find((x) => x.id === r.id) : undefined;
+    if (person?.id === p.id || (!person && r.name.trim().toLowerCase() === p.display_name.toLowerCase())) continue;
+    const pick: RoommatePick = person ? { id: person.id, name: person.display_name } : { name: r.name.trim() };
+    const key = pick.id ?? `name:${pick.name.toLowerCase()}`;
+    if (!pick.name || seen.has(key)) continue;
+    seen.add(key);
+    out.push(pick);
+    if (out.length === MAX_ROOMMATES) break;
+  }
+  return { ...data, preferences: { ...data.preferences, roommates: out } };
+}
+
+/**
  * Save a plan — the person's own autosave/submit, or an organizer editing it
  * on their behalf (`actor`: works while edits are locked, never submits,
  * stamps "Edited by <organizer>").
@@ -35,7 +63,7 @@ export async function savePlan(p: ParticipantRow, body: Record<string, unknown> 
 
   const parsed = parseItinerary(body?.data);
   if (!parsed) return error("That itinerary didn't look right — try refreshing.", 400);
-  const data = dropNewlyHidden(parsed, existing?.data ?? null);
+  const data = await cleanRoommates(p, dropNewlyHidden(parsed, existing?.data ?? null), existing?.data ?? null);
 
   const submit = !actor && body?.submit === true;
   if (submit && !data.startDate) return error("Pick your dates before submitting.", 400);

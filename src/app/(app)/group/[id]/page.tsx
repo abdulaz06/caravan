@@ -4,6 +4,7 @@ import { CurrencyProvider } from "@/components/currency";
 import { PersonView } from "@/components/group/person-view";
 import { RulesProvider } from "@/components/rules";
 import { normalize } from "@/lib/itinerary";
+import { browsePlan } from "@/lib/privacy";
 import { initialCurrency } from "@/lib/server/currency-pref";
 import { db, roleOf } from "@/lib/server/db";
 import { pageContext } from "@/lib/server/page-context";
@@ -27,7 +28,13 @@ export default async function PersonPage({ params }: PageProps<"/group/[id]">) {
   return (
     <RulesProvider rules={ctx.rules}>
       <CurrencyProvider initial={currency} rates={rates}>
-        <PersonView name={person.display_name} data={normalize(row.data)} isMe={person.id === me.id} role={roleOf(person)} />
+        {/* Someone else's private answers (incl. roommate picks) never reach the browser. */}
+        <PersonView
+          name={person.display_name}
+          data={person.id === me.id ? normalize(row.data) : browsePlan(normalize(row.data))}
+          isMe={person.id === me.id}
+          role={roleOf(person)}
+        />
       </CurrencyProvider>
     </RulesProvider>
   );

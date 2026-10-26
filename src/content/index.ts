@@ -1,5 +1,6 @@
 import { extras, halalAlternatives, isNightlife, options, stayIn, type StayIn } from "./options";
 import { nyePairs, pairs, pairsFor } from "./pairs";
+import { bannedIn } from "@/lib/halal-words";
 import { photos } from "./photos.generated";
 import type { Activity, Category, Pair } from "./types";
 
@@ -11,8 +12,54 @@ export type { StayIn };
 
 /** Options + Quick extras — everything that can sit in a slot (besides Stay in). */
 export const activities: Activity[] = [...options, ...extras];
-/** Includes the Halal-mode stand-ins so swapped plans still resolve. */
-export const activitiesById: Record<string, Activity> = Object.fromEntries([...activities, ...halalAlternatives].map((a) => [a.id, a]));
+/** The suffix of an activity's Halal-mode copy ("unawatuna-jungle-beach~halal"). Never a saved id. */
+export const HALAL_COPY = "~halal";
+
+/**
+ * Halal mode shows a copy of an activity whose own words mention bars or
+ * drinks: its `halalText` applied, with any tag or source label naming
+ * nightlife left out. Copies resolve like any activity but are never in the
+ * catalog, matchups or saved plans (`halalOf` marks them).
+ */
+const halalCopies: Activity[] = [...activities, ...halalAlternatives]
+  .filter((a) => !isNightlife(a))
+  .flatMap((a) => {
+    const tags = a.tags.filter((t) => !bannedIn(t).length);
+    const sources = a.sources.filter((s) => !bannedIn(s.label).length);
+    if (!a.halalText && tags.length === a.tags.length && sources.length === a.sources.length) return [];
+    return [{ ...a, ...a.halalText, id: `${a.id}${HALAL_COPY}`, tags, sources, halalOf: a.id }];
+  });
+
+/** Includes the Halal-mode stand-ins and copies so swapped plans still resolve. */
+export const activitiesById: Record<string, Activity> = Object.fromEntries(
+  [...activities, ...halalAlternatives, ...halalCopies].map((a) => [a.id, a]),
+);
+
+/** The activity id Halal mode shows for a pick: nightlife → its stand-in, then its Halal-mode copy if it has one. */
+export function halalIdFor(id: string): string {
+  const shown = activitiesById[id]?.halalSwap ?? id;
+  return activitiesById[`${shown}${HALAL_COPY}`] ? `${shown}${HALAL_COPY}` : shown;
+}
+
+/** Every piece of text an activity can show (detail sheet, cards, timeline, budget, share images). */
+export function shownText(a: Activity): string[] {
+  return [
+    a.title,
+    a.tagline,
+    a.loved,
+    a.description,
+    a.duration,
+    a.venue ?? "",
+    a.goodToKnow ?? "",
+    ...a.highlights,
+    ...a.tags,
+    ...(a.bring ?? []),
+    ...a.sources.map((s) => s.label),
+    ...(a.variants ?? []).flatMap((v) => [v.title, v.summary, v.total, v.eveningNote, v.eveBefore ?? "", ...v.honest, ...v.schedule.map((x) => x.text)]),
+    ...(a.rules ? [a.rules.title, ...a.rules.items] : []),
+    ...(a.course ?? []).map((c) => `${c.venue} ${c.area} ${c.note ?? ""}`),
+  ];
+}
 /** @deprecated name kept for older call sites — same as activitiesById. */
 export const optionsById = activitiesById;
 
@@ -63,6 +110,12 @@ export const CATEGORIES: { id: Category; label: string; emoji: string }[] = [
     if (isNightlife(swap)) throw new Error(`halalSwap for ${a.id} (${swap.id}) is nightlife too`);
     if (!a.slots.every((s) => swap.slots.includes(s))) throw new Error(`halalSwap for ${a.id} doesn't fit the same slot`);
     if (!a.where.some((w) => swap.where.includes(w))) throw new Error(`halalSwap for ${a.id} is in a different area`);
+  }
+  // Nothing Halal mode can show may mention nightlife (the word list: content/halal-banned-words.json).
+  for (const a of [...activities, ...halalAlternatives]) {
+    const shown = activitiesById[halalIdFor(a.id)];
+    const bad = shownText(shown).flatMap(bannedIn);
+    if (bad.length) throw new Error(`Halal mode would show "${[...new Set(bad)].join(", ")}" for ${a.id} — add halalText or reword it`);
   }
   // Extras tied to another pick (Ella extras → the Ella day trip) must point at a real option.
   for (const a of activities) {

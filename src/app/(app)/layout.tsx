@@ -43,7 +43,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
               <span className="italic text-saffron-400">your way.</span>
             </h2>
             <p className="mt-5 max-w-md text-lg text-paper/80">
-              {days} days · {days - 1} nights: {word} in Colombo, then {galle} in Galle — rainforests, whales, surf and beach parties. Build your
+              {days} days · {days - 1} nights: {word} in Colombo, then {galle} in Galle — rainforests, whales, surf and <span className="halal-hide">beach parties</span>
+              <span className="halal-only">golden sunsets</span>. Build your
               dream version, then we&apos;ll plan the trip together.
             </p>
             {hero && (

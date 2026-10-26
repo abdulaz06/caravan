@@ -359,7 +359,7 @@ export const galleDay: Activity[] = [
     region: "unawatuna",
     categories: ["water", "adventure"],
     tagline: "Reefs, rock pinnacles and a century-old wreck.",
-    loved: "Divers rave about the SS Rangoon wreck — upright on the sand and swarming with fish — and calm, clear December water.",
+    loved: "Divers love the SS Rangoon wreck — upright on the sand and swarming with fish — and calm, clear December water.",
     description:
       "Unawatuna's dive schools run around 16 sites from 6 to 30 m: reefs, rock and wrecks. First-timers do a PADI Discover Scuba (skills in the shallows, then a guided reef dive); certified divers head to wrecks like the SS Rangoon at ~30 m.",
     highlights: ["PADI Discover Scuba — no licence needed", "Reefs, turtles & reef fish", "SS Rangoon wreck (certified)", "Dec–Mar: calm, clear water"],
@@ -400,6 +400,12 @@ export const galleDay: Activity[] = [
   }),
   option("day", ["galle"], {
     id: "unawatuna-jungle-beach",
+    /** Halal mode shows these words instead (no bars or drinks). */
+    halalText: {
+      tagline: "A sheltered swimming bay, beach cafés and hammocks.",
+      description: "Unawatuna is a horseshoe bay protected by a reef, so the water is calm enough to swim and snorkel. Loungers, grilled fish, fresh juices and hammocks, with Galle Fort 15 minutes away for sunset.",
+      highlights: ["Calm, reef-protected bay", "Snorkelling off the beach", "Lunch on the sand", "Galle Fort for sunset"],
+    },
     title: "Unawatuna beach day",
     region: "unawatuna",
     categories: ["water", "chill"],
@@ -421,6 +427,11 @@ export const galleDay: Activity[] = [
   }),
   option("day", ["galle"], {
     id: "mirissa-beach-hop",
+    /** Halal mode shows these words instead (no bars or drinks). */
+    halalText: {
+      description: "Start at Coconut Tree Hill — the red-earth headland of leaning palms — then tuk-tuk to Secret Beach's rock pools and climb Parrot Rock. Afternoon on loungers with king coconuts and seafood, and sunset by the waves.",
+      highlights: ["Coconut Tree Hill", "Secret Beach & Parrot Rock", "Lunch on the sand", "Sunset by the waves"],
+    },
     title: "Mirissa beach-hop: Coconut Tree Hill to Secret Beach",
     region: "mirissa",
     categories: ["chill", "water"],
@@ -442,6 +453,13 @@ export const galleDay: Activity[] = [
   }),
   option("day", ["galle"], {
     id: "hiriketiya-day",
+    /** Halal mode shows these words instead (no bars or drinks). */
+    halalText: {
+      tagline: "A horseshoe surf bay, palm-shaded cafés and a creative crowd.",
+      loved: "People fall for Hiriketiya's tiny bay and creative crowd — and the sunset from the headland.",
+      description: "Hiriketiya is a tiny horseshoe bay with waves for every level, palm-shaded cafés and a creative crowd. Rent a board or just swim, eat well, and stay for sunset over the bay.",
+      highlights: ["Swim or surf the horseshoe bay", "Café hopping in the palms", "Sunset over the bay", "~1.5–2 hrs each way"],
+    },
     title: "Hiriketiya: the coolest cove on the coast",
     region: "hiriketiya",
     categories: ["chill", "water", "food"],
@@ -471,7 +489,7 @@ export const galleDay: Activity[] = [
     tagline: "Wander a 400-year-old walled town by the sea.",
     loved: "Walking the ramparts at golden hour as the lighthouse comes on is the moment everyone mentions.",
     description:
-      "Inside Galle Fort's Dutch ramparts are lanes of colonial villas turned into cafés, design shops, gelato bars and galleries. Walk the walls past the lighthouse, watch the Flag Rock jumpers, browse for linen and gems, and linger over lunch in a courtyard.",
+      "Inside Galle Fort's Dutch ramparts are lanes of colonial villas turned into cafés, design shops, gelato parlours and galleries. Walk the walls past the lighthouse, watch the Flag Rock jumpers, browse for linen and gems, and linger over lunch in a courtyard.",
     highlights: ["Walk the ramparts & the lighthouse", "Boutiques, galleries & courtyard cafés", "Cliff jumpers at Flag Rock", "UNESCO World Heritage"],
     duration: "Half to full day",
     hours: 4,
@@ -575,6 +593,13 @@ export const galleDay: Activity[] = [
   }),
   option("day", ["galle"], {
     id: "ahangama-cafes-yoga",
+    /** Halal mode shows these words instead (no bars or drinks). */
+    halalText: {
+      title: "Ahangama: yoga, cafés & a beach afternoon",
+      loved: "Morning vinyasa at a jungle shala, a long brunch, then a lazy afternoon on the sand — people call Ahangama the best-vibed stretch of the coast.",
+      description: "Start with a drop-in yoga class (The Nuga House does 8:30 am daily, mats and pool included), then café-hop Ahangama's strip of brunch spots before an afternoon on a beachfront lounger watching the surfers at Kabalana.",
+      highlights: ["Drop-in yoga (~US$10)", "Brunch & café crawl", "Beach afternoon", "Surfers at Kabalana"],
+    },
     title: "Ahangama: yoga, cafés & a beach club",
     region: "ahangama",
     categories: ["chill", "food"],

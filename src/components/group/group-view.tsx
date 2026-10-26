@@ -18,6 +18,7 @@ import { SiteFooter } from "../brand/site-footer";
 import { Lockup } from "../brand/wordmark";
 import { CurrencyPicker } from "../currency";
 import { ButtonLink } from "../ui/button";
+import { PopularBadge, usePopular } from "../popular";
 import { Photo } from "../ui/photo";
 import { BalanceMeter } from "../trip/balance-meter";
 import { RouteMap } from "../trip/route-map";
@@ -61,6 +62,7 @@ export function OrganizerBadge({ className }: { className?: string }) {
 const rise = { initial: { opacity: 0, y: 20 }, whileInView: { opacity: 1, y: 0 }, viewport: { once: true, margin: "-30px" } };
 
 export function GroupView({ stats, myStatus, canBrowse, itineraries, members, editsLocked, isOrganizer }: Props) {
+  const popular = usePopular();
   const rules = useRules();
   const pct = stats.joined ? stats.submitted / stats.joined : 0;
   const org = new Set(members.filter((m) => m.organizer).map((m) => m.id));
@@ -176,6 +178,7 @@ export function GroupView({ stats, myStatus, canBrowse, itineraries, members, ed
                       <span className="flex items-center gap-1.5 text-[14px] font-semibold leading-tight">
                         {t.slot === "day" ? <Sun className="size-3.5 shrink-0 text-saffron-600" /> : <Moon className="size-3.5 shrink-0 text-dusk-700" />}
                         <span className="truncate">{o.title}</span>
+                        {popular(t.optionId) !== null && <PopularBadge count={popular(t.optionId)!} short className="ml-auto shrink-0" />}
                       </span>
                       <span className="mt-1.5 flex items-center gap-2">
                         <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-sand-200">

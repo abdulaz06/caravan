@@ -29,6 +29,10 @@ export const galleNight: Activity[] = [
   }),
   option("night", ["galle"], {
     id: "galle-fort-sunset-dinner",
+    /** Halal mode shows these words instead (no bars or drinks). */
+    halalText: {
+      description: "Join the crowd on the fort walls as the sun drops into the ocean, then wander the lantern-lit lanes for dinner — rice-and-curry, wood-fired pizza or seafood platters — and dessert in a courtyard café.",
+    },
     title: "Sunset on Galle Fort's ramparts & dinner",
     region: "galle",
     categories: ["food", "chill", "culture"],
@@ -153,6 +157,11 @@ export const galleNight: Activity[] = [
   }),
   option("night", ["galle"], {
     id: "mirissa-seafood-bbq",
+    /** Halal mode shows these words instead (no bars or drinks). */
+    halalText: {
+      description: "Every evening Mirissa's beach restaurants drag tables onto the sand, light candles and lay out the day's catch on ice — tuna, barracuda, prawns, lobster. Pick, they grill, you eat by the waves with a fresh lime juice.",
+      highlights: ["Choose-your-catch seafood BBQ", "Tables right on the sand", "Fresh juices & king coconuts", "Candlelight by the waves"],
+    },
     title: "Candlelit seafood on Mirissa beach",
     region: "mirissa",
     categories: ["food", "chill"],

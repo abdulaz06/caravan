@@ -55,7 +55,17 @@ export type Preferences = {
   suggestions?: string;
   notes?: string;
   currency?: CurrencyCode;
+  /**
+   * "Who would you share a room with?" — just for fun, up to 3 in order. A
+   * participant (`id`, with their name at the time) or someone not on the list
+   * yet (name only). Private: organizers only. An empty list means "cleared";
+   * a missing key on save means "unchanged" (older app versions don't send it).
+   */
+  roommates?: RoommatePick[];
 };
+
+export type RoommatePick = { id?: string; name: string };
+export const MAX_ROOMMATES = 3;
 
 export type BudgetSettings = { excluded?: string[]; accommodation?: boolean };
 
@@ -202,7 +212,8 @@ export function itemAllowed(id: string, slot: SlotKind, where: Where | null, isN
   if (!where) return false;
   if (id === STAY_ID) return true;
   const a = activitiesById[id];
-  if (!a || a.kind === "halal" || !a.slots.includes(slot)) return false;
+  // Halal stand-ins and Halal-mode copies are view-only — never saved.
+  if (!a || a.kind === "halal" || a.halalOf || !a.slots.includes(slot)) return false;
   if (a.onlyRole) return where === "galle";
   if (currentRules().baseFiltering && !a.where.includes(where)) return false;
   if (isNyeOption(id)) return slot === "night" && isNyeNight;

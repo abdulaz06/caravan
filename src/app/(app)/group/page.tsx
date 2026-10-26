@@ -6,7 +6,10 @@ import { RulesProvider } from "@/components/rules";
 import { tripLength } from "@/lib/itinerary";
 import { balanceOf } from "@/lib/timeline";
 import { initialCurrency } from "@/lib/server/currency-pref";
-import { computeStats, loadPeople } from "@/lib/server/group";
+import { computeStats, loadPeople, realPeople } from "@/lib/server/group";
+import { getPopular } from "@/lib/server/popular";
+import { PopularProvider } from "@/components/popular";
+import { isTestName } from "@/lib/test-users";
 import { pageContext } from "@/lib/server/page-context";
 import { getRates } from "@/lib/server/rates";
 import { currentParticipant } from "@/lib/server/session";
@@ -17,8 +20,10 @@ export default async function GroupPage() {
   const me = await currentParticipant();
   if (!me) redirect("/join");
   const ctx = await pageContext(me);
-  const [people, rates] = await Promise.all([loadPeople(), getRates()]);
-  const stats = computeStats(people);
+  // Test users ("zz-test-…") never show up or count here — except to themselves.
+  const [all, rates, popular] = await Promise.all([loadPeople(), getRates(), getPopular()]);
+  const people = all.filter((p) => p.id === me.id || !isTestName(p.name));
+  const stats = computeStats(realPeople(people));
   const mine = people.find((p) => p.id === me.id);
   // Browsing others: after submitting (default), always, or off — a Trip rule.
   const canBrowse = ctx.rules.browse === "always" || (ctx.rules.browse === "after_submit" && mine?.status === "submitted");
@@ -44,6 +49,7 @@ export default async function GroupPage() {
   return (
     <RulesProvider rules={ctx.rules}>
       <CurrencyProvider initial={currency} rates={rates}>
+        <PopularProvider initial={popular}>
         <GroupView
           stats={stats}
           myStatus={mine?.status ?? "new"}
@@ -53,6 +59,7 @@ export default async function GroupPage() {
           editsLocked={ctx.locked}
           isOrganizer={ctx.isOrganizer}
         />
+        </PopularProvider>
       </CurrencyProvider>
     </RulesProvider>
   );

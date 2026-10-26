@@ -12,7 +12,7 @@ import { ItemRow } from "./day-card";
 import { OptionDetail } from "./option-detail";
 
 /** Read-only, beautiful vertical timeline of a whole itinerary. */
-export function ItineraryTimeline({ data, timeline }: { data: ItineraryData; timeline: Timeline }) {
+export function ItineraryTimeline({ data, timeline, hideNotes = false }: { data: ItineraryData; timeline: Timeline; hideNotes?: boolean }) {
   const [detail, setDetail] = useState<{ a: Activity; where: Where | null } | null>(null);
   const n = nights(timeline.days.length);
   const w = (x: number) => `${x} ${x === 1 ? "night" : "nights"}`;
@@ -22,7 +22,7 @@ export function ItineraryTimeline({ data, timeline }: { data: ItineraryData; tim
         <span className="absolute bottom-6 left-[19px] top-4 w-0.5 border-l-2 border-dashed border-sand-300" aria-hidden="true" />
         {timeline.days.map((t) => {
           const nye = t.tags.includes("nye");
-          const note = data.days[t.index]?.note;
+          const note = hideNotes ? undefined : data.days[t.index]?.note;
           const firstColombo = t.role === "colombo" && t.index === 0;
           const section = firstColombo ? `Colombo · ${w(n.colombo)}` : t.role === "transfer" ? `Galle · ${w(n.galle)}` : null;
           return (

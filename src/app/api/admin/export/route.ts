@@ -1,6 +1,6 @@
 import type { NextRequest } from "next/server";
 import { exportJson, exportLongCsv, exportWideCsv } from "@/lib/server/export";
-import { loadPeople } from "@/lib/server/group";
+import { loadPeople, realPeople } from "@/lib/server/group";
 import { asOrganizer, logAction } from "@/lib/server/organizer";
 import { loadRules } from "@/lib/server/rules";
 
@@ -8,7 +8,8 @@ export async function GET(req: NextRequest) {
   return asOrganizer("admin", async (actor) => {
     const format = req.nextUrl.searchParams.get("format") ?? "json";
     const live = await loadRules();
-    const people = await loadPeople();
+    // "zz-test-…" users never make it into an export.
+    const people = realPeople(await loadPeople());
     const stamp = new Date().toISOString().slice(0, 10);
     await logAction(actor, "export", null, { format });
 

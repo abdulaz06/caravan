@@ -601,48 +601,19 @@ await shot(pp, "peek-cards", { keep: true });
 await deeCard.getByRole("link", { name: `Peek at ${N.drafter}'s plan` }).click();
 await pp.waitForURL("**/group/peek/**");
 await pp.waitForTimeout(2200);
-await expect(pp.getByText(/Peeking at/).isVisible(), "the keyhole opens");
+await expect(pp.getByLabel("Status: In progress").isVisible(), "the full plan opens, marked “In progress”");
+await expect(pp.getByRole("img", { name: /^Route map/ }).isVisible(), "…with the route map");
+await expect(pp.getByRole("heading", { name: "Day by day" }).isVisible(), "…and the day-by-day timeline");
+await expect(pp.getByText(/DEE-SECRET-DAY-NOTE|DEE-PRIVATE/).count().then((c) => c === 0), "no day notes or private answers on the page");
+await expect(pp.getByRole("button", { name: /Pick this|Add to Day|Swap in/ }).count().then((c) => c === 0), "nothing to pick, copy or add");
 await shot(pp, "peek-open", { keep: true });
-const stageBox = await pp.getByRole("img", { name: /Peek view/ }).boundingBox();
-await pp.mouse.move(stageBox.x + stageBox.width * 0.5, stageBox.y + stageBox.height * 0.3);
-await pp.mouse.down();
-await pp.mouse.move(stageBox.x + stageBox.width * 0.35, stageBox.y + stageBox.height * 0.62, { steps: 8 });
-await pp.mouse.up();
-await pp.waitForTimeout(500);
-await shot(pp, "peek-dragged", { keep: true });
-const guard = await pp.evaluate(() => {
-  const layer = document.querySelector("[data-peek-layer]");
-  const cs = getComputedStyle(layer);
-  const ev = new MouseEvent("contextmenu", { bubbles: true, cancelable: true });
-  layer.dispatchEvent(ev);
-  return {
-    userSelect: cs.userSelect || cs.webkitUserSelect,
-    pointerEvents: cs.pointerEvents,
-    clickables: layer.querySelectorAll("a, button, input, select, textarea, [role=button], [tabindex], [href]").length,
-    mask: (cs.maskImage || cs.webkitMaskImage || "").slice(0, 20),
-    contextBlocked: ev.defaultPrevented,
-    selection: (() => {
-      const r = document.createRange();
-      r.selectNodeContents(layer);
-      const s = getSelection();
-      s.removeAllRanges();
-      s.addRange(r);
-      return s.toString().length;
-    })(),
-  };
-});
-console.log("    peek layer:", JSON.stringify(guard));
-await expect(guard.userSelect === "none", "peek text isn't selectable (user-select: none)");
-await expect(guard.pointerEvents === "none" && guard.clickables === 0, "nothing in the peek is clickable");
-await expect(guard.contextBlocked, "long-press / context menu suppressed");
-await expect(guard.mask.startsWith("url("), "the plan is only visible through the keyhole mask");
 
 step("The peek endpoint returns no private fields or notes");
 const raw = await peeker.api.get(`${base}/api/peek/${drafter.id}`).then((r) => r.text());
 const body = JSON.parse(raw);
-await expect(JSON.stringify(Object.keys(body).sort()) === JSON.stringify(["balance", "dates", "days", "length", "name", "status"]), "only name, status, dates, length, days and balance");
-await expect(!/DEE-SECRET-DAY-NOTE|DEE-PRIVATE|preferences|budget|dietary|hardNo|flyingFrom|"note"|"id"|"key"/.test(raw), "no notes, private answers or ids in the response");
-await expect(body.status === "draft" && body.days.length === 6, "a draft, with its days");
+await expect(JSON.stringify(Object.keys(body).sort()) === JSON.stringify(["data", "name", "role", "status"]), "only name, role, status and the plan");
+await expect(!/DEE-SECRET-DAY-NOTE|DEE-PRIVATE|"note"|budget|dietary|hardNo|flyingFrom|roommates/.test(raw), "no notes or private answers in the response");
+await expect(body.status === "draft" && body.data.days.length === 6 && JSON.stringify(body.data.preferences) === "{}", "a draft, with its days and no answers");
 
 step("Peek counter: unique peekers, never who");
 await peeker.api.get(`${base}/api/peek/${drafter.id}`);

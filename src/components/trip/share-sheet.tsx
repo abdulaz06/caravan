@@ -7,6 +7,7 @@ import { daysNightsLabel, type ItineraryData } from "@/lib/itinerary";
 import { tripDays } from "@/lib/rules";
 import { dayRoutes } from "@/lib/routes";
 import { renderShareImage, type ShareFormat, type ShareModel } from "@/lib/share-image";
+import { tripHighlights } from "@/lib/highlights";
 import { balanceOf, buildTimeline } from "@/lib/timeline";
 import { cn } from "@/lib/cn";
 import { Button } from "../ui/button";
@@ -38,10 +39,11 @@ function pickPhotos(model: Omit<ShareModel, "photos">): ShareModel["photos"] {
   return out;
 }
 
-export function buildShareModel(name: string, data: ItineraryData): ShareModel {
+/** `halal`: the plan is already swapped — its highlights replace the vibe meter (no other sign of Halal mode). */
+export function buildShareModel(name: string, data: ItineraryData, halal = false): ShareModel {
   const timeline = buildTimeline(data);
   const base = { name, data, timeline, routes: dayRoutes(data, timeline), balance: balanceOf(data) };
-  return { ...base, photos: pickPhotos(base) };
+  return { ...base, photos: pickPhotos(base), ...(halal ? { highlights: tripHighlights(data) } : {}) };
 }
 
 const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "trip";
@@ -60,8 +62,8 @@ function download(url: string, filename: string) {
  * Share button can hand the file to the Web Share API inside the tap.
  * Mount it only while open (state resets each time).
  */
-export function ShareSheet({ onClose, name, data }: { onClose: () => void; name: string; data: ItineraryData }) {
-  const model = useMemo(() => buildShareModel(name, data), [name, data]);
+export function ShareSheet({ onClose, name, data, halal = false }: { onClose: () => void; name: string; data: ItineraryData; halal?: boolean }) {
+  const model = useMemo(() => buildShareModel(name, data, halal), [name, data, halal]);
   const [imgs, setImgs] = useState<Partial<Record<ShareFormat, Img>>>({});
   const [failed, setFailed] = useState(false);
   const [canShareFiles, setCanShareFiles] = useState(false);

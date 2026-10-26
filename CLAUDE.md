@@ -5,6 +5,8 @@ A mobile-first web app for a friend group of ~12–13 people planning a December
 
 **Aesthetics are the #1 priority.** It must look beautiful and impressive on a phone opened from a WhatsApp/iMessage link. Treat visual design, motion and polish as core requirements, not extras.
 
+**The site is LIVE with real users.** Every change must be backward compatible: never lose or corrupt existing itineraries, and any data migration must be safe and idempotent (new fields are optional; a field an older app version doesn't send means "unchanged"). Run Playwright tests against the local stand-in database (`LANKS_LOCAL_STORE=1`), not production. If production must be checked, only create users named with the **`zz-test-`** prefix and delete only those afterwards; they're excluded from every count (welcome page, group screen, popular picks, roommate lists, exports — `src/lib/test-users.ts`). Never touch real users' data.
+
 ## Stack (decided)
 - Next.js (App Router) + TypeScript + Tailwind CSS
 - Framer Motion for animation; dnd-kit for drag-and-drop (must work well with touch)
@@ -161,7 +163,8 @@ All prices are stored in **USD** (`estCostUsd`, per person) — the single base 
 - Must-do and hard-no free text
 - Suggestions for places or activities not listed
 - Anything else for the organizer
-Design this step as quick taps first, text fields last.
+- **"Top choices to share a room with 😄"** — clearly labelled "Just for fun · not binding". Pick and rank up to 3 people from the participants who have started an itinerary (never yourself or test users), with search, plus "Someone not on the list? Type their name" for people who haven't joined. Stored as `preferences.roommates: { id?, name }[]` (an empty list = cleared; a missing key on save = unchanged, so older app versions can't wipe it; the server keeps the first 3, drops yourself and stores participants' current names). A **private answer**: organizers only (console + exports) — never in browse, peek or the group screen.
+Design this step as quick taps first, text fields last. The privacy line reads "Only the organizers (Abdul & Aadil) see these answers, roommate picks included".
 
 ## Currency
 - All money in the app (option and Quick extra costs, budget tiers, the budget tracker) can be shown in **LKR, USD, GBP, EUR, AED, INR, SAR, QAR, CAD, AUD**.
@@ -176,12 +179,13 @@ Design this step as quick taps first, text fields last.
 - Computed totals are included in the admin export.
 
 ## Group features (logged-in participants only)
-- **Group overview:** responses count (joined vs submitted), **date availability heatmap** (how many people want each date — very important), most-picked options, group nature ↔ nightlife balance, popular regions.
+- **Group overview:** responses count (joined vs submitted), **date availability heatmap** (how many people want each date — very important), most-picked options (counted per person, with 🔥 badges on the popular ones), group nature ↔ nightlife balance, popular regions.
+- **🔥 Popular picks:** pick counts per option/Quick extra across all real participants' itineraries (drafts + submitted, each person once; test users, hidden options and Halal stand-ins left out), from a cached server endpoint (`GET /api/popular`, ~3 min cache; the client refreshes every few minutes). Popular = the top 5 per slot type (daytime / evening; ties at the cut-off stay) with at least max(3, 20% of the people who've picked anything) — constants in `src/lib/popular.ts`. A custom flame badge "Popular · 7 picked" on the A-vs-B matchup cards, the "+ Add another" catalog (plus a "🔥 Popular" filter, most picked first), option detail sheets and the group overview. Counts only, never who picked what. A console toggle (Trip rules → 🔥 Popular badges) shows/hides them; never shown in Halal mode.
 - **Browse itineraries:** by default only after you've submitted your own (keeps opinions independent); organizers can switch this to always or off. Read-only timeline view of each submitted itinerary.
 - **Everyone's scale:** each card in the "Everyone's trips" list shows that person's Nature ↔ Nightlife meter.
-- **Group spectrum:** a strip at the top of the group screen — one horizontal Nature ↔ Nightlife line with everyone's avatar/initials plotted where they land (overlaps stack neatly; tap an avatar to open their trip). Like browsing, it unlocks once you've submitted your own. Always labelled "Nature ↔ Nightlife" here (Halal wording only ever appears in Halal mode).
+- **Group spectrum:** a strip at the top of the group screen — one horizontal Nature ↔ Nightlife line with everyone's avatar/initials plotted where they land (overlaps stack neatly; tap an avatar to open their trip). Like browsing, it unlocks once you've submitted your own. Always labelled "Nature ↔ Nightlife" here (Halal mode never applies outside the review view).
 - **Organizer badge:** a small "Organizer" badge next to admins' and the owner's names (group screen, browse, spectrum).
-- **👀 Peek:** anyone logged in can peek at anyone else's plan — drafts too ("Still cooking…"), even before submitting their own — from a "👀 Peek" button on each person's card. It's a keyhole, not a normal view: the screen goes dark and a keyhole spotlight the user drags (finger or mouse) reveals a small part of the plan at a time; never the whole plan clearly at once. A creak/peek opening animation and a quip ("Nosy, aren't we?"); reduced-motion gets a simple small moving reveal window. Shows only picks (daytime/evening activities), dates and the balance meter — never private answers (budget, dietary, free text) or day notes. Copy-resistant: one non-interactive layer, no buttons/links/details/"use this", `user-select: none`, long-press and context menu suppressed, no exports (screenshots are fine). Data comes from its own endpoint that returns only those fields. No attempt limits. Each person sees an anonymous "👀 3 people peeked at your plan" on their own plan (unique peekers, never who); organizers see who peeked in the console activity log. Respects the "peek" rule; Halal mode doesn't apply.
+- **👀 Peek:** anyone logged in can peek at anyone else's plan — drafts too, even before submitting their own — from a "👀 Peek" button on each person's card. It shows their **full itinerary in the normal read-only view** (trip poster + route map, vibe meter, day by day), with an "In progress" badge on drafts and a playful quip. The data comes from its own endpoint (`/api/peek/[id]`, `privacy.peekPlan`) that returns only picks and dates — never private answers (budget, dietary, free text, roommate picks) or day notes. No copy/add actions (details open read-only). Each person sees an anonymous "👀 3 people peeked at your plan" on their own plan (unique peekers, never who); organizers see who peeked in the console activity log. Respects the "peek" rule; Halal mode doesn't apply. Browsing a submitted plan likewise only sends picks, dates, day notes and interests (`privacy.browsePlan`).
 
 ## Route map, share images & Halal mode
 ### Zoomed route map (review + person view)
@@ -193,11 +197,13 @@ Design this step as quick taps first, text fields last.
 - Generated client-side with embedded fonts (fixed-weight copies of Fraunces and Instrument Sans in `public/fonts/share/`, made by `scripts/make-share-fonts.py` and loaded via the FontFace API before drawing — WebKit's canvas ignores a variable font's weight axis), same-origin images and an SVG/Path2D map, so it works on iPhone Safari and Android Chrome. Map labels and day badges never overlap (shared placement helpers in `src/lib/routes.ts`). Images are pre-generated when the share sheet opens; the Share button uses the Web Share API with the PNG file (save to Photos / share to Instagram) and falls back to a download. Personal day notes are never included.
 
 ### Halal mode (easter egg)
-- A subtle crescent-moon "Halal" switch on the user's own review view (tucked into the vibe meter card).
-- When ON it's a **view-only** transformation: every nightlife item (party, club, bar, pub golf, casino, anything alcohol-centric) is swapped for its curated `halalSwap` — a wholesome alternative in the same slot and area with a similar duration. Every nightlife activity in `src/content` must define one (checked at startup); swap targets live in `src/content/activities/halal.ts` or are existing non-nightlife options. Stay in, nature and culture items stay as they are.
-- The meter is relabelled "Halal ↔ Haram" and its titles read accordingly. A banner says "Halal mode: preview only, your real plan is untouched" with one-tap off.
-- It never changes saved data: no autosave, no DB writes, no effect on the group overview, browsing, admin export or budget. Editing and submitting are disabled while it's on, and it resets when they leave the page.
-- Share images made in Halal mode use the swapped itinerary and look completely normal: no banner, no "Halal" label, normal Nature ↔ Nightlife wording, no personal notes.
+- A subtle crescent-moon "Halal" switch on the user's own review view (tucked into the vibe card).
+- When ON it's a **view-only** transformation (`src/lib/halal.ts`): every nightlife item (party, club, bar, pub golf, casino, anything alcohol-centric) is swapped for its curated `halalSwap` — a wholesome alternative in the same slot and area with a similar duration. Every nightlife activity in `src/content` must define one (checked at startup); swap targets live in `src/content/activities/halal.ts` or are existing non-nightlife options. Stay in, nature and culture items stay as they are.
+- **No Nature ↔ Nightlife scale at all.** Its place goes to a **"Trip highlights"** card: custom icons with counts ("10 feasts · 5 beaches · 5 sunsets · 2 hikes · 1 temple · 1 safari"), computed from the swapped itinerary (`src/lib/highlights.ts`, icons as path data shared with the canvas). The Halal switch stays in the card. A banner says "Halal mode: preview only, your real plan is untouched" with one-tap off.
+- **Nothing about nightlife, partying, alcohol or gambling may appear anywhere while it's on** — titles, taglines, descriptions, highlights, tags and "why people love it" lines, category filters (Party hidden), day-of-week party badges, late-night notes, budget line items (the budget panel shows the swapped plan), 🔥 badges, map labels, the desktop poster copy and both exports. Non-nightlife options whose own words mention bars or drinks carry `halalText` (Halal-mode wording); Halal mode shows a `~halal` copy of them (tags and source labels naming nightlife left out), never saved or offered anywhere (`halalOf`). Day notes, free-text answers and the announcement banner are hidden while it's on.
+- The banned-word list lives in one place, `src/content/halal-banned-words.json` (bar, pub, club, party, drinks, cocktail, beer, alcohol, sundowner, casino, gambling, rave, shots, nightlife, haram — whole words, case-insensitive, with plurals). The content check at startup fails the build if anything Halal mode can show contains one, and `scripts/round9.mjs` renders every itinerary screen, every detail sheet, the budget and both exports in Halal mode for a plan full of nightlife and fails on any banned word.
+- It never changes saved data (byte-identical): no autosave, no DB writes, no effect on the group overview, browsing, admin export or budget exclusions. Editing and submitting are disabled while it's on, and it resets when they leave the page.
+- Share images made in Halal mode use the swapped itinerary with the Trip highlights card in the meter's place and look completely normal: no banner, no "Halal" label, no Nature ↔ Nightlife wording, no personal notes.
 
 ## Organizers & the console (`/admin`)
 ### Roles
@@ -210,13 +216,14 @@ Design this step as quick taps first, text fields last.
 - `ADMIN_PASSWORD` stays as an **owner-level break-glass** login on `/admin`.
 - Admin names show an "Organizer" badge to everyone. The preferences step says "Only the organizers (Abdul & Aadil) see these answers", built from the real owner/admin list.
 
-### Console (one page, sections: Overview · People · Trip rules · Content · Announcement · Data · Activity)
+### Console (one page, sections: Overview · People · Roommates · Trip rules · Content · Announcement · Data · Activity)
 - **Overview:** joined vs submitted, who hasn't started / hasn't submitted, last activity, quick links.
-- **People:** status, role + badge; view any itinerary **including private answers**; **edit any itinerary on their behalf in the normal day builder** (works even when edits are locked), stamped "Edited by <admin>" — the person sees a subtle, dismissible "Aadil updated your plan on 21 Oct"; reset PIN; delete; owner only: make/remove admin.
-- **Trip rules** (stored in `settings.rules`, applied live, enforced server-side): edits lock on/off + a scheduled **auto-lock** date/time (countdown shown to everyone); require full length to submit / allow the 5-day length; 5-day preview on/off; date window (earliest start / latest end); base structure (Colombo nights / Galle nights, default 1 / 4) and base-area filtering on/off; browse others: after submitting / always / off; peek on/off; group spectrum on/off; Halal button on/off; default currency. A change that would invalidate saved itineraries (nights split, date window) first shows an **impact preview** ("4 itineraries will need re-picks") and needs confirmation, then migrates them the way earlier migrations did (picks kept by day role and order, the rest cleared) and the people affected see a one-time note.
+- **Roommates (just for fun):** mutual matches (A picked B and B picked A, with their ranks; "Both #1"), most wanted, and a who-picked-whom list (typed names marked "not joined"; a typed name that matches someone who has since joined counts as them).
+- **People:** status, role + badge (test users listed with a "Test user · not counted" tag so they can be deleted, but left out of every count); view any itinerary **including private answers**; **edit any itinerary on their behalf in the normal day builder** (works even when edits are locked), stamped "Edited by <admin>" — the person sees a subtle, dismissible "Aadil updated your plan on 21 Oct"; reset PIN; delete; owner only: make/remove admin.
+- **Trip rules** (stored in `settings.rules`, applied live, enforced server-side): edits lock on/off + a scheduled **auto-lock** date/time (countdown shown to everyone); require full length to submit / allow the 5-day length; 5-day preview on/off; date window (earliest start / latest end); base structure (Colombo nights / Galle nights, default 1 / 4) and base-area filtering on/off; browse others: after submitting / always / off; peek on/off; group spectrum on/off; 🔥 popular badges on/off; Halal button on/off; default currency. A change that would invalidate saved itineraries (nights split, date window) first shows an **impact preview** ("4 itineraries will need re-picks") and needs confirmation, then migrates them the way earlier migrations did (picks kept by day role and order, the rest cleared) and the people affected see a one-time note.
 - **Content:** hide/disable any option or Quick extra (people who already picked it see "No longer available" on that item — never silently deleted; new picks of it are refused); flag "re-check closer to the date"; pin/feature an option (shown first in matchups and the catalog).
 - **Announcement:** a banner message shown to everyone, with an on/off switch.
-- **Data:** JSON and CSV exports (one row per person incl. days · nights, budget totals, role and edit stamp; plus a long-format CSV, one row per item in every slot) for AI analysis.
+- **Data:** JSON and CSV exports (one row per person incl. days · nights, budget totals, role, edit stamp and roommate picks + mutual matches; plus a long-format CSV, one row per item in every slot) for AI analysis. Test users are never exported.
 - **Activity log:** every admin action (who, what, when) and who peeked at whom.
 
 ## Data model (Supabase)
@@ -239,7 +246,7 @@ Itinerary `data` (versioned; current `version: 3`, which introduced the fixed da
     night: SlotItem[];
     note?: string;
   }>,
-  preferences: { ..., currency?: CurrencyCode },
+  preferences: { ..., currency?: CurrencyCode, roommates?: { id?: string; name: string }[] },
   budget?: { excluded?: string[]; accommodation?: boolean },
 }
 type SlotItem = { key: string; id: string; pairId?: string; variant?: string };

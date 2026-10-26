@@ -7,7 +7,9 @@ import { emptyItinerary, normalize } from "@/lib/itinerary";
 import { initialCurrency } from "@/lib/server/currency-pref";
 import { db } from "@/lib/server/db";
 import { organizersOf } from "@/lib/server/organizer";
+import { getPopular } from "@/lib/server/popular";
 import { getRates } from "@/lib/server/rates";
+import { roommateCandidates } from "@/lib/server/roommates";
 import { loadRules } from "@/lib/server/rules";
 import { consoleActor } from "@/lib/server/session";
 
@@ -18,12 +20,14 @@ export default async function AdminEditPage({ params, searchParams }: PageProps<
   if (!(await consoleActor())) redirect("/admin");
   const { id } = await params;
   const live = await loadRules();
-  const [person, row, people, rates, sp] = await Promise.all([
+  const [person, row, people, rates, sp, popular, candidates] = await Promise.all([
     db().getParticipant(id),
     db().getItinerary(id),
     db().listParticipants(),
     getRates(),
     searchParams,
+    getPopular(),
+    roommateCandidates(id),
   ]);
   if (!person) notFound();
   const data = row ? normalize(row.data) : emptyItinerary();
@@ -40,6 +44,8 @@ export default async function AdminEditPage({ params, searchParams }: PageProps<
           requestedStep={typeof sp.step === "string" ? sp.step : data.startDate ? "build" : "dates"}
           organizers={organizersOf(people).map((o) => o.name)}
           admin={{ targetId: person.id, targetName: person.display_name }}
+          popular={popular}
+          roommateCandidates={candidates}
         />
       </CurrencyProvider>
     </RulesProvider>

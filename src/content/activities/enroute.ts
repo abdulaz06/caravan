@@ -141,6 +141,10 @@ export const enrouteDay: Activity[] = [
   }),
   option("day", ["enroute", "galle"], {
     id: "hikkaduwa-turtles",
+    /** Halal mode shows these words instead (no bars or drinks). */
+    halalText: {
+      highlights: ["Wild green turtles in the shallows", "Coral sanctuary snorkelling", "Glass-bottom boat option", "Lunch on the beach strip"],
+    },
     title: "Snorkel with sea turtles in Hikkaduwa",
     region: "hikkaduwa",
     routeKm: 98,

@@ -7,7 +7,9 @@ import { emptyItinerary, hadReplacedPick, migrationLoss, normalize } from "@/lib
 import { initialCurrency } from "@/lib/server/currency-pref";
 import { db } from "@/lib/server/db";
 import { pageContext } from "@/lib/server/page-context";
+import { getPopular } from "@/lib/server/popular";
 import { getRates } from "@/lib/server/rates";
+import { roommateCandidates } from "@/lib/server/roommates";
 import { currentParticipant } from "@/lib/server/session";
 
 export const metadata: Metadata = { title: "My trip" };
@@ -16,11 +18,13 @@ export default async function TripPage({ searchParams }: PageProps<"/trip">) {
   const me = await currentParticipant();
   if (!me) redirect("/join");
   const ctx = await pageContext(me);
-  const [row, sp, rates, peekCount] = await Promise.all([
+  const [row, sp, rates, peekCount, popular, candidates] = await Promise.all([
     db().getItinerary(me.id),
     searchParams,
     getRates(),
     db().countPeekers(me.id).catch(() => 0),
+    getPopular(),
+    roommateCandidates(me.id).catch(() => []),
   ]);
   const data = row ? normalize(row.data) : emptyItinerary();
   // Itineraries saved before the fixed day structure are moved over; -1 = already current.
@@ -45,6 +49,8 @@ export default async function TripPage({ searchParams }: PageProps<"/trip">) {
           organizers={ctx.organizers}
           isOrganizer={ctx.isOrganizer}
           peekCount={peekCount}
+          popular={popular}
+          roommateCandidates={candidates}
           stamp={stamp ? { kind: stamp.kind, by: stamp.by, at: stamp.at, lost: stamp.lost, text: stamp.text } : null}
         />
       </CurrencyProvider>

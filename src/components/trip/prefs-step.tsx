@@ -15,6 +15,7 @@ import { cn } from "@/lib/cn";
 import { useCurrency } from "../currency";
 import type { ItineraryData, Preferences } from "@/lib/itinerary";
 import { TukTuk, Van, Train, SunMark, Palm } from "../brand/illustrations";
+import { RoommatePicker } from "./roommate-picker";
 import { Button } from "../ui/button";
 
 type Props = {
@@ -23,6 +24,8 @@ type Props = {
   locked: boolean;
   /** Owner + admin names — the only people who see these answers. */
   organizers: string[];
+  /** People who can be picked as a roommate. */
+  candidates: { id: string; name: string }[];
   onNext: () => void;
 };
 
@@ -34,7 +37,7 @@ export function namesList(names: string[]): string {
 
 const STAY_ICONS = { hostel: BedDouble, boutique: Building2, villa: Home, mix: Shuffle } as const;
 
-export function PrefsStep({ data, update, locked, organizers, onNext }: Props) {
+export function PrefsStep({ data, update, locked, organizers, candidates, onNext }: Props) {
   const p = data.preferences;
   const { money, code } = useCurrency();
   const tierLabel = (id: string) => {
@@ -71,7 +74,7 @@ export function PrefsStep({ data, update, locked, organizers, onNext }: Props) {
         <p className="mt-3 text-[15px] text-ink-2">All optional. Tap what&apos;s true, skip the rest — it all helps plan.</p>
         <p className="mt-3 inline-flex items-center gap-2 rounded-full bg-paper px-3 py-1.5 text-[12.5px] font-semibold text-ink-2 shadow-card">
           <LockKeyhole className="size-3.5 text-jungle-600" />
-          {organizers.length ? `Only the organizers (${namesList(organizers)}) see these answers` : "Only the organizers see these answers"}
+          {organizers.length ? `Only the organizers (${namesList(organizers)}) see these answers` : "Only the organizers see these answers"}, roommate picks included
         </p>
       </section>
 
@@ -106,6 +109,20 @@ export function PrefsStep({ data, update, locked, organizers, onNext }: Props) {
           </div>
           <p className="mb-2 mt-5 text-[14px] font-semibold text-ink-2">Sharing a room?</p>
           <Segmented options={sharedRooms} value={p.sharedRooms} onChange={(id) => single("sharedRooms", id)} />
+        </Card>
+
+        <Card
+          title="Top choices to share a room with 😄"
+          sub="Up to 3, in order. Pick from the crew or type a name."
+          badge="Just for fun · not binding"
+        >
+          <RoommatePicker
+            value={p.roommates ?? []}
+            // An empty list is kept (not deleted) so the server knows it was cleared.
+            onChange={(next) => update((d) => ({ ...d, preferences: { ...d.preferences, roommates: next } }))}
+            candidates={candidates}
+            disabled={locked}
+          />
         </Card>
 
         <Card title="What are you into?" sub="Pick as many as you like">
@@ -191,9 +208,14 @@ export function PrefsStep({ data, update, locked, organizers, onNext }: Props) {
   );
 }
 
-function Card({ title, sub, children }: { title: string; sub?: string; children: React.ReactNode }) {
+function Card({ title, sub, badge, children }: { title: string; sub?: string; badge?: string; children: React.ReactNode }) {
   return (
     <section className="rounded-[26px] bg-paper/70 p-4 shadow-card ring-1 ring-ink/[0.03]">
+      {badge && (
+        <span className="mb-2 inline-flex -rotate-1 items-center rounded-full bg-saffron-200 px-2.5 py-1 text-[11.5px] font-bold text-ink ring-1 ring-saffron-400/40">
+          {badge}
+        </span>
+      )}
       <h2 className="font-display text-[22px] font-semibold leading-tight">{title}</h2>
       {sub && <p className="mt-0.5 text-[13px] text-ink-3">{sub}</p>}
       <div className="mt-3.5">{children}</div>

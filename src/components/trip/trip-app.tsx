@@ -5,6 +5,7 @@ import { FlaskConical, MapPinned, PencilRuler, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { computeBudget } from "@/lib/budget";
+import { halalView } from "@/lib/halal";
 import type { CurrencyCode } from "@/lib/currency";
 import {
   daysNightsLabel,
@@ -16,6 +17,9 @@ import {
   type ItineraryStatus,
 } from "@/lib/itinerary";
 import { allowedLengths, previewAvailable, previewDays, tripDays } from "@/lib/rules";
+import { HalalProvider } from "../halal";
+import { PopularProvider } from "../popular";
+import type { PopularPayload } from "@/lib/popular";
 import { AnnouncementBar, LockCountdown } from "../rules";
 import { LocalTime } from "../ui/local-time";
 import { HillSunIcon } from "../brand/illustrations";
@@ -54,6 +58,10 @@ type Props = {
   stamp?: PlanStamp | null;
   /** An organizer editing someone else's plan from the console. */
   admin?: { targetId: string; targetName: string } | null;
+  /** 🔥 Popular pick counts (refreshed in the background). */
+  popular?: PopularPayload | null;
+  /** People who can be picked as a roommate (started a plan, not this person). */
+  roommateCandidates?: { id: string; name: string }[];
 };
 
 function initialStep(data: ItineraryData, status: ItineraryStatus, locked: boolean, requested?: string): Step {
@@ -80,6 +88,8 @@ export function TripApp({
   peekCount = 0,
   stamp = null,
   admin = null,
+  popular = null,
+  roommateCandidates = [],
 }: Props) {
   const router = useRouter();
   const toast = useToast();
@@ -115,7 +125,8 @@ export function TripApp({
   });
   const status = save.status ?? initialStatus;
   const updatedAt = save.updatedAt ?? initialUpdatedAt;
-  const budget = useMemo(() => computeBudget(view), [view]);
+  // Halal mode shows the budget of the swapped plan (display only — exclusions can't be toggled while it's on).
+  const budget = useMemo(() => computeBudget(halal ? halalView(view) : view), [view, halal]);
 
   const setStep = useCallback((next: Step, push = true) => {
     setHalal(false);
@@ -210,6 +221,8 @@ export function TripApp({
   }
 
   return (
+    <HalalProvider on={halal}>
+    <PopularProvider initial={popular}>
     <div className="min-h-dvh">
       <TripHeader
         name={admin ? admin.targetName : name}
@@ -235,7 +248,8 @@ export function TripApp({
       )}
       {!admin && (
         <>
-          <AnnouncementBar />
+          {/* An announcement is free text — Halal mode leaves it out. */}
+          {!halal && <AnnouncementBar />}
           <LockCountdown onLocked={() => setLocked(true)} />
         </>
       )}
@@ -340,7 +354,16 @@ export function TripApp({
               onNext={() => setStep("prefs")}
             />
           )}
-          {step === "prefs" && <PrefsStep data={view} update={update} locked={locked} organizers={organizers} onNext={() => setStep("review")} />}
+          {step === "prefs" && (
+            <PrefsStep
+              data={view}
+              update={update}
+              locked={locked}
+              organizers={organizers}
+              candidates={roommateCandidates}
+              onNext={() => setStep("review")}
+            />
+          )}
           {step === "review" && (
             <ReviewStep
               name={admin ? admin.targetName : name}
@@ -397,5 +420,7 @@ export function TripApp({
         }}
       />
     </div>
+    </PopularProvider>
+    </HalalProvider>
   );
 }

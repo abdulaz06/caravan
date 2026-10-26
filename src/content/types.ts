@@ -105,7 +105,13 @@ export type Activity = {
   onlyWith?: string;
   /** A quoted private-van price for the round trip (per van), used instead of the hourly estimate. */
   vanRoundTripUsd?: [number, number];
+  /** Halal mode: wording to show instead of copy that mentions bars or drinks (checked at startup). */
+  halalText?: HalalText;
+  /** Set on the Halal-mode copy of an activity (never saved, never in the catalog): the original id. */
+  halalOf?: string;
 };
+
+export type HalalText = Partial<Pick<Activity, "title" | "tagline" | "loved" | "description" | "highlights" | "goodToKnow">>;
 
 /** One way of doing a multi-variant option (Ella: sunrise at Little Adam's Peak vs an easy morning). */
 export type ActivityVariant = {

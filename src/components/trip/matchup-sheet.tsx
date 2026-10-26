@@ -10,6 +10,7 @@ import { STAY_ID, alsoOn, dateAt, nyeIndex, nyePairAt, roleAt, slotWhere, type I
 import { isFeatured, isHidden } from "@/lib/rules";
 import { distanceLabel, hoursFrom } from "@/lib/timeline";
 import { Firework, StayInIcon } from "../brand/illustrations";
+import { PopularBadge, usePopular } from "../popular";
 import { Photo } from "../ui/photo";
 import { Sheet } from "../ui/sheet";
 import { DaysBadge, VibeDots } from "./bits";
@@ -39,6 +40,7 @@ export function MatchupSheet({ open, onClose, data, index, slot, onPick, onStay 
   const [sort, setSort] = useState<"near" | "all">("near");
   const [chosen, setChosen] = useState<string | null>(null);
   const [detail, setDetail] = useState<{ option: Option; pair: Pair } | null>(null);
+  const popular = usePopular();
 
   const nye = slot === "night" && nyeIndex(data) === index && !!nyePairAt(data);
   const night = slot === "night";
@@ -165,6 +167,7 @@ export function MatchupSheet({ open, onClose, data, index, slot, onPick, onStay 
                         weekday={weekday}
                         isCurrent={currentId === o.id}
                         also={alsoLabel(alsoOn(data, slot, index, o.id))}
+                        popular={popular(o.id)}
                         state={chosen ? (chosen === o.id ? "won" : "lost") : "idle"}
                         onChoose={() => choose(pair, o)}
                         onInfo={() => setDetail({ option: o, pair })}
@@ -203,6 +206,7 @@ function OptionTile({
   weekday,
   isCurrent,
   also,
+  popular,
   state,
   onChoose,
   onInfo,
@@ -212,6 +216,7 @@ function OptionTile({
   weekday: number | null;
   isCurrent: boolean;
   also: string | null;
+  popular: number | null;
   state: "idle" | "won" | "lost";
   onChoose: () => void;
   onInfo: () => void;
@@ -251,6 +256,7 @@ function OptionTile({
               <Star className="size-3 fill-ink" /> Featured
             </span>
           )}
+          {popular !== null && <PopularBadge count={popular} tone="photo" />}
           <span className="rounded-full bg-ink/45 px-2 py-0.5 text-[10.5px] font-bold text-white backdrop-blur-md">
             {distanceLabel(option, where)}
           </span>

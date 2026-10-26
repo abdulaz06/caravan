@@ -55,7 +55,7 @@ export const halalAlternatives: Activity[] = [
     tagline: "Six lanes, an arcade and a very competitive crew.",
     loved: "Sri Lanka's best bowling alley — people lose hours on the lanes and the air hockey.",
     description:
-      "Playdium at One Galle Face: bowling on six Brunswick lanes, the arcade, VR and bumper cars, then dinner at the food court upstairs. Proper group fun, no drinks needed.",
+      "Playdium at One Galle Face: bowling on six Brunswick lanes, the arcade, VR and bumper cars, then dinner at the food court upstairs. Proper group fun, start to finish.",
     highlights: ["Six-lane bowling", "Arcade, VR & bumper cars", "Food court dinner", "Open late"],
     duration: "~3–4 hrs",
     hours: 3.5,
@@ -71,7 +71,7 @@ export const halalAlternatives: Activity[] = [
     region: "colombo",
     categories: ["food", "culture"],
     tagline: "The whole city counting down by the sea.",
-    loved: "Families, kites and food stalls — Colombo's biggest free party, with fireworks over the ocean.",
+    loved: "Families, kites and food stalls — Colombo's biggest free celebration, with fireworks over the ocean.",
     description:
       "Join the crowds on Galle Face Green for New Year's Eve: dinner from the food stalls, a walk along the promenade, then fireworks over the sea and the Port City at midnight.",
     highlights: ["Street-food dinner by the sea", "Fireworks at midnight", "Free and festive", "Home soon after"],
@@ -109,7 +109,7 @@ export const halalAlternatives: Activity[] = [
     region: "galle",
     categories: ["food"],
     tagline: "Hoppers, kottu and faluda — nine holes, no par.",
-    loved: "The same crawl energy as Pub Golf, but you end the night full of hoppers instead.",
+    loved: "A crawl with a scorecard, and you end the night full of hoppers.",
     description:
       "A food crawl in and around the fort: egg hoppers fresh off the pan, kottu from a roadside stall, short eats from a bakery, then faluda and watalappam to finish. Score each stop out of ten.",
     highlights: ["Egg hoppers & kottu", "Bakery short eats", "Faluda & watalappam", "Scorecards optional"],
@@ -227,7 +227,7 @@ export const halalAlternatives: Activity[] = [
     vibe: 1,
     tags: ["nye", "fireworks", "food"],
     photoKey: "nye-mirissa-beach-party",
-    sources: [src("friday.lk — beach parties 2026 (NYE island-wide)", "https://www.friday.lk/beach-parties-in-sri-lanka")],
+    sources: [src("friday.lk — New Year's Eve events island-wide 2026", "https://www.friday.lk/beach-parties-in-sri-lanka")],
   }),
 ];
 
