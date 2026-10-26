@@ -5,7 +5,7 @@ import { ArrowLeft, ArrowRight, Search } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { optionsById } from "@/content";
+import { useMaybeEngine } from "./engine";
 import { cn } from "@/lib/cn";
 import { Avatar } from "./avatar";
 import { Lockup } from "./brand/wordmark";
@@ -18,13 +18,14 @@ type PersonLite = { id: string; name: string };
 export function JoinFlow({ people, startReturning }: { people: PersonLite[]; startReturning: boolean }) {
   const [mode, setMode] = useState<"new" | "returning">(startReturning ? "returning" : "new");
   const [preselect, setPreselect] = useState<string | null>(null);
-  const backdrop = optionsById["mirissa-beach-hop"].images[0];
+  const catalog = useMaybeEngine()?.catalog;
+  const backdrop = catalog?.heroPhotos[1] ?? catalog?.heroPhotos[0];
 
   return (
-    <div className="relative flex min-h-dvh flex-col bg-ocean-900">
+    <div className="relative flex min-h-dvh flex-col bg-primary-900">
       <div className="absolute inset-x-0 top-0 h-[44dvh] overflow-hidden">
-        <Photo photo={backdrop} alt="Coconut Tree Hill in Mirissa" sizes="(min-width: 1024px) 480px, 100vw" priority />
-        <div className="absolute inset-0 bg-gradient-to-b from-ocean-950/50 via-ocean-950/10 to-ocean-900" />
+        <Photo photo={backdrop} alt={catalog?.preset.name ?? "Trip"} sizes="(min-width: 1024px) 480px, 100vw" priority />
+        <div className="absolute inset-0 bg-gradient-to-b from-primary-950/50 via-primary-950/10 to-primary-900" />
       </div>
       <header className="relative z-10 flex items-center justify-between px-5 pt-[max(1.25rem,env(safe-area-inset-top))]">
         <Link href="/" aria-label="Back to start" className="grid size-10 place-items-center rounded-full bg-white/15 text-paper ring-1 ring-white/25 backdrop-blur-md">
@@ -34,8 +35,8 @@ export function JoinFlow({ people, startReturning }: { people: PersonLite[]; sta
         <span className="size-10" />
       </header>
 
-      <div className="relative z-10 mt-[22dvh] flex-1 rounded-t-[32px] bg-sand-50 px-5 pb-[max(2rem,env(safe-area-inset-bottom))] pt-6 shadow-lift">
-        <div className="grid grid-cols-2 rounded-full bg-sand-200/80 p-1" role="tablist">
+      <div className="relative z-10 mt-[22dvh] flex-1 rounded-t-[32px] bg-surface-50 px-5 pb-[max(2rem,env(safe-area-inset-bottom))] pt-6 shadow-lift">
+        <div className="grid grid-cols-2 rounded-full bg-surface-200/80 p-1" role="tablist">
           {(["new", "returning"] as const).map((m) => (
             <button
               key={m}
@@ -118,7 +119,7 @@ function NewForm({ onExisting }: { onExisting: (name: string) => void }) {
   return (
     <form onSubmit={submit} className="pt-7">
       <h1 className="font-display text-[32px] font-semibold leading-[1.05] tracking-[-0.02em]">
-        Welcome aboard <span className="italic text-sunset-600">🌴</span>
+        Welcome aboard <span className="italic text-accent-600">🌴</span>
       </h1>
       <p className="mt-2 text-[15px] text-ink-2">No email, no passwords. Just a name and a PIN.</p>
 
@@ -138,8 +139,8 @@ function NewForm({ onExisting }: { onExisting: (name: string) => void }) {
         autoCapitalize="words"
         maxLength={30}
         className={cn(
-          "font-display mt-2 h-16 w-full rounded-2xl border-2 bg-paper px-4 text-[26px] font-medium outline-none transition placeholder:text-ink-3/50 focus:border-ocean-600",
-          err?.field === "name" ? "border-sunset-500" : "border-sand-300",
+          "font-display mt-2 h-16 w-full rounded-2xl border-2 bg-paper px-4 text-[26px] font-medium outline-none transition placeholder:text-ink-3/50 focus:border-primary-600",
+          err?.field === "name" ? "border-accent-500" : "border-surface-300",
         )}
       />
       <AnimatePresence>
@@ -150,12 +151,12 @@ function NewForm({ onExisting }: { onExisting: (name: string) => void }) {
             exit={{ opacity: 0, height: 0 }}
             className="overflow-hidden"
           >
-            <div className="mt-3 rounded-2xl bg-saffron-100 p-3.5 text-[14px] leading-snug text-ink-2">
+            <div className="mt-3 rounded-2xl bg-highlight-100 p-3.5 text-[14px] leading-snug text-ink-2">
               There&apos;s already a <b className="text-ink">{name.trim()}</b> on the trip. Add your last initial —
               like{" "}
               <button
                 type="button"
-                className="font-semibold text-ocean-700 underline decoration-2 underline-offset-2"
+                className="font-semibold text-primary-700 underline decoration-2 underline-offset-2"
                 onClick={() => {
                   setName(`${first} `);
                   setErr(null);
@@ -165,7 +166,7 @@ function NewForm({ onExisting }: { onExisting: (name: string) => void }) {
                 “{first} K.”
               </button>
               {" "}— or{" "}
-              <button type="button" onClick={() => onExisting(name.trim())} className="font-semibold text-ocean-700 underline decoration-2 underline-offset-2">
+              <button type="button" onClick={() => onExisting(name.trim())} className="font-semibold text-primary-700 underline decoration-2 underline-offset-2">
                 log in if that&apos;s you
               </button>
               .
@@ -191,7 +192,7 @@ function NewForm({ onExisting }: { onExisting: (name: string) => void }) {
         />
       </div>
       <p className="mt-2.5 text-[13px] text-ink-3">So you can get back in from another phone. Don&apos;t lose it!</p>
-      {err?.message && <p className="mt-3 text-sm font-semibold text-sunset-600">{err.message}</p>}
+      {err?.message && <p className="mt-3 text-sm font-semibold text-accent-600">{err.message}</p>}
 
       <Button type="submit" size="lg" block className="mt-8" disabled={busy}>
         {busy ? "Joining…" : "Let's go"} <ArrowRight className="size-5" strokeWidth={2.5} />
@@ -273,7 +274,7 @@ function ReturningForm({ people, preselect }: { people: PersonLite[]; preselect:
         {!selected ? (
           <motion.div key="list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
             <h1 className="font-display text-[32px] font-semibold leading-[1.05] tracking-[-0.02em]">
-              Welcome back! <span className="italic text-ocean-700">Who are you?</span>
+              Welcome back! <span className="italic text-primary-700">Who are you?</span>
             </h1>
             {people.length > 8 && (
               <div className="relative mt-5">
@@ -283,7 +284,7 @@ function ReturningForm({ people, preselect }: { people: PersonLite[]; preselect:
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Find your name"
                   aria-label="Find your name"
-                  className="h-12 w-full rounded-full border-2 border-sand-300 bg-paper pl-12 pr-4 outline-none focus:border-ocean-600"
+                  className="h-12 w-full rounded-full border-2 border-surface-300 bg-paper pl-12 pr-4 outline-none focus:border-primary-600"
                 />
               </div>
             )}
@@ -341,7 +342,7 @@ function ReturningForm({ people, preselect }: { people: PersonLite[]; preselect:
               />
             </div>
             {lockedFor > 0 ? (
-              <p className="mt-4 rounded-2xl bg-sunset-100 p-3.5 text-sm text-sunset-700">
+              <p className="mt-4 rounded-2xl bg-accent-100 p-3.5 text-sm text-accent-700">
                 Too many tries. Take a breather and try again in{" "}
                 <b>
                   {Math.floor(lockedFor / 60)}:{String(lockedFor % 60).padStart(2, "0")}
@@ -349,7 +350,7 @@ function ReturningForm({ people, preselect }: { people: PersonLite[]; preselect:
                 .
               </p>
             ) : (
-              msg && <p className="mt-3 text-sm font-semibold text-sunset-600">{msg}</p>
+              msg && <p className="mt-3 text-sm font-semibold text-accent-600">{msg}</p>
             )}
             <p className="mt-6 text-[13px] text-ink-3">Forgot your PIN? Ask an organizer to reset it for you.</p>
           </motion.div>

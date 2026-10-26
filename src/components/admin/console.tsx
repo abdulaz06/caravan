@@ -25,12 +25,13 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { activities, regions, type Activity } from "@/content";
+import type { Activity } from "@/engine/catalog";
+import type { RulesPatch, TripRules } from "@/engine/rules";
+import { daysNightsLabel } from "@/engine/structure";
 import { cn } from "@/lib/cn";
 import { CURRENCIES, type CurrencyCode } from "@/lib/currency";
 import { dayLabel } from "@/lib/dates";
-import { daysNightsLabel } from "@/lib/itinerary";
-import { NIGHTS_LIMITS, type RulesPatch, type TripRules } from "@/lib/rules";
+import { useCatalog } from "../engine";
 import type { RoommateBoard } from "@/lib/roommates";
 import { Avatar } from "../avatar";
 import { Lockup } from "../brand/wordmark";
@@ -152,16 +153,16 @@ export function Console({ actor, people, rules: initialRules, editsLocked, log, 
   }
 
   return (
-    <div className="grain min-h-dvh bg-sand-100 pb-24">
-      <header className="sticky top-0 z-40 border-b border-ink/[0.06] bg-sand-100/90 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
+    <div className="grain min-h-dvh bg-surface-100 pb-24">
+      <header className="sticky top-0 z-40 border-b border-ink/[0.06] bg-surface-100/90 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
         <div className="mx-auto flex h-14 max-w-3xl items-center gap-2.5 px-4">
           <Lockup size="sm" />
           <span className="flex-1" />
-          <span className="hidden items-center gap-1.5 rounded-full bg-jungle-800 px-2.5 py-1 text-[11.5px] font-bold text-paper sm:inline-flex">
-            <ShieldCheck className="size-3.5 text-saffron-400" /> {actor.role === "owner" ? "Owner" : "Admin"} · {actor.name}
+          <span className="hidden items-center gap-1.5 rounded-full bg-secondary-800 px-2.5 py-1 text-[11.5px] font-bold text-paper sm:inline-flex">
+            <ShieldCheck className="size-3.5 text-highlight-400" /> {actor.role === "owner" ? "Owner" : "Admin"} · {actor.name}
           </span>
           {!actor.breakGlass && (
-            <Link href="/trip" className="rounded-full px-3 py-1.5 text-[13px] font-semibold text-ink-2 hover:bg-sand-200">
+            <Link href="/trip" className="rounded-full px-3 py-1.5 text-[13px] font-semibold text-ink-2 hover:bg-surface-200">
               My trip
             </Link>
           )}
@@ -172,7 +173,7 @@ export function Console({ actor, people, rules: initialRules, editsLocked, log, 
               router.refresh();
             }}
             aria-label="Close the console"
-            className="grid size-9 place-items-center rounded-full text-ink-3 hover:bg-sand-200"
+            className="grid size-9 place-items-center rounded-full text-ink-3 hover:bg-surface-200"
           >
             <LogOut className="size-[18px]" />
           </button>
@@ -199,7 +200,7 @@ export function Console({ actor, people, rules: initialRules, editsLocked, log, 
 
       <main className="relative z-[1] mx-auto max-w-3xl px-4 pt-5">
         <h1 className="font-display text-[34px] font-semibold leading-none tracking-[-0.02em]">
-          Organizer <span className="italic text-ocean-700">console</span>
+          Organizer <span className="italic text-primary-700">console</span>
         </h1>
         {localStore && (
           <p className="mt-2 text-[12.5px] text-ink-3">Local development store — data lives in .data/dev-db.json.</p>
@@ -228,7 +229,7 @@ function Card({ title, sub, children, className, icon: Icon }: { title?: string;
     <section className={cn("rounded-[24px] bg-paper p-4 shadow-card", className)}>
       {title && (
         <h2 className="flex items-center gap-2 text-[17px] font-bold">
-          {Icon && <Icon className="size-[18px] text-ocean-600" />}
+          {Icon && <Icon className="size-[18px] text-primary-600" />}
           {title}
         </h2>
       )}
@@ -246,7 +247,7 @@ export function Switch({ on, onChange, label, disabled }: { on: boolean; onChang
       aria-label={label}
       disabled={disabled}
       onClick={() => onChange(!on)}
-      className={cn("relative h-7 w-12 shrink-0 rounded-full transition-colors disabled:opacity-40", on ? "bg-jungle-600" : "bg-sand-300")}
+      className={cn("relative h-7 w-12 shrink-0 rounded-full transition-colors disabled:opacity-40", on ? "bg-secondary-600" : "bg-surface-300")}
     >
       <span className={cn("absolute top-1 size-5 rounded-full bg-paper shadow transition-all", on ? "left-6" : "left-1")} />
     </button>
@@ -266,16 +267,16 @@ function Row({ title, hint, children }: { title: string; hint?: React.ReactNode;
 }
 
 const STATUS: Record<ConsolePerson["status"], { label: string; cls: string }> = {
-  submitted: { label: "Submitted", cls: "bg-jungle-100 text-jungle-700" },
-  draft: { label: "Drafting", cls: "bg-saffron-200 text-ink" },
-  new: { label: "Not started", cls: "bg-sand-200 text-ink-3" },
+  submitted: { label: "Submitted", cls: "bg-secondary-100 text-secondary-700" },
+  draft: { label: "Drafting", cls: "bg-highlight-200 text-ink" },
+  new: { label: "Not started", cls: "bg-surface-200 text-ink-3" },
 };
 
 export function RoleBadge({ role }: { role: ConsolePerson["role"] }) {
   if (role === "member") return null;
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-jungle-800 px-2 py-0.5 text-[10.5px] font-bold text-paper">
-      <ShieldCheck className="size-3 text-saffron-400" /> {role === "owner" ? "Owner" : "Organizer"}
+    <span className="inline-flex items-center gap-1 rounded-full bg-secondary-800 px-2 py-0.5 text-[10.5px] font-bold text-paper">
+      <ShieldCheck className="size-3 text-highlight-400" /> {role === "owner" ? "Owner" : "Organizer"}
     </span>
   );
 }
@@ -310,7 +311,7 @@ function Overview({
           { n: drafting.length, l: "Drafting" },
           { n: fresh.length, l: "Not started" },
         ].map((s) => (
-          <div key={s.l} className="rounded-[22px] bg-ocean-800 p-4 text-paper shadow-card">
+          <div key={s.l} className="rounded-[22px] bg-primary-800 p-4 text-paper shadow-card">
             <p className="font-display text-[36px] font-semibold leading-none">{s.n}</p>
             <p className="mt-1 text-[12px] font-bold uppercase tracking-wide text-paper/60">{s.l}</p>
           </div>
@@ -337,13 +338,13 @@ function Overview({
           </Button>
         </Row>
         <div className="mt-3 flex flex-wrap gap-2">
-          <Link href="/group" className="rounded-full bg-sand-200 px-3 py-1.5 text-[13px] font-semibold hover:bg-sand-300">
+          <Link href="/group" className="rounded-full bg-surface-200 px-3 py-1.5 text-[13px] font-semibold hover:bg-surface-300">
             Group overview
           </Link>
-          <a href="/api/admin/export?format=json" className="rounded-full bg-sand-200 px-3 py-1.5 text-[13px] font-semibold hover:bg-sand-300">
+          <a href="/api/admin/export?format=json" className="rounded-full bg-surface-200 px-3 py-1.5 text-[13px] font-semibold hover:bg-surface-300">
             Export JSON
           </a>
-          <button onClick={() => go("announce")} className="rounded-full bg-sand-200 px-3 py-1.5 text-[13px] font-semibold hover:bg-sand-300">
+          <button onClick={() => go("announce")} className="rounded-full bg-surface-200 px-3 py-1.5 text-[13px] font-semibold hover:bg-surface-300">
             Announcement {rules.announcement.on ? "· on" : ""}
           </button>
         </div>
@@ -376,7 +377,7 @@ function Overview({
       </Card>
       <Card title="Latest activity" icon={ActivityIcon}>
         <LogList log={log.slice(0, 5)} />
-        <button onClick={() => go("activity")} className="mt-3 text-[13px] font-semibold text-ocean-700">
+        <button onClick={() => go("activity")} className="mt-3 text-[13px] font-semibold text-primary-700">
           See everything →
         </button>
       </Card>
@@ -427,7 +428,7 @@ function People({ actor, people }: { actor: Props["actor"]; people: ConsolePerso
                   <span className="text-[16px] font-bold">{p.name}</span>
                   <RoleBadge role={p.role} />
                   <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-bold", STATUS[p.status].cls)}>{STATUS[p.status].label}</span>
-                  {p.test && <span className="rounded-full bg-sand-300 px-2 py-0.5 text-[11px] font-bold text-ink-2">Test user · not counted</span>}
+                  {p.test && <span className="rounded-full bg-surface-300 px-2 py-0.5 text-[11px] font-bold text-ink-2">Test user · not counted</span>}
                 </p>
                 <p className="mt-0.5 text-[12.5px] text-ink-3">
                   {p.startDate && p.endDate ? `${dayLabel(p.startDate)} → ${dayLabel(p.endDate)} · ${daysNightsLabel(p.days)} · ` : ""}
@@ -435,36 +436,36 @@ function People({ actor, people }: { actor: Props["actor"]; people: ConsolePerso
                   {p.peekers ? ` · 👀 ${p.peekers}` : ""}
                 </p>
                 {p.stamp?.kind === "edit" && (
-                  <p className="mt-1 text-[12px] font-semibold text-ocean-700">
+                  <p className="mt-1 text-[12px] font-semibold text-primary-700">
                     Edited by {p.stamp.by} · <When iso={p.stamp.at} />
                   </p>
                 )}
               </div>
             </div>
             <div className="mt-3 flex flex-wrap gap-1.5">
-              <Link href={`/admin/view/${p.id}`} className="inline-flex h-9 items-center gap-1.5 rounded-full bg-sand-200 px-3 text-[13px] font-semibold hover:bg-sand-300">
+              <Link href={`/admin/view/${p.id}`} className="inline-flex h-9 items-center gap-1.5 rounded-full bg-surface-200 px-3 text-[13px] font-semibold hover:bg-surface-300">
                 <Eye className="size-4" /> View plan
               </Link>
-              <Link href={`/admin/edit/${p.id}`} className="inline-flex h-9 items-center gap-1.5 rounded-full bg-ocean-700 px-3 text-[13px] font-semibold text-paper hover:bg-ocean-800">
+              <Link href={`/admin/edit/${p.id}`} className="inline-flex h-9 items-center gap-1.5 rounded-full bg-primary-700 px-3 text-[13px] font-semibold text-paper hover:bg-primary-800">
                 <PencilRuler className="size-4" /> Edit plan
               </Link>
               {can(actor, p, "reset_pin") && (
-                <button onClick={() => (setPinFor(p), setPin(""))} className="inline-flex h-9 items-center gap-1.5 rounded-full bg-sand-200 px-3 text-[13px] font-semibold hover:bg-sand-300">
+                <button onClick={() => (setPinFor(p), setPin(""))} className="inline-flex h-9 items-center gap-1.5 rounded-full bg-surface-200 px-3 text-[13px] font-semibold hover:bg-surface-300">
                   <KeyRound className="size-4" /> Reset PIN
                 </button>
               )}
               {can(actor, p, "set_role") &&
                 (p.role === "admin" ? (
-                  <button onClick={() => setRole(p, "member")} className="inline-flex h-9 items-center gap-1.5 rounded-full bg-sand-200 px-3 text-[13px] font-semibold hover:bg-sand-300">
+                  <button onClick={() => setRole(p, "member")} className="inline-flex h-9 items-center gap-1.5 rounded-full bg-surface-200 px-3 text-[13px] font-semibold hover:bg-surface-300">
                     <ShieldOff className="size-4" /> Remove admin
                   </button>
                 ) : (
-                  <button onClick={() => setRole(p, "admin")} className="inline-flex h-9 items-center gap-1.5 rounded-full bg-jungle-100 px-3 text-[13px] font-semibold text-jungle-800 hover:bg-jungle-100/70">
+                  <button onClick={() => setRole(p, "admin")} className="inline-flex h-9 items-center gap-1.5 rounded-full bg-secondary-100 px-3 text-[13px] font-semibold text-secondary-800 hover:bg-secondary-100/70">
                     <ShieldCheck className="size-4" /> Make admin
                   </button>
                 ))}
               {can(actor, p, "delete") && (
-                <button onClick={() => setDelFor(p)} aria-label={`Delete ${p.name}`} className="inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-[13px] font-semibold text-sunset-600 hover:bg-sunset-100">
+                <button onClick={() => setDelFor(p)} aria-label={`Delete ${p.name}`} className="inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-[13px] font-semibold text-accent-600 hover:bg-accent-100">
                   <Trash2 className="size-4" /> Delete
                 </button>
               )}
@@ -500,7 +501,7 @@ function People({ actor, people }: { actor: Props["actor"]; people: ConsolePerso
           <p className="text-[14.5px] text-ink-2">Their plan and answers go too. This can&apos;t be undone.</p>
           <Button
             size="lg"
-            className="bg-sunset-600 text-white hover:bg-sunset-700"
+            className="bg-accent-600 text-white hover:bg-accent-700"
             onClick={async () => {
               if (!delFor) return;
               const r = await call(`/api/admin/participants/${delFor.id}`, { method: "DELETE" });
@@ -533,13 +534,13 @@ function toLocalInput(iso: string | null): string {
 function Stepper({ value, min, max, onChange, label }: { value: number; min: number; max: number; onChange: (v: number) => void; label: string }) {
   return (
     <div className="flex items-center gap-1.5" role="group" aria-label={label}>
-      <button aria-label={`Fewer ${label}`} disabled={value <= min} onClick={() => onChange(value - 1)} className="grid size-9 place-items-center rounded-full bg-sand-200 text-[18px] font-bold disabled:opacity-40">
+      <button aria-label={`Fewer ${label}`} disabled={value <= min} onClick={() => onChange(value - 1)} className="grid size-9 place-items-center rounded-full bg-surface-200 text-[18px] font-bold disabled:opacity-40">
         −
       </button>
       <span className="font-display w-7 text-center text-[22px] font-semibold tabular-nums" aria-live="polite">
         {value}
       </span>
-      <button aria-label={`More ${label}`} disabled={value >= max} onClick={() => onChange(value + 1)} className="grid size-9 place-items-center rounded-full bg-sand-200 text-[18px] font-bold disabled:opacity-40">
+      <button aria-label={`More ${label}`} disabled={value >= max} onClick={() => onChange(value + 1)} className="grid size-9 place-items-center rounded-full bg-surface-200 text-[18px] font-bold disabled:opacity-40">
         +
       </button>
     </div>
@@ -561,23 +562,27 @@ function RulesTab({
 }) {
   const router = useRouter();
   const toast = useToast();
+  const { bases } = useCatalog();
   // Structural rules are edited here, previewed, then applied together.
-  const [draft, setDraft] = useState({ colomboNights: rules.colomboNights, galleNights: rules.galleNights, window: rules.window, requireFullTrip: rules.requireFullTrip });
+  const fromRules = (r: TripRules) => ({ nights: { ...r.nights }, window: r.window, requireFullTrip: r.requireFullTrip });
+  const [draft, setDraft] = useState(() => fromRules(rules));
   const [auto, setAuto] = useState(toLocalInput(rules.autoLockAt));
   const [impact, setImpact] = useState<Impact | null>(null);
   const [busy, setBusy] = useState(false);
   const [seenRules, setSeenRules] = useState(rules);
   if (seenRules !== rules) {
     setSeenRules(rules);
-    setDraft({ colomboNights: rules.colomboNights, galleNights: rules.galleNights, window: rules.window, requireFullTrip: rules.requireFullTrip });
+    setDraft(fromRules(rules));
   }
+  const nightsOf = (n: Record<string, number>, id: string) => n[id] ?? bases.find((b) => b.id === id)!.nights.default;
   const dirty =
-    draft.colomboNights !== rules.colomboNights ||
-    draft.galleNights !== rules.galleNights ||
+    bases.some((b) => nightsOf(draft.nights, b.id) !== nightsOf(rules.nights, b.id)) ||
     draft.window.start !== rules.window.start ||
     draft.window.end !== rules.window.end ||
     draft.requireFullTrip !== rules.requireFullTrip;
-  const len = draft.colomboNights + draft.galleNights + 1;
+  const lengthOf = (n: Record<string, number>) => bases.reduce((s, b) => s + nightsOf(n, b.id), 0) + 1;
+  const shapeOf = (n: Record<string, number>) => bases.map((b) => `${b.name} ${nightsOf(n, b.id)}`).join(" → ");
+  const len = lengthOf(draft.nights);
 
   async function apply(confirm: boolean) {
     setBusy(true);
@@ -612,7 +617,7 @@ function RulesTab({
               aria-label="Auto-lock at"
               value={auto}
               onChange={(e) => setAuto(e.target.value)}
-              className="h-11 rounded-2xl border-2 border-sand-300 bg-paper px-3 text-[15px] outline-none focus:border-ocean-600"
+              className="h-11 rounded-2xl border-2 border-surface-300 bg-paper px-3 text-[15px] outline-none focus:border-primary-600"
             />
             <Button size="md" disabled={!auto} onClick={() => onPatch({ autoLockAt: new Date(auto).toISOString() }, "Auto-lock scheduled")}>
               Schedule
@@ -630,17 +635,22 @@ function RulesTab({
               </Button>
             )}
           </div>
-          {rules.autoLockAt && <p className="mt-1.5 text-[12.5px] font-semibold text-sunset-600">Scheduled: <When iso={rules.autoLockAt} /></p>}
+          {rules.autoLockAt && <p className="mt-1.5 text-[12.5px] font-semibold text-accent-600">Scheduled: <When iso={rules.autoLockAt} /></p>}
         </div>
       </Card>
 
-      <Card title="Trip structure" icon={CalendarClock} sub={`Now: ${daysNightsLabel(rules.colomboNights + rules.galleNights + 1)} · Colombo ${rules.colomboNights} → Galle ${rules.galleNights}`}>
-        <Row title="Colombo nights" hint="Day 1 lands in Colombo.">
-          <Stepper label="Colombo nights" value={draft.colomboNights} min={NIGHTS_LIMITS.colombo[0]} max={NIGHTS_LIMITS.colombo[1]} onChange={(v) => setDraft({ ...draft, colomboNights: v })} />
-        </Row>
-        <Row title="Galle nights" hint="Including the road-trip day's night.">
-          <Stepper label="Galle nights" value={draft.galleNights} min={NIGHTS_LIMITS.galle[0]} max={NIGHTS_LIMITS.galle[1]} onChange={(v) => setDraft({ ...draft, galleNights: v })} />
-        </Row>
+      <Card title="Trip structure" icon={CalendarClock} sub={`Now: ${daysNightsLabel(lengthOf(rules.nights))} · ${shapeOf(rules.nights)}`}>
+        {bases.map((b, i) => (
+          <Row key={b.id} title={`${b.name} nights`} hint={i === 0 ? `Day 1 lands in ${b.name}.` : "Including the travel day's night."}>
+            <Stepper
+              label={`${b.name} nights`}
+              value={nightsOf(draft.nights, b.id)}
+              min={b.nights.min}
+              max={b.nights.max}
+              onChange={(v) => setDraft({ ...draft, nights: { ...draft.nights, [b.id]: v } })}
+            />
+          </Row>
+        ))}
         <Row title="Require the full trip to submit" hint={`Off: ${daysNightsLabel(len - 1)} plans can be submitted too.`}>
           <Switch on={draft.requireFullTrip} onChange={(v) => setDraft({ ...draft, requireFullTrip: v })} label="Require full trip" />
         </Row>
@@ -649,17 +659,17 @@ function RulesTab({
           <div className="mt-2 grid grid-cols-2 gap-2">
             <label className="text-[12px] font-semibold text-ink-3">
               Earliest start
-              <input type="date" aria-label="Earliest start" value={draft.window.start} onChange={(e) => setDraft({ ...draft, window: { ...draft.window, start: e.target.value } })} className="mt-1 h-11 w-full rounded-2xl border-2 border-sand-300 bg-paper px-3 text-[15px] text-ink outline-none focus:border-ocean-600" />
+              <input type="date" aria-label="Earliest start" value={draft.window.start} onChange={(e) => setDraft({ ...draft, window: { ...draft.window, start: e.target.value } })} className="mt-1 h-11 w-full rounded-2xl border-2 border-surface-300 bg-paper px-3 text-[15px] text-ink outline-none focus:border-primary-600" />
             </label>
             <label className="text-[12px] font-semibold text-ink-3">
               Latest end
-              <input type="date" aria-label="Latest end" value={draft.window.end} onChange={(e) => setDraft({ ...draft, window: { ...draft.window, end: e.target.value } })} className="mt-1 h-11 w-full rounded-2xl border-2 border-sand-300 bg-paper px-3 text-[15px] text-ink outline-none focus:border-ocean-600" />
+              <input type="date" aria-label="Latest end" value={draft.window.end} onChange={(e) => setDraft({ ...draft, window: { ...draft.window, end: e.target.value } })} className="mt-1 h-11 w-full rounded-2xl border-2 border-surface-300 bg-paper px-3 text-[15px] text-ink outline-none focus:border-primary-600" />
             </label>
           </div>
         </div>
         {dirty && (
-          <p className="mt-4 rounded-2xl bg-saffron-100 px-3 py-2 text-[13px] font-semibold text-ink ring-1 ring-saffron-200">
-            New: {daysNightsLabel(len)} · Colombo {draft.colomboNights} → Galle {draft.galleNights}
+          <p className="mt-4 rounded-2xl bg-highlight-100 px-3 py-2 text-[13px] font-semibold text-ink ring-1 ring-highlight-200">
+            New: {daysNightsLabel(len)} · {shapeOf(draft.nights)}
           </p>
         )}
         <div className="mt-3 flex items-center gap-2">
@@ -667,7 +677,7 @@ function RulesTab({
             Review & apply
           </Button>
           {dirty && (
-            <Button size="md" variant="light" onClick={() => setDraft({ colomboNights: rules.colomboNights, galleNights: rules.galleNights, window: rules.window, requireFullTrip: rules.requireFullTrip })}>
+            <Button size="md" variant="light" onClick={() => setDraft(fromRules(rules))}>
               Undo
             </Button>
           )}
@@ -675,7 +685,7 @@ function RulesTab({
       </Card>
 
       <Card title="Who sees what" icon={Eye}>
-        <Row title="5-day preview" hint="The shorter “try it” length on the dates step.">
+        <Row title={`${lengthOf(rules.nights) - 1}-day preview`} hint="The shorter “try it” length on the dates step.">
           <Switch on={rules.previewEnabled} onChange={(v) => onPatch({ previewEnabled: v }, v ? "Preview on" : "Preview off")} label="Preview available" />
         </Row>
         <Row title="Base-area filtering" hint="Each slot only offers its own area's options.">
@@ -683,7 +693,7 @@ function RulesTab({
         </Row>
         <div className="border-t border-ink/5 py-3">
           <p className="text-[14.5px] font-semibold">Browse others&apos; plans</p>
-          <div className="mt-2 grid grid-cols-3 gap-1.5 rounded-2xl bg-sand-200 p-1" role="radiogroup" aria-label="Browse others">
+          <div className="mt-2 grid grid-cols-3 gap-1.5 rounded-2xl bg-surface-200 p-1" role="radiogroup" aria-label="Browse others">
             {(["after_submit", "always", "off"] as const).map((m) => (
               <button
                 key={m}
@@ -706,15 +716,15 @@ function RulesTab({
         <Row title="🔥 Popular badges" hint="“Popular · 7 picked” on the most-picked options (counts only, never who).">
           <Switch on={rules.popularBadges} onChange={(v) => onPatch({ popularBadges: v }, v ? "Popular badges on" : "Popular badges off")} label="Popular badges" />
         </Row>
-        <Row title="Halal button" hint="The crescent-moon easter egg on the review page.">
-          <Switch on={rules.halalButton} onChange={(v) => onPatch({ halalButton: v }, v ? "Halal button on" : "Halal button off")} label="Halal button" />
+        <Row title="Family-friendly switch" hint="A view-only mode on the review page: nightlife and drinks swapped for family-friendly picks.">
+          <Switch on={rules.familyButton} onChange={(v) => onPatch({ familyButton: v }, v ? "Family-friendly switch on" : "Family-friendly switch off")} label="Family-friendly switch" />
         </Row>
         <Row title="Default currency" hint="For people who haven't picked one.">
           <select
             aria-label="Default currency"
             value={rules.defaultCurrency}
             onChange={(e) => onPatch({ defaultCurrency: e.target.value as CurrencyCode }, "Default currency saved")}
-            className="h-10 rounded-xl border-2 border-sand-300 bg-paper px-2 text-[14px] font-semibold"
+            className="h-10 rounded-xl border-2 border-surface-300 bg-paper px-2 text-[14px] font-semibold"
           >
             {CURRENCIES.map((c) => (
               <option key={c.code} value={c.code}>
@@ -728,7 +738,7 @@ function RulesTab({
       <Sheet open={!!impact} onClose={() => setImpact(null)} size="auto" eyebrow="Before you apply" title={impact ? `${impact.plans} ${impact.plans === 1 ? "plan" : "plans"} will move over` : ""}>
         {impact && (
           <div className="px-5 pb-8">
-            <p className="flex gap-2 rounded-2xl bg-sunset-100 p-3 text-[14px] leading-snug text-sunset-700">
+            <p className="flex gap-2 rounded-2xl bg-accent-100 p-3 text-[14px] leading-snug text-accent-700">
               <AlertTriangle className="mt-0.5 size-4 shrink-0" />
               <span>
                 <b>
@@ -763,6 +773,7 @@ function RulesTab({
 // ── Content ───────────────────────────────────────────────────────────
 
 function ContentTab({ rules, people, onPatch }: { rules: TripRules; people: ConsolePerson[]; onPatch: (p: RulesPatch, done?: string) => Promise<unknown> }) {
+  const { activities, regions } = useCatalog();
   const [q, setQ] = useState("");
   const [only, setOnly] = useState<"all" | "flagged">("all");
   const picked = useMemo(() => {
@@ -802,17 +813,17 @@ function ContentTab({ rules, people, onPatch }: { rules: TripRules; people: Cons
             <li key={a.id} className={cn("rounded-[20px] bg-paper p-3 shadow-card", hidden && "opacity-75")} aria-label={a.title}>
               <p className="text-[14.5px] font-semibold leading-tight">{a.title}</p>
               <p className="mt-0.5 text-[12px] text-ink-3">
-                {a.kind === "extra" ? "Quick extra" : a.slots[0] === "day" ? "Daytime option" : "Evening option"} · {regions[a.region].short}
+                {a.kind === "extra" ? "Quick extra" : a.slots[0] === "day" ? "Daytime option" : "Evening option"} · {regions[a.region]?.short ?? a.region}
                 {picked.get(a.id) ? ` · picked by ${picked.get(a.id)}` : ""}
               </p>
               <div className="mt-2 flex flex-wrap gap-1.5">
-                <button onClick={() => toggle("hidden", a)} aria-pressed={hidden} aria-label={`${hidden ? "Unhide" : "Hide"} ${a.title}`} className={cn("inline-flex h-8 items-center gap-1 rounded-full px-2.5 text-[12px] font-bold", hidden ? "bg-sunset-600 text-white" : "bg-sand-200 text-ink-2")}>
+                <button onClick={() => toggle("hidden", a)} aria-pressed={hidden} aria-label={`${hidden ? "Unhide" : "Hide"} ${a.title}`} className={cn("inline-flex h-8 items-center gap-1 rounded-full px-2.5 text-[12px] font-bold", hidden ? "bg-accent-600 text-white" : "bg-surface-200 text-ink-2")}>
                   <Ban className="size-3.5" /> {hidden ? "Hidden" : "Hide"}
                 </button>
-                <button onClick={() => toggle("recheck", a)} aria-pressed={rules.recheck.includes(a.id)} aria-label={`Re-check ${a.title}`} className={cn("inline-flex h-8 items-center gap-1 rounded-full px-2.5 text-[12px] font-bold", rules.recheck.includes(a.id) ? "bg-saffron-400 text-ink" : "bg-sand-200 text-ink-2")}>
+                <button onClick={() => toggle("recheck", a)} aria-pressed={rules.recheck.includes(a.id)} aria-label={`Re-check ${a.title}`} className={cn("inline-flex h-8 items-center gap-1 rounded-full px-2.5 text-[12px] font-bold", rules.recheck.includes(a.id) ? "bg-highlight-400 text-ink" : "bg-surface-200 text-ink-2")}>
                   <RefreshCw className="size-3.5" /> Re-check
                 </button>
-                <button onClick={() => toggle("featured", a)} aria-pressed={rules.featured.includes(a.id)} aria-label={`Feature ${a.title}`} className={cn("inline-flex h-8 items-center gap-1 rounded-full px-2.5 text-[12px] font-bold", rules.featured.includes(a.id) ? "bg-ocean-700 text-paper" : "bg-sand-200 text-ink-2")}>
+                <button onClick={() => toggle("featured", a)} aria-pressed={rules.featured.includes(a.id)} aria-label={`Feature ${a.title}`} className={cn("inline-flex h-8 items-center gap-1 rounded-full px-2.5 text-[12px] font-bold", rules.featured.includes(a.id) ? "bg-primary-700 text-paper" : "bg-surface-200 text-ink-2")}>
                   <Star className="size-3.5" /> Feature
                 </button>
               </div>
@@ -837,7 +848,7 @@ function AnnounceTab({ rules, onPatch }: { rules: TripRules; onPatch: (p: RulesP
         rows={4}
         aria-label="Announcement text"
         placeholder="e.g. Flights: aim to land before noon on Day 1 ✈️"
-        className="w-full resize-none rounded-2xl border-2 border-sand-300 bg-paper p-3.5 text-[15px] outline-none focus:border-ocean-600"
+        className="w-full resize-none rounded-2xl border-2 border-surface-300 bg-paper p-3.5 text-[15px] outline-none focus:border-primary-600"
       />
       <div className="mt-2 flex items-center gap-3">
         <span className="flex-1 text-[12px] text-ink-3">{text.length}/280</span>
@@ -857,14 +868,14 @@ function DataTab() {
   return (
     <Card title="Exports" icon={FileJson} sub="Everything for AI analysis — budget totals, roles and edit stamps included.">
       <div className="grid gap-2 sm:grid-cols-3">
-        <a href="/api/admin/export?format=json" className="flex h-14 items-center gap-2.5 rounded-2xl bg-ocean-700 px-4 text-[14.5px] font-semibold text-paper">
+        <a href="/api/admin/export?format=json" className="flex h-14 items-center gap-2.5 rounded-2xl bg-primary-700 px-4 text-[14.5px] font-semibold text-paper">
           <FileJson className="size-5" /> JSON
         </a>
-        <a href="/api/admin/export?format=csv" className="flex h-14 items-center gap-2.5 rounded-2xl bg-sand-200 px-4 text-[14.5px] font-semibold">
-          <FileSpreadsheet className="size-5 text-jungle-600" /> CSV · per person
+        <a href="/api/admin/export?format=csv" className="flex h-14 items-center gap-2.5 rounded-2xl bg-surface-200 px-4 text-[14.5px] font-semibold">
+          <FileSpreadsheet className="size-5 text-secondary-600" /> CSV · per person
         </a>
-        <a href="/api/admin/export?format=csv-long" className="flex h-14 items-center gap-2.5 rounded-2xl bg-sand-200 px-4 text-[14.5px] font-semibold">
-          <FileSpreadsheet className="size-5 text-jungle-600" /> CSV · every pick
+        <a href="/api/admin/export?format=csv-long" className="flex h-14 items-center gap-2.5 rounded-2xl bg-surface-200 px-4 text-[14.5px] font-semibold">
+          <FileSpreadsheet className="size-5 text-secondary-600" /> CSV · every pick
         </a>
       </div>
     </Card>
@@ -878,13 +889,13 @@ const RULE_LABELS: Record<string, string> = {
   requireFullTrip: "full-length rule",
   previewEnabled: "preview",
   window: "date window",
-  colomboNights: "Colombo nights",
-  galleNights: "Galle nights",
+  nights: "nights per base",
   baseFiltering: "area filtering",
   browse: "browsing",
   peek: "peek",
   spectrum: "spectrum",
-  halalButton: "Halal button",
+  familyButton: "family-friendly switch",
+  popularBadges: "popular badges",
   defaultCurrency: "default currency",
   announcement: "announcement",
   hidden: "hidden options",
@@ -951,7 +962,7 @@ function ActivityTab({ log }: { log: ConsoleLog[] }) {
     <Card title="Activity log" icon={ActivityIcon} sub="Every organizer action, and who peeked at whom.">
       <div className="mb-3 flex gap-1.5">
         {(["all", "admin", "peek"] as const).map((f) => (
-          <button key={f} onClick={() => setFilter(f)} aria-pressed={filter === f} className={cn("h-8 rounded-full px-3 text-[12.5px] font-semibold", filter === f ? "bg-ink text-paper" : "bg-sand-200 text-ink-2")}>
+          <button key={f} onClick={() => setFilter(f)} aria-pressed={filter === f} className={cn("h-8 rounded-full px-3 text-[12.5px] font-semibold", filter === f ? "bg-ink text-paper" : "bg-surface-200 text-ink-2")}>
             {f === "all" ? "All" : f === "admin" ? "Organizers" : "👀 Peeks"}
           </button>
         ))}
@@ -968,14 +979,14 @@ const RANKS = ["1st", "2nd", "3rd"];
 function RoommatesTab({ board }: { board: RoommateBoard }) {
   return (
     <>
-      <p className="inline-flex -rotate-1 items-center rounded-full bg-saffron-200 px-3 py-1 text-[12px] font-bold text-ink ring-1 ring-saffron-400/40">
+      <p className="inline-flex -rotate-1 items-center rounded-full bg-highlight-200 px-3 py-1 text-[12px] font-bold text-ink ring-1 ring-highlight-400/40">
         Just for fun · not binding · organizers only
       </p>
       <Card title="Mutual matches 🤝" sub="They picked each other.">
         {board.mutual.length ? (
           <ul className="grid gap-2" aria-label="Mutual matches">
             {board.mutual.map((m) => (
-              <li key={`${m.a.id}-${m.b.id}`} className="flex items-center gap-3 rounded-2xl bg-saffron-100/70 p-2.5 ring-1 ring-saffron-200">
+              <li key={`${m.a.id}-${m.b.id}`} className="flex items-center gap-3 rounded-2xl bg-highlight-100/70 p-2.5 ring-1 ring-highlight-200">
                 <span className="flex -space-x-2">
                   <Avatar name={m.a.name} />
                   <Avatar name={m.b.name} />
@@ -988,7 +999,7 @@ function RoommatesTab({ board }: { board: RoommateBoard }) {
                     {m.a.name}&apos;s {RANKS[m.a.rank - 1]} · {m.b.name}&apos;s {RANKS[m.b.rank - 1]}
                   </span>
                 </span>
-                {m.a.rank === 1 && m.b.rank === 1 && <span className="shrink-0 rounded-full bg-hibiscus-500 px-2 py-0.5 text-[11px] font-bold text-white">Both #1</span>}
+                {m.a.rank === 1 && m.b.rank === 1 && <span className="shrink-0 rounded-full bg-pop-500 px-2 py-0.5 text-[11px] font-bold text-white">Both #1</span>}
               </li>
             ))}
           </ul>
@@ -1000,7 +1011,7 @@ function RoommatesTab({ board }: { board: RoommateBoard }) {
         <Card title="Most wanted" sub="How many people picked them.">
           <div className="flex flex-wrap gap-2">
             {board.wanted.slice(0, 8).map((w) => (
-              <span key={w.id ?? w.name} className="inline-flex items-center gap-2 rounded-full bg-sand-100 py-1 pl-1 pr-3 text-[13.5px] font-semibold">
+              <span key={w.id ?? w.name} className="inline-flex items-center gap-2 rounded-full bg-surface-100 py-1 pl-1 pr-3 text-[13.5px] font-semibold">
                 <Avatar name={w.name} className="size-7 text-[12px] ring-0" />
                 {w.name}
                 <span className="rounded-full bg-ink px-1.5 text-[11px] font-bold text-paper tabular-nums">{w.count}</span>
@@ -1021,7 +1032,7 @@ function RoommatesTab({ board }: { board: RoommateBoard }) {
                 </span>
                 <span className="flex flex-wrap gap-1.5">
                   {r.picks.map((k) => (
-                    <span key={k.rank} className="inline-flex items-center gap-1 rounded-full bg-sand-100 px-2.5 py-1 text-[12.5px] font-semibold">
+                    <span key={k.rank} className="inline-flex items-center gap-1 rounded-full bg-surface-100 px-2.5 py-1 text-[12.5px] font-semibold">
                       <span className="text-ink-3">{RANKS[k.rank - 1]}</span> {k.name}
                       {!k.joined && <span className="text-[11px] text-ink-3">· not joined</span>}
                     </span>

@@ -1,56 +1,71 @@
 // Poster-quality share images (9:16 Story and 1:1 Square), drawn straight onto
-// a canvas — fonts come from the page's own (next/font) faces via the FontFace
-// API, the map is Path2D from the same SVG coastline, photos are same-origin.
-// Works the same on iPhone Safari and Android Chrome. Client-only.
-import { formatHours, regions, type Activity, type Photo } from "@/content";
+// a canvas — fixed-weight copies of the page fonts via the FontFace API, the
+// map as Path2D from the preset's outline, same-origin photos. Colours,
+// place names and copy all come from the trip's preset. Works the same on
+// iPhone Safari and Android Chrome. Client-only.
+import { formatHours, type Activity, type Photo } from "@/engine/catalog";
+import { HIGHLIGHT_ICONS, highlightsTitle, type Highlight, type HighlightKind } from "@/engine/highlights";
+import { tripLength, type ItineraryData } from "@/engine/itinerary";
+import { airports, badgeStop, labelAbove, laneFor, onRoadChain, placeBadge, placeLabel, projector, routeBox, routePoints, type DayRoute, type Rect } from "@/engine/routes";
+import { daysNightsLabel, nightsFor, type Engine } from "@/engine/structure";
+import { balanceLabel, type Balance, type Timeline } from "@/engine/timeline";
+import { BRAND, MARK } from "./brand";
 import { dayLabel } from "./dates";
-import { DAY_NAMES, daysNightsLabel, nights, tripLength, type ItineraryData } from "./itinerary";
-import { badgeStop, COAST_DETAIL, laneFor, onCoastRoad, onSouthCoast, placeBadge, placeLabel, routeBox, routePoints, type DayRoute, type Rect } from "./routes";
-import { HIGHLIGHT_ICONS, highlightsTitle, type Highlight, type HighlightKind } from "./highlights";
-import { balanceLabel, type Balance, type Timeline } from "./timeline";
-import { project } from "./map-data";
 
 export type ShareFormat = "story" | "square";
 export const SHARE_SIZES: Record<ShareFormat, [number, number]> = { story: [1080, 1920], square: [1080, 1080] };
 
 export type ShareModel = {
+  engine: Engine;
   name: string;
   data: ItineraryData;
   timeline: Timeline;
   routes: DayRoute[];
   balance: Balance;
   photos: { photo: Photo; title: string }[];
-  /** Halal mode: the trip's highlights take the vibe meter's place (and nothing says "Halal"). */
+  /** Family-friendly mode: the trip's highlights take the vibe meter's place (and nothing says so). */
   highlights?: Highlight[];
 };
 
-const C = {
-  ocean950: "#04242c",
-  ocean900: "#06323d",
-  ocean800: "#0a4351",
-  ocean700: "#0d5a6b",
-  paper: "#fffbf4",
-  sand: "#f7eee0",
-  ink: "#1d1914",
-  saffron400: "#f7ba5c",
-  saffron500: "#f2a33a",
-  jungle: "#2b6a48",
-  jungleLight: "#7cc493",
-  hibiscus: "#d6467a",
-  hibiscusLight: "#ef94b4",
+/** The preset's palette, as the colours the canvas needs. */
+function colors(e: Engine) {
+  const p = e.catalog.preset.theme.palette;
+  return {
+    deep: p.primary["950"],
+    dark: p.primary["900"],
+    mid: p.primary["800"],
+    light: p.primary["700"],
+    paper: p.paper,
+    surface: p.surface["100"],
+    land: [p.surface["50"], p.surface["200"]] as const,
+    ink: p.ink["1"],
+    ink2: p.ink["2"],
+    gold: p.highlight["400"],
+    goldDeep: p.highlight["500"],
+    nature: p.secondary["600"],
+    natureLight: p.secondary["400"],
+    night: p.pop["500"],
+    nightLight: p.pop["300"],
+  };
+}
+type Colors = ReturnType<typeof colors>;
+
+const rgba = (hex: string, a: number) => {
+  const n = parseInt(hex.slice(1), 16);
+  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
 };
 
 // ── Fonts ─────────────────────────────────────────────────────────────
 
-type Fonts = { display: string; body: string; stamp: string };
+type Fonts = { display: string; body: string };
 
 /**
  * Fixed-weight copies of the page fonts (scripts/make-share-fonts.py). Canvas
  * text in WebKit ignores a variable font's weight axis, so the images draw
  * with these static files; the page's own fonts stay as the fallback.
  */
-const DISPLAY = "Lanks Share Display";
-const SANS = "Lanks Share Sans";
+const DISPLAY = "Caravan Share Display";
+const SANS = "Caravan Share Sans";
 const SHARE_FACES: [family: string, file: string, weight: string, style: string][] = [
   [DISPLAY, "fraunces-600", "600", "normal"],
   [DISPLAY, "fraunces-600-italic", "600", "italic"],
@@ -79,26 +94,14 @@ function loadShareFaces(): Promise<boolean> {
 async function fontFamilies(): Promise<Fonts> {
   const css = getComputedStyle(document.documentElement);
   const pick = (v: string, fallback: string) => css.getPropertyValue(v).trim() || fallback;
-  const page = {
-    display: pick("--font-fraunces", "Georgia, serif"),
-    body: pick("--font-instrument", "system-ui, sans-serif"),
-    stamp: pick("--font-rubik-dirt", "Impact, sans-serif"),
-  };
+  const page = { display: pick("--font-fraunces", "Georgia, serif"), body: pick("--font-instrument", "system-ui, sans-serif") };
   if (!(await loadShareFaces())) return page;
-  return { ...page, display: `"${DISPLAY}", ${page.display}`, body: `"${SANS}", ${page.body}` };
+  return { display: `"${DISPLAY}", ${page.display}`, body: `"${SANS}", ${page.body}` };
 }
 
 async function loadFonts(f: Fonts) {
-  const specs = [
-    `italic 900 100px ${f.display}`,
-    `italic 600 100px ${f.display}`,
-    `600 100px ${f.display}`,
-    `700 40px ${f.body}`,
-    `600 40px ${f.body}`,
-    `500 40px ${f.body}`,
-    `400 40px ${f.stamp}`,
-  ];
-  await Promise.all(specs.map((s) => document.fonts.load(s, "Lanks 10hyaya Sri Lanka 0123456789 →·").catch(() => [])));
+  const specs = [`italic 900 100px ${f.display}`, `italic 600 100px ${f.display}`, `600 100px ${f.display}`, `700 40px ${f.body}`, `600 40px ${f.body}`, `500 40px ${f.body}`];
+  await Promise.all(specs.map((s) => document.fonts.load(s, "Caravan 0123456789 →·").catch(() => [])));
   await document.fonts.ready;
 }
 
@@ -153,7 +156,6 @@ const ICONS: Record<string, string[]> = {
   plane: ["M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"],
   leaf: ["M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z", "M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"],
   glass: ["M8 22h8", "M12 11v11", "m19 3-7 8-7-8Z"],
-  van: ["M4 17h16V9l-3-4H4z", "M4 11h16", "M7 17a2 2 0 1 0 4 0", "M14 17a2 2 0 1 0 4 0"],
 };
 
 function icon(ctx: Ctx, name: keyof typeof ICONS, x: number, y: number, size: number, color: string, width = 2.2) {
@@ -168,72 +170,32 @@ function icon(ctx: Ctx, name: keyof typeof ICONS, x: number, y: number, size: nu
   ctx.restore();
 }
 
-/** The Lanks sun mark: a saffron disc with rays. */
-function sunMark(ctx: Ctx, cx: number, cy: number, r: number) {
+/** The Caravan lockup (mark + wordmark), light-on-dark. Returns its height. */
+function lockup(ctx: Ctx, f: Fonts, c: Colors, x: number, y: number, scale: number) {
+  const size = 84 * scale;
   ctx.save();
-  ctx.fillStyle = C.saffron500;
-  ctx.beginPath();
-  ctx.arc(cx, cy, r * 0.55, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.strokeStyle = C.saffron500;
-  ctx.lineCap = "round";
-  ctx.lineWidth = r * 0.16;
-  for (let i = 0; i < 12; i++) {
-    const a = (i / 12) * Math.PI * 2;
+  ctx.translate(x, y);
+  ctx.scale(size / 32, size / 32);
+  ctx.globalAlpha = 0.95;
+  for (const d of MARK.dark) {
     ctx.beginPath();
-    ctx.moveTo(cx + Math.cos(a) * r * 0.75, cy + Math.sin(a) * r * 0.75);
-    ctx.lineTo(cx + Math.cos(a) * r * (i % 2 ? 0.92 : 1.02), cy + Math.sin(a) * r * (i % 2 ? 0.92 : 1.02));
-    ctx.stroke();
+    ctx.arc(d.cx, d.cy, d.r, 0, Math.PI * 2);
+    ctx.fillStyle = d.color;
+    ctx.fill();
   }
   ctx.restore();
-}
-
-/** "☀ Lanks / by [10hyaya]" — the brand lockup, light-on-dark. Returns its height. */
-function lockup(ctx: Ctx, f: Fonts, x: number, y: number, scale: number) {
-  const word = 92 * scale;
-  sunMark(ctx, x + word * 0.42, y + word * 0.52, word * 0.42);
-  ctx.fillStyle = C.paper;
-  ctx.font = `italic 900 ${word}px ${f.display}`;
+  ctx.fillStyle = c.paper;
+  ctx.font = `italic 600 ${size * 0.82}px ${f.display}`;
   ctx.textBaseline = "alphabetic";
-  const wx = x + word * 0.98;
-  ctx.fillText("Lanks", wx, y + word * 0.86);
-  const ww = ctx.measureText("Lanks").width;
-  // "by [10hyaya]" right-aligned under the wordmark like a signature
-  const stampPx = 30 * scale;
-  ctx.font = `400 ${stampPx}px ${f.stamp}`;
-  const sw = ctx.measureText("10hyaya").width + stampPx * 0.9;
-  const sh = stampPx * 1.45;
-  const sx = wx + ww - sw;
-  const sy = y + word * 1.02;
-  ctx.font = `italic 600 ${stampPx * 0.95}px ${f.display}`;
-  ctx.fillStyle = C.paper;
-  ctx.globalAlpha = 0.85;
-  ctx.fillText("by", sx - ctx.measureText("by").width - stampPx * 0.35, sy + sh * 0.72);
-  ctx.globalAlpha = 1;
-  ctx.save();
-  ctx.translate(sx + sw / 2, sy + sh / 2);
-  ctx.rotate((-5 * Math.PI) / 180);
-  ctx.strokeStyle = C.saffron400;
-  ctx.lineWidth = 2.4 * scale;
-  roundRect(ctx, -sw / 2, -sh / 2, sw, sh, 6 * scale);
-  ctx.stroke();
-  ctx.lineWidth = 1.2 * scale;
-  roundRect(ctx, -sw / 2 + 4 * scale, -sh / 2 + 4 * scale, sw - 8 * scale, sh - 8 * scale, 4 * scale);
-  ctx.stroke();
-  ctx.fillStyle = C.saffron400;
-  ctx.font = `400 ${stampPx}px ${f.stamp}`;
-  ctx.textAlign = "center";
-  ctx.fillText("10hyaya", 0, stampPx * 0.36);
-  ctx.restore();
-  ctx.textAlign = "left";
-  return word * 1.02 + sh;
+  ctx.fillText(BRAND.name, x + size * 1.08, y + size * 0.78);
+  return size;
 }
 
-function background(ctx: Ctx, w: number, h: number) {
+function background(ctx: Ctx, c: Colors, w: number, h: number) {
   const g = ctx.createLinearGradient(0, 0, w * 0.3, h);
-  g.addColorStop(0, C.ocean700);
-  g.addColorStop(0.45, C.ocean800);
-  g.addColorStop(1, C.ocean900);
+  g.addColorStop(0, c.light);
+  g.addColorStop(0.45, c.mid);
+  g.addColorStop(1, c.dark);
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, w, h);
   // sunburst rays from the top-right corner
@@ -250,27 +212,30 @@ function background(ctx: Ctx, w: number, h: number) {
     ctx.fill();
   }
   ctx.restore();
-  // soft saffron glow
+  // a soft warm glow
   const glow = ctx.createRadialGradient(w * 0.9, 0, 0, w * 0.9, 0, w * 0.9);
-  glow.addColorStop(0, "rgba(247,186,92,0.22)");
-  glow.addColorStop(1, "rgba(247,186,92,0)");
+  glow.addColorStop(0, rgba(c.gold, 0.22));
+  glow.addColorStop(1, rgba(c.gold, 0));
   ctx.fillStyle = glow;
   ctx.fillRect(0, 0, w, h);
 }
 
 // ── The map ───────────────────────────────────────────────────────────
 
-function drawMap(ctx: Ctx, f: Fonts, routes: DayRoute[], x: number, y: number, w: number, h: number) {
+function drawMap(ctx: Ctx, f: Fonts, c: Colors, e: Engine, routes: DayRoute[], x: number, y: number, w: number, h: number) {
+  const { map } = e.catalog.preset;
+  const regions = e.catalog.regions;
+  const project = projector(e);
   ctx.save();
   roundRect(ctx, x, y, w, h, 34);
   ctx.clip();
   const sea = ctx.createLinearGradient(x, y, x + w, y + h);
-  sea.addColorStop(0, "#0d4f60");
-  sea.addColorStop(1, C.ocean950);
+  sea.addColorStop(0, c.mid);
+  sea.addColorStop(1, c.deep);
   ctx.fillStyle = sea;
   ctx.fillRect(x, y, w, h);
 
-  const box = routeBox(routes, 5);
+  const box = routeBox(e, routes, 5);
   const s = Math.min(w / box.w, h / box.h);
   const ox = x + (w - box.w * s) / 2 - box.x * s;
   const oy = y + (h - box.h * s) / 2 - box.y * s;
@@ -278,18 +243,19 @@ function drawMap(ctx: Ctx, f: Fonts, routes: DayRoute[], x: number, y: number, w
     const [px, py] = project(lat, lng);
     return [ox + px * s, oy + py * s];
   };
+  const at = (id: string) => (regions[id] ? P(regions[id].lat, regions[id].lng) : ([0, 0] as [number, number]));
 
   // land
   ctx.save();
   ctx.setTransform(ctx.getTransform().multiply(new DOMMatrix([s, 0, 0, s, ox, oy])));
   const land = ctx.createLinearGradient(0, box.y, 0, box.y + box.h);
-  land.addColorStop(0, "#fbf3e6");
-  land.addColorStop(1, "#eadbbf");
-  ctx.shadowColor = "rgba(2,28,34,0.5)";
+  land.addColorStop(0, c.land[0]);
+  land.addColorStop(1, c.land[1]);
+  ctx.shadowColor = rgba(c.deep, 0.5);
   ctx.shadowBlur = 18;
   ctx.shadowOffsetY = 4;
   ctx.fillStyle = land;
-  ctx.fill(new Path2D(COAST_DETAIL));
+  ctx.fill(new Path2D(map.detail));
   ctx.restore();
 
   // routes (each day its own colour, parallel where they overlap)
@@ -297,7 +263,7 @@ function drawMap(ctx: Ctx, f: Fonts, routes: DayRoute[], x: number, y: number, w
   const lw = Math.max(5, s * 1.25);
   const lane = (lw + 1.5) / s;
   for (const [k, r] of routes.entries()) {
-    const pts = routePoints(r, laneFor(k, n, lane)).map(([px, py]) => [ox + px * s, oy + py * s] as [number, number]);
+    const pts = routePoints(e, r, laneFor(k, n, lane)).map(([px, py]) => [ox + px * s, oy + py * s] as [number, number]);
     if (pts.length < 2) continue;
     const trace = () => {
       ctx.beginPath();
@@ -313,7 +279,7 @@ function drawMap(ctx: Ctx, f: Fonts, routes: DayRoute[], x: number, y: number, w
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
     trace();
-    ctx.strokeStyle = "rgba(255,251,244,0.9)";
+    ctx.strokeStyle = rgba(c.paper, 0.9);
     ctx.lineWidth = lw + 5;
     ctx.stroke();
     trace();
@@ -330,65 +296,67 @@ function drawMap(ctx: Ctx, f: Fonts, routes: DayRoute[], x: number, y: number, w
       const key = `${st.region}-${st.kind}`;
       if (seen.has(key) && st.kind !== "stop") continue;
       seen.add(key);
-      const [px, py] = P(regions[st.region].lat, regions[st.region].lng);
+      const [px, py] = at(st.region);
       ctx.beginPath();
       ctx.arc(px, py, st.kind === "base" ? R * 1.15 : st.kind === "airport" ? R * 0.85 : R * 0.75, 0, Math.PI * 2);
-      ctx.fillStyle = st.kind === "base" ? C.saffron500 : st.kind === "airport" ? C.ink : C.paper;
+      ctx.fillStyle = st.kind === "base" ? c.goldDeep : st.kind === "airport" ? c.ink : c.paper;
       ctx.fill();
       ctx.lineWidth = st.kind === "stop" ? 4 : 3.5;
-      ctx.strokeStyle = st.kind === "stop" ? r.color : C.ink;
+      ctx.strokeStyle = st.kind === "stop" ? r.color : c.ink;
       ctx.stroke();
     }
   }
 
-  // labels for the main places
-  const labelled = new Set<string>();
-  const boxes: Rect[] = [];
   // every drawn marker counts as taken space for labels and badges
+  const boxes: Rect[] = [];
   for (const r of routes) {
     for (const st of r.stops) {
-      const [px, py] = P(regions[st.region].lat, regions[st.region].lng);
+      const [px, py] = at(st.region);
       boxes.push({ x: px - R, y: py - R, w: R * 2, h: R * 2 });
     }
   }
-  // "Indian Ocean", set vertically in the sea off the west coast
-  {
-    const [, oy] = P(6.42, 79.8);
+  // the body of water, set vertically beside the land (e.g. "Indian Ocean")
+  if (map.waterLabel) {
+    const [, wy] = P(map.waterLabel.at[0], map.waterLabel.at[1]);
     const px = Math.max(15, Math.min(19, s * 4.6));
     ctx.save();
     ctx.font = `italic 600 ${px}px ${f.display}`;
-    const tw = ctx.measureText("Indian Ocean").width + 11 * 2.5;
+    const text = map.waterLabel.text;
+    const tw = ctx.measureText(text).width + text.length * 2.5;
     const cx = x + px * 1.6;
-    if (oy - tw / 2 > y + 20 && oy + tw / 2 < y + h - 20) {
-      ctx.translate(cx, oy);
+    if (wy - tw / 2 > y + 20 && wy + tw / 2 < y + h - 20) {
+      ctx.translate(cx, wy);
       ctx.rotate(-Math.PI / 2);
-      ctx.fillStyle = "rgba(255,251,244,0.42)";
-      spaced(ctx, "Indian Ocean", -tw / 2, px * 0.35, 2.5);
-      boxes.push({ x: cx - px, y: oy - tw / 2, w: px * 2, h: tw });
+      ctx.fillStyle = rgba(c.paper, 0.42);
+      spaced(ctx, text, -tw / 2, px * 0.35, 2.5);
+      boxes.push({ x: cx - px, y: wy - tw / 2, w: px * 2, h: tw });
     }
     ctx.restore();
   }
+  // labels: airports and bases, then the places visited
   const fontPx = Math.max(20, Math.min(30, s * 2.6));
   const frame = { x: x + 8, y: y + 8, w: w - 16, h: h - 16 };
   ctx.font = `700 ${fontPx}px ${f.body}`;
-  const want = ["airport", "colombo", "galle", ...routes.flatMap((r) => r.stops.filter((x) => x.kind === "stop").map((x) => x.region))];
+  const ports = airports(e);
+  const visited = new Set(routes.flatMap((r) => r.stops.map((st) => st.region)));
+  const want = [...[...ports].filter((p) => visited.has(p)), ...e.catalog.bases.map((b) => b.region), ...routes.flatMap((r) => r.stops.filter((v) => v.kind === "stop").map((v) => v.region))];
+  const labelled = new Set<string>();
   for (const id of want) {
-    if (labelled.has(id)) continue;
+    if (labelled.has(id) || !regions[id]) continue;
     labelled.add(id);
-    const reg = regions[id as keyof typeof regions];
-    const [px, py] = P(reg.lat, reg.lng);
-    const text = id === "airport" ? "CMB" : reg.short;
+    const [px, py] = at(id);
+    const text = ports.has(id) ? regions[id].short.replace(/\s*airport$/i, "") : regions[id].short;
     const own = (b: Rect) => Math.abs(b.x + b.w / 2 - px) < 1 && Math.abs(b.y + b.h / 2 - py) < 1;
-    const south = onSouthCoast(id as keyof typeof regions);
-    const spot = placeLabel(px, py, ctx.measureText(text).width, fontPx, R * 1.6, south, boxes.filter((b) => !own(b)), frame);
+    const above = labelAbove(e, id);
+    const spot = placeLabel(px, py, ctx.measureText(text).width, fontPx, R * 1.6, above, boxes.filter((b) => !own(b)), frame);
     if (!spot) continue;
     boxes.push(spot.box);
-    // below a south-coast town (or left of a west-coast one) is open sea: light text on a dark halo there
-    const atSea = south ? spot.side === "below" : spot.side === "left" && onCoastRoad(id as keyof typeof regions);
+    // the open side (below a south-coast town, left of a west-coast one) is water: light text on a dark halo
+    const open = above ? spot.side === "below" : spot.side === "left" && onRoadChain(e, id);
     ctx.lineWidth = 6;
-    ctx.strokeStyle = atSea ? "rgba(4,36,44,0.85)" : C.sand;
+    ctx.strokeStyle = open ? rgba(c.deep, 0.85) : c.surface;
     ctx.strokeText(text, spot.x, spot.y);
-    ctx.fillStyle = atSea ? C.paper : "#3b332a";
+    ctx.fillStyle = open ? c.paper : c.ink2;
     ctx.fillText(text, spot.x, spot.y);
   }
 
@@ -397,10 +365,10 @@ function drawMap(ctx: Ctx, f: Fonts, routes: DayRoute[], x: number, y: number, w
   ctx.font = `800 ${badgeR * 1.05}px ${f.body}`;
   ctx.textAlign = "center";
   for (const r of routes) {
-    const best = badgeStop(r);
+    const best = badgeStop(e, r);
     if (!best) continue;
-    const [px, py] = P(regions[best.region].lat, regions[best.region].lng);
-    const spot = placeBadge(px, py, badgeR, onSouthCoast(best.region), boxes, frame);
+    const [px, py] = at(best.region);
+    const spot = placeBadge(px, py, badgeR, labelAbove(e, best.region), boxes, frame);
     const [bx, by] = spot ? [spot.x, spot.y] : [px, py + badgeR * 1.75];
     if (spot) boxes.push(spot.box);
     if (spot?.far) {
@@ -417,9 +385,9 @@ function drawMap(ctx: Ctx, f: Fonts, routes: DayRoute[], x: number, y: number, w
     ctx.fillStyle = r.color;
     ctx.fill();
     ctx.lineWidth = 4;
-    ctx.strokeStyle = C.paper;
+    ctx.strokeStyle = c.paper;
     ctx.stroke();
-    ctx.fillStyle = C.paper;
+    ctx.fillStyle = c.paper;
     ctx.fillText(String(r.index + 1), bx, by + badgeR * 0.37);
   }
   ctx.textAlign = "left";
@@ -438,7 +406,7 @@ function titlesFor(t: Timeline["days"][number], slot: "day" | "night"): string {
 
 /** Trim marketing subtitles: "Galle Fort: ramparts, boutiques & cafés" → "Galle Fort". */
 function shortTitle(a: Activity): string {
-  return a.title.replace(/^Big day trip: /, "").split(/: | — /)[0];
+  return a.title.replace(/^Big day trip: /, "").split(/: | — | · /)[0];
 }
 
 /**
@@ -446,18 +414,21 @@ function shortTitle(a: Activity): string {
  * the day's name, then its first Daytime and Evening picks (+N for more).
  * `k` scales everything (1 = Story).
  */
-function dayList(ctx: Ctx, f: Fonts, m: ShareModel, x: number, y: number, w: number, rowH: number, k: number) {
+function dayList(ctx: Ctx, f: Fonts, c: Colors, m: ShareModel, x: number, y: number, w: number, rowH: number, k: number) {
+  const e = m.engine;
+  const { structure } = e.catalog.preset;
+  const regions = e.catalog.regions;
   const days = m.timeline.days;
   for (const [i, t] of days.entries()) {
     const ry = y + i * rowH;
-    const color = m.routes[i]?.color ?? C.saffron500;
+    const color = m.routes[i]?.color ?? c.goldDeep;
     const br = 25 * k;
     const titleY = ry + 30 * k;
     ctx.beginPath();
     ctx.arc(x + br, titleY - 10 * k, br, 0, Math.PI * 2);
     ctx.fillStyle = color;
     ctx.fill();
-    ctx.fillStyle = C.paper;
+    ctx.fillStyle = c.paper;
     ctx.font = `800 ${br * 1.05}px ${f.body}`;
     ctx.textAlign = "center";
     ctx.fillText(String(i + 1), x + br, titleY - 10 * k + br * 0.37);
@@ -467,32 +438,34 @@ function dayList(ctx: Ctx, f: Fonts, m: ShareModel, x: number, y: number, w: num
     const tw = w - (tx - x);
     const date = t.date ? dayLabel(t.date).split(" ").slice(0, 2).join(" ").toUpperCase() : `DAY ${i + 1}`;
     ctx.font = `700 ${19 * k}px ${f.body}`;
-    ctx.fillStyle = C.saffron400;
+    ctx.fillStyle = c.gold;
     const dx = spaced(ctx, date, tx, titleY - 1 * k, 2 * k) + 14 * k;
     ctx.font = `700 ${29 * k}px ${f.body}`;
-    ctx.fillStyle = C.paper;
-    ctx.fillText(fit(ctx, DAY_NAMES[t.role], tx + tw - dx), dx, titleY);
+    ctx.fillStyle = c.paper;
+    ctx.fillText(fit(ctx, t.name, tx + tw - dx), dx, titleY);
 
     ctx.font = `500 ${25 * k}px ${f.body}`;
-    ctx.fillStyle = "rgba(255,251,244,0.74)";
+    ctx.fillStyle = rgba(c.paper, 0.74);
     const iconPx = 24 * k;
     const line1 = ry + 67 * k;
     const line2 = ry + 101 * k;
     const textX = tx + iconPx + 12 * k;
-    if (t.role === "departure") {
-      icon(ctx, "plane", tx, line1 - iconPx + 3 * k, iconPx, C.saffron400);
-      ctx.fillText(fit(ctx, `Galle → CMB · ${formatHours(2.5).slice(1)} · fly home`, tx + tw - textX), textX, line1);
+    if (t.plan.kind === "departure") {
+      const leg = e.catalog.legs[structure.departure.leg];
+      icon(ctx, "plane", tx, line1 - iconPx + 3 * k, iconPx, c.gold);
+      const route = leg ? `${regions[leg.from]?.short} → ${regions[leg.to]?.short.replace(/\s*airport$/i, "")} · ${formatHours(leg.hours).slice(1)} · ` : "";
+      ctx.fillText(fit(ctx, `${route}fly home`, tx + tw - textX), textX, line1);
       continue;
     }
-    icon(ctx, "sun", tx, line1 - iconPx + 3 * k, iconPx, C.saffron400);
-    ctx.fillText(fit(ctx, titlesFor(t, "day") || "Free daytime", tx + tw - textX), textX, line1);
-    icon(ctx, "moon", tx, line2 - iconPx + 3 * k, iconPx, C.hibiscusLight);
-    const night = titlesFor(t, "night") || "Free evening";
+    icon(ctx, "sun", tx, line1 - iconPx + 3 * k, iconPx, c.gold);
+    ctx.fillText(fit(ctx, titlesFor(t, "day") || `Free ${structure.slots.day.label.toLowerCase()}`, tx + tw - textX), textX, line1);
+    icon(ctx, "moon", tx, line2 - iconPx + 3 * k, iconPx, c.nightLight);
+    const night = titlesFor(t, "night") || `Free ${structure.slots.night.label.toLowerCase()}`;
     ctx.fillText(fit(ctx, night, tx + tw - textX), textX, line2);
   }
 }
 
-function vibe(ctx: Ctx, f: Fonts, b: Balance, x: number, y: number, w: number, h: number, scale = 1) {
+function vibe(ctx: Ctx, f: Fonts, c: Colors, b: Balance, x: number, y: number, w: number, h: number, scale = 1) {
   ctx.save();
   roundRect(ctx, x, y, w, h, 32 * scale);
   ctx.fillStyle = "rgba(255,255,255,0.07)";
@@ -502,10 +475,10 @@ function vibe(ctx: Ctx, f: Fonts, b: Balance, x: number, y: number, w: number, h
   ctx.stroke();
   const label = balanceLabel(b.score);
   const pad = 34 * scale;
-  ctx.fillStyle = C.saffron400;
+  ctx.fillStyle = c.gold;
   ctx.font = `700 ${20 * scale}px ${f.body}`;
   spaced(ctx, "YOUR VIBE", x + pad, y + pad + 16 * scale, 3 * scale);
-  ctx.fillStyle = C.paper;
+  ctx.fillStyle = c.paper;
   ctx.font = `600 ${50 * scale}px ${f.display}`;
   ctx.fillText(fit(ctx, label.title, w - pad * 2), x + pad, y + pad + 68 * scale);
 
@@ -513,16 +486,16 @@ function vibe(ctx: Ctx, f: Fonts, b: Balance, x: number, y: number, w: number, h
   const my = y + h - pad - 30 * scale;
   if (my - 20 * scale - (y + pad + 108 * scale) > 18 * scale) {
     ctx.font = `500 ${24 * scale}px ${f.body}`;
-    ctx.fillStyle = "rgba(255,251,244,0.72)";
+    ctx.fillStyle = rgba(c.paper, 0.72);
     ctx.fillText(fit(ctx, label.line, w - pad * 2), x + pad, y + pad + 108 * scale);
   }
   const ml = x + pad + 40 * scale;
   const mr = x + w - pad - 40 * scale;
   const mh = 18 * scale;
   const g = ctx.createLinearGradient(ml, 0, mr, 0);
-  g.addColorStop(0, C.jungle);
-  g.addColorStop(0.5, C.saffron400);
-  g.addColorStop(1, C.hibiscus);
+  g.addColorStop(0, c.nature);
+  g.addColorStop(0.5, c.gold);
+  g.addColorStop(1, c.night);
   roundRect(ctx, ml, my - mh / 2, mr - ml, mh, mh / 2);
   ctx.fillStyle = g;
   ctx.fill();
@@ -530,15 +503,15 @@ function vibe(ctx: Ctx, f: Fonts, b: Balance, x: number, y: number, w: number, h
   const kx = ml + (mr - ml) * pos;
   ctx.beginPath();
   ctx.arc(kx, my, 20 * scale, 0, Math.PI * 2);
-  ctx.fillStyle = C.ink;
+  ctx.fillStyle = c.ink;
   ctx.fill();
   ctx.lineWidth = 6 * scale;
-  ctx.strokeStyle = C.paper;
+  ctx.strokeStyle = c.paper;
   ctx.stroke();
-  icon(ctx, "leaf", x + pad - 2 * scale, my - 15 * scale, 30 * scale, C.jungleLight);
-  icon(ctx, "glass", mr + 12 * scale, my - 15 * scale, 30 * scale, C.hibiscusLight);
+  icon(ctx, "leaf", x + pad - 2 * scale, my - 15 * scale, 30 * scale, c.natureLight);
+  icon(ctx, "glass", mr + 12 * scale, my - 15 * scale, 30 * scale, c.nightLight);
   ctx.font = `700 ${17 * scale}px ${f.body}`;
-  ctx.fillStyle = "rgba(255,251,244,0.6)";
+  ctx.fillStyle = rgba(c.paper, 0.6);
   spaced(ctx, "NATURE", ml, my + mh + 24 * scale, 2.5 * scale);
   let nightW = 0;
   for (const ch of "NIGHTLIFE") nightW += ctx.measureText(ch).width + 2.5 * scale;
@@ -575,7 +548,7 @@ function highlightIcon(ctx: Ctx, kind: HighlightKind, x: number, y: number, size
 }
 
 /** "Trip highlights": icon + count + label tiles in a grid, in the vibe card's place. */
-function highlightsCard(ctx: Ctx, f: Fonts, items: Highlight[], x: number, y: number, w: number, h: number, scale = 1, cols = 3) {
+function highlightsCard(ctx: Ctx, f: Fonts, c: Colors, e: Engine, items: Highlight[], x: number, y: number, w: number, h: number, scale = 1, cols = 3) {
   ctx.save();
   roundRect(ctx, x, y, w, h, 32 * scale);
   ctx.fillStyle = "rgba(255,255,255,0.07)";
@@ -584,18 +557,18 @@ function highlightsCard(ctx: Ctx, f: Fonts, items: Highlight[], x: number, y: nu
   ctx.lineWidth = 2;
   ctx.stroke();
   const pad = 34 * scale;
-  ctx.fillStyle = C.saffron400;
+  ctx.fillStyle = c.gold;
   ctx.font = `700 ${20 * scale}px ${f.body}`;
   spaced(ctx, "TRIP HIGHLIGHTS", x + pad, y + pad + 16 * scale, 3 * scale);
-  ctx.fillStyle = C.paper;
+  ctx.fillStyle = c.paper;
   ctx.font = `600 ${46 * scale}px ${f.display}`;
-  ctx.fillText(fit(ctx, highlightsTitle(items), w - pad * 2), x + pad, y + pad + 66 * scale);
+  ctx.fillText(fit(ctx, highlightsTitle(e, items), w - pad * 2), x + pad, y + pad + 66 * scale);
 
   const top = y + pad + 96 * scale;
   const bottom = y + h - pad * 0.7;
   if (!items.length) {
     ctx.font = `500 ${24 * scale}px ${f.body}`;
-    ctx.fillStyle = "rgba(255,251,244,0.72)";
+    ctx.fillStyle = rgba(c.paper, 0.72);
     ctx.fillText("Pick a few things to see them here.", x + pad, top + 30 * scale);
     ctx.restore();
     return;
@@ -612,13 +585,13 @@ function highlightsCard(ctx: Ctx, f: Fonts, items: Highlight[], x: number, y: nu
     highlightIcon(ctx, it.kind, cx, cy, iconPx);
     const tx = cx + iconPx + 14 * scale;
     const base = cy + iconPx / 2 + 13 * scale;
-    ctx.fillStyle = C.paper;
+    ctx.fillStyle = c.paper;
     ctx.font = `600 ${40 * scale}px ${f.display}`;
     const count = String(it.count);
     ctx.fillText(count, tx, base);
     const lx = tx + ctx.measureText(count).width + 9 * scale;
     ctx.font = `600 ${22 * scale}px ${f.body}`;
-    ctx.fillStyle = "rgba(255,251,244,0.8)";
+    ctx.fillStyle = rgba(c.paper, 0.8);
     ctx.fillText(fit(ctx, it.label, cx + colW - lx - 8 * scale), lx, base - 2 * scale);
   }
   ctx.restore();
@@ -645,66 +618,75 @@ function cover(ctx: Ctx, img: HTMLImageElement, x: number, y: number, w: number,
   ctx.restore();
 }
 
-function header(ctx: Ctx, f: Fonts, m: ShareModel, x: number, y: number, w: number, scale: number) {
+function header(ctx: Ctx, f: Fonts, c: Colors, m: ShareModel, x: number, y: number, w: number, scale: number) {
+  const e = m.engine;
+  const { preset } = e.catalog;
   const len = tripLength(m.data);
-  const year = m.data.startDate?.startsWith("2027") ? "2027" : m.data.endDate?.startsWith("2027") ? "2026–27" : "2026";
-  ctx.fillStyle = C.saffron400;
+  const y0 = m.data.startDate?.slice(0, 4);
+  const y1 = m.data.endDate?.slice(0, 4);
+  const year = y0 && y1 && y0 !== y1 ? `${y0}–${y1.slice(2)}` : (y0 ?? preset.dates.window.start.slice(0, 4));
+  ctx.fillStyle = c.gold;
   ctx.font = `700 ${24 * scale}px ${f.body}`;
-  spaced(ctx, `SRI LANKA · ${year}`, x, y, 4 * scale);
+  spaced(ctx, `${preset.name.toUpperCase()} · ${year}`, x, y, 4 * scale);
 
   const nameLine = `${m.name}'s`;
   const px = sizeToFit(ctx, nameLine, (p) => `600 ${p}px ${f.display}`, 110 * scale, w, 56 * scale);
-  ctx.fillStyle = C.paper;
+  ctx.fillStyle = c.paper;
   ctx.fillText(nameLine, x - 4 * scale, y + px * 1.02);
-  ctx.font = `italic 600 ${Math.max(px, 100 * scale)}px ${f.display}`;
-  ctx.fillStyle = C.saffron400;
-  const sl = y + px * 1.02 + Math.max(px, 100 * scale) * 0.98;
-  ctx.fillText("Sri Lanka", x - 4 * scale, sl);
+  const destPx = sizeToFit(ctx, preset.name, (p) => `italic 600 ${p}px ${f.display}`, Math.max(px, 100 * scale), w, 56 * scale);
+  ctx.fillStyle = c.gold;
+  const sl = y + px * 1.02 + destPx * 0.98;
+  ctx.fillText(preset.name, x - 4 * scale, sl);
 
-  // dates + "6 days · 5 nights" chip
+  // dates + "6 days · 5 nights" chip + nights per base
   const dy = sl + 62 * scale;
   ctx.font = `600 ${32 * scale}px ${f.body}`;
-  ctx.fillStyle = "rgba(255,251,244,0.85)";
+  ctx.fillStyle = rgba(c.paper, 0.85);
   const dates = m.data.startDate && m.data.endDate ? `${dayLabel(m.data.startDate)} → ${dayLabel(m.data.endDate)}` : "";
   ctx.fillText(dates, x, dy);
-  const chip = daysNightsLabel(len || 6);
+  const chip = daysNightsLabel(len || 1);
   ctx.font = `700 ${27 * scale}px ${f.body}`;
   const cw = ctx.measureText(chip).width + 36 * scale;
   const ch = 50 * scale;
   const cy = dy + 26 * scale;
   roundRect(ctx, x, cy, cw, ch, ch / 2);
-  ctx.fillStyle = C.saffron500;
+  ctx.fillStyle = c.goldDeep;
   ctx.fill();
-  ctx.fillStyle = C.ink;
+  ctx.fillStyle = c.ink;
   ctx.fillText(chip, x + 18 * scale, cy + ch * 0.68);
-  const { colombo, galle } = nights(len || 6);
-  ctx.font = `600 ${25 * scale}px ${f.body}`;
-  ctx.fillStyle = "rgba(255,251,244,0.7)";
-  ctx.fillText(`Colombo ${colombo} · Galle ${galle}`, x + cw + 20 * scale, cy + ch * 0.68);
+  const split = nightsFor(e, len).filter((s) => s.nights > 0);
+  if (split.length > 1) {
+    ctx.font = `600 ${25 * scale}px ${f.body}`;
+    ctx.fillStyle = rgba(c.paper, 0.7);
+    ctx.fillText(fit(ctx, split.map((s) => `${s.base.name} ${s.nights}`).join(" · "), w - cw - 20 * scale), x + cw + 20 * scale, cy + ch * 0.68);
+  }
   return cy + ch;
 }
 
+const footerText = (m: ShareModel) => `Planned together on ${BRAND.name} · ${m.engine.catalog.preset.destination.season}`;
+
 // ── Layouts ───────────────────────────────────────────────────────────
 
-async function drawStory(ctx: Ctx, f: Fonts, m: ShareModel) {
+async function drawStory(ctx: Ctx, f: Fonts, c: Colors, m: ShareModel) {
   const [W, H] = SHARE_SIZES.story;
-  background(ctx, W, H);
+  background(ctx, c, W, H);
   const M = 72;
-  lockup(ctx, f, M, 92, 1);
-  const headerEnd = header(ctx, f, m, M, 312, W - M * 2, 1);
+  lockup(ctx, f, c, M, 92, 1);
+  const headerEnd = header(ctx, f, c, m, M, 312, W - M * 2, 1);
 
   // map on the left, the days beside it like a legend
   const top = headerEnd + 42;
   const mapW = 430;
-  const rowH = 118;
-  const listH = rowH * (m.timeline.days.length - 1) + 78;
-  drawMap(ctx, f, m.routes, M, top, mapW, listH);
-  dayList(ctx, f, m, M + mapW + 34, top + 2, W - M * 2 - mapW - 34, rowH, 1);
+  const rowH = Math.min(118, Math.floor(900 / Math.max(1, m.timeline.days.length)));
+  const k = rowH / 118;
+  const listH = rowH * (m.timeline.days.length - 1) + 78 * k;
+  drawMap(ctx, f, c, m.engine, m.routes, M, top, mapW, listH);
+  dayList(ctx, f, c, m, M + mapW + 34, top + 2, W - M * 2 - mapW - 34, rowH, k);
 
   const vibeY = top + listH + 32;
   const vibeH = m.highlights ? 300 : 252;
-  if (m.highlights) highlightsCard(ctx, f, m.highlights, M, vibeY, W - M * 2, vibeH);
-  else vibe(ctx, f, m.balance, M, vibeY, W - M * 2, vibeH);
+  if (m.highlights) highlightsCard(ctx, f, c, m.engine, m.highlights, M, vibeY, W - M * 2, vibeH);
+  else vibe(ctx, f, c, m.balance, M, vibeY, W - M * 2, vibeH);
 
   // photo strip
   const py = vibeY + vibeH + 28;
@@ -717,45 +699,47 @@ async function drawStory(ctx: Ctx, f: Fonts, m: ShareModel) {
   }
 
   ctx.font = `600 24px ${f.body}`;
-  ctx.fillStyle = "rgba(255,251,244,0.55)";
+  ctx.fillStyle = rgba(c.paper, 0.55);
   ctx.textAlign = "center";
-  ctx.fillText("Built with Lanks · the 10hyaya group trip · Dec ’26 – Jan ’27", W / 2, H - 38);
+  ctx.fillText(footerText(m), W / 2, H - 38);
   ctx.textAlign = "left";
 }
 
-async function drawSquare(ctx: Ctx, f: Fonts, m: ShareModel) {
+async function drawSquare(ctx: Ctx, f: Fonts, c: Colors, m: ShareModel) {
   const [W, H] = SHARE_SIZES.square;
-  background(ctx, W, H);
+  background(ctx, c, W, H);
   const M = 56;
-  lockup(ctx, f, M, 48, 0.62);
+  lockup(ctx, f, c, M, 48, 0.62);
   const leftW = 500;
-  const headerEnd = header(ctx, f, m, M, 204, leftW, 0.66);
-  dayList(ctx, f, m, M, headerEnd + 30, leftW, 90, 0.8);
+  const headerEnd = header(ctx, f, c, m, M, 204, leftW, 0.66);
+  const rowH = Math.min(90, Math.floor((H - headerEnd - 90) / Math.max(1, m.timeline.days.length)));
+  dayList(ctx, f, c, m, M, headerEnd + 30, leftW, rowH, 0.8 * (rowH / 90));
 
   const mapX = M + leftW + 30;
   const mapW = W - mapX - M;
   const mapH = 716;
-  drawMap(ctx, f, m.routes, mapX, M, mapW, mapH);
+  drawMap(ctx, f, c, m.engine, m.routes, mapX, M, mapW, mapH);
   const boxY = M + mapH + 24;
-  if (m.highlights) highlightsCard(ctx, f, m.highlights, mapX, boxY, mapW, H - M - boxY, 0.78, 2);
-  else vibe(ctx, f, m.balance, mapX, boxY, mapW, H - M - boxY, 0.78);
+  if (m.highlights) highlightsCard(ctx, f, c, m.engine, m.highlights, mapX, boxY, mapW, H - M - boxY, 0.78, 2);
+  else vibe(ctx, f, c, m.balance, mapX, boxY, mapW, H - M - boxY, 0.78);
 
   ctx.font = `600 17px ${f.body}`;
-  ctx.fillStyle = "rgba(255,251,244,0.5)";
-  ctx.fillText("Built with Lanks · the 10hyaya group trip", M, H - 28);
+  ctx.fillStyle = rgba(c.paper, 0.5);
+  ctx.fillText(footerText(m), M, H - 28);
 }
 
 /** Render one share image to a PNG blob. */
 export async function renderShareImage(format: ShareFormat, m: ShareModel): Promise<Blob> {
   const f = await fontFamilies();
   await loadFonts(f);
+  const c = colors(m.engine);
   const [W, H] = SHARE_SIZES[format];
   const canvas = document.createElement("canvas");
   canvas.width = W;
   canvas.height = H;
   const ctx = canvas.getContext("2d")!;
   ctx.textBaseline = "alphabetic";
-  if (format === "story") await drawStory(ctx, f, m);
-  else await drawSquare(ctx, f, m);
+  if (format === "story") await drawStory(ctx, f, c, m);
+  else await drawSquare(ctx, f, c, m);
   return new Promise((resolve, reject) => canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("toBlob failed"))), "image/png"));
 }

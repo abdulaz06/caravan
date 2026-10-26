@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { ItineraryData, ItineraryStatus } from "@/lib/itinerary";
+import type { ItineraryData, ItineraryStatus } from "@/engine/itinerary";
 
 export type SaveState = "idle" | "saving" | "saved" | "error";
 

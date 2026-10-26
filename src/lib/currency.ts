@@ -11,6 +11,8 @@ export const CURRENCIES = [
   { code: "QAR", name: "Qatari riyal", symbol: "QAR", mark: "QR", locale: "en-QA" },
   { code: "CAD", name: "Canadian dollar", symbol: "CA$", mark: "C$", locale: "en-CA" },
   { code: "AUD", name: "Australian dollar", symbol: "A$", mark: "A$", locale: "en-AU" },
+  { code: "GEL", name: "Georgian lari", symbol: "₾", mark: "₾", locale: "en-GB" },
+  { code: "JPY", name: "Japanese yen", symbol: "¥", mark: "¥", locale: "en-US" },
 ] as const;
 
 export type CurrencyCode = (typeof CURRENCIES)[number]["code"];
@@ -40,6 +42,8 @@ export const FALLBACK_RATES: Rates = {
     QAR: 3.64,
     CAD: 1.41,
     AUD: 1.44,
+    GEL: 2.72,
+    JPY: 152,
   },
   date: "2026-10-19",
   source: "fallback",

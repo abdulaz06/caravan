@@ -1,72 +1,72 @@
 @import "tailwindcss";
 
 /* ──────────────────────────────────────────────────────────────────────
-   Lanks design system — "tropical travel poster"
-   Teal Indian Ocean, jungle green, sunset orange & saffron on warm sand.
-   Display: Fraunces (soft, wonky, poster-ish). Body: Instrument Sans.
+   Caravan design tokens.
+   Semantic colour scales — primary, secondary, accent, highlight, pop,
+   night, surface, paper and ink — so every trip can bring its own palette:
+   a trip page injects its preset's theme (src/lib/theme.ts) over these
+   defaults, which are Caravan's own neutral, travel-journal look.
    ────────────────────────────────────────────────────────────────────── */
 
-@theme inline {
+@theme {
   --font-display: var(--font-fraunces), ui-serif, Georgia, serif;
   --font-sans: var(--font-instrument), ui-sans-serif, system-ui, sans-serif;
   --font-stamp: var(--font-rubik-dirt), var(--font-instrument), ui-sans-serif, sans-serif;
-}
 
-@theme {
-  /* Sand & paper */
-  --color-paper: #fffbf4;
-  --color-sand-50: #fcf7ee;
-  --color-sand-100: #f7eee0;
-  --color-sand-200: #efe1c9;
-  --color-sand-300: #e2cba6;
-  --color-sand-400: #cfae7c;
+  /* Paper, surface and ink */
+  --color-paper: #fffdf9;
+  --color-surface-50: #fbf9f5;
+  --color-surface-100: #f4f0e8;
+  --color-surface-200: #e9e2d5;
+  --color-surface-300: #d9cfbd;
+  --color-surface-400: #bfb29a;
+  --color-ink: #16181d;
+  --color-ink-2: #44464d;
+  --color-ink-3: #6e6f75;
 
-  /* Ink (warm near-black) */
-  --color-ink: #1d1914;
-  --color-ink-2: #4a4239;
-  --color-ink-3: #73685a;
+  /* Primary — midnight ink-blue */
+  --color-primary-950: #0b1220;
+  --color-primary-900: #111a2e;
+  --color-primary-800: #18243d;
+  --color-primary-700: #22324f;
+  --color-primary-600: #2e4266;
+  --color-primary-500: #3e5680;
+  --color-primary-300: #9fb0cc;
+  --color-primary-100: #e3e9f3;
 
-  /* Indian Ocean */
-  --color-ocean-950: #04242c;
-  --color-ocean-900: #06323d;
-  --color-ocean-800: #0a4351;
-  --color-ocean-700: #0d5a69;
-  --color-ocean-600: #117485;
-  --color-ocean-500: #1a8e9c;
-  --color-ocean-300: #79c6c3;
-  --color-ocean-100: #d6efeb;
+  /* Secondary — sage */
+  --color-secondary-900: #1f2a1f;
+  --color-secondary-800: #2a3a2a;
+  --color-secondary-700: #36503a;
+  --color-secondary-600: #476b4c;
+  --color-secondary-400: #8aa78a;
+  --color-secondary-100: #e3ece0;
 
-  /* Jungle */
-  --color-jungle-900: #112d20;
-  --color-jungle-800: #173d2c;
-  --color-jungle-700: #1e5139;
-  --color-jungle-600: #2b6a48;
-  --color-jungle-400: #6aa06a;
-  --color-jungle-100: #dcebd5;
+  /* Accent — terracotta */
+  --color-accent-700: #8f3a24;
+  --color-accent-600: #a9472c;
+  --color-accent-500: #c95c3c;
+  --color-accent-300: #e4a28a;
+  --color-accent-100: #f7e4dc;
 
-  /* Sun */
-  --color-saffron-600: #d98a1c;
-  --color-saffron-500: #f2a33a;
-  --color-saffron-400: #f7ba5c;
-  --color-saffron-200: #fbe0ae;
-  --color-saffron-100: #fdf0d6;
+  /* Highlight — brass */
+  --color-highlight-600: #b8862e;
+  --color-highlight-500: #d4a24a;
+  --color-highlight-400: #e2bb6e;
+  --color-highlight-200: #f1dcae;
+  --color-highlight-100: #f8eed6;
 
-  --color-sunset-700: #b23d1d;
-  --color-sunset-600: #c4461f;
-  --color-sunset-500: #ec6437;
-  --color-sunset-300: #f6a17f;
-  --color-sunset-100: #fde3d8;
+  /* Pop — dusty rose */
+  --color-pop-600: #9c3d5a;
+  --color-pop-500: #c25576;
+  --color-pop-300: #e3a0b5;
+  --color-pop-100: #f6e2e9;
 
-  /* Night */
-  --color-hibiscus-600: #b02f58;
-  --color-hibiscus-500: #d6467a;
-  --color-hibiscus-300: #ef94b4;
-  --color-hibiscus-100: #fbe3ec;
-  --color-dusk-950: #120f2a;
-  --color-dusk-900: #1a1638;
-  --color-dusk-800: #252050;
-  --color-dusk-700: #352d68;
-  --color-plum-600: #6a2d6c;
+  /* Night — evening slots */
+  --color-night-950: #0d0f1c;
+  --color-night-900: #141729;
+  --color-night-800: #1d2139;
+  --color-night-700: #2a2f4d;
 
   --radius-card: 1.6rem;
 
@@ -109,7 +109,7 @@
     text-size-adjust: 100%;
   }
   body {
-    background: var(--color-sand-100);
+    background: var(--color-surface-100);
     color: var(--color-ink);
     font-family: var(--font-sans);
     font-feature-settings: "ss01", "cv11";
@@ -127,7 +127,7 @@
     text-wrap: pretty;
   }
   :focus-visible {
-    outline: 3px solid var(--color-saffron-500);
+    outline: 3px solid var(--color-highlight-500);
     outline-offset: 2px;
     border-radius: 6px;
   }
@@ -139,7 +139,7 @@
     cursor: not-allowed;
   }
   ::selection {
-    background: var(--color-saffron-200);
+    background: var(--color-highlight-200);
   }
 }
 
@@ -172,9 +172,9 @@
   /* Evening slots: dusk sky */
   .dusk {
     background:
-      radial-gradient(120% 90% at 85% -10%, rgb(214 70 122 / 0.45), transparent 55%),
-      radial-gradient(90% 80% at 0% 110%, rgb(26 142 156 / 0.35), transparent 60%),
-      linear-gradient(160deg, var(--color-dusk-800), var(--color-dusk-950));
+      radial-gradient(120% 90% at 85% -10%, color-mix(in srgb, var(--color-pop-500) 45%, transparent), transparent 55%),
+      radial-gradient(90% 80% at 0% 110%, color-mix(in srgb, var(--color-primary-500) 35%, transparent), transparent 60%),
+      linear-gradient(160deg, var(--color-night-800), var(--color-night-950));
   }
   .stars {
     position: relative;
@@ -197,7 +197,7 @@
 
   /* Ticket perforation between the date stub and the slots */
   .perforated {
-    background-image: linear-gradient(to bottom, var(--color-sand-300) 50%, transparent 50%);
+    background-image: linear-gradient(to bottom, var(--color-surface-300) 50%, transparent 50%);
     background-size: 2px 10px;
     background-repeat: repeat-y;
     background-position: center;
@@ -248,13 +248,13 @@
   }
 }
 
-/* Halal mode (the trip app sets data-halal on <html>): swap the few words that live outside the app tree. */
-.halal-only {
+/* Family-friendly mode (the trip app sets data-family on <html>): swap the few words that live outside the app tree. */
+.family-only {
   display: none;
 }
-:root[data-halal="on"] .halal-only {
+:root[data-family="on"] .family-only {
   display: inline;
 }
-:root[data-halal="on"] .halal-hide {
+:root[data-family="on"] .family-hide {
   display: none;
 }

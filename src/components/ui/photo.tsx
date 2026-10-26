@@ -2,9 +2,9 @@
 
 import Image from "next/image";
 import { useState } from "react";
-import type { Photo as PhotoT } from "@/content";
+import type { Photo as PhotoT } from "@/engine/catalog";
 import { cn } from "@/lib/cn";
-import { PalmScene } from "../brand/illustrations";
+import { SceneArt } from "../brand/art";
 
 type Props = {
   photo?: PhotoT;
@@ -20,8 +20,8 @@ export function Photo({ photo, alt, sizes, className, priority, quality = 75 }: 
   const [failed, setFailed] = useState(false);
   if (!photo || failed) {
     return (
-      <div className={cn("absolute inset-0 overflow-hidden bg-ocean-700", className)} role="img" aria-label={alt}>
-        <PalmScene className="absolute inset-0 size-full" />
+      <div className={cn("absolute inset-0 overflow-hidden bg-primary-700", className)} role="img" aria-label={alt}>
+        <SceneArt className="absolute inset-0 size-full" />
       </div>
     );
   }

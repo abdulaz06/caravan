@@ -2,22 +2,13 @@
 
 import confetti from "canvas-confetti";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, CalendarDays, CheckCircle2, ChevronRight, FlaskConical, Moon, Pencil, Send, Share2, SlidersHorizontal, Users, Wallet, X } from "lucide-react";
+import { ArrowRight, CalendarDays, CheckCircle2, ChevronRight, FlaskConical, Pencil, Send, Share2, SlidersHorizontal, Smile, Users, Wallet, X } from "lucide-react";
 import { useMemo, useState } from "react";
-import {
-  budgets,
-  dietary,
-  earlyMornings,
-  interests,
-  sharedRooms,
-  stays,
-  transport,
-} from "@/content/preferences";
-import { halalSwapCount, halalView } from "@/lib/halal";
-import { countItems, daysNightsLabel, type ItineraryData, type ItineraryStatus } from "@/lib/itinerary";
-import { tripDays } from "@/lib/rules";
-import { useRules } from "../rules";
-import { balanceOf, buildTimeline } from "@/lib/timeline";
+import { familySwapCount, familyView } from "@/engine/family";
+import { countItems, type ItineraryData, type ItineraryStatus } from "@/engine/itinerary";
+import { daysNightsLabel, tripDays } from "@/engine/structure";
+import { balanceOf, buildTimeline } from "@/engine/timeline";
+import { useCatalog, useEngine } from "../engine";
 import { cn } from "@/lib/cn";
 import { SiteFooter } from "../brand/site-footer";
 import { Lockup, Stamp } from "../brand/wordmark";
@@ -31,7 +22,7 @@ import { ShareSheet } from "./share-sheet";
 import { TripPoster } from "./trip-poster";
 import { VerdictChip } from "./budget";
 import { useCurrency } from "../currency";
-import type { BudgetResult } from "@/lib/budget";
+import type { BudgetResult } from "@/engine/budget";
 import type { SaveState } from "./use-autosave";
 
 type Props = {
@@ -48,14 +39,14 @@ type Props = {
   onExitPreview?: () => void;
   /** Unique people who peeked at this plan (anonymous). */
   peekCount?: number;
-  /** An organizer editing on someone's behalf: no submitting, no Halal mode. */
+  /** An organizer editing on someone's behalf: no submitting, no family-friendly mode. */
   adminMode?: boolean;
   budget: BudgetResult;
   onOpenBudget: () => void;
   onSubmit: () => Promise<boolean>;
-  /** Halal mode (view-only easter egg) — state lives in TripApp so it can lock editing everywhere. */
-  halal?: boolean;
-  onHalal?: (on: boolean) => void;
+  /** Family-friendly mode (view only) — state lives in TripApp so it can lock editing everywhere. */
+  family?: boolean;
+  onFamily?: (on: boolean) => void;
 };
 
 function ago(iso: string | null): string {
@@ -86,17 +77,19 @@ export function ReviewStep({
   onExitPreview,
   peekCount = 0,
   adminMode = false,
-  halal = false,
-  onHalal,
+  family = false,
+  onFamily,
 }: Props) {
-  const rules = useRules();
-  // Halal mode only changes what's shown — `saved` is never touched.
-  const data = useMemo(() => (halal ? halalView(saved) : saved), [saved, halal]);
-  const swaps = useMemo(() => halalSwapCount(saved), [saved]);
-  const timeline = useMemo(() => buildTimeline(data), [data]);
-  const balance = useMemo(() => balanceOf(data), [data]);
+  const e = useEngine();
+  const { rules } = e;
+  const { preset } = e.catalog;
+  // Family-friendly mode only changes what's shown — `saved` is never touched.
+  const data = useMemo(() => (family ? familyView(e, saved) : saved), [e, saved, family]);
+  const swaps = useMemo(() => familySwapCount(e, saved), [e, saved]);
+  const timeline = useMemo(() => buildTimeline(e, data), [e, data]);
+  const balance = useMemo(() => balanceOf(e, data), [e, data]);
   const [sharing, setSharing] = useState(false);
-  const editable = !locked && !halal;
+  const editable = !locked && !family;
   const [busy, setBusy] = useState(false);
   const [celebrate, setCelebrate] = useState(false);
   const submitted = status === "submitted";
@@ -108,7 +101,7 @@ export function ReviewStep({
     setBusy(false);
     if (!ok) return;
     setCelebrate(true);
-    const colors = ["#f2a33a", "#ec6437", "#1a8e9c", "#d6467a", "#fbe0ae", "#2b6a48"];
+    const colors = preset.theme.confetti;
     confetti({ particleCount: 140, spread: 80, origin: { y: 0.7 }, colors, disableForReducedMotion: true });
     setTimeout(
       () => confetti({ particleCount: 90, angle: 60, spread: 70, origin: { x: 0, y: 0.75 }, colors, disableForReducedMotion: true }),
@@ -123,15 +116,15 @@ export function ReviewStep({
   return (
     <div className="grain pb-40">
       <section className="relative z-[1] px-5 pt-7">
-        <p className="label text-sunset-600">Step 4 · Review</p>
+        <p className="label text-accent-600">Step 4 · Review</p>
         <h1 className="font-display mt-2 text-[38px] font-semibold leading-[1] tracking-[-0.025em]">
           {submitted ? (
             <>
-              Your trip is <span className="italic text-jungle-600">in</span>
+              Your trip is <span className="italic text-secondary-600">in</span>
             </>
           ) : (
             <>
-              Looking <span className="italic text-ocean-700">good</span>
+              Looking <span className="italic text-primary-700">good</span>
             </>
           )}
         </h1>
@@ -149,21 +142,21 @@ export function ReviewStep({
         </p>
       </section>
 
-      {halal && (
+      {family && (
         <div
           role="status"
-          className="relative z-[2] mx-3 mt-4 flex items-center gap-3 rounded-2xl bg-jungle-800 p-3 text-[13.5px] leading-snug text-paper shadow-card"
+          className="relative z-[2] mx-3 mt-4 flex items-center gap-3 rounded-2xl bg-secondary-800 p-3 text-[13.5px] leading-snug text-paper shadow-card"
         >
-          <Moon className="size-5 shrink-0 fill-saffron-400 text-saffron-400" />
+          <Smile className="size-5 shrink-0 text-highlight-400" />
           <p className="flex-1">
-            <b>Halal mode: preview only, your real plan is untouched.</b>{" "}
+            <b>Family-friendly mode: preview only, your real plan is untouched.</b>{" "}
             <span className="text-paper/70">
-              {swaps ? `${swaps} ${swaps === 1 ? "pick" : "picks"} swapped for wholesome alternatives.` : "Nothing needed swapping."}
+              {swaps ? `${swaps} ${swaps === 1 ? "pick" : "picks"} swapped for family-friendly alternatives.` : "Nothing needed swapping."}
             </span>
           </p>
           <button
-            onClick={() => onHalal?.(false)}
-            aria-label="Turn Halal mode off"
+            onClick={() => onFamily?.(false)}
+            aria-label="Turn family-friendly mode off"
             className="grid size-9 shrink-0 place-items-center rounded-full bg-white/10 hover:bg-white/20"
           >
             <X className="size-4" />
@@ -177,23 +170,23 @@ export function ReviewStep({
           onClick={() => setSharing(true)}
           className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-paper text-[16px] font-bold text-ink shadow-card ring-1 ring-ink/5 transition hover:-translate-y-0.5 active:scale-[0.99]"
         >
-          <Share2 className="size-5 text-sunset-500" /> Share my trip
-          <span className="rounded-full bg-saffron-200 px-2 py-0.5 text-[11px] font-bold text-ink">Story · Square</span>
+          <Share2 className="size-5 text-accent-500" /> Share my trip
+          <span className="rounded-full bg-highlight-200 px-2 py-0.5 text-[11px] font-bold text-ink">Story · Square</span>
         </button>
         <BudgetSummary budget={budget} onOpen={onOpenBudget} />
         <div className="rounded-[26px] bg-paper p-4 shadow-card">
-          {/* Halal mode: no Nature ↔ Nightlife scale at all — the plan's highlights instead. */}
-          {halal ? (
-            <HighlightsCard data={data} action={onHalal ? <HalalSwitch on={halal} onChange={onHalal} /> : undefined} />
+          {/* Family-friendly mode: no Nature ↔ Nightlife scale at all — the plan's highlights instead. */}
+          {family ? (
+            <HighlightsCard data={data} action={onFamily ? <FamilySwitch on={family} onChange={onFamily} /> : undefined} />
           ) : (
             <BalanceMeter
               balance={balance}
-              action={onHalal && !previewing && rules.halalButton ? <HalalSwitch on={halal} onChange={onHalal} /> : undefined}
+              action={onFamily && !previewing && rules.familyButton ? <FamilySwitch on={family} onChange={onFamily} /> : undefined}
             />
           )}
         </div>
         {peekCount > 0 && (
-          <p aria-label="Peek counter" className="flex items-center justify-center gap-2 rounded-2xl bg-dusk-900 px-4 py-3 text-[14px] font-semibold text-paper shadow-card">
+          <p aria-label="Peek counter" className="flex items-center justify-center gap-2 rounded-2xl bg-night-900 px-4 py-3 text-[14px] font-semibold text-paper shadow-card">
             <span aria-hidden="true" className="text-[18px]">👀</span>
             {peekCount} {peekCount === 1 ? "person" : "people"} peeked at your plan
           </p>
@@ -207,27 +200,27 @@ export function ReviewStep({
           </div>
         )}
 
-        <section className="rounded-[26px] bg-sand-50 p-4 pt-5 shadow-card ring-1 ring-ink/[0.03]">
+        <section className="rounded-[26px] bg-surface-50 p-4 pt-5 shadow-card ring-1 ring-ink/[0.03]">
           <h2 className="font-display mb-4 text-[24px] font-semibold">Day by day</h2>
           {picks === 0 && (
-            <button onClick={() => onEdit("build")} className="mb-4 w-full rounded-2xl bg-saffron-100 p-3.5 text-left text-[14px] text-ink-2">
+            <button onClick={() => onEdit("build")} className="mb-4 w-full rounded-2xl bg-highlight-100 p-3.5 text-left text-[14px] text-ink-2">
               You haven&apos;t picked anything yet — <b className="text-ink">try Quick fill</b>, it takes a second.
             </button>
           )}
-          <ItineraryTimeline data={data} timeline={timeline} hideNotes={halal} />
+          <ItineraryTimeline data={data} timeline={timeline} hideNotes={family} />
         </section>
 
-        {/* Their own free-text answers can say anything — Halal mode leaves them out. */}
-        {!halal && <PrefsSummary data={data} />}
+        {/* Their own free-text answers can say anything — family-friendly mode leaves them out. */}
+        {!family && <PrefsSummary data={data} />}
       </div>
       <SiteFooter className="relative z-[1] mt-6" />
 
       {editable && !adminMode && (
-        <div className="pb-safe fixed inset-x-0 bottom-0 z-30 bg-gradient-to-t from-sand-100 via-sand-100/90 to-transparent px-4 pt-6 lg:left-auto lg:w-[480px]">
+        <div className="pb-safe fixed inset-x-0 bottom-0 z-30 bg-gradient-to-t from-surface-100 via-surface-100/90 to-transparent px-4 pt-6 lg:left-auto lg:w-[480px]">
           {previewing && canSubmitPreview ? (
             <div className="space-y-2">
-              <div className="flex items-center gap-2 rounded-2xl bg-saffron-100 px-3 py-2 text-[13px] font-semibold leading-snug text-ink shadow-card ring-1 ring-saffron-200">
-                <FlaskConical className="size-4 shrink-0 text-sunset-600" />
+              <div className="flex items-center gap-2 rounded-2xl bg-highlight-100 px-3 py-2 text-[13px] font-semibold leading-snug text-ink shadow-card ring-1 ring-highlight-200">
+                <FlaskConical className="size-4 shrink-0 text-accent-600" />
                 <span className="flex-1">The organizers allow shorter trips — submitting makes this your plan.</span>
               </div>
               <Button size="lg" block onClick={submit} disabled={busy || !data.startDate}>
@@ -236,11 +229,11 @@ export function ReviewStep({
             </div>
           ) : previewing ? (
             <div className="space-y-2">
-              <div className="flex items-center gap-2 rounded-2xl bg-saffron-100 px-3 py-2 text-[13px] font-semibold leading-snug text-ink shadow-card ring-1 ring-saffron-200">
-                <FlaskConical className="size-4 shrink-0 text-sunset-600" />
-                <span className="flex-1">The group voted {tripDays()} days. Switch back to submit.</span>
+              <div className="flex items-center gap-2 rounded-2xl bg-highlight-100 px-3 py-2 text-[13px] font-semibold leading-snug text-ink shadow-card ring-1 ring-highlight-200">
+                <FlaskConical className="size-4 shrink-0 text-accent-600" />
+                <span className="flex-1">This trip is {tripDays(e)} days. Switch back to submit.</span>
                 <button onClick={onExitPreview} className="shrink-0 rounded-full bg-ink px-3 py-1.5 text-[12px] font-bold text-paper">
-                  Back to {tripDays()} days
+                  Back to {tripDays(e)} days
                 </button>
               </div>
               <Button size="lg" block disabled>
@@ -249,7 +242,7 @@ export function ReviewStep({
             </div>
           ) : submitted ? (
             <div className="flex gap-2.5">
-              <div className="flex flex-1 items-center gap-2 rounded-full bg-jungle-100 px-4 text-[14px] font-semibold text-jungle-700">
+              <div className="flex flex-1 items-center gap-2 rounded-full bg-secondary-100 px-4 text-[14px] font-semibold text-secondary-700">
                 <CheckCircle2 className="size-5 shrink-0" />
                 {saveState === "saving" ? "Saving changes…" : "Submitted · changes auto-save"}
               </div>
@@ -265,12 +258,12 @@ export function ReviewStep({
         </div>
       )}
 
-      {sharing && <ShareSheet onClose={() => setSharing(false)} name={name} data={data} halal={halal} />}
+      {sharing && <ShareSheet onClose={() => setSharing(false)} name={name} data={data} family={family} />}
 
       <AnimatePresence>
         {celebrate && (
           <motion.div
-            className="fixed inset-0 z-[70] grid place-items-center bg-ocean-950/60 p-6 backdrop-blur-sm lg:left-auto lg:w-[480px]"
+            className="fixed inset-0 z-[70] grid place-items-center bg-primary-950/60 p-6 backdrop-blur-sm lg:left-auto lg:w-[480px]"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -284,13 +277,13 @@ export function ReviewStep({
               onClick={(e) => e.stopPropagation()}
               className="relative w-full max-w-sm overflow-hidden rounded-[32px] bg-paper p-6 pt-20 text-center shadow-lift"
             >
-              <div className="absolute inset-x-0 top-0 h-24 bg-saffron-400 sunburst" />
-              <Stamp className="absolute left-1/2 top-5 size-28 -translate-x-1/2 text-sunset-500" text="YOU'RE IN · SEE YOU IN LANKA · " />
+              <div className="absolute inset-x-0 top-0 h-24 bg-highlight-400 sunburst" />
+              <Stamp className="absolute left-1/2 top-5 size-28 -translate-x-1/2 text-accent-500" text={preset.destination.stampText} />
               <h2 className="font-display mt-10 text-[34px] font-semibold leading-none">
-                You&apos;re <span className="italic text-sunset-600">in!</span>
+                You&apos;re <span className="italic text-accent-600">in!</span>
               </h2>
               <p className="mt-3 text-[15px] text-ink-2">
-                Your dream trip is in with the 10hyaya crew. Now see where everyone overlaps — and peek at their picks.
+                Your dream trip is in with the crew. Now see where everyone overlaps — and peek at their picks.
               </p>
               <ButtonLink href="/group" size="lg" block className="mt-6">
                 See the group <ArrowRight className="size-5" strokeWidth={2.5} />
@@ -298,7 +291,7 @@ export function ReviewStep({
               <button onClick={() => setCelebrate(false)} className="mt-3 text-sm font-semibold text-ink-3">
                 Back to my trip
               </button>
-              <div className="mt-6 flex justify-center border-t border-dashed border-sand-300 pt-5">
+              <div className="mt-6 flex justify-center border-t border-dashed border-surface-300 pt-5">
                 <Lockup size="sm" />
               </div>
             </motion.div>
@@ -309,22 +302,22 @@ export function ReviewStep({
   );
 }
 
-/** The easter egg: a little crescent-moon switch tucked into the vibe card. */
-function HalalSwitch({ on, onChange }: { on: boolean; onChange: (on: boolean) => void }) {
+/** Family-friendly mode: a little switch tucked into the vibe card. */
+function FamilySwitch({ on, onChange }: { on: boolean; onChange: (on: boolean) => void }) {
   return (
     <button
       role="switch"
       aria-checked={on}
-      aria-label="Halal mode"
+      aria-label="Family-friendly mode"
       onClick={() => onChange(!on)}
       className={cn(
         "inline-flex h-7 items-center gap-1.5 rounded-full pl-2 pr-1 text-[11px] font-bold uppercase tracking-wide transition",
-        on ? "bg-jungle-800 text-saffron-400" : "bg-sand-100 text-ink-3 hover:text-ink-2",
+        on ? "bg-secondary-800 text-highlight-400" : "bg-surface-100 text-ink-3 hover:text-ink-2",
       )}
     >
-      <Moon className={cn("size-3.5", on && "fill-saffron-400")} strokeWidth={2.5} />
-      Halal
-      <span className={cn("relative h-4 w-7 rounded-full transition-colors", on ? "bg-saffron-400" : "bg-sand-300")}>
+      <Smile className="size-3.5" strokeWidth={2.5} />
+      Family
+      <span className={cn("relative h-4 w-7 rounded-full transition-colors", on ? "bg-highlight-400" : "bg-surface-300")}>
         <span className={cn("absolute top-0.5 size-3 rounded-full bg-paper shadow transition-all", on ? "left-3.5" : "left-0.5")} />
       </span>
     </button>
@@ -334,13 +327,14 @@ function HalalSwitch({ on, onChange }: { on: boolean; onChange: (on: boolean) =>
 function EditChip({ icon: Icon, label, onClick }: { icon: typeof Pencil; label: string; onClick: () => void }) {
   return (
     <button onClick={onClick} className="flex h-10 shrink-0 items-center gap-2 rounded-full bg-paper px-4 text-[14px] font-semibold shadow-card transition hover:-translate-y-0.5">
-      <Icon className="size-4 text-ocean-600" /> Edit {label.toLowerCase()}
+      <Icon className="size-4 text-primary-600" /> Edit {label.toLowerCase()}
     </button>
   );
 }
 
 export function PrefsSummary({ data, title = "Your extras" }: { data: ItineraryData; title?: string }) {
   const p = data.preferences;
+  const { budgets, stays, sharedRooms, earlyMornings, transport, interests, dietary } = useCatalog().preset.preferences;
   const find = (list: readonly { id: string; label: string }[], id?: string) => list.find((x) => x.id === id)?.label;
   const rows: [string, string | undefined][] = [
     ["Budget", find(budgets, p.budget)],
@@ -381,7 +375,7 @@ function BudgetSummary({ budget, onOpen }: { budget: BudgetResult; onOpen: () =>
       onClick={onOpen}
       className="flex w-full items-center gap-3 rounded-[26px] bg-paper p-4 text-left shadow-card transition hover:-translate-y-0.5 lg:pointer-events-none"
     >
-      <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-ocean-100 text-ocean-700">
+      <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-primary-100 text-primary-700">
         <Wallet className="size-6" />
       </span>
       <span className="min-w-0 flex-1">

@@ -2,14 +2,15 @@
 
 import { Download, Loader2, Share2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import type { Photo } from "@/content";
-import { daysNightsLabel, type ItineraryData } from "@/lib/itinerary";
-import { tripDays } from "@/lib/rules";
-import { dayRoutes } from "@/lib/routes";
-import { renderShareImage, type ShareFormat, type ShareModel } from "@/lib/share-image";
-import { tripHighlights } from "@/lib/highlights";
-import { balanceOf, buildTimeline } from "@/lib/timeline";
+import type { Photo } from "@/engine/catalog";
+import { tripHighlights } from "@/engine/highlights";
+import type { ItineraryData } from "@/engine/itinerary";
+import { dayRoutes } from "@/engine/routes";
+import { daysNightsLabel, tripDays, type Engine } from "@/engine/structure";
+import { balanceOf, buildTimeline } from "@/engine/timeline";
 import { cn } from "@/lib/cn";
+import { renderShareImage, type ShareFormat, type ShareModel } from "@/lib/share-image";
+import { useEngine } from "../engine";
 import { Button } from "../ui/button";
 import { Sheet } from "../ui/sheet";
 
@@ -39,11 +40,11 @@ function pickPhotos(model: Omit<ShareModel, "photos">): ShareModel["photos"] {
   return out;
 }
 
-/** `halal`: the plan is already swapped — its highlights replace the vibe meter (no other sign of Halal mode). */
-export function buildShareModel(name: string, data: ItineraryData, halal = false): ShareModel {
-  const timeline = buildTimeline(data);
-  const base = { name, data, timeline, routes: dayRoutes(data, timeline), balance: balanceOf(data) };
-  return { ...base, photos: pickPhotos(base), ...(halal ? { highlights: tripHighlights(data) } : {}) };
+/** `family`: the plan is already swapped — its highlights replace the vibe meter (no other sign of the mode). */
+export function buildShareModel(engine: Engine, name: string, data: ItineraryData, family = false): ShareModel {
+  const timeline = buildTimeline(engine, data);
+  const base = { engine, name, data, timeline, routes: dayRoutes(engine, data, timeline), balance: balanceOf(engine, data) };
+  return { ...base, photos: pickPhotos(base), ...(family ? { highlights: tripHighlights(engine, data) } : {}) };
 }
 
 const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "trip";
@@ -62,8 +63,10 @@ function download(url: string, filename: string) {
  * Share button can hand the file to the Web Share API inside the tap.
  * Mount it only while open (state resets each time).
  */
-export function ShareSheet({ onClose, name, data, halal = false }: { onClose: () => void; name: string; data: ItineraryData; halal?: boolean }) {
-  const model = useMemo(() => buildShareModel(name, data, halal), [name, data, halal]);
+export function ShareSheet({ onClose, name, data, family = false }: { onClose: () => void; name: string; data: ItineraryData; family?: boolean }) {
+  const engine = useEngine();
+  const { preset } = engine.catalog;
+  const model = useMemo(() => buildShareModel(engine, name, data, family), [engine, name, data, family]);
   const [imgs, setImgs] = useState<Partial<Record<ShareFormat, Img>>>({});
   const [failed, setFailed] = useState(false);
   const [canShareFiles, setCanShareFiles] = useState(false);
@@ -90,14 +93,18 @@ export function ShareSheet({ onClose, name, data, halal = false }: { onClose: ()
     };
   }, [model]);
 
-  const filename = (f: ShareFormat) => `lanks-${slug(name)}-${f}.png`;
+  const filename = (f: ShareFormat) => `caravan-${slug(name)}-${preset.id}-${f}.png`;
 
   async function share(f: ShareFormat) {
     const img = imgs[f];
     if (!img) return;
     const file = new File([img.blob], filename(f), { type: "image/png" });
     try {
-      await navigator.share({ files: [file], title: `${name}'s Sri Lanka`, text: `My Sri Lanka trip — ${daysNightsLabel(data.days.length || tripDays())}` });
+      await navigator.share({
+        files: [file],
+        title: `${name}'s ${preset.name}`,
+        text: `My ${preset.name} trip — ${daysNightsLabel(data.days.length || tripDays(engine))}`,
+      });
     } catch (e) {
       if ((e as DOMException)?.name !== "AbortError") download(img.url, filename(f));
     }
@@ -110,7 +117,7 @@ export function ShareSheet({ onClose, name, data, halal = false }: { onClose: ()
           Made for Instagram Stories and the group chat. {canShareFiles ? "Tap Share to send it or save it to Photos." : "Save it and post it anywhere."}
         </p>
         {failed && (
-          <p className="mt-3 rounded-2xl bg-sunset-100 p-3 text-[13.5px] text-sunset-700">Couldn&apos;t draw the image on this device — try again in a moment.</p>
+          <p className="mt-3 rounded-2xl bg-accent-100 p-3 text-[13.5px] text-accent-700">Couldn&apos;t draw the image on this device — try again in a moment.</p>
         )}
         <div className="mt-4 grid grid-cols-[0.62fr_1fr] items-start gap-3">
           {FORMATS.map((f) => {
@@ -119,7 +126,7 @@ export function ShareSheet({ onClose, name, data, halal = false }: { onClose: ()
               <figure key={f.id} className="min-w-0">
                 <div
                   className={cn(
-                    "relative overflow-hidden rounded-2xl bg-ocean-800 shadow-card ring-1 ring-ink/5",
+                    "relative overflow-hidden rounded-2xl bg-primary-800 shadow-card ring-1 ring-ink/5",
                     f.id === "story" ? "aspect-[9/16]" : "aspect-square",
                   )}
                 >

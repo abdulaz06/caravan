@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
 import { AdminLogin, ConfirmPin } from "@/components/admin/admin";
 import { Console } from "@/components/admin/console";
-import { RulesProvider } from "@/components/rules";
 import { db, isOrganizerRole, isUsingLocalStore, roleOf } from "@/lib/server/db";
 import { loadPeople, realPeople } from "@/lib/server/group";
 import { roommateBoard } from "@/lib/roommates";
 import { isTestName } from "@/lib/test-users";
-import { loadRules } from "@/lib/server/rules";
+import { loadTrip } from "@/lib/server/trip";
 import { consoleActor, currentParticipant } from "@/lib/server/session";
 
 export const metadata: Metadata = { title: "Organizer" };
@@ -18,11 +17,10 @@ export default async function AdminPage() {
     if (me && isOrganizerRole(roleOf(me))) return <ConfirmPin name={me.display_name} />;
     return <AdminLogin />;
   }
-  const live = await loadRules();
-  const [people, log] = await Promise.all([loadPeople(), db().listLog(300).catch(() => [])]);
+  const live = await loadTrip();
+  const [people, log] = await Promise.all([loadPeople(live.engine), db().listLog(300).catch(() => [])]);
   const peekers = await Promise.all(people.map((p) => db().countPeekers(p.id).catch(() => 0)));
   return (
-    <RulesProvider rules={live.rules}>
       <Console
         actor={{ name: actor.name, role: actor.role === "owner" ? "owner" : "admin", breakGlass: actor.breakGlass, id: actor.id }}
         rules={live.rules}
@@ -47,6 +45,5 @@ export default async function AdminPage() {
           test: isTestName(p.name),
         }))}
       />
-    </RulesProvider>
   );
 }

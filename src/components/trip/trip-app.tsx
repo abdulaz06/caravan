@@ -1,28 +1,20 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { FlaskConical, MapPinned, PencilRuler, X } from "lucide-react";
+import { FlaskConical, PencilRuler, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { computeBudget } from "@/lib/budget";
-import { halalView } from "@/lib/halal";
+import { computeBudget } from "@/engine/budget";
+import { familyView } from "@/engine/family";
+import { expandToFull, isSubmittable, makePreview, type ItineraryData, type ItineraryStatus } from "@/engine/itinerary";
+import type { PopularPayload } from "@/engine/popular";
+import { allowedLengths, daysNightsLabel, previewAvailable, previewDays, tripDays } from "@/engine/structure";
 import type { CurrencyCode } from "@/lib/currency";
-import {
-  daysNightsLabel,
-  expandToFull,
-  isSubmittable,
-  makePreview,
-  nights,
-  type ItineraryData,
-  type ItineraryStatus,
-} from "@/lib/itinerary";
-import { allowedLengths, previewAvailable, previewDays, tripDays } from "@/lib/rules";
-import { HalalProvider } from "../halal";
+import { useEngine } from "../engine";
+import { FamilyProvider } from "../family";
 import { PopularProvider } from "../popular";
-import type { PopularPayload } from "@/lib/popular";
 import { AnnouncementBar, LockCountdown } from "../rules";
 import { LocalTime } from "../ui/local-time";
-import { HillSunIcon } from "../brand/illustrations";
 import { useToast } from "../ui/toast";
 import { BudgetSheet, BudgetSidePanel } from "./budget";
 import { BuildStep } from "./build-step";
@@ -44,12 +36,7 @@ type Props = {
   /** Locked by hand or by the scheduled auto-lock. */
   editsLocked: boolean;
   requestedStep?: string;
-  /** Picks cleared when an older itinerary moved onto the day structure (-1 = no upgrade). */
-  migratedPicks?: number;
-  needsUpgradeSave?: boolean;
-  /** The saved plan had Adam's Peak, now swapped for the Ella day trip (one-time note). */
-  swappedPeak?: boolean;
-  /** Owner + admin names for the privacy line ("Abdul & Aadil"). */
+  /** Owner + admin names for the privacy line. */
   organizers: string[];
   isOrganizer?: boolean;
   /** Unique people who peeked at this plan. */
@@ -72,7 +59,6 @@ function initialStep(data: ItineraryData, status: ItineraryStatus, locked: boole
   return data.startDate ? "build" : "dates";
 }
 
-
 export function TripApp({
   name,
   initialData,
@@ -80,9 +66,6 @@ export function TripApp({
   initialUpdatedAt,
   editsLocked,
   requestedStep,
-  migratedPicks = -1,
-  needsUpgradeSave = false,
-  swappedPeak = false,
   organizers,
   isOrganizer = false,
   peekCount = 0,
@@ -91,31 +74,27 @@ export function TripApp({
   popular = null,
   roommateCandidates = [],
 }: Props) {
+  const e = useEngine();
   const router = useRouter();
   const toast = useToast();
-  const full = tripDays();
-  const short = previewDays();
+  const full = tripDays(e);
+  const short = previewDays(e);
   // `data` is the real plan (autosaved). `preview` is the shorter sandbox that
   // lives only in this tab — switching back restores `data` untouched.
   const [data, setData] = useState(initialData);
   const [preview, setPreview] = useState<ItineraryData | null>(null);
-  // Halal mode: a view-only easter egg on the review page. Never saved; resets on leaving the page.
-  const [halal, setHalal] = useState(false);
+  // Family-friendly mode: a view-only switch on the review page. Never saved; resets on leaving the page.
+  const [family, setFamily] = useState(false);
   const view = preview ?? data;
   // Organizers editing on someone's behalf can edit even while edits are locked.
   const [locked, setLocked] = useState(editsLocked && !admin);
-  const [step, setStepState] = useState<Step>(() =>
-    initialStep(initialData, initialStatus, editsLocked && !admin, migratedPicks > 0 ? "build" : requestedStep),
-  );
+  const [step, setStepState] = useState<Step>(() => initialStep(initialData, initialStatus, editsLocked && !admin, requestedStep));
   const [direction, setDirection] = useState(1);
   const [budgetOpen, setBudgetOpen] = useState(false);
-  const [notice, setNotice] = useState(migratedPicks >= 0 && !admin);
-  const [peakNote, setPeakNote] = useState(swappedPeak && !admin);
   const [stampNote, setStampNote] = useState(admin ? null : stamp);
 
   const save = useAutosave(data, {
     enabled: !locked,
-    saveOnMount: needsUpgradeSave && !editsLocked && !admin,
     url: admin ? `/api/admin/participants/${admin.targetId}/itinerary` : undefined,
     onLocked: () => {
       setLocked(true);
@@ -125,11 +104,11 @@ export function TripApp({
   });
   const status = save.status ?? initialStatus;
   const updatedAt = save.updatedAt ?? initialUpdatedAt;
-  // Halal mode shows the budget of the swapped plan (display only — exclusions can't be toggled while it's on).
-  const budget = useMemo(() => computeBudget(halal ? halalView(view) : view), [view, halal]);
+  // Family-friendly mode shows the budget of the swapped plan (display only — exclusions can't be toggled while it's on).
+  const budget = useMemo(() => computeBudget(e, family ? familyView(e, view) : view), [e, view, family]);
 
   const setStep = useCallback((next: Step, push = true) => {
-    setHalal(false);
+    setFamily(false);
     setStepState((cur) => {
       setDirection(STEPS.indexOf(next) >= STEPS.indexOf(cur) ? 1 : -1);
       return next;
@@ -155,6 +134,7 @@ export function TripApp({
   /** A shorter plan that was submitted while the rules allowed it. */
   const savedShort = !!data.startDate && data.days.length === short && short !== full;
   const length = view.days.length || (previewing ? short : full);
+  const lastBase = e.catalog.bases[e.catalog.bases.length - 1];
   const update = useCallback(
     (fn: (d: ItineraryData) => ItineraryData) => {
       if (locked) return;
@@ -166,33 +146,29 @@ export function TripApp({
   const setLength = useCallback(
     (len: number) => {
       if (len === short) {
-        if (!previewAvailable() || savedShort || previewing) return;
-        setPreview(makePreview(data));
-        toast(
-          allowedLengths().includes(short)
-            ? `Trying ${daysNightsLabel(short)} — submit it if you prefer it`
-            : `Previewing ${daysNightsLabel(short)} — nothing here is saved`,
-        );
+        if (!previewAvailable(e) || savedShort || previewing) return;
+        setPreview(makePreview(e, data));
+        toast(allowedLengths(e).includes(short) ? `Trying ${daysNightsLabel(short)} — submit it if you prefer it` : `Previewing ${daysNightsLabel(short)} — nothing here is saved`);
       } else if (previewing) {
         setPreview(null);
         toast(`Back to your ${daysNightsLabel(full)} plan`);
       } else if (savedShort && !locked) {
-        setData((d) => expandToFull(d));
-        toast(`Back to ${daysNightsLabel(full)} — an empty Galle day is back in`);
+        setData((d) => expandToFull(e, d));
+        toast(`Back to ${daysNightsLabel(full)} — an empty ${lastBase.name} day is back in`);
       }
     },
-    [data, full, locked, previewing, savedShort, short, toast],
+    [e, data, full, lastBase.name, locked, previewing, savedShort, short, toast],
   );
 
   // Currency is a display preference: it always sticks, even while previewing.
   const onCurrency = useCallback(
     (code: CurrencyCode) => {
-      if (locked || halal) return;
+      if (locked || family) return;
       const set = (d: ItineraryData) => ({ ...d, preferences: { ...d.preferences, currency: code } });
       setData(set);
       setPreview((p) => (p ? set(p) : p));
     },
-    [locked, halal],
+    [locked, family],
   );
 
   const toggleLine = useCallback(
@@ -205,15 +181,11 @@ export function TripApp({
       }),
     [update],
   );
-  const toggleAccommodation = useCallback(
-    (on: boolean) => update((d) => ({ ...d, budget: { ...d.budget, accommodation: on } })),
-    [update],
-  );
+  const toggleAccommodation = useCallback((on: boolean) => update((d) => ({ ...d, budget: { ...d.budget, accommodation: on } })), [update]);
 
   const canVisit = (s: Step) => s === "dates" || !!view.startDate;
   const showBudget = !!view.startDate && step !== "dates";
-  const n = nights(full);
-  const submittablePreview = previewing && allowedLengths().includes(short);
+  const submittablePreview = previewing && allowedLengths(e).includes(short);
 
   function dismissStamp() {
     setStampNote(null);
@@ -221,206 +193,164 @@ export function TripApp({
   }
 
   return (
-    <HalalProvider on={halal}>
-    <PopularProvider initial={popular}>
-    <div className="min-h-dvh">
-      <TripHeader
-        name={admin ? admin.targetName : name}
-        step={step}
-        canVisit={canVisit}
-        onStep={(s) => setStep(s)}
-        saveState={save.state}
-        submitted={status === "submitted"}
-        locked={locked}
-        beforeLeave={() => save.flush()}
-        onCurrency={onCurrency}
-        preview={previewing ? { onExit: () => setLength(full), label: `${short}-day ${submittablePreview ? "plan" : "preview"}` } : null}
-        organizer={isOrganizer && !admin}
-        admin={admin ? { targetName: admin.targetName } : null}
-      />
-      {admin && (
-        <div className="mx-3 mt-3 flex items-center gap-3 rounded-2xl bg-jungle-800 p-3 text-[13.5px] leading-snug text-paper shadow-card" role="status">
-          <PencilRuler className="size-5 shrink-0 text-saffron-400" />
-          <p className="flex-1">
-            <b>Editing {admin.targetName}&apos;s plan as an organizer.</b> <span className="text-paper/70">Changes save as you go and are stamped with your name — even while edits are locked.</span>
-          </p>
-        </div>
-      )}
-      {!admin && (
-        <>
-          {/* An announcement is free text — Halal mode leaves it out. */}
-          {!halal && <AnnouncementBar />}
-          <LockCountdown onLocked={() => setLocked(true)} />
-        </>
-      )}
-      <AnimatePresence>
-        {notice && (
-          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-            <div className="mx-3 mt-3 flex items-start gap-3 rounded-2xl bg-saffron-100 p-3.5 text-[14px] leading-snug text-ink-2 ring-1 ring-saffron-200">
-              <MapPinned className="mt-0.5 size-5 shrink-0 text-sunset-600" />
+    <FamilyProvider on={family}>
+      <PopularProvider initial={popular}>
+        <div className="min-h-dvh">
+          <TripHeader
+            name={admin ? admin.targetName : name}
+            step={step}
+            canVisit={canVisit}
+            onStep={(s) => setStep(s)}
+            saveState={save.state}
+            submitted={status === "submitted"}
+            locked={locked}
+            beforeLeave={() => save.flush()}
+            onCurrency={onCurrency}
+            preview={previewing ? { onExit: () => setLength(full), label: `${short}-day ${submittablePreview ? "plan" : "preview"}` } : null}
+            organizer={isOrganizer && !admin}
+            admin={admin ? { targetName: admin.targetName } : null}
+          />
+          {admin && (
+            <div className="mx-3 mt-3 flex items-center gap-3 rounded-2xl bg-secondary-800 p-3 text-[13.5px] leading-snug text-paper shadow-card" role="status">
+              <PencilRuler className="size-5 shrink-0 text-highlight-400" />
               <p className="flex-1">
-                <b className="text-ink">The group voted for {daysNightsLabel(full)}</b> — {n.colombo} {n.colombo === 1 ? "night" : "nights"} in Colombo, then{" "}
-                {n.galle} in Galle. We&apos;ve moved your plan over{migratedPicks > 0 ? ` and a few picks need redoing (${migratedPicks} cleared)` : ""}.
-                Everything else is just as you left it.
+                <b>Editing {admin.targetName}&apos;s plan as an organizer.</b>{" "}
+                <span className="text-paper/70">Changes save as you go and are stamped with your name — even while edits are locked.</span>
               </p>
-              <button onClick={() => setNotice(false)} aria-label="Dismiss" className="-mr-1 -mt-1 grid size-8 place-items-center rounded-full hover:bg-saffron-200">
-                <X className="size-4" />
-              </button>
             </div>
-          </motion.div>
-        )}
-        {peakNote && (
-          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-            <div role="status" aria-label="Plan update" className="mx-3 mb-0.5 mt-3 flex items-start gap-3 rounded-2xl bg-jungle-100 p-3.5 text-[14px] leading-snug text-ink-2 ring-1 ring-jungle-400/40">
-              <span className="grid size-9 shrink-0 place-items-center overflow-hidden rounded-xl bg-dusk-800">
-                <HillSunIcon className="size-8 translate-y-0.5" rising />
-              </span>
+          )}
+          {!admin && (
+            <>
+              {/* An announcement is free text — family-friendly mode leaves it out. */}
+              {!family && <AnnouncementBar />}
+              <LockCountdown onLocked={() => setLocked(true)} />
+            </>
+          )}
+          <AnimatePresence>
+            {stampNote && (
+              <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                <div role="status" aria-label="Organizer update" className="mx-3 mt-3 flex items-start gap-3 rounded-2xl bg-paper p-3.5 text-[13.5px] leading-snug text-ink-2 shadow-card ring-1 ring-ink/5">
+                  <PencilRuler className="mt-0.5 size-[18px] shrink-0 text-primary-600" />
+                  <p className="flex-1">
+                    {stampNote.kind === "edit" ? (
+                      <>
+                        <b className="text-ink">{stampNote.by}</b> updated your plan on <LocalTime iso={stampNote.at} as="date" />.
+                      </>
+                    ) : (
+                      <>
+                        <b className="text-ink">The organizers changed the trip</b>
+                        {stampNote.text ? ` to ${stampNote.text}` : ""} on <LocalTime iso={stampNote.at} as="date" />. We&apos;ve moved your plan over
+                        {stampNote.lost ? ` — ${stampNote.lost} ${stampNote.lost === 1 ? "pick needs" : "picks need"} redoing` : ""}.
+                      </>
+                    )}
+                  </p>
+                  <button onClick={dismissStamp} aria-label="Dismiss update" className="-mr-1 -mt-1 grid size-8 place-items-center rounded-full hover:bg-surface-100">
+                    <X className="size-4" />
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+          {previewing && (
+            <div className="relative z-20 mx-3 mt-3 flex items-center gap-3 rounded-2xl bg-highlight-400 p-3 text-[13.5px] leading-snug text-ink shadow-card">
+              <FlaskConical className="size-5 shrink-0" />
               <p className="flex-1">
-                <b className="text-ink">We swapped Adam&apos;s Peak for Little Adam&apos;s Peak in Ella.</b> Easier hike, same sunrise. It&apos;s on the same day
-                in your plan.
-              </p>
-              <button onClick={() => setPeakNote(false)} aria-label="Dismiss" className="-mr-1 -mt-1 grid size-8 place-items-center rounded-full hover:bg-jungle-400/20">
-                <X className="size-4" />
-              </button>
-            </div>
-          </motion.div>
-        )}
-        {stampNote && (
-          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-            <div role="status" aria-label="Organizer update" className="mx-3 mt-3 flex items-start gap-3 rounded-2xl bg-paper p-3.5 text-[13.5px] leading-snug text-ink-2 shadow-card ring-1 ring-ink/5">
-              <PencilRuler className="mt-0.5 size-[18px] shrink-0 text-ocean-600" />
-              <p className="flex-1">
-                {stampNote.kind === "edit" ? (
+                {submittablePreview ? (
                   <>
-                    <b className="text-ink">{stampNote.by}</b> updated your plan on <LocalTime iso={stampNote.at} as="date" />.
+                    <b>Trying {daysNightsLabel(short)}.</b> Submit it if you prefer the shorter trip — your {full}-day plan stays until you do.
                   </>
                 ) : (
                   <>
-                    <b className="text-ink">The organizers changed the trip</b>
-                    {stampNote.text ? ` to ${stampNote.text}` : ""} on <LocalTime iso={stampNote.at} as="date" />. We&apos;ve moved your plan over
-                    {stampNote.lost ? ` — ${stampNote.lost} ${stampNote.lost === 1 ? "pick needs" : "picks need"} redoing` : ""}.
+                    <b>Previewing {daysNightsLabel(short)}.</b> A sandbox — nothing here is saved.
                   </>
                 )}
               </p>
-              <button onClick={dismissStamp} aria-label="Dismiss update" className="-mr-1 -mt-1 grid size-8 place-items-center rounded-full hover:bg-sand-100">
-                <X className="size-4" />
+              <button onClick={() => setLength(full)} className="shrink-0 rounded-full bg-ink px-3 py-1.5 text-[12.5px] font-bold text-paper hover:bg-ink-2">
+                Back to {full} days
               </button>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-      {previewing && (
-        <div className="relative z-20 mx-3 mt-3 flex items-center gap-3 rounded-2xl bg-saffron-400 p-3 text-[13.5px] leading-snug text-ink shadow-card">
-          <FlaskConical className="size-5 shrink-0" />
-          <p className="flex-1">
-            {submittablePreview ? (
-              <>
-                <b>Trying {daysNightsLabel(short)}.</b> Submit it if you prefer the shorter trip — your {full}-day plan stays until you do.
-              </>
-            ) : (
-              <>
-                <b>Previewing {daysNightsLabel(short)}.</b> A sandbox — nothing here is saved.
-              </>
-            )}
-          </p>
-          <button
-            onClick={() => setLength(full)}
-            className="shrink-0 rounded-full bg-ink px-3 py-1.5 text-[12.5px] font-bold text-paper hover:bg-ink-2"
-          >
-            Back to {full} days
-          </button>
-        </div>
-      )}
-      <AnimatePresence mode="wait" initial={false} custom={direction}>
-        <motion.div
-          key={step}
-          custom={direction}
-          initial={{ opacity: 0, x: 36 * direction }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -36 * direction }}
-          transition={{ type: "spring", stiffness: 420, damping: 38 }}
-        >
-          {step === "dates" && (
-            <DatesStep data={view} update={update} locked={locked} length={length} onLength={setLength} onNext={() => setStep("build")} />
           )}
-          {step === "build" && (
-            <BuildStep
-              data={view}
-              update={update}
-              locked={locked}
-              budget={budget}
-              onOpenBudget={() => setBudgetOpen(true)}
-              onBack={() => setStep("dates")}
-              onNext={() => setStep("prefs")}
-            />
-          )}
-          {step === "prefs" && (
-            <PrefsStep
-              data={view}
-              update={update}
-              locked={locked}
-              organizers={organizers}
-              candidates={roommateCandidates}
-              onNext={() => setStep("review")}
-            />
-          )}
-          {step === "review" && (
-            <ReviewStep
-              name={admin ? admin.targetName : name}
-              data={view}
-              previewing={previewing}
-              canSubmitPreview={submittablePreview}
-              onExitPreview={() => setLength(full)}
-              halal={halal}
-              onHalal={admin ? undefined : setHalal}
-              status={status}
-              updatedAt={updatedAt}
-              locked={locked}
-              saveState={save.state}
-              budget={budget}
-              onOpenBudget={() => setBudgetOpen(true)}
-              onEdit={(s) => setStep(s)}
-              peekCount={admin ? 0 : peekCount}
-              adminMode={!!admin}
-              onSubmit={async () => {
-                const target = preview ?? data;
-                if (admin || !isSubmittable(target)) return false;
-                const r = await save.submit(target);
-                if (!r.ok) toast(r.code === 423 ? "Edits are closed." : "Couldn't submit — try again.", "error");
-                else if (preview) {
-                  setData(preview);
-                  setPreview(null);
-                }
-                return r.ok;
-              }}
-            />
-          )}
-        </motion.div>
-      </AnimatePresence>
+          <AnimatePresence mode="wait" initial={false} custom={direction}>
+            <motion.div
+              key={step}
+              custom={direction}
+              initial={{ opacity: 0, x: 36 * direction }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -36 * direction }}
+              transition={{ type: "spring", stiffness: 420, damping: 38 }}
+            >
+              {step === "dates" && <DatesStep data={view} update={update} locked={locked} length={length} onLength={setLength} onNext={() => setStep("build")} />}
+              {step === "build" && (
+                <BuildStep
+                  data={view}
+                  update={update}
+                  locked={locked}
+                  budget={budget}
+                  onOpenBudget={() => setBudgetOpen(true)}
+                  onBack={() => setStep("dates")}
+                  onNext={() => setStep("prefs")}
+                />
+              )}
+              {step === "prefs" && (
+                <PrefsStep data={view} update={update} locked={locked} organizers={organizers} candidates={roommateCandidates} onNext={() => setStep("review")} />
+              )}
+              {step === "review" && (
+                <ReviewStep
+                  name={admin ? admin.targetName : name}
+                  data={view}
+                  previewing={previewing}
+                  canSubmitPreview={submittablePreview}
+                  onExitPreview={() => setLength(full)}
+                  family={family}
+                  onFamily={admin ? undefined : setFamily}
+                  status={status}
+                  updatedAt={updatedAt}
+                  locked={locked}
+                  saveState={save.state}
+                  budget={budget}
+                  onOpenBudget={() => setBudgetOpen(true)}
+                  onEdit={(s) => setStep(s)}
+                  peekCount={admin ? 0 : peekCount}
+                  adminMode={!!admin}
+                  onSubmit={async () => {
+                    const target = preview ?? data;
+                    if (admin || !isSubmittable(e, target)) return false;
+                    const r = await save.submit(target);
+                    if (!r.ok) toast(r.code === 423 ? "Edits are closed." : "Couldn't submit — try again.", "error");
+                    else if (preview) {
+                      setData(preview);
+                      setPreview(null);
+                    }
+                    return r.ok;
+                  }}
+                />
+              )}
+            </motion.div>
+          </AnimatePresence>
 
-      {showBudget && (
-        <BudgetSidePanel
-          budget={budget}
-          locked={locked || halal}
-          onToggleLine={toggleLine}
-          onToggleAccommodation={toggleAccommodation}
-          onEditBudget={() => setStep("prefs")}
-        />
-      )}
-      <BudgetSheet
-        open={budgetOpen}
-        onClose={() => setBudgetOpen(false)}
-        budget={budget}
-        locked={locked || halal}
-        onToggleLine={toggleLine}
-        onToggleAccommodation={toggleAccommodation}
-        onEditBudget={() => {
-          setBudgetOpen(false);
-          setStep("prefs");
-        }}
-      />
-    </div>
-    </PopularProvider>
-    </HalalProvider>
+          {showBudget && (
+            <BudgetSidePanel
+              budget={budget}
+              locked={locked || family}
+              onToggleLine={toggleLine}
+              onToggleAccommodation={toggleAccommodation}
+              onEditBudget={() => setStep("prefs")}
+            />
+          )}
+          <BudgetSheet
+            open={budgetOpen}
+            onClose={() => setBudgetOpen(false)}
+            budget={budget}
+            locked={locked || family}
+            onToggleLine={toggleLine}
+            onToggleAccommodation={toggleAccommodation}
+            onEditBudget={() => {
+              setBudgetOpen(false);
+              setStep("prefs");
+            }}
+          />
+        </div>
+      </PopularProvider>
+    </FamilyProvider>
   );
 }

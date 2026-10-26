@@ -1,4 +1,4 @@
-import { pinSchema } from "@/lib/schema";
+import { pinSchema } from "@/lib/validation";
 import { isOrganizerRole, roleOf } from "@/lib/server/db";
 import { error, json, readJson } from "@/lib/server/http";
 import { logAction } from "@/lib/server/organizer";

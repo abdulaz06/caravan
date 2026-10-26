@@ -3,9 +3,9 @@
 import { ArrowLeft, PencilRuler, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { useMemo } from "react";
-import { interests as INTERESTS } from "@/content/preferences";
-import type { ItineraryData } from "@/lib/itinerary";
-import { balanceOf, buildTimeline } from "@/lib/timeline";
+import type { ItineraryData } from "@/engine/itinerary";
+import { balanceOf, buildTimeline } from "@/engine/timeline";
+import { useEngine } from "../engine";
 import { SiteFooter } from "../brand/site-footer";
 import { Lockup } from "../brand/wordmark";
 import { CurrencyPicker } from "../currency";
@@ -33,15 +33,17 @@ export function PersonView({
   role?: "owner" | "admin" | "member";
   organizer?: { id: string; status: string; stamp: { by: string; at: string; kind: string } | null };
 }) {
-  const timeline = useMemo(() => buildTimeline(data), [data]);
-  const balance = useMemo(() => balanceOf(data), [data]);
-  const into = data.preferences.interests?.map((i) => INTERESTS.find((x) => x.id === i)?.label).filter(Boolean);
+  const e = useEngine();
+  const timeline = useMemo(() => buildTimeline(e, data), [e, data]);
+  const balance = useMemo(() => balanceOf(e, data), [e, data]);
+  const interests = e.catalog.preset.preferences.interests;
+  const into = data.preferences.interests?.map((i) => interests.find((x) => x.id === i)?.label).filter(Boolean);
   return (
     <div className="grain min-h-dvh">
-      <header className="sticky top-0 z-40 flex h-16 items-center gap-3 border-b border-ink/[0.06] bg-sand-100/85 px-4 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
+      <header className="sticky top-0 z-40 flex h-16 items-center gap-3 border-b border-ink/[0.06] bg-surface-100/85 px-4 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
         <Link
           href={organizer ? "/admin#people" : "/group"}
-          className="flex items-center gap-1.5 rounded-full px-2 py-1.5 text-[14px] font-semibold text-ink-2 hover:bg-sand-200"
+          className="flex items-center gap-1.5 rounded-full px-2 py-1.5 text-[14px] font-semibold text-ink-2 hover:bg-surface-200"
         >
           <ArrowLeft className="size-4" /> {organizer ? "Console" : "The crew"}
         </Link>
@@ -51,8 +53,8 @@ export function PersonView({
       </header>
       <div className="relative z-[1] space-y-4 px-3 pt-5">
         {role !== "member" && (
-          <p className="inline-flex items-center gap-1.5 rounded-full bg-jungle-800 px-3 py-1 text-[12px] font-bold text-paper">
-            <ShieldCheck className="size-3.5 text-saffron-400" /> {name} is an organizer
+          <p className="inline-flex items-center gap-1.5 rounded-full bg-secondary-800 px-3 py-1 text-[12px] font-bold text-paper">
+            <ShieldCheck className="size-3.5 text-highlight-400" /> {name} is an organizer
           </p>
         )}
         {organizer && (
@@ -64,7 +66,7 @@ export function PersonView({
               </span>
             )}
             <span className="flex-1" />
-            <Link href={`/admin/edit/${organizer.id}`} className="inline-flex h-9 items-center gap-1.5 rounded-full bg-ocean-700 px-3 font-semibold text-paper">
+            <Link href={`/admin/edit/${organizer.id}`} className="inline-flex h-9 items-center gap-1.5 rounded-full bg-primary-700 px-3 font-semibold text-paper">
               <PencilRuler className="size-4" /> Edit plan
             </Link>
           </div>
@@ -76,14 +78,14 @@ export function PersonView({
             <div className="mt-4 flex flex-wrap gap-1.5 border-t border-ink/5 pt-3">
               <span className="label mr-1 self-center text-ink-3">Into</span>
               {into.map((i) => (
-                <span key={i} className="rounded-full bg-sand-200 px-2.5 py-1 text-[12.5px] font-semibold">
+                <span key={i} className="rounded-full bg-surface-200 px-2.5 py-1 text-[12.5px] font-semibold">
                   {i}
                 </span>
               ))}
             </div>
           )}
         </div>
-        <section className="rounded-[26px] bg-sand-50 p-4 pt-5 shadow-card ring-1 ring-ink/[0.03]">
+        <section className="rounded-[26px] bg-surface-50 p-4 pt-5 shadow-card ring-1 ring-ink/[0.03]">
           <h2 className="font-display mb-4 text-[24px] font-semibold">Day by day</h2>
           <ItineraryTimeline data={data} timeline={timeline} />
         </section>

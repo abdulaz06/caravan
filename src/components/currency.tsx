@@ -157,14 +157,14 @@ export function CurrencyPicker({ onPick, className }: { onPick?: (c: CurrencyCod
                       setOpen(false);
                     }}
                     className={cn(
-                      "flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-[14px] transition hover:bg-sand-100",
-                      c.code === code && "bg-sand-100 font-semibold",
+                      "flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-[14px] transition hover:bg-surface-100",
+                      c.code === code && "bg-surface-100 font-semibold",
                     )}
                   >
                     <CurrencyMark mark={c.mark} />
                     <span className="w-10 font-bold tabular-nums">{c.code}</span>
                     <span className="flex-1 truncate text-ink-2">{c.name}</span>
-                    {c.code === code && <Check className="size-4 text-ocean-600" strokeWidth={3} />}
+                    {c.code === code && <Check className="size-4 text-primary-600" strokeWidth={3} />}
                   </button>
                 </li>
               ))}
@@ -186,7 +186,7 @@ function CurrencyMark({ mark }: { mark: string }) {
     <span
       aria-hidden="true"
       className={cn(
-        "grid size-6 shrink-0 place-items-center rounded-full bg-ocean-100 font-bold leading-none text-ocean-800",
+        "grid size-6 shrink-0 place-items-center rounded-full bg-primary-100 font-bold leading-none text-primary-800",
         mark.length > 1 ? "text-[9.5px] tracking-[-0.02em]" : "text-[12.5px]",
       )}
     >

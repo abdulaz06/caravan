@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { CurrencyProvider } from "@/components/currency";
-import { RulesProvider } from "@/components/rules";
 import { TripApp } from "@/components/trip/trip-app";
-import { emptyItinerary, hadReplacedPick, migrationLoss, normalize } from "@/lib/itinerary";
+import { emptyItinerary, normalize } from "@/engine/itinerary";
 import { initialCurrency } from "@/lib/server/currency-pref";
 import { db } from "@/lib/server/db";
 import { pageContext } from "@/lib/server/page-context";
@@ -26,15 +25,10 @@ export default async function TripPage({ searchParams }: PageProps<"/trip">) {
     getPopular(),
     roommateCandidates(me.id).catch(() => []),
   ]);
-  const data = row ? normalize(row.data) : emptyItinerary();
-  // Itineraries saved before the fixed day structure are moved over; -1 = already current.
-  const migrated = row ? migrationLoss(row.data) : -1;
-  // Adam's Peak picks become the Ella day trip; saving the upgraded plan makes the note one-time.
-  const swappedPeak = row ? hadReplacedPick(row.data) : false;
-  const currency = await initialCurrency(data.preferences.currency, ctx.rules.defaultCurrency);
+  const data = row ? normalize(ctx.trip.engine, row.data) : emptyItinerary();
+  const currency = await initialCurrency(data.preferences.currency, ctx.trip.rules.defaultCurrency);
   const stamp = row?.stamp && !row.stamp.seen ? row.stamp : null;
   return (
-    <RulesProvider rules={ctx.rules}>
       <CurrencyProvider initial={currency} rates={rates}>
         <TripApp
           name={me.display_name}
@@ -43,9 +37,6 @@ export default async function TripPage({ searchParams }: PageProps<"/trip">) {
           initialUpdatedAt={row?.updated_at ?? null}
           editsLocked={ctx.locked}
           requestedStep={typeof sp.step === "string" ? sp.step : undefined}
-          migratedPicks={migrated}
-          needsUpgradeSave={migrated >= 0 || swappedPeak}
-          swappedPeak={swappedPeak}
           organizers={ctx.organizers}
           isOrganizer={ctx.isOrganizer}
           peekCount={peekCount}
@@ -54,6 +45,5 @@ export default async function TripPage({ searchParams }: PageProps<"/trip">) {
           stamp={stamp ? { kind: stamp.kind, by: stamp.by, at: stamp.at, lost: stamp.lost, text: stamp.text } : null}
         />
       </CurrencyProvider>
-    </RulesProvider>
   );
 }

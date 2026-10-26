@@ -18,14 +18,16 @@ const REF_LENGTH = 20;
 const sha256 = (s: string) => createHash("sha256").update(s).digest("hex");
 
 /** Does this text contain a protected project ref anywhere (any 20-character window)? */
-export function containsBlockedRef(text: string | undefined | null): boolean {
+export function containsBlockedRef(text: string | undefined | null, blocked: ReadonlySet<string> = BLOCKED_REFS): boolean {
   if (!text) return false;
   const s = text.toLowerCase();
   for (let i = 0; i + REF_LENGTH <= s.length; i++) {
-    if (BLOCKED_REFS.has(sha256(s.slice(i, i + REF_LENGTH)))) return true;
+    if (blocked.has(sha256(s.slice(i, i + REF_LENGTH)))) return true;
   }
   return false;
 }
+
+export { sha256 as hashRef };
 
 /** Legacy Supabase keys are JWTs whose payload names the project ("ref"). */
 function jwtRef(key: string | undefined): string | null {

@@ -67,7 +67,7 @@ export function TripHeader({
 
   return (
     <>
-      <header className="sticky top-0 z-40 border-b border-ink/[0.06] bg-sand-100/85 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
+      <header className="sticky top-0 z-40 border-b border-ink/[0.06] bg-surface-100/85 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
         <div className="flex h-14 items-center gap-2.5 px-3.5">
           <Lockup size="sm" className="shrink-0" />
           <span className="flex-1" />
@@ -75,7 +75,7 @@ export function TripHeader({
             <button
               onClick={preview.onExit}
               aria-label={`${preview.label} — switch back to the full trip`}
-              className="shrink-0 rounded-full bg-saffron-400 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-ink shadow-card"
+              className="shrink-0 rounded-full bg-highlight-400 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-ink shadow-card"
             >
               {preview.label}
             </button>
@@ -84,9 +84,9 @@ export function TripHeader({
             <Link
               href="/admin"
               onClick={() => void beforeLeave()}
-              className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-jungle-800 px-3 text-[12.5px] font-bold text-paper shadow-card transition hover:bg-jungle-700"
+              className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-secondary-800 px-3 text-[12.5px] font-bold text-paper shadow-card transition hover:bg-secondary-700"
             >
-              <ShieldCheck className="size-4 text-saffron-400" /> Organizer
+              <ShieldCheck className="size-4 text-highlight-400" /> Organizer
             </Link>
           )}
           <CurrencyPicker onPick={onCurrency} />
@@ -128,13 +128,13 @@ export function TripHeader({
                   <Link
                     href="/group"
                     onClick={() => void beforeLeave()}
-                    className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[15px] font-medium hover:bg-sand-100"
+                    className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[15px] font-medium hover:bg-surface-100"
                   >
-                    <Users className="size-[18px] text-ocean-600" /> Group overview
+                    <Users className="size-[18px] text-primary-600" /> Group overview
                   </Link>
                   <button
                     onClick={logout}
-                    className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[15px] font-medium hover:bg-sand-100"
+                    className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[15px] font-medium hover:bg-surface-100"
                   >
                     <LogOut className="size-[18px] text-ink-3" /> Log out
                   </button>
@@ -156,7 +156,7 @@ export function TripHeader({
               aria-current={active ? "step" : undefined}
               className={cn(
                 "relative flex h-7 flex-1 items-center justify-center rounded-full text-[12.5px] font-semibold tracking-[-0.01em] transition-colors",
-                active ? "text-paper" : enabled ? "text-ink-2 hover:bg-sand-200" : "text-ink-3/50",
+                active ? "text-paper" : enabled ? "text-ink-2 hover:bg-surface-200" : "text-ink-3/50",
               )}
             >
               {active && (
@@ -169,8 +169,8 @@ export function TripHeader({
       </nav>
       </header>
       {locked && (
-        <div className="flex items-center gap-2.5 bg-ocean-800 px-4 py-3 text-[14px] font-medium text-paper">
-          <Lock className="size-4 shrink-0 text-saffron-400" />
+        <div className="flex items-center gap-2.5 bg-primary-800 px-4 py-3 text-[14px] font-medium text-paper">
+          <Lock className="size-4 shrink-0 text-highlight-400" />
           Edits are closed — the final plan is coming!
         </div>
       )}
@@ -187,10 +187,10 @@ function SaveDot({ state }: { state: SaveState }) {
       aria-label={label}
       role="status"
       className={cn(
-        "absolute -bottom-1 -right-1 grid size-[18px] place-items-center rounded-full ring-2 ring-sand-100",
-        state === "saving" && "bg-sand-300 text-ink",
-        state === "saved" && "bg-jungle-600 text-white",
-        state === "error" && "bg-sunset-600 text-white",
+        "absolute -bottom-1 -right-1 grid size-[18px] place-items-center rounded-full ring-2 ring-surface-100",
+        state === "saving" && "bg-surface-300 text-ink",
+        state === "saved" && "bg-secondary-600 text-white",
+        state === "error" && "bg-accent-600 text-white",
       )}
     >
       {state === "saving" && <Loader2 className="size-3 animate-spin" strokeWidth={3} />}

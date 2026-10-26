@@ -14,7 +14,7 @@ export function Wordmark({ className, tone = "ink" }: { className?: string; tone
         className,
       )}
     >
-      <SunMark className="size-[0.95em] -translate-y-[0.04em] text-saffron-500" />
+      <SunMark className="size-[0.95em] -translate-y-[0.04em] text-highlight-500" />
       Lanks
     </span>
   );
@@ -23,7 +23,7 @@ export function Wordmark({ className, tone = "ink" }: { className?: string; tone
 /** The "10hyaya" rubber stamp. Always lowercase, exactly "10hyaya". */
 export function TenHyaya({ tone = "ink", className }: { tone?: Tone; className?: string }) {
   return (
-    <span className={cn("stamp-10h", tone === "light" ? "text-saffron-400" : "text-sunset-600", className)}>10hyaya</span>
+    <span className={cn("stamp-10h", tone === "light" ? "text-highlight-400" : "text-accent-600", className)}>10hyaya</span>
   );
 }
 
@@ -55,7 +55,7 @@ export function Lockup({
           tone === "light" ? "text-paper" : "text-ink",
         )}
       >
-        <SunMark className="size-[0.95em] -translate-y-[0.04em] text-saffron-500" />
+        <SunMark className="size-[0.95em] -translate-y-[0.04em] text-highlight-500" />
         Lanks
       </span>
       <span className="-mr-[0.04em] mt-[0.02em] flex items-center gap-[0.18em]">

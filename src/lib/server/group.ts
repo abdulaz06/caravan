@@ -1,12 +1,11 @@
 import "server-only";
-import { activitiesById, regions, type RegionId } from "@/content";
 import { dateRange } from "@/lib/dates";
-import { STAY_ID, countItems, normalize, tripLength, type ItineraryData } from "@/lib/itinerary";
-import { tripDays, tripWindow } from "@/lib/rules";
 import { isTestName } from "@/lib/test-users";
-import { balanceOf } from "@/lib/timeline";
+import { STAY_ID, countItems, normalize, tripLength, type ItineraryData } from "@/engine/itinerary";
+import { nightsFor, tripDays, type Engine } from "@/engine/structure";
+import { balanceOf } from "@/engine/timeline";
 import { db, roleOf, type ItineraryRow, type ParticipantRow, type Role, type Stamp } from "./db";
-import { loadRules } from "./rules";
+import { loadTrip } from "./trip";
 
 export type Person = {
   id: string;
@@ -24,18 +23,14 @@ export type Person = {
 /** Everyone except "zz-test-" users — what every count and list is built from. */
 export const realPeople = (people: Person[]) => people.filter((p) => !isTestName(p.name));
 
-/** Everyone and their (normalised) plans. Puts the live Trip rules in force first. */
-export async function loadPeople(): Promise<Person[]> {
-  await loadRules();
-  const [participants, itineraries] = await Promise.all([
-    db().listParticipants(),
-    db().listItineraries(),
-  ]);
+/** Everyone and their (normalised) plans. */
+export async function loadPeople(e?: Engine): Promise<Person[]> {
+  const engine = e ?? (await loadTrip()).engine;
+  const [participants, itineraries] = await Promise.all([db().listParticipants(), db().listItineraries()]);
   const byId = new Map<string, ItineraryRow>(itineraries.map((i) => [i.participant_id, i]));
   return participants.map((p: ParticipantRow) => {
     const it = byId.get(p.id);
-    const data = it?.data ? normalize(it.data) : null; // also upgrades older (v1/v2) itineraries
-    const picks = data ? countItems(data) : 0;
+    const data = it?.data ? normalize(engine, it.data) : null;
     return {
       id: p.id,
       name: p.display_name,
@@ -45,7 +40,7 @@ export async function loadPeople(): Promise<Person[]> {
       joinedAt: p.created_at,
       updatedAt: it?.updated_at ?? null,
       submittedAt: it?.submitted_at ?? null,
-      picks,
+      picks: data ? countItems(data) : 0,
       data,
     };
   });
@@ -61,17 +56,18 @@ export type GroupStats = {
   topOptions: { optionId: string; count: number; slot: "day" | "night" }[];
   stayCount: { day: number; night: number };
   balance: number | null;
-  regions: { region: RegionId; count: number }[];
+  regions: { region: string; count: number }[];
   flexibility: Record<string, number>;
   avgLength: number | null;
   people: { id: string; name: string; status: Person["status"] }[];
 };
 
-export function computeStats(people: Person[]): GroupStats {
-  const dates = dateRange(tripWindow().start, tripWindow().end);
+export function computeStats(e: Engine, people: Person[]): GroupStats {
+  const byId = e.catalog.byId;
+  const dates = dateRange(e.rules.window.start, e.rules.window.end);
   const dateCounts: Record<string, number> = Object.fromEntries(dates.map((d) => [d, 0]));
   const optionCounts = new Map<string, number>();
-  const regionCounts = new Map<RegionId, number>();
+  const regionCounts = new Map<string, number>();
   const flexibility: Record<string, number> = {};
   const balances: number[] = [];
   const lengths: number[] = [];
@@ -84,16 +80,14 @@ export function computeStats(people: Person[]): GroupStats {
     if (d.startDate && d.endDate) {
       withDates++;
       lengths.push(tripLength(d));
-      for (const day of dateRange(d.startDate, d.endDate)) {
-        if (day in dateCounts) dateCounts[day]++;
-      }
+      for (const day of dateRange(d.startDate, d.endDate)) if (day in dateCounts) dateCounts[day]++;
     }
     if (d.flexibility) flexibility[d.flexibility] = (flexibility[d.flexibility] ?? 0) + 1;
     // "Most picked" counts people (each once per option), like the 🔥 popular badges.
     const mine = new Set<string>();
     for (const day of d.days) {
       for (const x of [...day.day, ...day.night]) {
-        const o = activitiesById[x.id];
+        const o = byId[x.id];
         if (!o) continue;
         if (!mine.has(o.id)) optionCounts.set(o.id, (optionCounts.get(o.id) ?? 0) + 1);
         mine.add(o.id);
@@ -102,29 +96,24 @@ export function computeStats(people: Person[]): GroupStats {
       if (day.day.some((x) => x.id === STAY_ID)) stayCount.day++;
       if (day.night.some((x) => x.id === STAY_ID)) stayCount.night++;
     }
-    const b = balanceOf(d).score;
+    const b = balanceOf(e, d).score;
     if (b !== null) balances.push(b);
   }
 
-  // Sweet spot: the full-length window (6 days by default) where the most
-  // people can make every single day; ties go to the busier window.
+  // Sweet spot: the full-length window where the most people can make every
+  // single day; ties go to the busier window.
   let sweetSpot: GroupStats["sweetSpot"] = null;
   let bestSum = -1;
-  for (const len of [tripDays()]) {
-    for (let i = 0; i + len <= dates.length; i++) {
-      const window = dates.slice(i, i + len);
-      const counts = window.map((d) => dateCounts[d]);
-      const min = Math.min(...counts);
-      const sum = counts.reduce((a, b) => a + b, 0);
-      const better =
-        !sweetSpot ||
-        min > sweetSpot.min ||
-        (min === sweetSpot.min && len > sweetSpot.days) ||
-        (min === sweetSpot.min && len === sweetSpot.days && sum > bestSum);
-      if (min > 0 && better) {
-        sweetSpot = { start: window[0], end: window[len - 1], min, days: len };
-        bestSum = sum;
-      }
+  const len = tripDays(e);
+  for (let i = 0; i + len <= dates.length; i++) {
+    const window = dates.slice(i, i + len);
+    const counts = window.map((d) => dateCounts[d]);
+    const min = Math.min(...counts);
+    const sum = counts.reduce((a, b) => a + b, 0);
+    const better = !sweetSpot || min > sweetSpot.min || (min === sweetSpot.min && sum > bestSum);
+    if (min > 0 && better) {
+      sweetSpot = { start: window[0], end: window[len - 1], min, days: len };
+      bestSum = sum;
     }
   }
 
@@ -138,12 +127,12 @@ export function computeStats(people: Person[]): GroupStats {
     topOptions: [...optionCounts.entries()]
       .sort((a, b) => b[1] - a[1])
       .slice(0, 10)
-      .map(([optionId, count]) => ({ optionId, count, slot: activitiesById[optionId].slots[0] })),
+      .map(([optionId, count]) => ({ optionId, count, slot: byId[optionId].slots[0] })),
     stayCount,
     balance: balances.length ? balances.reduce((a, b) => a + b, 0) / balances.length : null,
     regions: [...regionCounts.entries()]
       .sort((a, b) => b[1] - a[1])
-      .filter(([r]) => r in regions)
+      .filter(([r]) => r in e.catalog.regions)
       .map(([region, count]) => ({ region, count })),
     flexibility,
     avgLength: lengths.length ? lengths.reduce((a, b) => a + b, 0) / lengths.length : null,
@@ -157,26 +146,30 @@ export type PublicCounts = {
   submitted: number;
   initials: string[];
   locked: boolean;
-  trip: { days: number; colombo: number; galle: number; start: string; end: string };
+  trip: { days: number; bases: { name: string; nights: number }[]; start: string; end: string };
   announcement: string | null;
 };
 
-const DEFAULT_TRIP = { days: 6, colombo: 1, galle: 4, start: "2026-12-01", end: "2027-01-31" };
-
 export async function publicCounts(): Promise<PublicCounts> {
+  const trip = await loadTrip();
+  const e = trip.engine;
+  const shape = {
+    days: tripDays(e),
+    bases: nightsFor(e, tripDays(e)).map((s) => ({ name: s.base.name, nights: s.nights })),
+    start: e.rules.window.start,
+    end: e.rules.window.end,
+  };
   try {
-    const people = realPeople(await loadPeople());
-    const live = await loadRules();
-    const r = live.rules;
+    const people = realPeople(await loadPeople(e));
     return {
       joined: people.length,
       submitted: people.filter((p) => p.status === "submitted").length,
       initials: people.slice(-5).map((p) => p.name.trim()[0]?.toUpperCase() ?? "?"),
-      locked: live.locked,
-      trip: { days: tripDays(r), colombo: r.colomboNights, galle: r.galleNights, start: r.window.start, end: r.window.end },
-      announcement: r.announcement.on && r.announcement.text.trim() ? r.announcement.text : null,
+      locked: trip.locked,
+      trip: shape,
+      announcement: e.rules.announcement.on && e.rules.announcement.text.trim() ? e.rules.announcement.text : null,
     };
   } catch {
-    return { joined: 0, submitted: 0, initials: [], locked: false, trip: DEFAULT_TRIP, announcement: null };
+    return { joined: 0, submitted: 0, initials: [], locked: false, trip: shape, announcement: null };
   }
 }

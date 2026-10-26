@@ -1,13 +1,13 @@
-import { activitiesById } from "@/content";
-import { daysNightsLabel, nightsLine, restructure } from "@/lib/itinerary";
-import { applyRules, mergeRules, rulesPatchSchema, rulesProblems, tripDays, type TripRules } from "@/lib/rules";
+import { restructure } from "@/engine/itinerary";
+import { mergeRules, rulesPatchSchema, rulesProblems, type TripRules } from "@/engine/rules";
+import { createEngine, daysNightsLabel, nightsLine, tripDays } from "@/engine/structure";
 import { db } from "@/lib/server/db";
 import { error, json, readJson } from "@/lib/server/http";
 import { asOrganizer, logAction } from "@/lib/server/organizer";
-import { loadRules } from "@/lib/server/rules";
+import { loadTrip } from "@/lib/server/trip";
 
 /** Rule changes that can invalidate saved plans (and so need a preview + confirmation). */
-const STRUCTURAL: (keyof TripRules)[] = ["colomboNights", "galleNights", "window", "requireFullTrip"];
+const STRUCTURAL: (keyof TripRules)[] = ["nights", "window", "requireFullTrip"];
 
 export type Impact = { plans: number; needRepicks: number; lostPicks: number; people: { name: string; lost: number }[] };
 
@@ -18,27 +18,27 @@ export type Impact = { plans: number; needRepicks: number; lostPicks: number; pe
  */
 export async function POST(req: Request) {
   return asOrganizer("admin", async (actor) => {
+    const trip = await loadTrip();
     const body = await readJson(req);
-    const parsed = rulesPatchSchema.safeParse(body?.patch);
+    const parsed = rulesPatchSchema(trip.preset).safeParse(body?.patch);
     if (!parsed.success) return error(parsed.error.issues[0]?.message ?? "Those rules didn't look right", 400);
-    const patch = parsed.data;
+    const patch = parsed.data as Partial<TripRules>;
+    const byId = trip.catalog.byId;
     for (const k of ["hidden", "recheck", "featured"] as const) {
-      if (patch[k]) patch[k] = [...new Set(patch[k]!.filter((id) => activitiesById[id]?.kind === "option" || activitiesById[id]?.kind === "extra"))];
+      if (patch[k]) patch[k] = [...new Set(patch[k]!.filter((id) => byId[id]?.kind === "option" || byId[id]?.kind === "extra"))];
     }
 
-    const live = await loadRules();
-    const before = live.rules;
+    const before = trip.rules;
     const next = mergeRules(before, patch);
-    const problems = rulesProblems(next);
+    const problems = rulesProblems(next, trip.preset);
     if (problems.length) return error(problems[0], 400);
 
+    const from = trip.engine;
+    const to = createEngine(trip.catalog, next);
     const structural = STRUCTURAL.some((k) => JSON.stringify(before[k]) !== JSON.stringify(next[k]));
     const [participants, rows] = structural ? await Promise.all([db().listParticipants(), db().listItineraries()]) : [[], []];
     const names = new Map(participants.map((p) => [p.id, p.display_name]));
-    const moved = rows
-      .map((row) => ({ row, ...restructure(row.data, before, next) }))
-      .filter((m) => m.changed);
-    applyRules(before);
+    const moved = rows.map((row) => ({ row, ...restructure(row.data, from, to) })).filter((m) => m.changed);
     const impact: Impact = {
       plans: moved.length,
       needRepicks: moved.filter((m) => m.lost > 0).length,
@@ -49,9 +49,8 @@ export async function POST(req: Request) {
     if (moved.length && body?.confirm !== true) return error("confirm", 409, { code: "confirm", impact });
 
     await db().setRules(next);
-    applyRules(next);
     const now = new Date().toISOString();
-    const summary = `${daysNightsLabel(tripDays())} · ${nightsLine(tripDays())}`;
+    const summary = `${daysNightsLabel(tripDays(to))} · ${nightsLine(to, tripDays(to))}`;
     for (const m of moved) {
       await db().saveItinerary({
         participant_id: m.row.participant_id,

@@ -4,13 +4,13 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ArrowDown, ArrowUp, LockKeyhole, Plus, Search, UserPlus, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/cn";
-import { MAX_ROOMMATES, type RoommatePick } from "@/lib/itinerary";
+import { MAX_ROOMMATES, type RoommatePick } from "@/engine/itinerary";
 import { Avatar } from "../avatar";
 
 const RANK = [
-  { label: "1st", medal: "bg-saffron-400 text-ink ring-saffron-200" },
-  { label: "2nd", medal: "bg-sand-300 text-ink ring-sand-200" },
-  { label: "3rd", medal: "bg-sunset-300 text-ink ring-sunset-100" },
+  { label: "1st", medal: "bg-highlight-400 text-ink ring-highlight-200" },
+  { label: "2nd", medal: "bg-surface-300 text-ink ring-surface-200" },
+  { label: "3rd", medal: "bg-accent-300 text-ink ring-accent-100" },
 ];
 
 /**
@@ -90,7 +90,7 @@ export function RoommatePicker({
                       onClick={() => move(i, -1)}
                       disabled={disabled || i === 0}
                       aria-label={`Move ${p.name} up`}
-                      className="grid size-9 place-items-center rounded-full text-ink-2 transition hover:bg-sand-200 disabled:opacity-25"
+                      className="grid size-9 place-items-center rounded-full text-ink-2 transition hover:bg-surface-200 disabled:opacity-25"
                     >
                       <ArrowUp className="size-4" />
                     </button>
@@ -99,7 +99,7 @@ export function RoommatePicker({
                       onClick={() => move(i, 1)}
                       disabled={disabled || i === value.length - 1}
                       aria-label={`Move ${p.name} down`}
-                      className="grid size-9 place-items-center rounded-full text-ink-2 transition hover:bg-sand-200 disabled:opacity-25"
+                      className="grid size-9 place-items-center rounded-full text-ink-2 transition hover:bg-surface-200 disabled:opacity-25"
                     >
                       <ArrowDown className="size-4" />
                     </button>
@@ -108,14 +108,14 @@ export function RoommatePicker({
                       onClick={() => onChange(value.filter((_, k) => k !== i))}
                       disabled={disabled}
                       aria-label={`Remove ${p.name}`}
-                      className="grid size-9 place-items-center rounded-full text-ink-3 transition hover:bg-sunset-100 hover:text-sunset-600"
+                      className="grid size-9 place-items-center rounded-full text-ink-3 transition hover:bg-accent-100 hover:text-accent-600"
                     >
                       <X className="size-4" />
                     </button>
                   </motion.div>
                 ) : (
-                  <div className="flex h-[52px] items-center gap-2.5 rounded-2xl border-2 border-dashed border-sand-300 px-2 text-[14px] font-semibold text-ink-3">
-                    <span className="font-display grid size-9 place-items-center rounded-full bg-sand-200 text-[13px] font-bold text-ink-3">{r.label}</span>
+                  <div className="flex h-[52px] items-center gap-2.5 rounded-2xl border-2 border-dashed border-surface-300 px-2 text-[14px] font-semibold text-ink-3">
+                    <span className="font-display grid size-9 place-items-center rounded-full bg-surface-200 text-[13px] font-bold text-ink-3">{r.label}</span>
                     {i === value.length ? "Tap someone below" : "—"}
                   </div>
                 )}
@@ -181,7 +181,7 @@ export function RoommatePicker({
             maxLength={40}
             placeholder="e.g. Sam"
             disabled={disabled || full}
-            className="h-12 min-w-0 flex-1 rounded-2xl border-2 border-sand-300 bg-paper px-4 text-[16px] outline-none transition placeholder:text-ink-3/60 focus:border-ocean-600"
+            className="h-12 min-w-0 flex-1 rounded-2xl border-2 border-surface-300 bg-paper px-4 text-[16px] outline-none transition placeholder:text-ink-3/60 focus:border-primary-600"
           />
           <button
             type="submit"
@@ -193,7 +193,7 @@ export function RoommatePicker({
         </div>
       </form>
       <p className="mt-3 flex items-center gap-1.5 px-1 text-[12px] text-ink-3">
-        <LockKeyhole className="size-3 shrink-0 text-jungle-600" /> Only the organizers see this — never the group screen, browse or peeks.
+        <LockKeyhole className="size-3 shrink-0 text-secondary-600" /> Only the organizers see this — never the group screen, browse or peeks.
       </p>
     </div>
   );

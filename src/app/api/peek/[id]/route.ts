@@ -1,17 +1,17 @@
-import { normalize } from "@/lib/itinerary";
+import { normalize } from "@/engine/itinerary";
 import type { PeekResponse } from "@/lib/peek";
 import { peekPlan } from "@/lib/privacy";
 import { db, roleOf } from "@/lib/server/db";
 import { error, json } from "@/lib/server/http";
 import { logAction } from "@/lib/server/organizer";
-import { loadRules } from "@/lib/server/rules";
+import { loadTrip } from "@/lib/server/trip";
 import { currentParticipant } from "@/lib/server/session";
 
 /** 👀 Peek at someone's plan (drafts too): their full itinerary, read-only — never notes or private answers. */
 export async function GET(_req: Request, ctx: RouteContext<"/api/peek/[id]">) {
   const me = await currentParticipant();
   if (!me) return error("Sign in first", 401);
-  const { rules } = await loadRules();
+  const { rules, engine } = await loadTrip();
   if (!rules.peek) return error("Peeking is switched off", 403, { code: "peek_off" });
   const { id } = await ctx.params;
   if (id === me.id) return error("That's your own plan!", 400);
@@ -25,7 +25,7 @@ export async function GET(_req: Request, ctx: RouteContext<"/api/peek/[id]">) {
     name: person.display_name,
     role: roleOf(person),
     status: row ? row.status : "new",
-    data: row ? peekPlan(normalize(row.data)) : null,
+    data: row ? peekPlan(normalize(engine, row.data)) : null,
   };
   return json(body);
 }

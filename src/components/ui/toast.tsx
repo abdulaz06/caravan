@@ -37,7 +37,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               exit={{ opacity: 0, y: -10, scale: 0.98 }}
               className={
                 t.tone === "error"
-                  ? "rounded-full bg-sunset-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lift"
+                  ? "rounded-full bg-accent-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lift"
                   : "rounded-full bg-ink px-4 py-2.5 text-sm font-semibold text-paper shadow-lift"
               }
             >

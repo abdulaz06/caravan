@@ -4,16 +4,15 @@ import { motion } from "framer-motion";
 import { ArrowLeft, ArrowRight, Leaf, Lock, Martini, Moon, ShieldCheck, Sparkles, Sun } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import { NYE_DATE, optionsById, regions } from "@/content";
-import { flexibility as FLEX } from "@/content/preferences";
+import { daysNightsLabel, tripDays } from "@/engine/structure";
+import { balanceLabel } from "@/engine/timeline";
 import { cn } from "@/lib/cn";
 import { dayLabel, monthName, parseISO, rangeLabel } from "@/lib/dates";
-import { daysNightsLabel } from "@/lib/itinerary";
-import { tripDays, tripWindow } from "@/lib/rules";
-import { balanceLabel } from "@/lib/timeline";
 import type { GroupStats } from "@/lib/server/group";
 import { Avatar } from "../avatar";
-import { Firework, Palm } from "../brand/illustrations";
+import { useArt } from "../brand/art";
+import { Firework } from "../brand/illustrations";
+import { useEngine } from "../engine";
 import { SiteFooter } from "../brand/site-footer";
 import { Lockup } from "../brand/wordmark";
 import { CurrencyPicker } from "../currency";
@@ -53,8 +52,8 @@ type Props = {
 /** A small "Organizer" badge next to admins' and the owner's names. */
 export function OrganizerBadge({ className }: { className?: string }) {
   return (
-    <span className={cn("inline-flex shrink-0 items-center gap-0.5 rounded-full bg-jungle-800 px-1.5 py-px text-[10px] font-bold text-paper", className)}>
-      <ShieldCheck className="size-2.5 text-saffron-400" /> Organizer
+    <span className={cn("inline-flex shrink-0 items-center gap-0.5 rounded-full bg-secondary-800 px-1.5 py-px text-[10px] font-bold text-paper", className)}>
+      <ShieldCheck className="size-2.5 text-highlight-400" /> Organizer
     </span>
   );
 }
@@ -64,19 +63,21 @@ const rise = { initial: { opacity: 0, y: 20 }, whileInView: { opacity: 1, y: 0 }
 export function GroupView({ stats, myStatus, canBrowse, itineraries, members, editsLocked, isOrganizer }: Props) {
   const popular = usePopular();
   const rules = useRules();
+  const { catalog } = useEngine();
+  const { Decor } = useArt();
   const pct = stats.joined ? stats.submitted / stats.joined : 0;
   const org = new Set(members.filter((m) => m.organizer).map((m) => m.id));
   const card = new Map(itineraries.map((it) => [it.id, it]));
   return (
     <div className="grain min-h-dvh">
-      <header className="sticky top-0 z-40 flex h-16 items-center gap-3 border-b border-ink/[0.06] bg-sand-100/85 px-4 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
-        <Link href="/trip" className="flex items-center gap-1.5 rounded-full px-2 py-1.5 text-[14px] font-semibold text-ink-2 hover:bg-sand-200">
+      <header className="sticky top-0 z-40 flex h-16 items-center gap-3 border-b border-ink/[0.06] bg-surface-100/85 px-4 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
+        <Link href="/trip" className="flex items-center gap-1.5 rounded-full px-2 py-1.5 text-[14px] font-semibold text-ink-2 hover:bg-surface-200">
           <ArrowLeft className="size-4" /> My trip
         </Link>
         <span className="flex-1" />
         {isOrganizer && (
-          <Link href="/admin" className="inline-flex h-9 items-center gap-1.5 rounded-full bg-jungle-800 px-3 text-[12.5px] font-bold text-paper">
-            <ShieldCheck className="size-4 text-saffron-400" /> Organizer
+          <Link href="/admin" className="inline-flex h-9 items-center gap-1.5 rounded-full bg-secondary-800 px-3 text-[12.5px] font-bold text-paper">
+            <ShieldCheck className="size-4 text-highlight-400" /> Organizer
           </Link>
         )}
         <CurrencyPicker />
@@ -86,15 +87,15 @@ export function GroupView({ stats, myStatus, canBrowse, itineraries, members, ed
       <LockCountdown />
 
       {editsLocked && (
-        <div className="flex items-center gap-2.5 bg-ocean-800 px-4 py-3 text-[14px] font-medium text-paper">
-          <Lock className="size-4 shrink-0 text-saffron-400" /> Edits are closed — the final plan is coming!
+        <div className="flex items-center gap-2.5 bg-primary-800 px-4 py-3 text-[14px] font-medium text-paper">
+          <Lock className="size-4 shrink-0 text-highlight-400" /> Edits are closed — the final plan is coming!
         </div>
       )}
 
       <div className="relative z-[1] px-5 pt-7">
-        <p className="label text-sunset-600">Group overview</p>
+        <p className="label text-accent-600">Group overview</p>
         <h1 className="font-display mt-2 text-[38px] font-semibold leading-[1] tracking-[-0.025em]">
-          The <span className="italic text-ocean-700">crew</span>
+          The <span className="italic text-primary-700">crew</span>
         </h1>
       </div>
       <div className="relative z-[1] mt-5 space-y-4 px-3">
@@ -107,11 +108,11 @@ export function GroupView({ stats, myStatus, canBrowse, itineraries, members, ed
         )}
 
         {/* Responses */}
-        <section className="relative overflow-hidden rounded-[30px] bg-ocean-800 p-5 text-paper shadow-lift">
+        <section className="relative overflow-hidden rounded-[30px] bg-primary-800 p-5 text-paper shadow-lift">
           <div className="sunburst absolute inset-0" />
-          <Palm className="absolute -right-4 bottom-0 h-36 text-ocean-950/40" />
+          <Decor className="absolute -right-4 bottom-0 h-36 text-primary-950/40" />
           <div className="relative">
-            <p className="label text-saffron-400">Responses</p>
+            <p className="label text-highlight-400">Responses</p>
             <p className="font-display mt-2 text-[56px] font-semibold leading-none tracking-[-0.03em]">
               {stats.submitted}
               <span className="text-paper/40">/{stats.joined}</span>
@@ -121,7 +122,7 @@ export function GroupView({ stats, myStatus, canBrowse, itineraries, members, ed
             </p>
             <div className="mt-4 h-2.5 overflow-hidden rounded-full bg-white/15">
               <motion.div
-                className="h-full rounded-full bg-saffron-400"
+                className="h-full rounded-full bg-highlight-400"
                 initial={{ width: 0 }}
                 animate={{ width: `${pct * 100}%` }}
                 transition={{ type: "spring", stiffness: 60, damping: 16, delay: 0.2 }}
@@ -138,8 +139,8 @@ export function GroupView({ stats, myStatus, canBrowse, itineraries, members, ed
                 >
                   <Avatar name={p.name} className="size-6 text-[11px] ring-0" />
                   {p.name}
-                  {org.has(p.id) && <ShieldCheck aria-label="Organizer" className="size-3.5 text-saffron-500" />}
-                  {p.status === "submitted" && <span className="text-jungle-600">✓</span>}
+                  {org.has(p.id) && <ShieldCheck aria-label="Organizer" className="size-3.5 text-highlight-500" />}
+                  {p.status === "submitted" && <span className="text-secondary-600">✓</span>}
                 </li>
               ))}
             </ul>
@@ -166,24 +167,24 @@ export function GroupView({ stats, myStatus, canBrowse, itineraries, members, ed
             <h2 className="font-display text-[24px] font-semibold">Most picked</h2>
             <ol className="mt-3 space-y-2.5">
               {stats.topOptions.slice(0, 8).map((t, i) => {
-                const o = optionsById[t.optionId];
+                const o = catalog.byId[t.optionId];
                 const max = stats.topOptions[0].count;
                 return (
                   <li key={t.optionId} className="flex items-center gap-3">
                     <span className="font-display w-5 text-right text-[15px] font-semibold text-ink-3">{i + 1}</span>
-                    <span className="relative size-12 shrink-0 overflow-hidden rounded-xl bg-ocean-800">
+                    <span className="relative size-12 shrink-0 overflow-hidden rounded-xl bg-primary-800">
                       <Photo photo={o.images[0]} alt={o.title} sizes="48px" />
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="flex items-center gap-1.5 text-[14px] font-semibold leading-tight">
-                        {t.slot === "day" ? <Sun className="size-3.5 shrink-0 text-saffron-600" /> : <Moon className="size-3.5 shrink-0 text-dusk-700" />}
+                        {t.slot === "day" ? <Sun className="size-3.5 shrink-0 text-highlight-600" /> : <Moon className="size-3.5 shrink-0 text-night-700" />}
                         <span className="truncate">{o.title}</span>
                         {popular(t.optionId) !== null && <PopularBadge count={popular(t.optionId)!} short className="ml-auto shrink-0" />}
                       </span>
                       <span className="mt-1.5 flex items-center gap-2">
-                        <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-sand-200">
+                        <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-200">
                           <motion.span
-                            className={cn("block h-full rounded-full", t.slot === "day" ? "bg-saffron-500" : "bg-hibiscus-500")}
+                            className={cn("block h-full rounded-full", t.slot === "day" ? "bg-highlight-500" : "bg-pop-500")}
                             initial={{ width: 0 }}
                             whileInView={{ width: `${(t.count / max) * 100}%` }}
                             viewport={{ once: true }}
@@ -198,7 +199,7 @@ export function GroupView({ stats, myStatus, canBrowse, itineraries, members, ed
               })}
             </ol>
             {stats.stayCount.day + stats.stayCount.night > 0 && (
-              <div className="mt-3 flex items-center gap-3 rounded-2xl bg-sand-100 p-2.5">
+              <div className="mt-3 flex items-center gap-3 rounded-2xl bg-surface-100 p-2.5">
                 <StayThumb kind="night" className="size-11" />
                 <p className="text-[13.5px] leading-snug text-ink-2">
                   <b className="text-ink">Stay in</b> picked {stats.stayCount.day + stats.stayCount.night}{" "}
@@ -215,11 +216,11 @@ export function GroupView({ stats, myStatus, canBrowse, itineraries, members, ed
           <motion.section {...rise} className="rounded-[26px] bg-paper p-4 shadow-card">
             <h2 className="font-display text-[24px] font-semibold">Where people want to go</h2>
             <div className="mt-2 grid grid-cols-[1fr_1fr] items-center gap-3">
-              <RouteMap stops={[]} weights={stats.regions} tone="light" />
+              <RouteMap weights={stats.regions} />
               <ul className="space-y-1.5">
                 {stats.regions.slice(0, 8).map((r) => (
                   <li key={r.region} className="flex items-center justify-between text-[13.5px]">
-                    <span className="font-semibold">{regions[r.region].short}</span>
+                    <span className="font-semibold">{catalog.regions[r.region]?.short ?? r.region}</span>
                     <span className="tabular-nums text-ink-3">{r.count} picks</span>
                   </li>
                 ))}
@@ -229,11 +230,11 @@ export function GroupView({ stats, myStatus, canBrowse, itineraries, members, ed
         )}
 
         {/* Everyone: open submitted trips (if browsing is unlocked) and 👀 peek at anyone */}
-        <motion.section {...rise} className="rounded-[26px] bg-sand-50 p-4 shadow-card ring-1 ring-ink/[0.03]">
+        <motion.section {...rise} className="rounded-[26px] bg-surface-50 p-4 shadow-card ring-1 ring-ink/[0.03]">
           <h2 className="font-display text-[24px] font-semibold">Everyone&apos;s trips</h2>
           {!canBrowse && rules.browse !== "off" && (
-            <div className="mt-3 rounded-2xl bg-ocean-800 p-5 text-paper">
-              <Lock className="size-6 text-saffron-400" />
+            <div className="mt-3 rounded-2xl bg-primary-800 p-5 text-paper">
+              <Lock className="size-6 text-highlight-400" />
               <p className="font-display mt-2 text-[20px] font-semibold leading-tight">Submit yours to unlock everyone&apos;s trips</p>
               <p className="mt-1.5 text-[14px] text-paper/70">
                 Keeps everyone&apos;s picks independent — no copying the cool kids.{rules.peek ? " (A sneaky peek is allowed though 👀)" : ""}
@@ -277,9 +278,9 @@ export function GroupView({ stats, myStatus, canBrowse, itineraries, members, ed
                     </span>
                     {open && it && (
                       <span className="mt-1.5 flex items-center gap-1.5" aria-label={`Nature to nightlife: ${balanceLabel(it.balance).title}`}>
-                        <Leaf className="size-3 shrink-0 text-jungle-600" strokeWidth={2.5} />
+                        <Leaf className="size-3 shrink-0 text-secondary-600" strokeWidth={2.5} />
                         <MiniMeter score={it.balance} className="max-w-[150px]" />
-                        <Martini className="size-3 shrink-0 text-hibiscus-600" strokeWidth={2.5} />
+                        <Martini className="size-3 shrink-0 text-pop-600" strokeWidth={2.5} />
                       </span>
                     )}
                   </span>
@@ -287,7 +288,7 @@ export function GroupView({ stats, myStatus, canBrowse, itineraries, members, ed
                     <Link
                       href={`/group/peek/${m.id}`}
                       aria-label={`Peek at ${m.name}'s plan`}
-                      className="inline-flex h-9 shrink-0 items-center gap-1 rounded-full bg-dusk-900 px-3 text-[13px] font-bold text-paper shadow-card transition hover:-translate-y-0.5 active:scale-95"
+                      className="inline-flex h-9 shrink-0 items-center gap-1 rounded-full bg-night-900 px-3 text-[13px] font-bold text-paper shadow-card transition hover:-translate-y-0.5 active:scale-95"
                     >
                       <span aria-hidden="true">👀</span> Peek
                     </Link>
@@ -324,19 +325,21 @@ function months(start: string, end: string) {
 const WEEK = ["M", "T", "W", "T", "F", "S", "S"];
 
 function heat(count: number, max: number): string {
-  if (!count || !max) return "bg-sand-100 text-ink-3/60";
+  if (!count || !max) return "bg-surface-100 text-ink-3/60";
   const r = count / max;
-  if (r <= 0.25) return "bg-saffron-100 text-ink";
-  if (r <= 0.5) return "bg-saffron-200 text-ink";
-  if (r <= 0.75) return "bg-saffron-400 text-ink";
-  if (r < 1) return "bg-sunset-500 text-white";
-  return "bg-hibiscus-600 text-white";
+  if (r <= 0.25) return "bg-highlight-100 text-ink";
+  if (r <= 0.5) return "bg-highlight-200 text-ink";
+  if (r <= 0.75) return "bg-highlight-400 text-ink";
+  if (r < 1) return "bg-accent-500 text-white";
+  return "bg-pop-600 text-white";
 }
 
 function Heatmap({ stats }: { stats: GroupStats }) {
+  const e = useEngine();
   const [focus, setFocus] = useState<string | null>(stats.sweetSpot?.start ?? null);
   const max = stats.maxDateCount;
-  const flexEntries = FLEX.filter((f) => stats.flexibility[f.id]);
+  const flexEntries = e.catalog.preset.preferences.flexibility.filter((f) => stats.flexibility[f.id]);
+  const special = (d: string) => e.catalog.specialDates.some((s) => s.date === d.slice(5));
 
   return (
     <motion.section {...rise} className="rounded-[26px] bg-paper p-4 shadow-card">
@@ -348,8 +351,8 @@ function Heatmap({ stats }: { stats: GroupStats }) {
       </p>
 
       {stats.sweetSpot && (
-        <div className="mt-3 flex items-start gap-3 rounded-2xl bg-ocean-800 p-3.5 text-paper">
-          <Sparkles className="mt-0.5 size-5 shrink-0 text-saffron-400" />
+        <div className="mt-3 flex items-start gap-3 rounded-2xl bg-primary-800 p-3.5 text-paper">
+          <Sparkles className="mt-0.5 size-5 shrink-0 text-highlight-400" />
           <p className="text-[14px] leading-snug">
             <span className="font-display text-[17px] font-semibold">Sweet spot: {rangeLabel(stats.sweetSpot.start, stats.sweetSpot.end)}</span>
             <br />
@@ -363,7 +366,7 @@ function Heatmap({ stats }: { stats: GroupStats }) {
       )}
 
       <div className="mt-4 space-y-5">
-        {months(tripWindow().start, tripWindow().end).map(({ y, m }) => {
+        {months(e.rules.window.start, e.rules.window.end).map(({ y, m }) => {
           const first = new Date(Date.UTC(y, m, 1));
           const lead = (first.getUTCDay() + 6) % 7;
           const days = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
@@ -391,12 +394,12 @@ function Heatmap({ stats }: { stats: GroupStats }) {
                         "relative flex aspect-square flex-col items-center justify-center rounded-lg text-[12px] font-semibold leading-none transition",
                         heat(c, max),
                         focus === d && "ring-2 ring-ink ring-offset-1",
-                        inSweet && "outline outline-2 outline-offset-[-2px] outline-ocean-600",
+                        inSweet && "outline outline-2 outline-offset-[-2px] outline-primary-600",
                       )}
                     >
                       <span className="tabular-nums opacity-70">{parseISO(d).getUTCDate()}</span>
                       {c > 0 && <span className="mt-0.5 text-[10px] font-bold tabular-nums">{c}</span>}
-                      {d === NYE_DATE && <Firework className="absolute right-0.5 top-0.5 size-2.5 opacity-80" />}
+                      {special(d) && <Firework className="absolute right-0.5 top-0.5 size-2.5 opacity-80" />}
                     </button>
                   );
                 })}
@@ -409,21 +412,21 @@ function Heatmap({ stats }: { stats: GroupStats }) {
       <div className="mt-4 flex items-center gap-2 text-[11.5px] font-semibold text-ink-3">
         <span>Fewer</span>
         <span className="flex flex-1 gap-0.5">
-          {["bg-sand-100", "bg-saffron-100", "bg-saffron-200", "bg-saffron-400", "bg-sunset-500", "bg-hibiscus-600"].map((c) => (
+          {["bg-surface-100", "bg-highlight-100", "bg-highlight-200", "bg-highlight-400", "bg-accent-500", "bg-pop-600"].map((c) => (
             <span key={c} className={cn("h-2.5 flex-1 rounded-sm", c)} />
           ))}
         </span>
         <span>Everyone</span>
       </div>
       {focus && (
-        <p className="mt-3 rounded-xl bg-sand-100 px-3 py-2 text-[13.5px]">
+        <p className="mt-3 rounded-xl bg-surface-100 px-3 py-2 text-[13.5px]">
           <b>{dayLabel(focus)}</b> · {stats.dateCounts[focus] ?? 0} of {stats.withDates} can make it
         </p>
       )}
       {flexEntries.length > 0 && (
         <p className="mt-3 text-[12.5px] text-ink-3">
           {flexEntries.map((f) => `${stats.flexibility[f.id]} ${f.label.toLowerCase()}`).join(" · ")}
-          {stats.avgLength ? ` · everyone's window is ${daysNightsLabel(tripDays())}` : ""}
+          {stats.avgLength ? ` · everyone's window is ${daysNightsLabel(tripDays(e))}` : ""}
         </p>
       )}
     </motion.section>

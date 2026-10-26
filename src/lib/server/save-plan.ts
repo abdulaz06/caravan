@@ -1,33 +1,27 @@
 import "server-only";
-import { MAX_ROOMMATES, daysNightsLabel, isSubmittable, normalize, type ItineraryData, type RoommatePick } from "@/lib/itinerary";
-import { currentRules, isHidden, tripDays } from "@/lib/rules";
-import { parseItinerary } from "@/lib/schema";
+import { parseItinerary } from "@/engine/input";
+import { MAX_ROOMMATES, isSubmittable, normalize, type ItineraryData, type RoommatePick } from "@/engine/itinerary";
+import { isHidden } from "@/engine/rules";
+import { daysNightsLabel, tripDays, type Engine } from "@/engine/structure";
 import { db, type ParticipantRow } from "./db";
 import { error, json } from "./http";
 import { logAction } from "./organizer";
-import { loadRules } from "./rules";
 import type { Actor } from "./session";
+import { loadTrip } from "./trip";
 
 /** Hidden options someone already had stay ("No longer available"); new picks of them are refused. */
-function dropNewlyHidden(data: ItineraryData, before: ItineraryData | null): ItineraryData {
-  if (!currentRules().hidden.length) return data;
-  // The saved plan may be an older shape (v1/v2) — normalise it before reading its picks.
-  const had = new Set(before ? normalize(before).days.flatMap((d) => [...d.day, ...d.night].map((x) => x.id)) : []);
-  return {
-    ...data,
-    days: data.days.map((d) => ({
-      ...d,
-      day: d.day.filter((x) => !isHidden(x.id) || had.has(x.id)),
-      night: d.night.filter((x) => !isHidden(x.id) || had.has(x.id)),
-    })),
-  };
+function dropNewlyHidden(e: Engine, data: ItineraryData, before: ItineraryData | null): ItineraryData {
+  if (!e.rules.hidden.length) return data;
+  const had = new Set(before ? normalize(e, before).days.flatMap((d) => [...d.day, ...d.night].map((x) => x.id)) : []);
+  const keep = (id: string) => !isHidden(e.rules, id) || had.has(id);
+  return { ...data, days: data.days.map((d) => ({ ...d, day: d.day.filter((x) => keep(x.id)), night: d.night.filter((x) => keep(x.id)) })) };
 }
 
 /**
- * Roommate picks, made safe: an app version that doesn't know about them sends
- * none, so a missing list keeps what's saved. Participant picks must be real
- * people other than yourself (their current name is stored); a pick of someone
- * who's gone is kept as a typed name. No duplicates, at most three.
+ * Roommate picks, made safe: a client that doesn't send them keeps what's
+ * saved. Participant picks must be real people other than yourself (their
+ * current name is stored); a pick of someone who's gone is kept as a typed
+ * name. No duplicates, at most three.
  */
 async function cleanRoommates(p: ParticipantRow, data: ItineraryData, before: ItineraryData | null): Promise<ItineraryData> {
   const sent = data.preferences.roommates;
@@ -57,17 +51,18 @@ async function cleanRoommates(p: ParticipantRow, data: ItineraryData, before: It
  * stamps "Edited by <organizer>").
  */
 export async function savePlan(p: ParticipantRow, body: Record<string, unknown> | null, actor?: Actor): Promise<Response> {
-  const live = await loadRules();
-  if (!actor && live.locked) return error("locked", 423);
+  const trip = await loadTrip();
+  const e = trip.engine;
+  if (!actor && trip.locked) return error("locked", 423);
   const existing = await db().getItinerary(p.id);
 
-  const parsed = parseItinerary(body?.data);
+  const parsed = parseItinerary(e, body?.data);
   if (!parsed) return error("That itinerary didn't look right — try refreshing.", 400);
-  const data = await cleanRoommates(p, dropNewlyHidden(parsed, existing?.data ?? null), existing?.data ?? null);
+  const data = await cleanRoommates(p, dropNewlyHidden(e, parsed, existing?.data ?? null), existing?.data ?? null);
 
   const submit = !actor && body?.submit === true;
   if (submit && !data.startDate) return error("Pick your dates before submitting.", 400);
-  if (submit && !isSubmittable(data)) return error(`The group voted ${daysNightsLabel(tripDays())}. Switch back to submit.`, 400);
+  if (submit && !isSubmittable(e, data)) return error(`This trip is ${daysNightsLabel(tripDays(e))}. Switch back to submit.`, 400);
 
   const now = new Date().toISOString();
   const status = submit || existing?.status === "submitted" ? "submitted" : "draft";

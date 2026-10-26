@@ -12,8 +12,8 @@ import { PinInput } from "../ui/pin-input";
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="grain grid min-h-dvh place-items-center bg-ocean-900 px-5 py-10">
-      <div className="relative z-[1] w-full max-w-sm rounded-[30px] bg-sand-50 p-6 shadow-lift">{children}</div>
+    <div className="grain grid min-h-dvh place-items-center bg-primary-900 px-5 py-10">
+      <div className="relative z-[1] w-full max-w-sm rounded-[30px] bg-surface-50 p-6 shadow-lift">{children}</div>
     </div>
   );
 }
@@ -49,7 +49,7 @@ export function ConfirmPin({ name }: { name: string }) {
       <div className="mt-6 flex items-center gap-3">
         <Avatar name={name} className="size-11 text-[17px]" />
         <div>
-          <p className="label text-jungle-600">
+          <p className="label text-secondary-600">
             <ShieldCheck className="mr-1 inline size-3.5" /> Organizer
           </p>
           <p className="font-display text-[22px] font-semibold leading-tight">Hi {name}</p>
@@ -72,7 +72,7 @@ export function ConfirmPin({ name }: { name: string }) {
           onComplete={submit}
         />
       </div>
-      {err && <p className="mt-3 text-sm font-semibold text-sunset-600">{err}</p>}
+      {err && <p className="mt-3 text-sm font-semibold text-accent-600">{err}</p>}
       <Button size="lg" block className="mt-5" disabled={busy || pin.length !== 4} onClick={() => submit(pin)}>
         {busy ? "Checking…" : "Open the console"}
       </Button>
@@ -108,7 +108,7 @@ export function AdminLogin() {
         <Lockup size="md" />
         <h1 className="font-display mt-6 text-[30px] font-semibold leading-tight">Organizers only</h1>
         <p className="mt-1 text-[15px] text-ink-2">
-          Organizers: <Link href="/join?returning=1" className="font-semibold text-ocean-700 underline-offset-2 hover:underline">sign in with your name &amp; PIN</Link>, then tap
+          Organizers: <Link href="/join?returning=1" className="font-semibold text-primary-700 underline-offset-2 hover:underline">sign in with your name &amp; PIN</Link>, then tap
           the Organizer button.
         </p>
         <label htmlFor="admin-pw" className="label mt-6 block text-ink-3">
@@ -124,11 +124,11 @@ export function AdminLogin() {
             setErr(false);
           }}
           className={cn(
-            "mt-2 h-14 w-full rounded-2xl border-2 bg-paper px-4 text-[17px] outline-none focus:border-ocean-600",
-            err ? "animate-shake border-sunset-500" : "border-sand-300",
+            "mt-2 h-14 w-full rounded-2xl border-2 bg-paper px-4 text-[17px] outline-none focus:border-primary-600",
+            err ? "animate-shake border-accent-500" : "border-surface-300",
           )}
         />
-        {err && <p className="mt-2 text-sm font-semibold text-sunset-600">That&apos;s not it.</p>}
+        {err && <p className="mt-2 text-sm font-semibold text-accent-600">That&apos;s not it.</p>}
         <Button type="submit" size="lg" block className="mt-6" disabled={busy || !pw}>
           {busy ? "Checking…" : "Enter"}
         </Button>

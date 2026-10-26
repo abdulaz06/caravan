@@ -5,10 +5,11 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/cn";
 import type { PeekResponse } from "@/lib/peek";
-import { balanceOf, buildTimeline } from "@/lib/timeline";
+import { balanceOf, buildTimeline } from "@/engine/timeline";
 import { SiteFooter } from "../brand/site-footer";
 import { Lockup } from "../brand/wordmark";
 import { CurrencyPicker } from "../currency";
+import { useEngine } from "../engine";
 import { BalanceMeter } from "../trip/balance-meter";
 import { ItineraryTimeline } from "../trip/itinerary-timeline";
 import { TripPoster } from "../trip/trip-poster";
@@ -43,14 +44,15 @@ export function PeekView({ id, name }: { id: string; name: string }) {
 
   const plan = load.kind === "ok" ? load.plan : null;
   const data = plan?.data ?? null;
-  const timeline = useMemo(() => (data ? buildTimeline(data) : null), [data]);
-  const balance = useMemo(() => (data ? balanceOf(data) : null), [data]);
+  const e = useEngine();
+  const timeline = useMemo(() => (data ? buildTimeline(e, data) : null), [e, data]);
+  const balance = useMemo(() => (data ? balanceOf(e, data) : null), [e, data]);
   const status = plan?.status ?? null;
 
   return (
     <div className="grain min-h-dvh">
-      <header className="sticky top-0 z-40 flex h-16 items-center gap-3 border-b border-ink/[0.06] bg-sand-100/85 px-4 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
-        <Link href="/group" className="flex items-center gap-1.5 rounded-full px-2 py-1.5 text-[14px] font-semibold text-ink-2 hover:bg-sand-200">
+      <header className="sticky top-0 z-40 flex h-16 items-center gap-3 border-b border-ink/[0.06] bg-surface-100/85 px-4 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
+        <Link href="/group" className="flex items-center gap-1.5 rounded-full px-2 py-1.5 text-[14px] font-semibold text-ink-2 hover:bg-surface-200">
           <ArrowLeft className="size-4" /> The crew
         </Link>
         <span className="flex-1" />
@@ -60,11 +62,11 @@ export function PeekView({ id, name }: { id: string; name: string }) {
 
       <div className="relative z-[1] space-y-4 px-3 pt-5">
         <section className="px-2">
-          <p className="label flex items-center gap-1.5 text-sunset-600">
+          <p className="label flex items-center gap-1.5 text-accent-600">
             <span aria-hidden="true" className="text-[15px]">👀</span> Peek
           </p>
           <h1 className="font-display mt-2 text-[34px] font-semibold leading-[1] tracking-[-0.025em] [overflow-wrap:anywhere]">
-            {name}&apos;s <span className="italic text-ocean-700">plan</span>
+            {name}&apos;s <span className="italic text-primary-700">plan</span>
           </h1>
           <p className="font-display mt-1.5 text-[16px] italic text-ink-3">{quip}</p>
           <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -73,18 +75,18 @@ export function PeekView({ id, name }: { id: string; name: string }) {
                 aria-label={`Status: ${status === "draft" ? "In progress" : status === "submitted" ? "Submitted" : "Not started"}`}
                 className={cn(
                   "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[12.5px] font-bold",
-                  status === "draft" && "bg-saffron-200 text-ink",
-                  status === "submitted" && "bg-jungle-100 text-jungle-700",
-                  status === "new" && "bg-sand-200 text-ink-2",
+                  status === "draft" && "bg-highlight-200 text-ink",
+                  status === "submitted" && "bg-secondary-100 text-secondary-700",
+                  status === "new" && "bg-surface-200 text-ink-2",
                 )}
               >
-                {status === "draft" && <span className="size-2 animate-pulse rounded-full bg-sunset-500" />}
+                {status === "draft" && <span className="size-2 animate-pulse rounded-full bg-accent-500" />}
                 {status === "draft" ? "In progress" : status === "submitted" ? "Submitted" : "Not started"}
               </span>
             )}
             {plan && plan.role !== "member" && (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-jungle-800 px-3 py-1 text-[12px] font-bold text-paper">
-                <ShieldCheck className="size-3.5 text-saffron-400" /> Organizer
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary-800 px-3 py-1 text-[12px] font-bold text-paper">
+                <ShieldCheck className="size-3.5 text-highlight-400" /> Organizer
               </span>
             )}
           </div>
@@ -113,7 +115,7 @@ export function PeekView({ id, name }: { id: string; name: string }) {
             <div className="rounded-[26px] bg-paper p-4 shadow-card">
               <BalanceMeter balance={balance} title="Their vibe" />
             </div>
-            <section className="rounded-[26px] bg-sand-50 p-4 pt-5 shadow-card ring-1 ring-ink/[0.03]">
+            <section className="rounded-[26px] bg-surface-50 p-4 pt-5 shadow-card ring-1 ring-ink/[0.03]">
               <h2 className="font-display mb-4 text-[24px] font-semibold">Day by day</h2>
               <ItineraryTimeline data={data} timeline={timeline} hideNotes />
             </section>

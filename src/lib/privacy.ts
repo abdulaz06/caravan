@@ -1,6 +1,6 @@
 // What other people may see of a plan. Private answers (budget, dietary,
 // free text, roommate picks) never leave the server for them.
-import type { ItineraryData } from "./itinerary";
+import type { ItineraryData } from "@/engine/itinerary";
 
 /** Browsing a submitted plan: picks, dates and day notes; of the answers only their interests. */
 export function browsePlan(d: ItineraryData): ItineraryData {

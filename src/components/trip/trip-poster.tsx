@@ -2,35 +2,45 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { useMemo, useState } from "react";
-import { regions } from "@/content";
-import { flexibility as FLEX } from "@/content/preferences";
+import { tripLength, type ItineraryData } from "@/engine/itinerary";
+import { dayRoutes } from "@/engine/routes";
+import { nightsFor } from "@/engine/structure";
+import type { Timeline } from "@/engine/timeline";
 import { cn } from "@/lib/cn";
 import { dayLabel } from "@/lib/dates";
-import { nights, tripLength, type ItineraryData } from "@/lib/itinerary";
-import { dayRoutes } from "@/lib/routes";
-import type { Timeline } from "@/lib/timeline";
-import { Palm } from "../brand/illustrations";
+import { useArt } from "../brand/art";
+import { useEngine } from "../engine";
 import { ChipScroller } from "../ui/chip-scroller";
-import { CoastMap } from "./coast-map";
+import { TripMap, airportLabel } from "./trip-map";
+
+/** How set someone's dates are, in one word for the poster. */
+const FLEX_SHORT: Record<string, string> = { exact: "Fixed", few_days: "± days", very: "Flexi" };
 
 /** The travel-poster summary card at the top of a review/itinerary view, with the day-by-day route map. */
 export function TripPoster({ name, data, timeline }: { name: string; data: ItineraryData; timeline: Timeline }) {
+  const e = useEngine();
+  const { preset, regions, legs } = e.catalog;
+  const { Decor } = useArt();
   const len = tripLength(data);
-  const nts = nights(len);
-  const flex = FLEX.find((f) => f.id === data.flexibility);
-  const routes = useMemo(() => dayRoutes(data, timeline), [data, timeline]);
+  const split = nightsFor(e, len).filter((s) => s.nights > 0);
+  const flex = preset.preferences.flexibility.find((f) => f.id === data.flexibility);
+  const routes = useMemo(() => dayRoutes(e, data, timeline), [e, data, timeline]);
   const [active, setActive] = useState<number | null>(null);
   const activeRoute = active === null ? null : routes[active];
   const activeDay = active === null ? null : timeline.days[active];
+  const year = data.startDate ? data.startDate.slice(0, 4) : preset.dates.window.start.slice(0, 4);
+  const departure = legs[preset.structure.departure.leg];
 
   return (
-    <section className="relative overflow-hidden rounded-[30px] bg-ocean-800 text-paper shadow-lift">
+    <section className="relative overflow-hidden rounded-[30px] bg-primary-800 text-paper shadow-lift">
       <div className="sunburst absolute inset-0" />
-      <Palm className="absolute -right-6 top-10 h-40 text-ocean-950/40" />
+      <Decor className="absolute -right-6 top-10 h-40 text-primary-950/40" />
       <div className="relative p-5 pb-4">
-        <p className="label text-saffron-400">Sri Lanka · {data.startDate?.startsWith("2027") ? "2027" : "2026"}</p>
+        <p className="label text-highlight-400">
+          {preset.name} · {year}
+        </p>
         <h2 className="font-display mt-2 text-[34px] font-semibold leading-[0.95] tracking-[-0.025em] [overflow-wrap:anywhere]">
-          {name}&apos;s <span className="italic text-saffron-400">Sri Lanka</span>
+          {name}&apos;s <span className="italic text-highlight-400">{preset.name}</span>
         </h2>
         {data.startDate && data.endDate && (
           <p className="mt-2 text-[13.5px] leading-snug text-paper/80">
@@ -38,17 +48,21 @@ export function TripPoster({ name, data, timeline }: { name: string; data: Itine
           </p>
         )}
         <dl className="mt-4 grid grid-cols-4 gap-2">
-          <Stat label="Days · nights" value={`${len}·${nts.total}`} />
-          <Stat label="Colombo + Galle" value={`${nts.colombo}+${nts.galle}`} />
+          <Stat label="Days · nights" value={`${len}·${Math.max(0, len - 1)}`} />
+          {split.length > 1 ? (
+            <Stat label={split.map((s) => s.base.name).join(" + ")} value={split.map((s) => s.nights).join("+")} />
+          ) : (
+            <Stat label={`Nights in ${split[0]?.base.name ?? preset.name}`} value={`${split[0]?.nights ?? 0}`} />
+          )}
           <Stat label="Hrs on the road" value={`~${Math.round(timeline.totalHours)}`} />
-          {flex && <Stat label="Dates" value={flex.id === "exact" ? "Fixed" : flex.id === "few_days" ? "± days" : "Flexi"} />}
+          {flex && <Stat label="Dates" value={FLEX_SHORT[flex.id] ?? flex.label} />}
         </dl>
       </div>
 
       {len > 0 && (
         <div className="relative px-3 pb-3">
           <div className="overflow-hidden rounded-[22px] ring-1 ring-white/10">
-            <CoastMap routes={routes} active={active} onActive={setActive} />
+            <TripMap routes={routes} active={active} onActive={setActive} />
           </div>
           <ChipScroller label="Highlight a day" activeKey={active ?? "all"} className="-mx-3 mt-3">
             <DayChip label="All days" on={active === null} onClick={() => setActive(null)} />
@@ -78,10 +92,10 @@ export function TripPoster({ name, data, timeline }: { name: string; data: Itine
                 {activeRoute.stops.some((s) => s.kind === "stop")
                   ? ` — ${activeRoute.stops
                       .filter((s) => s.kind === "stop")
-                      .map((s) => `${s.order}. ${regions[s.region].short}`)
+                      .map((s) => `${s.order}. ${regions[s.region]?.short ?? s.region}`)
                       .join(" → ")}`
-                  : activeDay.role === "departure"
-                    ? " — Galle → CMB airport"
+                  : activeDay.plan.kind === "departure" && departure
+                    ? ` — ${regions[departure.from]?.short} → ${airportLabel(regions[departure.to]?.short ?? "")}`
                     : " — staying close to base"}
               </motion.p>
             )}
@@ -112,9 +126,9 @@ function DayChip({ label, sub, color, on, onClick }: { label: string; sub?: stri
 
 function Stat({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div>
+    <div className="min-w-0">
       <dd className="font-display text-[22px] font-semibold leading-none">{value}</dd>
-      <dt className="mt-1 text-[9.5px] font-bold uppercase leading-tight tracking-wider text-paper/55">{label}</dt>
+      <dt className="mt-1 text-[9.5px] font-bold uppercase leading-tight tracking-wider text-paper/55 [overflow-wrap:anywhere]">{label}</dt>
     </div>
   );
 }

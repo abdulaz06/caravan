@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { pinSchema } from "@/lib/schema";
+import { pinSchema } from "@/lib/validation";
 import { db } from "@/lib/server/db";
 import { error, json, readJson } from "@/lib/server/http";
 import { checkPin } from "@/lib/server/pin";

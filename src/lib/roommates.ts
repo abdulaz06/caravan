@@ -2,7 +2,7 @@
 // who picked whom (in order), mutual matches (A picked B and B picked A) and
 // the most-wanted roommates. Typed names that match someone who has since
 // joined count as picking them. Pure, for the console and the exports.
-import type { RoommatePick } from "./itinerary";
+import type { RoommatePick } from "@/engine/itinerary";
 
 export type RoommatePerson = { id: string; name: string; picks?: RoommatePick[] };
 

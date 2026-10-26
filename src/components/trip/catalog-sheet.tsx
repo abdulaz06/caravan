@@ -3,16 +3,17 @@
 import { motion } from "framer-motion";
 import { Check, Plus, Search, X } from "lucide-react";
 import { useMemo, useState } from "react";
-import { CATEGORIES, activities, isNightlife, stayIn, type Activity, type Category, type Where } from "@/content";
+import type { Activity, Category } from "@/engine/catalog";
 import { cn } from "@/lib/cn";
 import { dayLabel, parseISO } from "@/lib/dates";
-import { STAY_ID, dateAt, itemAllowed, nyeIndex, roleAt, slotWhere, type ItineraryData, type SlotKind } from "@/lib/itinerary";
-import { isFeatured, isHidden } from "@/lib/rules";
-import { distanceLabel, hoursFrom } from "@/lib/timeline";
+import { STAY_ID, dateAt, isSpecialSlot, itemAllowed, planAt, resolve, slotArea, type ItineraryData, type SlotKind } from "@/engine/itinerary";
+import { isFeatured, isHidden } from "@/engine/rules";
+import { useEngine } from "../engine";
+import { distanceLabel, hoursFrom } from "@/engine/timeline";
 import { useCurrency } from "../currency";
-import { useHalal } from "../halal";
+import { useFamily } from "../family";
+import { useArt } from "../brand/art";
 import { Flame, PopularBadge, usePopular } from "../popular";
-import { StayInIcon } from "../brand/illustrations";
 import { Photo } from "../ui/photo";
 import { Sheet } from "../ui/sheet";
 import { DaysBadge, VibeDots } from "./bits";
@@ -35,24 +36,28 @@ export function CatalogSheet({ open, onClose, data, index, slot, mode = "add", o
   const [cat, setCat] = useState<Category | "all" | "popular">("all");
   const [q, setQ] = useState("");
   const [detail, setDetail] = useState<Activity | null>(null);
-  const where: Where = slotWhere(roleAt(data, index), slot) ?? "galle";
+  const e = useEngine();
+  const { catalog, rules } = e;
+  const { StayIn } = useArt();
+  const plan = planAt(e, data, index);
+  const area = slotArea(e, data, index, slot) ?? catalog.bases[0].area;
+  const onRoute = slot === "day" && plan?.kind === "transfer" && plan.transfer?.dayArea === area;
   const date = dateAt(data, index);
   const weekday = date ? parseISO(date).getUTCDay() : null;
-  const isNye = slot === "night" && nyeIndex(data) === index;
+  const special = !!isSpecialSlot(e, data, index, slot);
   const slotIds = (data.days[index]?.[slot] ?? []).map((x) => x.id).join(",");
   const inSlot = useMemo(() => new Set(slotIds ? slotIds.split(",") : []), [slotIds]);
   const night = slot === "night";
-  const halal = useHalal();
+  const family = useFamily();
   const popular = usePopular();
 
   const list = useMemo(() => {
     const term = q.trim().toLowerCase();
-    return activities
-      .filter((a) => itemAllowed(a.id, slot, where, isNye) && !isHidden(a.id))
-      .filter((a) => !a.onlyRole || a.onlyRole === roleAt(data, index))
-      // Ella extras only alongside the Ella day trip, in this same slot.
+    return catalog.activities
+      .filter((a) => itemAllowed(e, a.id, slot, plan, special) && !isHidden(rules, a.id))
+      // Extras tied to a pick (a day trip's extras) only alongside it, in this same slot.
       .filter((a) => !a.onlyWith || inSlot.has(a.onlyWith))
-      .filter((a) => !halal || !isNightlife(a))
+      .filter((a) => !family || !catalog.isNightlife(a))
       .filter((a) => cat === "all" || (cat === "popular" ? popular(a.id) !== null : a.categories.includes(cat)))
       .filter(
         (a) =>
@@ -63,20 +68,21 @@ export function CatalogSheet({ open, onClose, data, index, slot, mode = "add", o
       .sort((a, b) => {
         if (!!a.onlyWith !== !!b.onlyWith) return a.onlyWith ? -1 : 1;
         if (cat === "popular") return (popular(b.id) ?? 0) - (popular(a.id) ?? 0);
-        if (isFeatured(a.id) !== isFeatured(b.id)) return isFeatured(a.id) ? -1 : 1;
+        if (isFeatured(rules, a.id) !== isFeatured(rules, b.id)) return isFeatured(rules, a.id) ? -1 : 1;
         if (a.kind !== b.kind) return a.kind === "option" ? -1 : 1;
-        if (where === "enroute") return (a.routeKm ?? 0) - (b.routeKm ?? 0);
-        return hoursFrom(a, where) - hoursFrom(b, where);
+        if (onRoute) return (a.routeKm ?? 0) - (b.routeKm ?? 0);
+        return hoursFrom(e, a, area) - hoursFrom(e, b, area);
       });
-  }, [q, cat, slot, where, isNye, data, index, halal, inSlot, popular]);
+  }, [e, catalog, rules, q, cat, slot, area, onRoute, plan, special, family, inSlot, popular]);
   // The 🔥 filter only shows when something in this slot's pool is popular.
   const anyPopular = useMemo(
-    () => activities.some((a) => popular(a.id) !== null && itemAllowed(a.id, slot, where, isNye) && !isHidden(a.id) && (!a.onlyWith || inSlot.has(a.onlyWith))),
-    [popular, slot, where, isNye, inSlot],
+    () => catalog.activities.some((a) => popular(a.id) !== null && itemAllowed(e, a.id, slot, plan, special) && !isHidden(rules, a.id) && (!a.onlyWith || inSlot.has(a.onlyWith))),
+    [e, catalog, rules, popular, slot, plan, special, inSlot],
   );
 
-  const showStay = (cat === "all" || cat === "chill") && (!q.trim() || "stay in villa chill".includes(q.trim().toLowerCase()));
-  const stay = where === "enroute" ? stayIn.enroute : stayIn[slot];
+  const stayR = resolve(e, { id: STAY_ID }, slot, area);
+  const stay = stayR?.kind === "stay" ? stayR.stay : catalog.stayIn[slot];
+  const showStay = (cat === "all" || cat === "chill") && (!q.trim() || `stay in chill ${stay.title}`.toLowerCase().includes(q.trim().toLowerCase()));
 
   function choose(id: string) {
     onChoose(id);
@@ -89,7 +95,7 @@ export function CatalogSheet({ open, onClose, data, index, slot, mode = "add", o
         open={open}
         onClose={onClose}
         tone={night ? "dusk" : "light"}
-        eyebrow={`Day ${index + 1}${date ? ` · ${dayLabel(date)}` : ""} · ${night ? "Evening" : where === "enroute" ? "On the way" : "Daytime"}`}
+        eyebrow={`Day ${index + 1}${date ? ` · ${dayLabel(date)}` : ""} · ${onRoute ? "On the way" : catalog.preset.structure.slots[slot].label}`}
         title={mode === "replace" ? "Swap it for…" : "Add another"}
       >
         <div className="px-4 pb-10">
@@ -112,7 +118,7 @@ export function CatalogSheet({ open, onClose, data, index, slot, mode = "add", o
             {[
               { id: "all" as const, label: "All", icon: <span aria-hidden="true">✨</span> },
               ...(anyPopular ? [{ id: "popular" as const, label: "Popular", icon: <Flame className="-ml-0.5 size-[18px]" /> }] : []),
-              ...CATEGORIES.filter((c) => !halal || c.id !== "party").map((c) => ({ id: c.id, label: c.label, icon: <span aria-hidden="true">{c.emoji}</span> })),
+              ...catalog.preset.categories.filter((c) => !family || c.id !== "party").map((c) => ({ id: c.id, label: c.label, icon: <span aria-hidden="true">{c.emoji}</span> })),
             ].map((c) => {
               const on = cat === c.id;
               return (
@@ -122,7 +128,7 @@ export function CatalogSheet({ open, onClose, data, index, slot, mode = "add", o
                   aria-pressed={on}
                   className={cn(
                     "inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-[13px] font-semibold transition active:scale-95",
-                    on ? (night ? "bg-saffron-400 text-ink" : "bg-ink text-paper") : night ? "bg-white/10 text-paper/85" : "bg-paper text-ink-2 shadow-card",
+                    on ? (night ? "bg-highlight-400 text-ink" : "bg-ink text-paper") : night ? "bg-white/10 text-paper/85" : "bg-paper text-ink-2 shadow-card",
                   )}
                 >
                   {c.icon} {c.label}
@@ -138,10 +144,10 @@ export function CatalogSheet({ open, onClose, data, index, slot, mode = "add", o
                   night={night}
                   title={stay.title}
                   subtitle={stay.tagline}
-                  meta={where === "enroute" ? "~2 hrs on the expressway" : "No travel · free"}
+                  meta={onRoute ? stay.meta : `${stay.meta} · free`}
                   thumb={
-                    <span className={cn("grid size-14 shrink-0 place-items-center rounded-xl", night ? "bg-gradient-to-b from-dusk-700 to-ocean-800" : "bg-gradient-to-b from-saffron-200 to-sand-200")}>
-                      <StayInIcon variant={slot} className="size-11" />
+                    <span className={cn("grid size-14 shrink-0 place-items-center rounded-xl", night ? "bg-gradient-to-b from-night-700 to-primary-800" : "bg-gradient-to-b from-highlight-200 to-surface-200")}>
+                      <StayIn variant={slot} className="size-11" />
                     </span>
                   }
                   added={inSlot.has(STAY_ID)}
@@ -157,11 +163,11 @@ export function CatalogSheet({ open, onClose, data, index, slot, mode = "add", o
                     night={night}
                     title={a.title}
                     subtitle={a.tagline}
-                    meta={`${isFeatured(a.id) ? "★ Featured · " : ""}${distanceLabel(a, where)} · ${range(a.estCostUsd)}`}
+                    meta={`${isFeatured(rules, a.id) ? "★ Featured · " : ""}${distanceLabel(e, a, area)} · ${range(a.estCostUsd)}`}
                     badges={
                       <>
                         {a.kind === "extra" && (
-                          <span className={cn("rounded-full px-1.5 py-px text-[10px] font-bold", night ? "bg-white/15" : "bg-saffron-200 text-ink")}>Quick extra</span>
+                          <span className={cn("rounded-full px-1.5 py-px text-[10px] font-bold", night ? "bg-white/15" : "bg-highlight-200 text-ink")}>Quick extra</span>
                         )}
                         {popular(a.id) !== null && <PopularBadge count={popular(a.id)!} tone={night ? "dark" : "light"} />}
                         <VibeDots vibe={a.vibe} />
@@ -169,7 +175,7 @@ export function CatalogSheet({ open, onClose, data, index, slot, mode = "add", o
                       </>
                     }
                     thumb={
-                      <span className="relative size-14 shrink-0 overflow-hidden rounded-xl bg-ocean-800">
+                      <span className="relative size-14 shrink-0 overflow-hidden rounded-xl bg-primary-800">
                         <Photo photo={a.images[0]} alt={a.title} sizes="56px" />
                         {a.emoji && (
                           <span className="absolute bottom-0.5 right-0.5 grid size-5 place-items-center rounded-md bg-paper/95 text-[12px] shadow">{a.emoji}</span>
@@ -195,7 +201,7 @@ export function CatalogSheet({ open, onClose, data, index, slot, mode = "add", o
       <OptionDetail
         open={!!detail}
         option={detail}
-        where={where}
+        area={area}
         onClose={() => setDetail(null)}
         pickLabel={mode === "replace" ? `Swap in on Day ${index + 1}` : `Add to Day ${index + 1}`}
         onPick={() => {
@@ -250,7 +256,7 @@ function CatalogRow({
         aria-label={added ? `${title} is already in this slot` : (addLabel ?? `Add ${title}`)}
         className={cn(
           "grid size-10 shrink-0 place-items-center rounded-full transition active:scale-90",
-          added ? (night ? "bg-white/10 text-saffron-400" : "bg-jungle-100 text-jungle-700") : night ? "bg-saffron-500 text-ink" : "bg-ink text-paper",
+          added ? (night ? "bg-white/10 text-highlight-400" : "bg-secondary-100 text-secondary-700") : night ? "bg-highlight-500 text-ink" : "bg-ink text-paper",
         )}
       >
         {added ? <Check className="size-[18px]" strokeWidth={3} /> : <Plus className="size-[18px]" strokeWidth={3} />}

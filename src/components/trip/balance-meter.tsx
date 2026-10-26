@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import { Leaf, Martini } from "lucide-react";
 import { cn } from "@/lib/cn";
-import { balanceLabel, type Balance } from "@/lib/timeline";
+import { balanceLabel, type Balance } from "@/engine/timeline";
 
 type Props = {
   balance: Balance;
@@ -27,7 +27,7 @@ export function BalanceMeter({ balance, size = "full", tone = "light", className
       {size === "full" && (
         <div className="mb-3 flex items-end justify-between gap-3">
           <div>
-            <p className={cn("label", dark ? "text-saffron-400" : "text-ink-3")}>{title}</p>
+            <p className={cn("label", dark ? "text-highlight-400" : "text-ink-3")}>{title}</p>
             <motion.p
               key={label.title}
               initial={{ opacity: 0, y: 6 }}
@@ -45,13 +45,13 @@ export function BalanceMeter({ balance, size = "full", tone = "light", className
       )}
       <div className="flex items-center gap-2.5">
         <span
-          className={cn("flex items-center gap-1 text-[11.5px] font-bold uppercase tracking-wide", dark ? "text-jungle-400" : "text-jungle-600")}
+          className={cn("flex items-center gap-1 text-[11.5px] font-bold uppercase tracking-wide", dark ? "text-secondary-400" : "text-secondary-600")}
         >
           <Leaf className="size-3.5" strokeWidth={2.5} />
           {size === "full" && "Nature"}
         </span>
         <div className="relative h-3 flex-1">
-          <div className="absolute inset-0 rounded-full bg-gradient-to-r from-jungle-600 via-saffron-400 to-hibiscus-500" />
+          <div className="absolute inset-0 rounded-full bg-gradient-to-r from-secondary-600 via-highlight-400 to-pop-500" />
           <div className="absolute inset-y-0 left-1/2 w-0.5 -translate-x-1/2 bg-white/60" />
           <motion.div
             className="absolute top-1/2 -ml-[11px] -mt-[11px] size-[22px] rounded-full border-[3px] border-white bg-ink shadow-lg"
@@ -61,7 +61,7 @@ export function BalanceMeter({ balance, size = "full", tone = "light", className
           />
         </div>
         <span
-          className={cn("flex items-center gap-1 text-[11.5px] font-bold uppercase tracking-wide", dark ? "text-hibiscus-300" : "text-hibiscus-600")}
+          className={cn("flex items-center gap-1 text-[11.5px] font-bold uppercase tracking-wide", dark ? "text-pop-300" : "text-pop-600")}
         >
           {size === "full" && "Nightlife"}
           <Martini className="size-3.5" strokeWidth={2.5} />

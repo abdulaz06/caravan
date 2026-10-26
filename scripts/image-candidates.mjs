@@ -1,17 +1,18 @@
 // Dev helper: search Wikimedia Commons for photo candidates and build contact
-// sheets so a human (or Claude) can pick the right shots.
-// Usage: node scripts/image-candidates.mjs <outDir> [key1,key2,...]
+// sheets so a human (or Claude) can pick the right shots for a preset.
+// Usage: node scripts/image-candidates.mjs <preset-id> <outDir> [key1,key2,...]
+// Queries come from presets/<id>/photos.queries.json ({ key: ["search", …] }).
 import fs from "node:fs/promises";
 import path from "node:path";
 import sharp from "sharp";
 
 const UA = "CaravanTripPlanner/1.0 (https://github.com/abdulaz06/caravan)";
-const outDir = process.argv[2];
-const only = process.argv[3]?.split(",");
-if (!outDir) throw new Error("usage: image-candidates.mjs <outDir> [keys]");
+const [presetId, outDir] = process.argv.slice(2);
+const only = process.argv[4]?.split(",");
+if (!presetId || !outDir) throw new Error("usage: image-candidates.mjs <preset-id> <outDir> [keys]");
 
 const queries = JSON.parse(
-  await fs.readFile(new URL("./image-queries.json", import.meta.url), "utf8"),
+  await fs.readFile(new URL(`../presets/${presetId}/photos.queries.json`, import.meta.url), "utf8"),
 );
 const OK_LICENSE = /^(CC BY(-SA)? \d|CC0|Public domain|PD)/i;
 const PER_KEY = 8;

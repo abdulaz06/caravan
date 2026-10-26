@@ -1,13 +1,12 @@
 import "server-only";
-import { activitiesById, regions, stayIn } from "@/content";
-import { computeBudget } from "@/lib/budget";
 import { addDays } from "@/lib/dates";
-import { STAY_ID, dayName, dayRole, daysNightsLabel, nights, slotWhere, tripLength, type SlotItem } from "@/lib/itinerary";
-import { balanceOf, buildTimeline, type SlotView } from "@/lib/timeline";
-import { tripDays } from "@/lib/rules";
 import { roommateBoard, type RoommateBoard } from "@/lib/roommates";
+import { computeBudget } from "@/engine/budget";
+import { STAY_ID, plansOf, tripLength, type SlotItem } from "@/engine/itinerary";
+import { daysNightsLabel, nightsFor, nightsLine, tripDays, type Engine } from "@/engine/structure";
+import { balanceOf, buildTimeline, type SlotView } from "@/engine/timeline";
 import type { Person } from "./group";
-import type { LiveSettings } from "./rules";
+import type { TripContext } from "./trip";
 
 const csvCell = (v: unknown): string => {
   if (v === null || v === undefined) return "";
@@ -21,15 +20,15 @@ const toCsv = (rows: Record<string, unknown>[]): string => {
   return [headers.join(","), ...rows.map((r) => headers.map((h) => csvCell(r[h])).join(","))].join("\n");
 };
 
-function titleOf(x: SlotItem): string {
-  if (x.id === STAY_ID) return stayIn.day.title;
-  const a = activitiesById[x.id];
+function titleOf(e: Engine, x: SlotItem): string {
+  if (x.id === STAY_ID) return e.catalog.stayIn.day.title;
+  const a = e.catalog.byId[x.id];
   if (!a) return x.id;
   const v = x.variant ? a.variants?.find((y) => y.id === x.variant) : undefined;
   return v ? `${a.title} (${v.title})` : a.title;
 }
 
-function summarizeSlot(v: SlotView) {
+function summarizeSlot(e: Engine, v: SlotView) {
   return {
     plannedHours: v.plannedHours,
     items: v.items.map((it) =>
@@ -39,7 +38,7 @@ function summarizeSlot(v: SlotView) {
             id: it.resolved.activity.id,
             title: it.resolved.activity.title,
             kind: it.resolved.activity.kind,
-            region: regions[it.resolved.activity.region].name,
+            region: e.catalog.regions[it.resolved.activity.region]?.name ?? it.resolved.activity.region,
             vibe: it.resolved.activity.vibe,
             pairId: it.item.pairId ?? null,
           },
@@ -47,9 +46,9 @@ function summarizeSlot(v: SlotView) {
   };
 }
 
-function budgetSummary(p: Person) {
+function budgetSummary(e: Engine, p: Person) {
   if (!p.data?.startDate) return null;
-  const b = computeBudget(p.data);
+  const b = computeBudget(e, p.data);
   return {
     totalUsd: b.total,
     verdict: b.verdict.text,
@@ -60,27 +59,29 @@ function budgetSummary(p: Person) {
   };
 }
 
-function summary(p: Person) {
+const nightsMap = (e: Engine, len: number) => Object.fromEntries(nightsFor(e, len).map((s) => [s.base.id, s.nights]));
+
+function summary(e: Engine, p: Person) {
   const d = p.data;
   if (!d) return null;
-  const t = buildTimeline(d);
+  const t = buildTimeline(e, d);
   const len = tripLength(d);
   return {
     tripLength: len ? daysNightsLabel(len) : null,
     days: len,
-    nights: nights(len),
-    balance: balanceOf(d),
-    budget: budgetSummary(p),
+    nights: len ? nightsMap(e, len) : {},
+    balance: balanceOf(e, d),
+    budget: budgetSummary(e, p),
     currency: d.preferences.currency ?? null,
-    regionsVisited: t.regionsVisited.map((r) => regions[r].name),
+    regionsVisited: t.regionsVisited.map((r) => e.catalog.regions[r]?.name ?? r),
     totalTravelHours: t.totalHours,
     itinerary: t.days.map((day) => ({
       date: day.date,
       day: day.index + 1,
       name: day.name,
       tags: day.tags,
-      daytime: summarizeSlot(day.day),
-      evening: summarizeSlot(day.night),
+      daytime: summarizeSlot(e, day.day),
+      evening: summarizeSlot(e, day.night),
       note: d.days[day.index].note ?? null,
       travel: [
         ...day.legsBefore,
@@ -94,20 +95,21 @@ function summary(p: Person) {
 
 const boardOf = (people: Person[]) => roommateBoard(people.map((p) => ({ id: p.id, name: p.name, picks: p.data?.preferences.roommates })));
 
-/** "A (their 1st), B (their 2nd)" — the people this person matched with both ways. */
+/** The people this person matched with both ways. */
 function mutualFor(board: RoommateBoard, id: string): string[] {
   return board.mutual.flatMap((m) => (m.a.id === id ? [m.b.name] : m.b.id === id ? [m.a.name] : []));
 }
 
-export function exportJson(people: Person[], live: LiveSettings) {
+export function exportJson(trip: TripContext, people: Person[]) {
+  const e = trip.engine;
   const board = boardOf(people);
-  const len = tripDays();
-  const n = nights(len);
+  const len = tripDays(e);
   return {
     exportedAt: new Date().toISOString(),
-    editsLocked: live.locked,
-    rules: live.rules,
-    notes: `Trip is ${daysNightsLabel(len)} (${n.colombo} ${n.colombo === 1 ? "night" : "nights"} Colombo, ${n.galle} nights Galle). All money is per person in USD (the app's base currency). Budget totals exclude flights. Roommate picks are just for fun, not binding.`,
+    preset: { id: trip.preset.id, name: trip.preset.name, version: trip.preset.version },
+    editsLocked: trip.locked,
+    rules: trip.rules,
+    notes: `Trip is ${daysNightsLabel(len)} (${nightsLine(e, len)}). All money is per person in USD (the app's base currency). Budget totals exclude flights. Roommate picks are just for fun, not binding.`,
     roommates: board,
     participants: people.map((p) => ({
       id: p.id,
@@ -121,33 +123,36 @@ export function exportJson(people: Person[], live: LiveSettings) {
       itinerary: p.data,
       roommates: (p.data?.preferences.roommates ?? []).map((r, i) => ({ rank: i + 1, name: r.name, participantId: r.id ?? null })),
       mutualRoommates: mutualFor(board, p.id),
-      summary: summary(p),
+      summary: summary(e, p),
     })),
   };
 }
 
 /** One row per person. */
-export function exportWideCsv(people: Person[]): string {
+export function exportWideCsv(e: Engine, people: Person[]): string {
   const board = boardOf(people);
+  const baseIds = e.catalog.bases.map((b) => b.id);
   return toCsv(
     people.map((p) => {
       const d = p.data;
       const pr = d?.preferences ?? {};
-      const b = d ? balanceOf(d) : null;
-      const budget = budgetSummary(p);
+      const b = d ? balanceOf(e, d) : null;
+      const budget = budgetSummary(e, p);
       const len = d ? tripLength(d) : 0;
+      const plans = d ? plansOf(e, d) : [];
+      const slot = (xs: SlotItem[]) => (xs.length ? xs.map((x) => titleOf(e, x)).join(" + ") : "—");
       const plan = d?.startDate
         ? d.days
             .map((day, i) => {
               const date = addDays(d.startDate!, i);
-              const role = dayRole(i, d.days.length);
-              const slot = (xs: SlotItem[]) => (xs.length ? xs.map(titleOf).join(" + ") : "—");
-              return role === "departure"
-                ? `${date} (Day ${i + 1} · ${dayName(i, role)})`
-                : `${date} (Day ${i + 1} · ${dayName(i, role)}): ${slot(day.day)} / ${slot(day.night)}${day.note ? ` (note: ${day.note})` : ""}`;
+              const name = plans[i]?.name ?? "";
+              return plans[i]?.kind === "departure"
+                ? `${date} (Day ${i + 1} · ${name})`
+                : `${date} (Day ${i + 1} · ${name}): ${slot(day.day)} / ${slot(day.night)}${day.note ? ` (note: ${day.note})` : ""}`;
             })
             .join(" | ")
         : "";
+      const nights = len ? nightsMap(e, len) : {};
       return {
         name: p.name,
         role: p.role,
@@ -161,8 +166,7 @@ export function exportWideCsv(people: Person[]): string {
         end_date: d?.endDate,
         trip_days: len || "",
         trip_nights: len ? len - 1 : "",
-        colombo_nights: len ? nights(len).colombo : "",
-        galle_nights: len ? nights(len).galle : "",
+        ...Object.fromEntries(baseIds.map((id) => [`${id.replace(/-/g, "_")}_nights`, len ? (nights[id] ?? 0) : ""])),
         flexibility: d?.flexibility,
         items: p.picks,
         balance_score: b?.score?.toFixed(2),
@@ -202,7 +206,7 @@ const LONG_HEADERS = {
   date: "",
   day_number: "",
   day_name: "",
-  where: "",
+  area: "",
   slot: "",
   position: "",
   kind: "",
@@ -221,18 +225,18 @@ const LONG_HEADERS = {
 };
 
 /** One row per item in every slot (long format). */
-export function exportLongCsv(people: Person[]): string {
+export function exportLongCsv(e: Engine, people: Person[]): string {
   const rows: Record<string, unknown>[] = [];
   for (const p of people) {
     const d = p.data;
     if (!d?.startDate) continue;
+    const plans = plansOf(e, d);
     d.days.forEach((day, i) => {
       const date = addDays(d.startDate!, i);
-      const role = dayRole(i, d.days.length);
       for (const [slot, key] of [["daytime", "day"], ["evening", "night"]] as const) {
         day[key].forEach((x, pos) => {
           const stay = x.id === STAY_ID;
-          const a = stay ? null : activitiesById[x.id];
+          const a = stay ? null : e.catalog.byId[x.id];
           if (!stay && !a) return;
           rows.push({
             ...LONG_HEADERS,
@@ -240,16 +244,16 @@ export function exportLongCsv(people: Person[]): string {
             status: p.status,
             date,
             day_number: i + 1,
-            day_name: dayName(i, role),
-            where: slotWhere(role, key) ?? "",
+            day_name: plans[i]?.name ?? "",
+            area: plans[i]?.areas[key] ?? "",
             slot,
             position: pos + 1,
             kind: stay ? "stay" : a!.kind,
             item_id: x.id,
-            item_title: stay ? stayIn.day.title : a!.title,
+            item_title: stay ? e.catalog.stayIn.day.title : a!.title,
             variant: x.variant ? (a?.variants?.find((v) => v.id === x.variant)?.title ?? x.variant) : "",
             pair_id: x.pairId ?? "",
-            region: a ? regions[a.region].name : "",
+            region: a ? (e.catalog.regions[a.region]?.name ?? a.region) : "",
             vibe: stay ? 0 : a!.vibe,
             categories: stay ? ["chill"] : a!.categories,
             available_days: a?.availableDays ?? [],

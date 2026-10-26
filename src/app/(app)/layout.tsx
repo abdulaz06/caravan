@@ -1,61 +1,76 @@
 import Image from "next/image";
-import { heroPhotos } from "@/content";
-import { DEFAULT_RULES, tripDays } from "@/lib/rules";
-import { loadRules } from "@/lib/server/rules";
 import { Lockup, Stamp } from "@/components/brand/wordmark";
+import { TripShell } from "@/components/trip-shell";
+import { nightsFor, tripDays } from "@/engine/structure";
+import { loadTrip } from "@/lib/server/trip";
+
+const WORDS = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"];
 
 /**
  * Participant pages live in a phone-width column. On desktop the column sits
- * on the right of a big travel-poster panel.
+ * on the right of a big travel-poster panel for the trip's destination.
  */
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const hero = heroPhotos[1] ?? heroPhotos[0];
-  // The trip shape comes from the live Trip rules (6 days · 5 nights, Colombo 1 + Galle 4 by default).
-  const { rules } = await loadRules().catch(() => ({ rules: DEFAULT_RULES }));
-  const days = tripDays(rules);
-  const word = ["zero", "a night", "two nights", "three nights"][rules.colomboNights] ?? `${rules.colomboNights} nights`;
-  const galle = ["zero", "one", "two", "three", "four", "five", "six"][rules.galleNights] ?? String(rules.galleNights);
+  const trip = await loadTrip();
+  const { preset, catalog, engine } = trip;
+  const hero = catalog.heroPhotos[1] ?? catalog.heroPhotos[0];
+  const days = tripDays(engine);
+  const split = nightsFor(engine, days).filter((s) => s.nights > 0);
+  const nightWord = (n: number, first: boolean) => (n === 1 && first ? "a night" : `${WORDS[n] ?? n}${first ? (n === 1 ? " night" : " nights") : ""}`);
+  const shape = split.map((s, i) => `${nightWord(s.nights, i === 0)} in ${s.base.name}`).join(", then ");
+  const d = preset.destination;
   return (
-    <div className="min-h-dvh lg:grid lg:grid-cols-[minmax(0,1fr)_480px]">
-      <aside className="sticky top-0 hidden h-dvh overflow-hidden bg-ocean-900 lg:block">
-        {hero && (
-          <Image
-            src={hero.src}
-            alt="Galle Fort lighthouse"
-            fill
-            sizes="(min-width: 1024px) 60vw, 1px"
-            placeholder={hero.blurDataURL ? "blur" : "empty"}
-            blurDataURL={hero.blurDataURL}
-            className="object-cover"
-            priority
-          />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-ocean-950/90 via-ocean-950/20 to-ocean-950/40" />
-        <div className="sunburst absolute inset-0 opacity-60" />
-        <div className="relative flex h-full flex-col justify-between p-12 text-paper">
-          <Lockup size="lg" tone="light" className="self-start" />
-          <div className="max-w-xl">
-            <Stamp className="mb-8 size-28 text-saffron-500" />
-            <p className="label text-saffron-400">The <span className="normal-case tracking-[0.06em]">10hyaya</span> group trip · Dec 2026 – Jan 2027</p>
-            <h2 className="font-display mt-3 text-6xl font-semibold leading-[0.95] tracking-[-0.03em] xl:text-7xl">
-              Sri Lanka,
-              <br />
-              <span className="italic text-saffron-400">your way.</span>
-            </h2>
-            <p className="mt-5 max-w-md text-lg text-paper/80">
-              {days} days · {days - 1} nights: {word} in Colombo, then {galle} in Galle — rainforests, whales, surf and <span className="halal-hide">beach parties</span>
-              <span className="halal-only">golden sunsets</span>. Build your
-              dream version, then we&apos;ll plan the trip together.
-            </p>
-            {hero && (
-              <a href={hero.source} target="_blank" rel="noreferrer" className="mt-8 block text-xs text-paper/50 hover:text-paper/80">
-                Photo: {hero.credit} · {hero.license}
-              </a>
-            )}
+    <TripShell>
+      <div className="min-h-dvh lg:grid lg:grid-cols-[minmax(0,1fr)_480px]">
+        <aside className="sticky top-0 hidden h-dvh overflow-hidden bg-primary-900 lg:block">
+          {hero && (
+            <Image
+              src={hero.src}
+              alt={preset.name}
+              fill
+              sizes="(min-width: 1024px) 60vw, 1px"
+              placeholder={hero.blurDataURL ? "blur" : "empty"}
+              blurDataURL={hero.blurDataURL}
+              className="object-cover"
+              priority
+            />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-primary-950/90 via-primary-950/20 to-primary-950/40" />
+          <div className="sunburst absolute inset-0 opacity-60" />
+          <div className="relative flex h-full flex-col justify-between p-12 text-paper">
+            <Lockup size="lg" tone="light" className="self-start" />
+            <div className="max-w-xl">
+              <Stamp className="mb-8 size-28 text-highlight-500" text={`${preset.name.toUpperCase()} · ${d.season.toUpperCase()} · `} />
+              <p className="label text-highlight-400">
+                The group trip · {d.season}
+              </p>
+              <h2 className="font-display mt-3 text-6xl font-semibold leading-[0.95] tracking-[-0.03em] xl:text-7xl">
+                {d.headline[0]}
+                <br />
+                <span className="italic text-highlight-400">{d.headline[1]}</span>
+              </h2>
+              <p className="mt-5 max-w-md text-lg text-paper/80">
+                {days} days · {days - 1} nights: {shape}.{" "}
+                {d.familyTagline ? (
+                  <>
+                    <span className="family-hide">{d.tagline}.</span>
+                    <span className="family-only">{d.familyTagline}.</span>
+                  </>
+                ) : (
+                  `${d.tagline}.`
+                )}{" "}
+                {d.blurb}
+              </p>
+              {hero && (
+                <a href={hero.source} target="_blank" rel="noreferrer" className="mt-8 block text-xs text-paper/50 hover:text-paper/80">
+                  Photo: {hero.credit} · {hero.license}
+                </a>
+              )}
+            </div>
           </div>
-        </div>
-      </aside>
-      <main className="relative min-h-dvh bg-sand-100 lg:shadow-[-30px_0_60px_-30px_rgb(0_0_0/0.5)]">{children}</main>
-    </div>
+        </aside>
+        <main className="relative min-h-dvh bg-surface-100 lg:shadow-[-30px_0_60px_-30px_rgb(0_0_0/0.5)]">{children}</main>
+      </div>
+    </TripShell>
   );
 }

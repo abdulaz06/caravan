@@ -64,7 +64,7 @@ export function ChipScroller({
   }, [activeKey]);
 
   const nudge = (dir: 1 | -1) => ref.current?.scrollBy({ left: dir * ref.current.clientWidth * 0.7, behavior: "smooth" });
-  const fade = tone === "dark" ? "from-ocean-800" : "from-sand-100";
+  const fade = tone === "dark" ? "from-primary-800" : "from-surface-100";
   const arrow = tone === "dark" ? "bg-paper text-ink" : "bg-ink text-paper";
 
   return (

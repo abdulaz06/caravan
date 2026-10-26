@@ -15,14 +15,11 @@ import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalList
 import { CSS } from "@dnd-kit/utilities";
 import { motion } from "framer-motion";
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowRightLeft, ArrowUp, Eye, GripVertical, Repeat2, Sparkles, Sunrise, Trash2, Wand2 } from "lucide-react";
-import { useMemo, useState } from "react";
-import { activitiesById, stays, type Activity } from "@/content";
-import { ELLA_ID, lateNightItems, tripPlaceable, tripVariant, tripVariants } from "@/lib/day-trip";
-import type { BudgetResult } from "@/lib/budget";
-import { cn } from "@/lib/cn";
-import { dayLabel } from "@/lib/dates";
+import { Fragment, useMemo, useState } from "react";
+import type { Activity, Base } from "@/engine/catalog";
+import type { BudgetResult } from "@/engine/budget";
+import { lateNightItems, tripPlaceable, variantOf } from "@/engine/day-trip";
 import {
-  DAY_NAMES,
   STAY_ID,
   addItem,
   canMoveItem,
@@ -31,26 +28,30 @@ import {
   countItems,
   dateAt,
   filledSlots,
-  isNyeOption,
+  isSpecialOption,
   moveItem,
   moveItemWithin,
-  nights,
   pickFirst,
+  plansOf,
   removeItem,
   reorderDays,
   replaceItem,
   resolve,
-  roleAt,
   setNote,
   setVariant,
-  slotWhere,
+  slotArea,
+  specialAt,
   type DayEntry,
   type ItineraryData,
   type SlotKind,
-} from "@/lib/itinerary";
-import { quickFill } from "@/lib/quickfill";
-import { balanceOf, buildTimeline, type TimelineDay } from "@/lib/timeline";
-import { Van } from "../brand/illustrations";
+} from "@/engine/itinerary";
+import { quickFill } from "@/engine/quickfill";
+import { daysNightsLabel, nightsFor, nightsLine } from "@/engine/structure";
+import { balanceOf, buildTimeline, type TimelineDay } from "@/engine/timeline";
+import { cn } from "@/lib/cn";
+import { dayLabel } from "@/lib/dates";
+import { useArt } from "../brand/art";
+import { useEngine } from "../engine";
 import { Button } from "../ui/button";
 import { Photo } from "../ui/photo";
 import { Sheet } from "../ui/sheet";
@@ -59,9 +60,9 @@ import { BalanceMeter } from "./balance-meter";
 import { BudgetPill } from "./budget";
 import { CatalogSheet } from "./catalog-sheet";
 import { DateStub, DayCard, StayThumb, type DragBits } from "./day-card";
+import { VariantSheet } from "./day-trip";
 import { MatchupSheet } from "./matchup-sheet";
 import { OptionDetail } from "./option-detail";
-import { VariantSheet } from "./day-trip";
 
 type Props = {
   data: ItineraryData;
@@ -75,20 +76,22 @@ type Props = {
 
 type SlotRef = { index: number; slot: SlotKind };
 type ItemRef = SlotRef & { key: string };
-/** The Ella day trip needs a variant before it's placed (or when switching). */
-type TripAsk = SlotRef & { mode: "first" | "add" | "replace" | "switch"; pairId?: string; key?: string; current?: string };
+/** A big day trip needs a variant before it's placed (or when switching). */
+type TripAsk = SlotRef & { id: string; mode: "first" | "add" | "replace" | "switch"; pairId?: string; key?: string; current?: string };
 
 export function BuildStep({ data, update, locked, budget, onOpenBudget, onBack, onNext }: Props) {
+  const e = useEngine();
+  const { catalog } = e;
   const toast = useToast();
-  const timeline = useMemo(() => buildTimeline(data), [data]);
-  const balance = useMemo(() => balanceOf(data), [data]);
-  const filled = filledSlots(data);
+  const timeline = useMemo(() => buildTimeline(e, data), [e, data]);
+  const balance = useMemo(() => balanceOf(e, data), [e, data]);
+  const filled = filledSlots(e, data);
   const items = countItems(data);
   const n = data.days.length;
-  const nts = nights(n);
+  const plans = plansOf(e, data);
 
   const [matchup, setMatchup] = useState<SlotRef | null>(null);
-  const [catalog, setCatalog] = useState<(SlotRef & { replace?: string }) | null>(null);
+  const [catalogRef, setCatalogRef] = useState<(SlotRef & { replace?: string }) | null>(null);
   const [itemRef, setItemRef] = useState<ItemRef | null>(null);
   const [moving, setMoving] = useState(false);
   const [detail, setDetail] = useState<Activity | null>(null);
@@ -104,20 +107,26 @@ export function BuildStep({ data, update, locked, budget, onOpenBudget, onBack, 
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
-  const all = data.days.map((_, i) => i);
-  const colomboIdx = all.filter((i) => roleAt(data, i) === "colombo");
-  const transferIdx = all.filter((i) => roleAt(data, i) === "transfer");
-  const galleIdx = all.filter((i) => roleAt(data, i) === "galle");
+  /** One section per base: its days in order (the fly-home day goes with the last). */
+  const sections = useMemo(() => {
+    const split = nightsFor(e, n).filter((s) => s.nights > 0);
+    return split.map(({ base, nights }, k) => {
+      const days = plans.filter((p) => p.base.id === base.id && p.kind !== "departure").map((p) => p.index);
+      const last = k === split.length - 1;
+      return { base, nights, from: days[0] ?? 0, days, departure: last && n > 1 ? n - 1 : null };
+    });
+  }, [e, n, plans]);
 
-  /** Options with variants (the Ella day trip) ask how first; everything else goes straight in. */
-  function needsVariant(id: string, ask: TripAsk): boolean {
-    if (!activitiesById[id]?.variants) return false;
-    const ok = tripPlaceable(data, ask.index);
+  /** Options with variants (big day trips) ask how first; everything else goes straight in. */
+  function needsVariant(id: string, ask: Omit<TripAsk, "id">): boolean {
+    const a = catalog.byId[id];
+    if (!a?.variants) return false;
+    const ok = tripPlaceable(e, data, ask.index, a);
     if (!ok.ok) {
       toast(ok.reason);
       return true;
     }
-    setTripAsk(ask);
+    setTripAsk({ ...ask, id });
     return true;
   }
 
@@ -126,33 +135,33 @@ export function BuildStep({ data, update, locked, budget, onOpenBudget, onBack, 
     setTripAsk(null);
     if (!ask) return;
     update((d) => {
-      if (ask.mode === "first") return pickFirst(d, ask.index, ask.slot, ELLA_ID, ask.pairId, variant);
-      if (ask.mode === "add") return addItem(d, ask.index, ask.slot, ELLA_ID, undefined, variant);
-      if (ask.mode === "replace") return replaceItem(d, ask.index, ask.slot, ask.key!, ELLA_ID, undefined, variant);
-      return setVariant(d, ask.index, ask.slot, ask.key!, variant);
+      if (ask.mode === "first") return pickFirst(e, d, ask.index, ask.slot, ask.id, ask.pairId, variant);
+      if (ask.mode === "add") return addItem(e, d, ask.index, ask.slot, ask.id, undefined, variant);
+      if (ask.mode === "replace") return replaceItem(e, d, ask.index, ask.slot, ask.key!, ask.id, undefined, variant);
+      return setVariant(e, d, ask.index, ask.slot, ask.key!, variant);
     });
-    const v = tripVariant(variant);
+    const v = variantOf(catalog.byId[ask.id], variant);
     toast(`${v?.emoji ?? "⛰"} ${v?.title} on Day ${ask.index + 1}`);
-    // A gentle heads-up, never a block: the sunrise van leaves after midnight.
-    const late = v?.eveBefore && ask.index > 0 ? lateNightItems(data, ask.index - 1) : [];
-    if (late.length) toast(`Heads-up: Day ${ask.index}'s evening has ${late[0].title.split(":")[0]} and the van leaves ${v!.leave} — maybe keep it short`);
+    // A gentle heads-up, never a block: a very early variant leaves in the small hours.
+    const late = v?.eveBefore && ask.index > 0 ? lateNightItems(e, data, ask.index - 1) : [];
+    if (late.length) toast(`Heads-up: Day ${ask.index}'s evening has ${late[0].title.split(":")[0]} and you leave ${v!.leave} — maybe keep it short`);
   }
 
-  function onDragEnd(e: DragEndEvent) {
-    if (!e.over || e.active.id === e.over.id) return;
-    const from = data.days.findIndex((d) => d.id === e.active.id);
-    const to = data.days.findIndex((d) => d.id === e.over!.id);
+  function onDragEnd(ev: DragEndEvent) {
+    if (!ev.over || ev.active.id === ev.over.id) return;
+    const from = data.days.findIndex((d) => d.id === ev.active.id);
+    const to = data.days.findIndex((d) => d.id === ev.over!.id);
     if (from < 0 || to < 0) return;
-    if (!canReorder(data, from, to)) {
-      toast("Only the Galle days can swap around");
+    if (!canReorder(e, data, from, to)) {
+      toast(`Only the ${plans[from]?.base.name} days can swap around`);
       return;
     }
-    update((d) => reorderDays(d, from, to));
+    update((d) => reorderDays(e, d, from, to));
   }
 
   function runQuickFill(onlyEmpty: boolean) {
     setFillAsk(false);
-    update((d) => quickFill(d, { onlyEmpty }));
+    update((d) => quickFill(e, d, { onlyEmpty }));
     setFillKey((k) => k + 1);
     toast("✨ Filled! Tweak anything you like.");
   }
@@ -174,10 +183,10 @@ export function BuildStep({ data, update, locked, budget, onOpenBudget, onBack, 
     t: timeline.days[i],
     locked,
     onFirst: (slot: SlotKind) => !locked && setMatchup({ index: i, slot }),
-    onAdd: (slot: SlotKind) => !locked && setCatalog({ index: i, slot }),
+    onAdd: (slot: SlotKind) => !locked && setCatalogRef({ index: i, slot }),
     onStayIn: () => {
       if (locked) return;
-      update((d) => (d.days[i].night.length ? addItem(d, i, "night", STAY_ID) : pickFirst(d, i, "night", STAY_ID)));
+      update((d) => (d.days[i].night.length ? addItem(e, d, i, "night", STAY_ID) : pickFirst(e, d, i, "night", STAY_ID)));
       toast(`Stay in added to Day ${i + 1}'s evening`);
     },
     onItem: (slot: SlotKind, key: string) => {
@@ -208,26 +217,30 @@ export function BuildStep({ data, update, locked, budget, onOpenBudget, onBack, 
   const it = itemRef ? data.days[itemRef.index]?.[itemRef.slot].find((x) => x.key === itemRef.key) : undefined;
   const itPos = itemRef && it ? data.days[itemRef.index][itemRef.slot].indexOf(it) : -1;
   const itCount = itemRef ? data.days[itemRef.index][itemRef.slot].length : 0;
-  const itWhere = itemRef ? slotWhere(roleAt(data, itemRef.index), itemRef.slot) : null;
-  const itResolved = itemRef && it ? resolve(it, itemRef.slot, itWhere) : null;
+  const itArea = itemRef ? slotArea(e, data, itemRef.index, itemRef.slot) : null;
+  const itResolved = itemRef && it ? resolve(e, it, itemRef.slot, itArea) : null;
   const itActivity = itResolved?.kind === "activity" ? itResolved.activity : null;
   const itTitle = itResolved ? (itResolved.kind === "stay" ? itResolved.stay.title : itResolved.activity.title) : "";
-  const moveTargets = itemRef && it ? data.days.map((_, i) => canMoveItem(data, itemRef.slot, itemRef.index, i, it.id)) : [];
+  const itOnRoute = !!itemRef && itemRef.slot === "day" && plans[itemRef.index]?.transfer?.dayArea === itArea;
+  const moveTargets = itemRef && it ? data.days.map((_, i) => canMoveItem(e, data, itemRef.slot, itemRef.index, i, it.id)) : [];
   const canMoveAnywhere = moveTargets.some(Boolean);
   const closeItem = () => setItemRef(null);
+  const itSpecial = itemRef ? specialAt(e, data, itemRef.index) : null;
+  const otherVariant = itActivity?.variants?.find((v) => v.id !== variantOf(itActivity, it?.variant)?.id);
+  const slotLabel = (slot: SlotKind) => catalog.preset.structure.slots[slot].label;
 
   return (
     <div className="grain pb-36">
       <section className="relative z-[1] px-5 pt-6">
-        <p className="label text-sunset-600">Step 2 · Your days</p>
+        <p className="label text-accent-600">Step 2 · Your days</p>
         <h1 className="font-display mt-2 text-[38px] font-semibold leading-[1] tracking-[-0.025em]">
-          Build your <span className="italic text-ocean-700">days</span>
+          Build your <span className="italic text-primary-700">days</span>
         </h1>
         <p className="mt-3 text-[15px] text-ink-2">
-          {n} days · {nts.total} nights: {nts.colombo === 1 ? "one night" : `${nts.colombo} nights`} in Colombo, then down the coast to Galle.
-          Pick a daytime and an evening — and add as much to each as you like.
+          {daysNightsLabel(n)}: {nightsLine(e, n)}. Pick a {slotLabel("day").toLowerCase()} and an {slotLabel("night").toLowerCase()} — and add as
+          much to each as you like.
         </p>
-        <StaysBanner colombo={nts.colombo} galle={nts.galle} className="mt-4" />
+        <StaysBanner stays={sections.map((s) => ({ base: s.base, nights: s.nights }))} className="mt-4" />
         {!locked && (
           <div className="mt-4 flex gap-2.5">
             <Button variant="ocean" size="md" className="flex-1" onClick={() => (items > 0 ? setFillAsk(true) : runQuickFill(false))}>
@@ -262,40 +275,40 @@ export function BuildStep({ data, update, locked, budget, onOpenBudget, onBack, 
         </div>
       </div>
 
-      {/* Colombo · Day 1 (… or more Colombo days, per the Trip rules) */}
-      <section className="relative z-[1] mt-5" aria-label="Colombo">
-        <SectionHeader
-          stay="colombo"
-          kicker={colomboIdx.length > 1 ? `Days 1–${colomboIdx.length} · ${nts.colombo} nights` : `Day 1 · ${nts.colombo} night`}
-        />
-        <ol key={`c${fillKey}`} className="mt-3 space-y-3 px-3">
-          {colomboIdx.map((i) => row(i))}
-        </ol>
-      </section>
+      {sections.map((s, k) => {
+        const fixed = s.days.filter((i) => !plans[i].reorderable);
+        const sortable = s.days.filter((i) => plans[i].reorderable);
+        const to = s.from + s.days.length + (s.departure !== null ? 1 : 0);
+        return (
+          <section key={s.base.id} className={cn("relative z-[1]", k ? "mt-6" : "mt-5")} aria-label={s.base.name}>
+            <SectionHeader
+              base={s.base}
+              kicker={`${to - s.from > 1 ? `Days ${s.from + 1}–${to}` : `Day ${s.from + 1}`} · ${s.nights} ${s.nights === 1 ? "night" : "nights"}`}
+            />
+            {fixed.length > 0 && (
+              <ol key={`f${s.base.id}${fillKey}`} className="mt-3 space-y-3 px-3">
+                {fixed.map((i) => row(i))}
+              </ol>
+            )}
+            {sortable.length > 0 && (
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd} modifiers={[restrictToVerticalAxis]}>
+                <SortableContext items={sortable.map((i) => data.days[i].id)} strategy={verticalListSortingStrategy}>
+                  <ol key={`s${s.base.id}${fillKey}`} className="mt-3 space-y-3 px-3">
+                    {sortable.map((i) => row(i, true))}
+                  </ol>
+                </SortableContext>
+              </DndContext>
+            )}
+            {s.departure !== null && (
+              <ol key={`d${fillKey}`} className="mt-3 space-y-3 px-3">
+                {row(s.departure)}
+              </ol>
+            )}
+          </section>
+        );
+      })}
 
-      {/* Galle · the road trip, the Galle days and the fly-home day */}
-      {n > 1 && (
-        <section className="relative z-[1] mt-6" aria-label="Galle">
-          <SectionHeader stay="galle" kicker={`Days ${colomboIdx.length + 1}–${n} · ${nts.galle} nights`} />
-          <ol key={`r${fillKey}`} className="mt-3 space-y-3 px-3">
-            {transferIdx.map((i) => row(i))}
-          </ol>
-          {galleIdx.length > 0 && (
-            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd} modifiers={[restrictToVerticalAxis]}>
-              <SortableContext items={galleIdx.map((i) => data.days[i].id)} strategy={verticalListSortingStrategy}>
-                <ol key={`g${fillKey}`} className="mt-3 space-y-3 px-3">
-                  {galleIdx.map((i) => row(i, true))}
-                </ol>
-              </SortableContext>
-            </DndContext>
-          )}
-          <ol key={`d${fillKey}`} className="mt-3 space-y-3 px-3">
-            {row(n - 1)}
-          </ol>
-        </section>
-      )}
-
-      <div className="pb-safe fixed inset-x-0 bottom-0 z-30 flex gap-2.5 bg-gradient-to-t from-sand-100 via-sand-100/90 to-transparent px-4 pt-6 lg:left-auto lg:w-[480px]">
+      <div className="pb-safe fixed inset-x-0 bottom-0 z-30 flex gap-2.5 bg-gradient-to-t from-surface-100 via-surface-100/90 to-transparent px-4 pt-6 lg:left-auto lg:w-[480px]">
         <Button variant="light" size="lg" onClick={onBack} aria-label="Back to dates" className="px-5">
           <ArrowLeft className="size-5" />
         </Button>
@@ -314,23 +327,23 @@ export function BuildStep({ data, update, locked, budget, onOpenBudget, onBack, 
           slot={matchup.slot}
           onPick={(id, pairId) => {
             if (needsVariant(id, { index: matchup.index, slot: matchup.slot, mode: "first", pairId })) return;
-            update((d) => pickFirst(d, matchup.index, matchup.slot, id, pairId));
+            update((d) => pickFirst(e, d, matchup.index, matchup.slot, id, pairId));
           }}
-          onStay={() => update((d) => pickFirst(d, matchup.index, matchup.slot, STAY_ID))}
+          onStay={() => update((d) => pickFirst(e, d, matchup.index, matchup.slot, STAY_ID))}
         />
       )}
-      {catalog && (
+      {catalogRef && (
         <CatalogSheet
-          open={!!catalog}
-          onClose={() => setCatalog(null)}
+          open={!!catalogRef}
+          onClose={() => setCatalogRef(null)}
           data={data}
-          index={catalog.index}
-          slot={catalog.slot}
-          mode={catalog.replace ? "replace" : "add"}
+          index={catalogRef.index}
+          slot={catalogRef.slot}
+          mode={catalogRef.replace ? "replace" : "add"}
           onChoose={(id) => {
-            const c = catalog;
+            const c = catalogRef;
             if (needsVariant(id, { index: c.index, slot: c.slot, mode: c.replace ? "replace" : "add", key: c.replace })) return;
-            update((d) => (c.replace ? replaceItem(d, c.index, c.slot, c.replace, id) : addItem(d, c.index, c.slot, id)));
+            update((d) => (c.replace ? replaceItem(e, d, c.index, c.slot, c.replace, id) : addItem(e, d, c.index, c.slot, id)));
             toast(c.replace ? "Swapped" : `Added to Day ${c.index + 1}`);
           }}
         />
@@ -339,40 +352,31 @@ export function BuildStep({ data, update, locked, budget, onOpenBudget, onBack, 
       <Sheet
         open={!!itemRef && !!it}
         onClose={closeItem}
-        eyebrow={
-          itemRef
-            ? `Day ${itemRef.index + 1} · ${itemRef.slot === "day" ? (itWhere === "enroute" ? "On the way" : "Daytime") : "Evening"}${itCount > 1 ? ` · ${itPos + 1} of ${itCount}` : ""}`
-            : ""
-        }
+        eyebrow={itemRef ? `Day ${itemRef.index + 1} · ${itOnRoute ? "On the way" : slotLabel(itemRef.slot)}${itCount > 1 ? ` · ${itPos + 1} of ${itCount}` : ""}` : ""}
         title={itTitle}
       >
         {itemRef && it && !moving && (
           <div className="grid gap-2 px-4 pb-10 pt-1">
             {itActivity && <ActionRow icon={Eye} label="See details" onClick={() => setDetail(itActivity)} />}
-            {it.id === ELLA_ID && (
+            {itActivity?.variants && otherVariant && (
               <ActionRow
                 icon={Sunrise}
-                label={`Switch to ${tripVariants().find((v) => v.id !== tripVariant(it.variant)?.id)?.title ?? "the other way"}`}
+                label={`Switch to ${otherVariant.title}`}
                 onClick={() => {
                   const ref = itemRef;
                   closeItem();
-                  setTripAsk({ index: ref.index, slot: ref.slot, mode: "switch", key: ref.key, current: tripVariant(it.variant)?.id });
+                  setTripAsk({ index: ref.index, slot: ref.slot, id: it.id, mode: "switch", key: ref.key, current: variantOf(itActivity, it.variant)?.id });
                 }}
               />
             )}
             {itCount > 1 && (
               <div className="grid grid-cols-2 gap-2">
-                <ActionRow
-                  icon={ArrowUp}
-                  label="Earlier"
-                  disabled={itPos <= 0}
-                  onClick={() => update((d) => moveItemWithin(d, itemRef.index, itemRef.slot, it.key, itPos - 1))}
-                />
+                <ActionRow icon={ArrowUp} label="Earlier" disabled={itPos <= 0} onClick={() => update((d) => moveItemWithin(e, d, itemRef.index, itemRef.slot, it.key, itPos - 1))} />
                 <ActionRow
                   icon={ArrowDown}
                   label="Later"
                   disabled={itPos >= itCount - 1}
-                  onClick={() => update((d) => moveItemWithin(d, itemRef.index, itemRef.slot, it.key, itPos + 1))}
+                  onClick={() => update((d) => moveItemWithin(e, d, itemRef.index, itemRef.slot, it.key, itPos + 1))}
                 />
               </div>
             )}
@@ -383,19 +387,21 @@ export function BuildStep({ data, update, locked, budget, onOpenBudget, onBack, 
                 const ref = itemRef;
                 closeItem();
                 if (itPos === 0) setMatchup({ index: ref.index, slot: ref.slot });
-                else setCatalog({ index: ref.index, slot: ref.slot, replace: ref.key });
+                else setCatalogRef({ index: ref.index, slot: ref.slot, replace: ref.key });
               }}
             />
             {canMoveAnywhere && <ActionRow icon={ArrowRightLeft} label="Move to another day" onClick={() => setMoving(true)} />}
-            {!canMoveAnywhere && isNyeOption(it.id) && (
-              <p className="px-1 text-[12.5px] text-ink-3">New Year&apos;s Eve picks stay pinned to 31 Dec.</p>
+            {!canMoveAnywhere && isSpecialOption(e, it.id) && itSpecial && (
+              <p className="px-1 text-[12.5px] text-ink-3">
+                {itSpecial.name} picks stay pinned to {dayLabel(dateAt(data, itemRef.index)!).split(" ").slice(1).join(" ")}.
+              </p>
             )}
             <ActionRow
               icon={Trash2}
               label="Remove"
               danger
               onClick={() => {
-                update((d) => removeItem(d, itemRef.index, itemRef.slot, it.key));
+                update((d) => removeItem(e, d, itemRef.index, itemRef.slot, it.key));
                 closeItem();
               }}
             />
@@ -403,11 +409,10 @@ export function BuildStep({ data, update, locked, budget, onOpenBudget, onBack, 
         )}
         {itemRef && it && moving && (
           <div className="px-4 pb-8">
-            <p className="px-1 pb-3 text-[14px] text-ink-2">Pick a Galle day — it goes to the end of that day&apos;s {itemRef.slot === "day" ? "daytime" : "evening"}.</p>
+            <p className="px-1 pb-3 text-[14px] text-ink-2">Pick a day — it goes to the end of that day&apos;s {slotLabel(itemRef.slot).toLowerCase()}.</p>
             <ul className="grid grid-cols-[minmax(0,1fr)] gap-2">
               {data.days.map((d, i) => {
                 if (i === itemRef.index) return null;
-                const ok = moveTargets[i];
                 return (
                   <li key={d.id}>
                     <MoveTarget
@@ -416,9 +421,9 @@ export function BuildStep({ data, update, locked, budget, onOpenBudget, onBack, 
                       index={i}
                       slot={itemRef.slot}
                       t={timeline.days[i]}
-                      ok={ok}
+                      ok={moveTargets[i]}
                       onClick={() => {
-                        update((cur) => moveItem(cur, itemRef.slot, itemRef.index, it.key, i));
+                        update((cur) => moveItem(e, cur, itemRef.slot, itemRef.index, it.key, i));
                         closeItem();
                         toast(`Moved to Day ${i + 1}`);
                       }}
@@ -431,16 +436,19 @@ export function BuildStep({ data, update, locked, budget, onOpenBudget, onBack, 
         )}
       </Sheet>
 
-      {tripAsk && (
-        <VariantSheet open data={data} index={tripAsk.index} current={tripAsk.current} onClose={() => setTripAsk(null)} onChoose={chooseTrip} />
+      {tripAsk && catalog.byId[tripAsk.id] && (
+        <VariantSheet
+          open
+          activity={catalog.byId[tripAsk.id]}
+          data={data}
+          index={tripAsk.index}
+          current={tripAsk.current}
+          onClose={() => setTripAsk(null)}
+          onChoose={chooseTrip}
+        />
       )}
 
-      <OptionDetail
-        open={!!detail}
-        option={detail}
-        where={itWhere ?? undefined}
-        onClose={() => setDetail(null)}
-      />
+      <OptionDetail open={!!detail} option={detail} area={itArea ?? undefined} onClose={() => setDetail(null)} />
 
       <Sheet
         open={noteFor !== null}
@@ -466,10 +474,10 @@ export function BuildStep({ data, update, locked, budget, onOpenBudget, onBack, 
             autoFocus
             value={noteText}
             maxLength={280}
-            onChange={(e) => setNoteText(e.target.value)}
+            onChange={(ev) => setNoteText(ev.target.value)}
             rows={4}
-            placeholder="e.g. My birthday! · Would love to do this with Priya · Could skip if we're tired"
-            className="w-full resize-none rounded-2xl border-2 border-sand-300 bg-paper p-4 text-[16px] outline-none focus:border-ocean-600"
+            placeholder="e.g. My birthday! · Would love to do this with Sam · Could skip if we're tired"
+            className="w-full resize-none rounded-2xl border-2 border-surface-300 bg-paper p-4 text-[16px] outline-none focus:border-primary-600"
           />
           <p className="mt-1 text-right text-xs text-ink-3">{noteText.length}/280</p>
         </div>
@@ -477,9 +485,7 @@ export function BuildStep({ data, update, locked, budget, onOpenBudget, onBack, 
 
       <Sheet open={fillAsk} onClose={() => setFillAsk(false)} size="auto" eyebrow="Quick fill" title="Keep your picks?">
         <div className="grid gap-2.5 px-5 pb-8">
-          <p className="pb-1 text-[15px] text-ink-2">
-            We&apos;ll put one balanced pick in each empty slot — adventures, beaches and nights out — keeping travel light.
-          </p>
+          <p className="pb-1 text-[15px] text-ink-2">We&apos;ll put one balanced pick in each empty slot — adventures, food and nights out — keeping travel light.</p>
           <Button size="lg" variant="ocean" onClick={() => runQuickFill(true)}>
             <Sparkles className="size-5" /> Fill the empty slots
           </Button>
@@ -505,7 +511,7 @@ function SortableDay(props: React.ComponentProps<typeof DayCard>) {
         {...attributes}
         {...listeners}
         aria-label={`Drag to reorder day ${props.index + 1}`}
-        className="grid size-8 cursor-grab touch-none place-items-center rounded-full text-ink-3 transition hover:bg-sand-200 active:cursor-grabbing"
+        className="grid size-8 cursor-grab touch-none place-items-center rounded-full text-ink-3 transition hover:bg-surface-200 active:cursor-grabbing"
       >
         <GripVertical className="size-[18px]" />
       </button>
@@ -533,17 +539,18 @@ function MoveTarget({
   ok: boolean;
   onClick: () => void;
 }) {
+  const e = useEngine();
   const first = day[slot][0];
-  const r = first ? resolve(first, slot, slotWhere(t.role, slot)) : null;
+  const r = first ? resolve(e, first, slot, t.plan.areas[slot]) : null;
   const label = r ? (r.kind === "stay" ? r.stay.title : r.activity.title) : "Nothing yet";
   const why =
-    t.role === "colombo"
-      ? "Colombo day"
-      : t.role === "departure"
-        ? "Fly-home day"
-        : t.role === "transfer" && slot === "day"
+    t.plan.kind === "departure"
+      ? "Fly-home day"
+      : t.special?.slot === slot
+        ? `${t.special.name} stays put`
+        : slot === "day" && t.day.onRoute
           ? "Stops on the way only"
-          : "New Year's Eve stays put";
+          : `${t.plan.base.name} day`;
   return (
     <button
       disabled={!ok}
@@ -557,58 +564,57 @@ function MoveTarget({
       {r?.kind === "stay" ? (
         <StayThumb kind={slot} className="size-11" />
       ) : (
-        <span className="relative size-11 shrink-0 overflow-hidden rounded-xl bg-sand-200">
+        <span className="relative size-11 shrink-0 overflow-hidden rounded-xl bg-surface-200">
           {r?.kind === "activity" && <Photo photo={r.activity.images[0]} alt={label} sizes="44px" />}
         </span>
       )}
       <span className="min-w-0 flex-1">
         <span className={cn("block truncate text-[14px] font-semibold", !first && "text-ink-3")}>{ok ? label : why}</span>
-        <span className="block truncate text-[11.5px] text-ink-3">{DAY_NAMES[t.role]}</span>
+        <span className="block truncate text-[11.5px] text-ink-3">{t.name}</span>
       </span>
     </button>
   );
 }
 
-/** "Colombo · 1 night → Galle · 4 nights" */
-export function StaysBanner({ colombo, galle, className }: { colombo: number; galle: number; className?: string }) {
-  const tile = (id: "colombo" | "galle", nightsHere: number) => (
-    <div className="relative flex h-[68px] min-w-0 flex-1 items-end overflow-hidden rounded-2xl bg-ocean-800 p-2.5 text-paper">
-      <Photo photo={stays[id].images[0]} alt={stays[id].name} sizes="200px" />
-      <span className="absolute inset-0 bg-gradient-to-t from-ink/85 via-ink/50 to-ink/5" />
-      <span className="relative [text-shadow:0_1px_8px_rgb(0_0_0/0.5)]">
-        <span className="font-display block text-[19px] font-semibold leading-none">{stays[id].name}</span>
-        <span className="text-[12px] font-semibold text-paper/85">
-          {nightsHere} {nightsHere === 1 ? "night" : "nights"}
-        </span>
-      </span>
-    </div>
-  );
+/** "Colombo · 1 night → Galle · 4 nights" as photo tiles. */
+export function StaysBanner({ stays, className }: { stays: { base: Base; nights: number }[]; className?: string }) {
+  const { Vehicle } = useArt();
   return (
-    <div
-      className={cn("flex items-center gap-2", className)}
-      aria-label={`Colombo ${colombo} ${colombo === 1 ? "night" : "nights"}, then Galle ${galle} ${galle === 1 ? "night" : "nights"}`}
-    >
-      {tile("colombo", colombo)}
-      <span className="flex shrink-0 flex-col items-center text-ocean-600">
-        <Van className="h-5 w-8" />
-        <ArrowRight className="size-4" strokeWidth={2.5} />
-      </span>
-      {tile("galle", galle)}
+    <div className={cn("flex items-center gap-2", className)} aria-label={stays.map((s) => `${s.base.name} ${s.nights} ${s.nights === 1 ? "night" : "nights"}`).join(", then ")}>
+      {stays.map((s, k) => (
+        <Fragment key={s.base.id}>
+          {k > 0 && (
+            <span className="flex shrink-0 flex-col items-center text-primary-600">
+              <Vehicle className="h-5 w-8" />
+              <ArrowRight className="size-4" strokeWidth={2.5} />
+            </span>
+          )}
+          <div className="relative flex h-[68px] min-w-0 flex-1 items-end overflow-hidden rounded-2xl bg-primary-800 p-2.5 text-paper">
+            <Photo photo={s.base.images[0]} alt={s.base.name} sizes="200px" />
+            <span className="absolute inset-0 bg-gradient-to-t from-ink/85 via-ink/50 to-ink/5" />
+            <span className="relative [text-shadow:0_1px_8px_rgb(0_0_0/0.5)]">
+              <span className="font-display block text-[19px] font-semibold leading-none">{s.base.name}</span>
+              <span className="text-[12px] font-semibold text-paper/85">
+                {s.nights} {s.nights === 1 ? "night" : "nights"}
+              </span>
+            </span>
+          </div>
+        </Fragment>
+      ))}
     </div>
   );
 }
 
-function SectionHeader({ stay, kicker }: { stay: "colombo" | "galle"; kicker: string }) {
-  const s = stays[stay];
+function SectionHeader({ base, kicker }: { base: Base; kicker: string }) {
   return (
-    <div className="mx-3 overflow-hidden rounded-[22px] bg-ocean-800 text-paper shadow-card">
+    <div className="mx-3 overflow-hidden rounded-[22px] bg-primary-800 text-paper shadow-card">
       <div className="relative h-24">
-        <Photo photo={s.images[0]} alt={s.name} sizes="(min-width: 1024px) 460px, 94vw" />
-        <span className="absolute inset-0 bg-gradient-to-r from-ocean-950/90 via-ocean-950/55 to-transparent" />
+        <Photo photo={base.images[0]} alt={base.name} sizes="(min-width: 1024px) 460px, 94vw" />
+        <span className="absolute inset-0 bg-gradient-to-r from-primary-950/90 via-primary-950/55 to-transparent" />
         <div className="relative flex h-full flex-col justify-center px-4">
-          <p className="label text-saffron-400">{kicker}</p>
-          <h2 className="font-display text-[28px] font-semibold leading-none">{s.name}</h2>
-          <p className="mt-1 text-[12.5px] text-paper/80">{s.tagline}</p>
+          <p className="label text-highlight-400">{kicker}</p>
+          <h2 className="font-display text-[28px] font-semibold leading-none">{base.name}</h2>
+          <p className="mt-1 text-[12.5px] text-paper/80">{base.tagline}</p>
         </div>
       </div>
     </div>
@@ -634,10 +640,10 @@ function ActionRow({
       disabled={disabled}
       className={cn(
         "flex h-14 items-center gap-3 rounded-2xl bg-paper px-4 text-left text-[16px] font-semibold shadow-card transition enabled:hover:-translate-y-0.5 enabled:active:scale-[0.99] disabled:opacity-40",
-        danger && "text-sunset-600",
+        danger && "text-accent-600",
       )}
     >
-      <Icon className={cn("size-5", danger ? "text-sunset-500" : "text-ocean-600")} />
+      <Icon className={cn("size-5", danger ? "text-accent-500" : "text-primary-600")} />
       {label}
     </button>
   );

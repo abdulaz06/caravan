@@ -2,12 +2,12 @@
 
 import { Backpack, Ban, Check, Clock, ExternalLink, Flag, Gauge, Heart, Info, MapPin, RefreshCw, Wallet } from "lucide-react";
 import { useRef, useState } from "react";
-import { COAST_ROAD_KM, extras, regions, type Activity, type Photo as PhotoT, type Where } from "@/content";
+import type { Activity, Photo as PhotoT } from "@/engine/catalog";
 import { cn } from "@/lib/cn";
-import { isHidden } from "@/lib/rules";
-import { distanceLabel } from "@/lib/timeline";
+import { isHidden } from "@/engine/rules";
+import { useEngine } from "../engine";
+import { distanceLabel } from "@/engine/timeline";
 import { PopularBadge, usePopular } from "../popular";
-import { useRules } from "../rules";
 import { VariantCard } from "./day-trip";
 import { useCurrency } from "../currency";
 import { Button } from "../ui/button";
@@ -20,7 +20,7 @@ type Option = Activity;
 type Props = {
   option: Option | null;
   /** Which pool it's being shown for (distance copy); defaults to the option's first. */
-  where?: Where;
+  area?: string;
   open: boolean;
   onClose: () => void;
   pickLabel?: string;
@@ -42,7 +42,7 @@ export function Gallery({ images, alt, className }: { images: PhotoT[]; alt: str
         className="no-scrollbar flex h-full snap-x snap-mandatory overflow-x-auto"
       >
         {images.map((img, k) => (
-          <div key={img.src} className="relative h-full w-full shrink-0 snap-center bg-ocean-800">
+          <div key={img.src} className="relative h-full w-full shrink-0 snap-center bg-primary-800">
             <Photo photo={img} alt={`${alt} — photo ${k + 1}`} sizes="(min-width: 1024px) 480px, 100vw" priority={k === 0} quality={85} />
           </div>
         ))}
@@ -64,10 +64,13 @@ export function Gallery({ images, alt, className }: { images: PhotoT[]; alt: str
   );
 }
 
-export function OptionDetail({ option, where, open, onClose, pickLabel, picked, onPick }: Props) {
+export function OptionDetail({ option, area, open, onClose, pickLabel, picked, onPick }: Props) {
   const { range, rateNote } = useCurrency();
-  const rules = useRules();
-  const gone = !!option && isHidden(option.id, rules);
+  const e = useEngine();
+  const { catalog, rules } = e;
+  const gone = !!option && isHidden(rules, option.familyOf ?? option.id);
+  const route = option?.routeKm !== undefined ? catalog.transfers.map((t) => (t.dayArea && option.areas.includes(t.dayArea) && t.route ? catalog.routes[t.route] : undefined)).find(Boolean) : undefined;
+  const extrasHere = option ? catalog.extras.filter((x) => x.onlyWith === (option.familyOf ?? option.id)) : [];
   const recheck = !!option && rules.recheck.includes(option.id);
   const popular = usePopular();
   const popularCount = option ? popular(option.id) : null;
@@ -95,50 +98,50 @@ export function OptionDetail({ option, where, open, onClose, pickLabel, picked, 
           <Gallery images={option.images} alt={option.title} className="aspect-[4/3.4] w-full" />
           <div className="px-5 pb-8 pt-5">
             <div className="flex flex-wrap items-center gap-2 text-[12px] font-semibold text-ink-3">
-              <span className="inline-flex items-center gap-1 rounded-full bg-ocean-100 px-2.5 py-1 text-ocean-700">
-                <MapPin className="size-3.5" /> {regions[option.region].name}
+              <span className="inline-flex items-center gap-1 rounded-full bg-primary-100 px-2.5 py-1 text-primary-700">
+                <MapPin className="size-3.5" /> {catalog.regions[option.region]?.name ?? option.region}
               </span>
-              <span className="rounded-full bg-sand-200 px-2.5 py-1 text-ink-2">
-                {distanceLabel(option, where ?? option.where[0])}
+              <span className="rounded-full bg-surface-200 px-2.5 py-1 text-ink-2">
+                {distanceLabel(e, option, area ?? option.areas[0])}
               </span>
-              {option.kind === "extra" && <span className="rounded-full bg-saffron-200 px-2.5 py-1 text-ink">Quick extra</span>}
-              <VibeDots vibe={option.vibe} className="rounded-full bg-sand-200 px-2.5 py-1 text-ink-2" />
+              {option.kind === "extra" && <span className="rounded-full bg-highlight-200 px-2.5 py-1 text-ink">Quick extra</span>}
+              <VibeDots vibe={option.vibe} className="rounded-full bg-surface-200 px-2.5 py-1 text-ink-2" />
               <DaysBadge option={option} className="px-2.5 py-1 text-[12px]" />
               {popularCount !== null && <PopularBadge count={popularCount} className="py-1 pr-2.5 text-[12px]" />}
             </div>
             {gone && (
-              <p className="mt-3 flex items-center gap-2 rounded-2xl bg-sand-200 px-3.5 py-2.5 text-[13.5px] font-semibold text-ink-2">
-                <Ban className="size-4 shrink-0 text-sunset-600" /> No longer available — the organizers have taken this off the list.
+              <p className="mt-3 flex items-center gap-2 rounded-2xl bg-surface-200 px-3.5 py-2.5 text-[13.5px] font-semibold text-ink-2">
+                <Ban className="size-4 shrink-0 text-accent-600" /> No longer available — the organizers have taken this off the list.
               </p>
             )}
             {recheck && !gone && (
-              <p className="mt-3 flex items-center gap-2 rounded-2xl bg-saffron-100 px-3.5 py-2.5 text-[13px] text-ink-2 ring-1 ring-saffron-200">
-                <RefreshCw className="size-4 shrink-0 text-sunset-600" /> The organizers will re-check this one closer to the date.
+              <p className="mt-3 flex items-center gap-2 rounded-2xl bg-highlight-100 px-3.5 py-2.5 text-[13px] text-ink-2 ring-1 ring-highlight-200">
+                <RefreshCw className="size-4 shrink-0 text-accent-600" /> The organizers will re-check this one closer to the date.
               </p>
             )}
             <h2 className="font-display mt-3 text-[30px] font-semibold leading-[1.05] tracking-[-0.02em]">{option.title}</h2>
-            <p className="font-display mt-2 text-[18px] italic leading-snug text-ocean-700">{option.tagline}</p>
+            <p className="font-display mt-2 text-[18px] italic leading-snug text-primary-700">{option.tagline}</p>
             {option.loved && (
-              <p className="mt-3 flex gap-2 rounded-2xl bg-hibiscus-100/70 px-3.5 py-2.5 text-[13.5px] leading-snug text-ink-2">
-                <Heart className="mt-0.5 size-4 shrink-0 fill-hibiscus-500 text-hibiscus-500" />
+              <p className="mt-3 flex gap-2 rounded-2xl bg-pop-100/70 px-3.5 py-2.5 text-[13.5px] leading-snug text-ink-2">
+                <Heart className="mt-0.5 size-4 shrink-0 fill-pop-500 text-pop-500" />
                 <span>
                   <b className="text-ink">Why people love it: </b>
                   {option.loved}
                 </span>
               </p>
             )}
-            {option.routeKm !== undefined && (
-              <div className="mt-4 rounded-2xl bg-paper p-3 shadow-card" aria-label={`About ${option.routeKm} km from Colombo on the coast road`}>
+            {option.routeKm !== undefined && route && (
+              <div className="mt-4 rounded-2xl bg-paper p-3 shadow-card" aria-label={`About ${option.routeKm} km from ${catalog.regions[route.from]?.short} on the way`}>
                 <div className="flex justify-between text-[11px] font-bold uppercase tracking-wide text-ink-3">
-                  <span>Colombo</span>
-                  <span>On the coast road · km {option.routeKm}</span>
-                  <span>Galle</span>
+                  <span>{catalog.regions[route.from]?.short}</span>
+                  <span>On the way · km {option.routeKm}</span>
+                  <span>{catalog.regions[route.to]?.short}</span>
                 </div>
-                <div className="relative mt-2 h-2 rounded-full bg-sand-200">
-                  <span className="absolute inset-y-0 left-0 rounded-full bg-ocean-600" style={{ width: `${(option.routeKm / COAST_ROAD_KM) * 100}%` }} />
+                <div className="relative mt-2 h-2 rounded-full bg-surface-200">
+                  <span className="absolute inset-y-0 left-0 rounded-full bg-primary-600" style={{ width: `${(option.routeKm / route.totalKm) * 100}%` }} />
                   <span
-                    className="absolute top-1/2 size-4 -translate-x-1/2 -translate-y-1/2 rounded-full bg-saffron-500 ring-[3px] ring-paper"
-                    style={{ left: `${(option.routeKm / COAST_ROAD_KM) * 100}%` }}
+                    className="absolute top-1/2 size-4 -translate-x-1/2 -translate-y-1/2 rounded-full bg-highlight-500 ring-[3px] ring-paper"
+                    style={{ left: `${(option.routeKm / route.totalKm) * 100}%` }}
                   />
                 </div>
               </div>
@@ -158,7 +161,7 @@ export function OptionDetail({ option, where, open, onClose, pickLabel, picked, 
             <ul className="mt-5 space-y-2.5">
               {option.highlights.map((h) => (
                 <li key={h} className="flex gap-3 text-[15px]">
-                  <span className="mt-1 grid size-5 shrink-0 place-items-center rounded-full bg-saffron-200 text-ink">
+                  <span className="mt-1 grid size-5 shrink-0 place-items-center rounded-full bg-highlight-200 text-ink">
                     <Check className="size-3" strokeWidth={3.5} />
                   </span>
                   {h}
@@ -171,19 +174,17 @@ export function OptionDetail({ option, where, open, onClose, pickLabel, picked, 
                 <p className="mt-1 text-[13.5px] text-ink-3">You choose when you pick it — and can switch later.</p>
                 <div className="mt-3 grid gap-3">
                   {option.variants.map((v) => (
-                    <VariantCard key={v.id} variant={v} />
+                    <VariantCard key={v.id} activity={option} variant={v} />
                   ))}
                 </div>
               </section>
             )}
-            {extras.some((x) => x.onlyWith === option.id) && (
+            {extrasHere.length > 0 && (
               <section className="mt-5" aria-label="While you're there">
-                <h3 className="font-display text-[20px] font-semibold">While you&apos;re in {regions[option.region].short}</h3>
+                <h3 className="font-display text-[20px] font-semibold">While you&apos;re in {catalog.regions[option.region]?.short}</h3>
                 <p className="mt-1 text-[13px] text-ink-3">Add these with “+ Add another” once the trip is in your day.</p>
                 <ul className="mt-2.5 grid gap-2">
-                  {extras
-                    .filter((x) => x.onlyWith === option.id)
-                    .map((x) => (
+                  {extrasHere.map((x) => (
                       <li key={x.id} className="flex items-center gap-3 rounded-2xl bg-paper px-3 py-2.5 shadow-card">
                         <span className="text-[22px] leading-none" aria-hidden="true">
                           {x.emoji}
@@ -201,7 +202,7 @@ export function OptionDetail({ option, where, open, onClose, pickLabel, picked, 
             {option.bring && (
               <section className="mt-5 rounded-[22px] bg-paper p-4 shadow-card">
                 <h3 className="flex items-center gap-2 text-[15px] font-bold">
-                  <Backpack className="size-4 text-ocean-600" /> What to bring
+                  <Backpack className="size-4 text-primary-600" /> What to bring
                 </h3>
                 <ul className="mt-2 space-y-1.5">
                   {option.bring.map((b) => (
@@ -214,9 +215,9 @@ export function OptionDetail({ option, where, open, onClose, pickLabel, picked, 
               </section>
             )}
             {option.course && (
-              <section className="mt-6 overflow-hidden rounded-[22px] bg-jungle-800 text-paper">
+              <section className="mt-6 overflow-hidden rounded-[22px] bg-secondary-800 text-paper">
                 <div className="flex items-center gap-2 px-4 pb-2 pt-4">
-                  <Flag className="size-5 text-saffron-400" />
+                  <Flag className="size-5 text-highlight-400" />
                   <h3 className="font-display text-[20px] font-semibold">The course</h3>
                   <span className="ml-auto text-[12px] font-semibold text-paper/60">
                     Par {option.course.reduce((n, h) => n + h.par, 0)}
@@ -225,7 +226,7 @@ export function OptionDetail({ option, where, open, onClose, pickLabel, picked, 
                 <ol className="divide-y divide-white/10 px-4 pb-2">
                   {option.course.map((h, i) => (
                     <li key={h.venue} className="flex items-center gap-3 py-2.5">
-                      <span className="font-display grid size-8 shrink-0 place-items-center rounded-full bg-saffron-400 text-[15px] font-bold text-ink">
+                      <span className="font-display grid size-8 shrink-0 place-items-center rounded-full bg-highlight-400 text-[15px] font-bold text-ink">
                         {option.course![0].par === 0 ? i : i + 1}
                       </span>
                       <span className="min-w-0 flex-1">
@@ -242,12 +243,12 @@ export function OptionDetail({ option, where, open, onClose, pickLabel, picked, 
               </section>
             )}
             {option.rules && (
-              <section className="relative mt-4 rotate-[-0.6deg] rounded-[18px] border-2 border-dashed border-jungle-600 bg-jungle-100 p-4">
-                <span className="label absolute -top-2.5 left-4 rounded-full bg-jungle-600 px-2.5 py-0.5 text-paper">Scorecard</span>
-                <h3 className="font-display mt-1 text-[19px] font-semibold text-jungle-900">{option.rules.title}</h3>
+              <section className="relative mt-4 rotate-[-0.6deg] rounded-[18px] border-2 border-dashed border-secondary-600 bg-secondary-100 p-4">
+                <span className="label absolute -top-2.5 left-4 rounded-full bg-secondary-600 px-2.5 py-0.5 text-paper">Scorecard</span>
+                <h3 className="font-display mt-1 text-[19px] font-semibold text-secondary-900">{option.rules.title}</h3>
                 <ul className="mt-2 space-y-1.5">
                   {option.rules.items.map((r) => (
-                    <li key={r} className="flex gap-2 text-[13.5px] leading-snug text-jungle-900">
+                    <li key={r} className="flex gap-2 text-[13.5px] leading-snug text-secondary-900">
                       <span aria-hidden="true">⛳</span>
                       <span>{r}</span>
                     </li>
@@ -256,8 +257,8 @@ export function OptionDetail({ option, where, open, onClose, pickLabel, picked, 
               </section>
             )}
             {option.goodToKnow && (
-              <div className="mt-6 flex gap-3 rounded-2xl bg-ocean-100/70 p-4 text-[14px] leading-snug text-ocean-900">
-                <Info className="mt-0.5 size-4 shrink-0 text-ocean-600" />
+              <div className="mt-6 flex gap-3 rounded-2xl bg-primary-100/70 p-4 text-[14px] leading-snug text-primary-900">
+                <Info className="mt-0.5 size-4 shrink-0 text-primary-600" />
                 <p>
                   <b>Good to know: </b>
                   {option.goodToKnow}
@@ -274,7 +275,7 @@ export function OptionDetail({ option, where, open, onClose, pickLabel, picked, 
                         href={s.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-start gap-1.5 text-[12.5px] leading-snug text-ocean-700 underline-offset-2 hover:underline"
+                        className="inline-flex items-start gap-1.5 text-[12.5px] leading-snug text-primary-700 underline-offset-2 hover:underline"
                       >
                         <ExternalLink className="mt-0.5 size-3 shrink-0" /> {s.label}
                       </a>
@@ -287,7 +288,7 @@ export function OptionDetail({ option, where, open, onClose, pickLabel, picked, 
               {option.images.map((img) => (
                 <PhotoCredit key={img.src} photo={img} className="block" />
               ))}
-              <p className="text-[10.5px] text-ink-3/70">Prices are rough per-person estimates for late 2026 · ≈ {rateNote}.</p>
+              <p className="text-[10.5px] text-ink-3/70">Prices are rough per-person estimates for {catalog.preset.destination.season} · ≈ {rateNote}.</p>
             </div>
           </div>
         </article>

@@ -40,3 +40,6 @@ next-env.d.ts
 
 # local Claude Code launch config
 .claude/
+
+# preset images copied from presets/<id>/images (scripts/sync-presets.mjs)
+public/presets/

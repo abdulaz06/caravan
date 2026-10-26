@@ -1,12 +1,12 @@
 import { cn } from "@/lib/cn";
 
 const TONES = [
-  "bg-saffron-500 text-ink",
-  "bg-sunset-500 text-white",
-  "bg-ocean-500 text-white",
-  "bg-jungle-600 text-white",
-  "bg-hibiscus-500 text-white",
-  "bg-sand-300 text-ink",
+  "bg-highlight-500 text-ink",
+  "bg-accent-500 text-white",
+  "bg-primary-500 text-white",
+  "bg-secondary-600 text-white",
+  "bg-pop-500 text-white",
+  "bg-surface-300 text-ink",
 ];
 
 export function toneFor(name: string): string {
@@ -38,7 +38,7 @@ export function AvatarStack({ initials, className }: { initials: string[]; class
         <span
           key={k}
           className={cn(
-            "font-display grid size-8 place-items-center rounded-full text-sm font-bold ring-2 ring-ocean-950",
+            "font-display grid size-8 place-items-center rounded-full text-sm font-bold ring-2 ring-primary-950",
             TONES[k % TONES.length],
           )}
         >

@@ -1,5 +1,5 @@
 import bcrypt from "bcryptjs";
-import { nameSchema, pinSchema } from "@/lib/schema";
+import { nameSchema, pinSchema } from "@/lib/validation";
 import { db } from "@/lib/server/db";
 import { error, json, readJson } from "@/lib/server/http";
 import { startSession } from "@/lib/server/session";

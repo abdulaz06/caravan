@@ -10,12 +10,12 @@ type Size = "sm" | "md" | "lg";
 
 const variants: Record<Variant, string> = {
   primary:
-    "bg-sunset-500 text-white shadow-[0_4px_0_0_var(--color-sunset-700)] hover:bg-sunset-600 active:shadow-[0_1px_0_0_var(--color-sunset-700)] active:translate-y-[3px]",
+    "bg-accent-500 text-white shadow-[0_4px_0_0_var(--color-accent-700)] hover:bg-accent-600 active:shadow-[0_1px_0_0_var(--color-accent-700)] active:translate-y-[3px]",
   ocean:
-    "bg-ocean-800 text-white shadow-[0_4px_0_0_var(--color-ocean-950)] hover:bg-ocean-700 active:shadow-[0_1px_0_0_var(--color-ocean-950)] active:translate-y-[3px]",
+    "bg-primary-800 text-white shadow-[0_4px_0_0_var(--color-primary-950)] hover:bg-primary-700 active:shadow-[0_1px_0_0_var(--color-primary-950)] active:translate-y-[3px]",
   light:
-    "bg-paper text-ink shadow-[0_4px_0_0_var(--color-sand-300)] hover:bg-white active:shadow-[0_1px_0_0_var(--color-sand-300)] active:translate-y-[3px]",
-  ghost: "text-ink-2 hover:bg-sand-200/70",
+    "bg-paper text-ink shadow-[0_4px_0_0_var(--color-surface-300)] hover:bg-white active:shadow-[0_1px_0_0_var(--color-surface-300)] active:translate-y-[3px]",
+  ghost: "text-ink-2 hover:bg-surface-200/70",
   outline: "border-2 border-ink/85 text-ink hover:bg-ink hover:text-paper",
   glass: "bg-white/15 text-white ring-1 ring-white/30 backdrop-blur-md hover:bg-white/25",
 };

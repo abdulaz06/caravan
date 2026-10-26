@@ -2,10 +2,10 @@
 
 import { motion } from "framer-motion";
 import { BedDouble, Check, ChevronRight, Pencil, Wallet } from "lucide-react";
-import { GROUP_SIZE, VANS } from "@/content/costs";
-import type { BudgetResult, Verdict } from "@/lib/budget";
+import type { BudgetResult, Verdict } from "@/engine/budget";
 import { cn } from "@/lib/cn";
 import { useCurrency } from "../currency";
+import { useCatalog } from "../engine";
 import { Sheet } from "../ui/sheet";
 
 type PanelProps = {
@@ -17,11 +17,11 @@ type PanelProps = {
 };
 
 const VERDICT_STYLE: Record<Verdict["kind"], string> = {
-  within: "bg-jungle-100 text-jungle-700",
-  under: "bg-ocean-100 text-ocean-800",
-  near: "bg-saffron-200 text-ink",
-  over: "bg-sunset-100 text-sunset-700",
-  none: "bg-sand-200 text-ink-2",
+  within: "bg-secondary-100 text-secondary-700",
+  under: "bg-primary-100 text-primary-800",
+  near: "bg-highlight-200 text-ink",
+  over: "bg-accent-100 text-accent-700",
+  none: "bg-surface-200 text-ink-2",
 };
 
 export function VerdictChip({ verdict, className }: { verdict: Verdict; className?: string }) {
@@ -41,12 +41,12 @@ export function BudgetPill({ budget, onOpen, className }: { budget: BudgetResult
     <button
       onClick={onOpen}
       className={cn(
-        "flex w-full items-center gap-2 rounded-xl bg-sand-100 px-2.5 py-1.5 text-left transition hover:bg-sand-200 min-[1360px]:hidden",
+        "flex w-full items-center gap-2 rounded-xl bg-surface-100 px-2.5 py-1.5 text-left transition hover:bg-surface-200 min-[1360px]:hidden",
         className,
       )}
       aria-label="Open trip budget"
     >
-      <Wallet className="size-4 shrink-0 text-ocean-600" />
+      <Wallet className="size-4 shrink-0 text-primary-600" />
       {!long && <span className="text-[12.5px] font-semibold text-ink-2">Budget</span>}
       <span className={cn("whitespace-nowrap font-bold tabular-nums", long ? "text-[12.5px]" : "text-[13px]")}>≈ {amount}</span>
       <span className="text-[11px] font-semibold text-ink-3">pp</span>
@@ -66,15 +66,17 @@ export function BudgetPill({ budget, onOpen, className }: { budget: BudgetResult
 /** The full checklist. Used in the mobile sheet and the desktop side panel. */
 export function BudgetPanel({ budget, locked, onToggleLine, onToggleAccommodation, onEditBudget }: PanelProps) {
   const { range, money, rateNote } = useCurrency();
+  const { preset } = useCatalog();
+  const { costs, travel } = preset;
   const tierText = budget.tier
     ? `Your budget: ${range(budget.tier.bounds)} per person`
     : null;
   return (
     <div className="space-y-4">
-      <section className="relative overflow-hidden rounded-[24px] bg-ocean-800 p-4 text-paper">
+      <section className="relative overflow-hidden rounded-[24px] bg-primary-800 p-4 text-paper">
         <div className="sunburst absolute inset-0 opacity-70" />
         <div className="relative">
-          <p className="label text-saffron-400">Estimated total · per person</p>
+          <p className="label text-highlight-400">Estimated total · per person</p>
           <p
             className={cn(
               "font-display mt-1 font-semibold leading-none tracking-[-0.02em] tabular-nums",
@@ -93,7 +95,7 @@ export function BudgetPanel({ budget, locked, onToggleLine, onToggleAccommodatio
           {!locked && (
             <button
               onClick={onEditBudget}
-              className="mt-2 inline-flex items-center gap-1 text-[12px] font-semibold text-saffron-400 hover:underline"
+              className="mt-2 inline-flex items-center gap-1 text-[12px] font-semibold text-highlight-400 hover:underline"
             >
               <Pencil className="size-3" /> {budget.tier ? "Change your budget" : "Set your budget"}
             </button>
@@ -107,11 +109,11 @@ export function BudgetPanel({ budget, locked, onToggleLine, onToggleAccommodatio
           locked ? "opacity-70" : "cursor-pointer",
         )}
       >
-        <BedDouble className="size-5 shrink-0 text-ocean-600" />
+        <BedDouble className="size-5 shrink-0 text-primary-600" />
         <span className="flex-1">
           <span className="block text-[14px] font-semibold">Include places to stay</span>
           <span className="text-[12px] text-ink-3">
-            {budget.accommodation.styleLabel} · {budget.accommodation.nights.colombo + budget.accommodation.nights.galle} nights
+            {budget.accommodation.styleLabel} · {budget.accommodation.nights.reduce((n, b) => n + b.nights, 0)} nights
           </span>
         </span>
         <input
@@ -124,8 +126,8 @@ export function BudgetPanel({ budget, locked, onToggleLine, onToggleAccommodatio
         <span
           aria-hidden="true"
           className={cn(
-            "relative h-7 w-12 shrink-0 rounded-full transition-colors peer-focus-visible:ring-2 peer-focus-visible:ring-saffron-500",
-            budget.accommodation.on ? "bg-ocean-600" : "bg-sand-300",
+            "relative h-7 w-12 shrink-0 rounded-full transition-colors peer-focus-visible:ring-2 peer-focus-visible:ring-highlight-500",
+            budget.accommodation.on ? "bg-primary-600" : "bg-surface-300",
           )}
         >
           <motion.span
@@ -137,7 +139,7 @@ export function BudgetPanel({ budget, locked, onToggleLine, onToggleAccommodatio
       </label>
 
       {budget.groups.length === 0 && (
-        <p className="rounded-2xl bg-sand-100 p-4 text-[14px] text-ink-2">Pick some days and the costs show up here.</p>
+        <p className="rounded-2xl bg-surface-100 p-4 text-[14px] text-ink-2">Pick some days and the costs show up here.</p>
       )}
 
       {budget.groups.map((g) => (
@@ -161,8 +163,8 @@ export function BudgetPanel({ budget, locked, onToggleLine, onToggleAccommodatio
                   <span
                     aria-hidden="true"
                     className={cn(
-                      "mt-0.5 grid size-5 shrink-0 place-items-center rounded-md border-2 transition peer-focus-visible:ring-2 peer-focus-visible:ring-saffron-500",
-                      l.included ? "border-ocean-600 bg-ocean-600 text-white" : "border-sand-300 bg-paper",
+                      "mt-0.5 grid size-5 shrink-0 place-items-center rounded-md border-2 transition peer-focus-visible:ring-2 peer-focus-visible:ring-highlight-500",
+                      l.included ? "border-primary-600 bg-primary-600 text-white" : "border-surface-300 bg-paper",
                     )}
                   >
                     {l.included && <Check className="size-3.5" strokeWidth={3.5} />}
@@ -184,7 +186,8 @@ export function BudgetPanel({ budget, locked, onToggleLine, onToggleAccommodatio
       ))}
 
       <p className="px-1 text-[11.5px] leading-snug text-ink-3">
-        Transfers are split across {VANS} shared vans for a group of {GROUP_SIZE}. Untick anything you&apos;d skip or that
+        Transport is split across {costs.vehicles} {travel.selfDrive ? "" : "shared "}
+        {travel.vehicle}s for a group of {costs.groupSize}. Untick anything you&apos;d skip or that
         someone else covers. Activity prices are rough per-person ranges; your picks set the total, not a
         quote (≈ {money(1)} = 1 USD).
       </p>
@@ -207,10 +210,10 @@ export function BudgetSidePanel(props: PanelProps) {
   return (
     <aside
       aria-label="Trip budget"
-      className="fixed bottom-6 right-[504px] top-6 z-30 hidden w-[372px] flex-col overflow-hidden rounded-[28px] bg-sand-50/95 shadow-lift ring-1 ring-white/40 backdrop-blur-xl min-[1360px]:flex"
+      className="fixed bottom-6 right-[504px] top-6 z-30 hidden w-[372px] flex-col overflow-hidden rounded-[28px] bg-surface-50/95 shadow-lift ring-1 ring-white/40 backdrop-blur-xl min-[1360px]:flex"
     >
       <div className="flex items-center gap-2 px-5 pb-2 pt-5">
-        <Wallet className="size-5 text-ocean-600" />
+        <Wallet className="size-5 text-primary-600" />
         <h2 className="font-display text-[22px] font-semibold">Trip budget</h2>
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-5">

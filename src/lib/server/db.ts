@@ -4,7 +4,7 @@ import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { assertSafeInfra } from "@/lib/infra-guard";
-import type { ItineraryData, ItineraryStatus } from "@/lib/itinerary";
+import type { ItineraryData, ItineraryStatus } from "@/engine/itinerary";
 
 // All database access lives here and only runs on the server, using the
 // Supabase service-role key (RLS is on with no public policies, so the anon

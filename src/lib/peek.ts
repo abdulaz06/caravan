@@ -1,6 +1,6 @@
 // What a 👀 peek returns: the person's plan as a read-only itinerary — picks
 // and dates only (see privacy.peekPlan). Never day notes or private answers.
-import type { ItineraryData } from "./itinerary";
+import type { ItineraryData } from "@/engine/itinerary";
 
 export type PeekResponse = {
   name: string;

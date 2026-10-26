@@ -51,10 +51,10 @@ export const PinInput = forwardRef<HTMLInputElement, Props>(function PinInput(
               className={cn(
                 "grid h-16 place-items-center rounded-2xl border-2 bg-paper transition-colors",
                 error
-                  ? "border-sunset-500"
+                  ? "border-accent-500"
                   : active
-                    ? "border-ink/70 peer-focus:border-ocean-600"
-                    : "border-sand-300",
+                    ? "border-ink/70 peer-focus:border-primary-600"
+                    : "border-surface-300",
               )}
             >
               {filled && (

@@ -3,13 +3,13 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { createContext, useCallback, useContext, useEffect, useId, useState } from "react";
 import { cn } from "@/lib/cn";
-import type { PopularPayload } from "@/lib/popular";
-import { useHalal } from "./halal";
-import { useRules } from "./rules";
+import type { PopularPayload } from "@/engine/popular";
+import { useRules } from "./engine";
+import { useFamily } from "./family";
 
 // 🔥 Popular picks on the client: seeded from the page, refreshed every few
 // minutes from /api/popular while the tab is visible. Badges show only when
-// the organizers have them on, and never in Halal mode.
+// the organizers have them on, and never in family-friendly mode.
 const REFRESH_MS = 3 * 60_000;
 const PopularContext = createContext<PopularPayload | null>(null);
 
@@ -38,8 +38,8 @@ export function PopularProvider({ initial, children }: { initial: PopularPayload
 export function usePopular(): (id: string) => number | null {
   const data = useContext(PopularContext);
   const rules = useRules();
-  const halal = useHalal();
-  const off = !data?.on || !rules.popularBadges || halal;
+  const family = useFamily();
+  const off = !data?.on || !rules.popularBadges || family;
   const counts = data?.counts;
   return useCallback((id: string) => (off || !counts ? null : (counts[id] ?? null)), [off, counts]);
 }
@@ -59,16 +59,16 @@ export function Flame({ className }: { className?: string }) {
     >
       <defs>
         <linearGradient id={`${id}o`} x1="0" y1="1" x2="0" y2="0">
-          <stop offset="0" stopColor="#d6467a" />
-          <stop offset="0.55" stopColor="#ec6437" />
-          <stop offset="1" stopColor="#f2a33a" />
+          <stop offset="0" stopColor="var(--color-pop-500)" />
+          <stop offset="0.55" stopColor="var(--color-accent-500)" />
+          <stop offset="1" stopColor="var(--color-highlight-500)" />
         </linearGradient>
       </defs>
       <path
         d="M12 1.8c1.1 3.4 6 5.9 6 11.6A6 6 0 0 1 12 19.6a6 6 0 0 1-6-6.2c0-3 1.7-4.8 3-6.2.3 2 1.1 3.2 2.4 3.8-.5-3.7-.1-6.4.6-9.2Z"
         fill={`url(#${id}o)`}
       />
-      <path d="M12.3 9.8c.7 2.1 3.1 3.3 3.1 6.1a3.4 3.4 0 0 1-6.8 0c0-1.5.8-2.5 1.5-3.3.2 1 .7 1.6 1.3 1.9-.2-1.8 0-3.2.9-4.7Z" fill="#fbe0ae" />
+      <path d="M12.3 9.8c.7 2.1 3.1 3.3 3.1 6.1a3.4 3.4 0 0 1-6.8 0c0-1.5.8-2.5 1.5-3.3.2 1 .7 1.6 1.3 1.9-.2-1.8 0-3.2.9-4.7Z" fill="var(--color-highlight-200)" />
     </motion.svg>
   );
 }
@@ -79,9 +79,9 @@ export function PopularBadge({ count, tone = "light", short, className }: { coun
     <span
       className={cn(
         "inline-flex items-center gap-1 whitespace-nowrap rounded-full py-0.5 pl-1 pr-2 text-[10.5px] font-bold leading-none",
-        tone === "photo" && "bg-gradient-to-r from-sunset-500 to-hibiscus-500 py-[3px] pl-[3px] text-white shadow-lg shadow-ink/25",
-        tone === "light" && "bg-sunset-100 text-sunset-700 ring-1 ring-sunset-500/20",
-        tone === "dark" && "bg-white/10 text-saffron-200 ring-1 ring-white/10",
+        tone === "photo" && "bg-gradient-to-r from-accent-500 to-pop-500 py-[3px] pl-[3px] text-white shadow-lg shadow-ink/25",
+        tone === "light" && "bg-accent-100 text-accent-700 ring-1 ring-accent-500/20",
+        tone === "dark" && "bg-white/10 text-highlight-200 ring-1 ring-white/10",
         className,
       )}
       aria-label={`Popular: ${count} people picked this`}

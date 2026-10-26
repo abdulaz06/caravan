@@ -73,7 +73,7 @@ export function Sheet({
       {open && (
         <div className="fixed inset-0 z-[60]">
           <motion.div
-            className="absolute inset-0 bg-ocean-950/55 backdrop-blur-[2px]"
+            className="absolute inset-0 bg-primary-950/55 backdrop-blur-[2px]"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -98,7 +98,7 @@ export function Sheet({
             className={cn(
               "absolute inset-x-0 bottom-0 flex flex-col overflow-hidden rounded-t-[30px] shadow-lift outline-none lg:left-auto lg:right-0 lg:w-[480px]",
               size === "tall" ? "h-[94dvh]" : "max-h-[94dvh]",
-              dark ? "dusk text-white" : "bg-sand-50 text-ink",
+              dark ? "dusk text-white" : "bg-surface-50 text-ink",
               className,
             )}
           >
@@ -119,7 +119,7 @@ export function Sheet({
                 <div className="flex items-start gap-3 pr-10">
                   <div className="min-w-0">
                     {eyebrow && (
-                      <div className={cn("label", dark ? "text-saffron-400" : "text-sunset-600")}>{eyebrow}</div>
+                      <div className={cn("label", dark ? "text-highlight-400" : "text-accent-600")}>{eyebrow}</div>
                     )}
                     {title && (
                       <h2 id={titleId} className="font-display mt-0.5 text-[26px] font-semibold leading-tight">
@@ -149,7 +149,7 @@ export function Sheet({
               <div
                 className={cn(
                   "pb-safe shrink-0 border-t px-5 pt-3",
-                  dark ? "border-white/10 bg-dusk-950/60" : "border-ink/5 bg-sand-50/95",
+                  dark ? "border-white/10 bg-night-950/60" : "border-ink/5 bg-surface-50/95",
                 )}
               >
                 {footer}
