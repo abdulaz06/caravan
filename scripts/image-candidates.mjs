@@ -5,7 +5,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import sharp from "sharp";
 
-const UA = "LanksTripPlanner/1.0 (https://github.com/abdulaz06/lanks)";
+const UA = "CaravanTripPlanner/1.0 (https://github.com/abdulaz06/caravan)";
 const outDir = process.argv[2];
 const only = process.argv[3]?.split(",");
 if (!outDir) throw new Error("usage: image-candidates.mjs <outDir> [keys]");

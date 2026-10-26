@@ -3,6 +3,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { assertSafeInfra } from "@/lib/infra-guard";
 import type { ItineraryData, ItineraryStatus } from "@/lib/itinerary";
 
 // All database access lives here and only runs on the server, using the
@@ -384,19 +385,26 @@ class FileStore implements Store {
 
 let store: Store | null = null;
 
+/** CARAVAN_LOCAL_STORE=1 forces the local JSON store even when Supabase is configured (tests, demos). */
+const forceLocal = () => process.env.CARAVAN_LOCAL_STORE === "1";
+
 export function isUsingLocalStore(): boolean {
-  return !process.env.SUPABASE_URL;
+  return forceLocal() || !process.env.SUPABASE_URL;
 }
 
 export function db(): Store {
   if (store) return store;
+  // Never open a connection to a protected project, whatever the build did.
+  assertSafeInfra();
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SECRET_KEY;
-  if (url && key) {
+  if (forceLocal()) {
+    store = new FileStore();
+  } else if (url && key) {
     store = new SupabaseStore(
       createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } }),
     );
-  } else if (process.env.NODE_ENV !== "production" || process.env.LANKS_LOCAL_STORE === "1") {
+  } else if (process.env.NODE_ENV !== "production") {
     store = new FileStore();
   } else {
     throw new Error(

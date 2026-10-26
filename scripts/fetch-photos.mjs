@@ -6,7 +6,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import sharp from "sharp";
 
-const UA = "LanksTripPlanner/1.0 (https://github.com/abdulaz06/lanks)";
+const UA = "CaravanTripPlanner/1.0 (https://github.com/abdulaz06/caravan)";
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname.replace(/^\/(\w:)/, "$1")), "..");
 const picks = JSON.parse(await fs.readFile(path.join(root, "scripts/image-picks.json"), "utf8"));
 delete picks._readme;

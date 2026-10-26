@@ -1,7 +1,7 @@
 // End-to-end flow test + screenshots.
 // Usage: node --env-file=.env.local scripts/flow.mjs <outDir>
 //   env: BASE (default http://localhost:3000), CHROME_PATH, VIEW (e.g. 375x667), PIN, ADMIN_PASSWORD
-//   Against a local-store server on :3100 (LANKS_LOCAL_STORE=1) it also tests the
+//   Against a local-store server on :3100 (CARAVAN_LOCAL_STORE=1) it also tests the
 //   upgrade of an older (v2) itinerary by writing it straight into .data/dev-db.json.
 import { chromium, webkit } from "playwright";
 import fs from "node:fs";

@@ -4,19 +4,19 @@ import { SignJWT, jwtVerify } from "jose";
 import { timingSafeEqual, createHash } from "node:crypto";
 import { db, isOrganizerRole, roleOf, type ParticipantRow, type Role } from "./db";
 
-const SESSION_COOKIE = "lanks_session";
+const SESSION_COOKIE = "caravan_session";
 /** The organizer console: a short session on top of the normal one (or the owner's break-glass password). */
-const CONSOLE_COOKIE = "lanks_console";
+const CONSOLE_COOKIE = "caravan_console";
 const YEAR = 60 * 60 * 24 * 365;
 const CONSOLE_HOURS = 12;
 
 function secret(): Uint8Array {
   const s = process.env.SESSION_SECRET;
   if (!s || s.length < 16) {
-    if (process.env.NODE_ENV === "production" && process.env.LANKS_LOCAL_STORE !== "1") {
+    if (process.env.NODE_ENV === "production" && process.env.CARAVAN_LOCAL_STORE !== "1") {
       throw new Error("SESSION_SECRET is missing or too short (see SETUP.md).");
     }
-    return new TextEncoder().encode("lanks-local-development-secret-only");
+    return new TextEncoder().encode("caravan-local-development-secret-only");
   }
   return new TextEncoder().encode(s);
 }
@@ -24,7 +24,7 @@ function secret(): Uint8Array {
 const cookieBase = {
   httpOnly: true,
   sameSite: "lax" as const,
-  secure: process.env.NODE_ENV === "production" && process.env.LANKS_LOCAL_STORE !== "1",
+  secure: process.env.NODE_ENV === "production" && process.env.CARAVAN_LOCAL_STORE !== "1",
   path: "/",
 };
 

@@ -1,4 +1,4 @@
--- Lanks — organizers, live trip rules, activity log and peeks
+-- Caravan — organizers, live trip rules, activity log and peeks
 -- Paste this whole file into Supabase → SQL Editor → New query → Run.
 -- Safe to run more than once. Nothing is deleted.
 
@@ -16,14 +16,8 @@ end $$;
 create unique index if not exists participants_one_owner
   on public.participants (role) where role = 'owner';
 
--- Abdul is the owner. Aadil becomes an admin only because he has already
--- joined (names are never trusted for roles after this — the owner promotes
--- people from the console).
-update public.participants set role = 'owner'
-  where lower(display_name) = 'abdul'
-    and not exists (select 1 from public.participants where role = 'owner');
-update public.participants set role = 'admin'
-  where lower(display_name) = 'aadil' and role = 'member';
+-- Roles are never granted by name (anyone could register a name first): the
+-- owner is set when a trip is created, and promotes admins from the console.
 
 -- ── Organizer edit stamp on itineraries ─────────────────────────────────
 -- { kind: 'edit' | 'rules', by, byId, at, seen, lost? } — shown to the person once.

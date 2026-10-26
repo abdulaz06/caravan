@@ -1,5 +1,5 @@
 // End-to-end checks for the Ella day trip, the map day tabs, organizer roles + the
-// console, and 👀 peek. Runs against the local-store server (LANKS_LOCAL_STORE=1).
+// console, and 👀 peek. Runs against the local-store server (CARAVAN_LOCAL_STORE=1).
 // Usage: node --env-file=.env.local scripts/round7.mjs <outDir>
 //   env: BASE (default http://localhost:3100), CHROME_PATH, VIEW (e.g. 375x667), ADMIN_PASSWORD
 import { chromium } from "playwright";
@@ -458,7 +458,7 @@ await ap.locator("#console-pin").fill(PIN);
 await ap.waitForTimeout(1800);
 await expect(ap.getByText(/Organizer\s+console/).isVisible(), "PIN opens the console");
 await shot(ap, "console-overview", { keep: true, full: true });
-const consoleCookie = (await admin.ctx.cookies()).find((c) => c.name === "lanks_console");
+const consoleCookie = (await admin.ctx.cookies()).find((c) => c.name === "caravan_console");
 await expect(consoleCookie && consoleCookie.expires - Date.now() / 1000 < 12.2 * 3600 && consoleCookie.expires - Date.now() / 1000 > 11.5 * 3600, "console session lasts ~12 hours");
 
 step("Admin powers: everything except owner-only actions");

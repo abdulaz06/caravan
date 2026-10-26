@@ -1,4 +1,4 @@
--- Lanks — initial schema
+-- Caravan — initial schema
 -- Paste this whole file into Supabase → SQL Editor → New query → Run.
 -- Safe to run more than once.
 

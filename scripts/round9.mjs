@@ -1,6 +1,6 @@
 // End-to-end checks for round 9: 🔥 popular picks, roommate picks, the full
 // read-only peek and the Halal mode clean-up (incl. the banned-word sweep).
-// Runs against the local-store server only (LANKS_LOCAL_STORE=1).
+// Runs against the local-store server only (CARAVAN_LOCAL_STORE=1).
 // Usage: node --env-file=.env.local scripts/round9.mjs <outDir>
 //   env: BASE (default http://localhost:3100), CHROME_PATH, VIEW (e.g. 375x667), ADMIN_PASSWORD
 import { chromium } from "playwright";

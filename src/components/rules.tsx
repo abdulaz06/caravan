@@ -22,7 +22,7 @@ export const useRules = () => useContext(RulesContext);
 /** The organizers' banner message (on/off in the console). Dismissible per message. */
 export function AnnouncementBar({ className }: { className?: string }) {
   const { announcement } = useRules();
-  const key = `lanks_ann_${announcement.text.slice(0, 40)}`;
+  const key = `caravan_ann_${announcement.text.slice(0, 40)}`;
   const [hidden, setHidden] = useState(true);
   useEffect(() => {
     // Read the dismissal after hydration (localStorage isn't there on the server).

@@ -1,4 +1,12 @@
-# Lanks — Sri Lanka Group Trip Planner
+# Caravan (forked from Lanks)
+
+> **Caravan** is a public, portfolio-grade group-trip planner forked from Lanks on 2026-10-26. Everything below the line is the original Lanks spec, kept as reference until the Caravan rebrand and preset engine replace it.
+>
+> **HARD RULE — Lanks must never be affected.** Lanks (live at lanks-26.vercel.app, repo `abdulaz06/lanks`, its own Supabase and Vercel projects) is used by real people. From Caravan: never push to `abdulaz06/lanks`, never read or use Lanks' `.env.local`, keys or Vercel project, never run anything against the Lanks database or site, and never pull from Lanks again. Caravan has its own repo (`abdulaz06/caravan`, private until the owner approves going public), Supabase project, Vercel project, `SESSION_SECRET` and admin credentials. `src/lib/infra-guard.ts` refuses to boot against the Lanks Supabase project (stored only as a hash). Tests run on the local store (`CARAVAN_LOCAL_STORE=1`).
+
+---
+
+# Lanks — Sri Lanka Group Trip Planner (original spec)
 
 ## What this is
 A mobile-first web app for a friend group of ~12–13 people planning a December 2026 / January 2027 trip to Sri Lanka (last year's trip: Georgia, Dec 26 – Jan 2, over New Year's Eve). The organizer (Abdul) drops one link in the group chat. Each friend opens it, spends anywhere from 3 to 20+ minutes, and **crafts their own ideal itinerary** from curated options. Abdul later analyzes everyone's data (with AI) to build the final group itinerary. The analysis/"findings" part is **out of scope** — this app collects rich, structured preferences and makes the experience feel great.

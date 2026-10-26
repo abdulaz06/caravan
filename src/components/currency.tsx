@@ -16,8 +16,8 @@ import {
   type Rates,
 } from "@/lib/currency";
 
-export const CURRENCY_COOKIE = "lanks_ccy";
-const STORAGE_KEY = "lanks.currency";
+export const CURRENCY_COOKIE = "caravan_ccy";
+const STORAGE_KEY = "caravan.currency";
 
 // A tiny external store: localStorage for speed, a cookie so the server can
 // render the same currency on the next visit (no flash).
