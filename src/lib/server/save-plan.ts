@@ -7,7 +7,7 @@ import { db, type ParticipantRow } from "./db";
 import { error, json } from "./http";
 import { logAction } from "./organizer";
 import type { Actor } from "./session";
-import { loadTrip } from "./trip";
+import type { TripContext } from "./trip";
 
 /** Hidden options someone already had stay ("No longer available"); new picks of them are refused. */
 function dropNewlyHidden(e: Engine, data: ItineraryData, before: ItineraryData | null): ItineraryData {
@@ -29,7 +29,7 @@ async function cleanRoommates(p: ParticipantRow, data: ItineraryData, before: It
     const kept = before?.preferences?.roommates;
     return kept ? { ...data, preferences: { ...data.preferences, roommates: kept } } : data;
   }
-  const people = sent.some((r) => r.id) ? await db().listParticipants() : [];
+  const people = sent.some((r) => r.id) ? await db().listParticipants(p.trip_id) : [];
   const out: RoommatePick[] = [];
   const seen = new Set<string>();
   for (const r of sent) {
@@ -50,9 +50,9 @@ async function cleanRoommates(p: ParticipantRow, data: ItineraryData, before: It
  * on their behalf (`actor`: works while edits are locked, never submits,
  * stamps "Edited by <organizer>").
  */
-export async function savePlan(p: ParticipantRow, body: Record<string, unknown> | null, actor?: Actor): Promise<Response> {
-  const trip = await loadTrip();
+export async function savePlan(trip: TripContext, p: ParticipantRow, body: Record<string, unknown> | null, actor?: Actor): Promise<Response> {
   const e = trip.engine;
+  if (p.trip_id !== trip.trip.id) return error("Not found", 404);
   if (!actor && trip.locked) return error("locked", 423);
   const existing = await db().getItinerary(p.id);
 
@@ -74,6 +74,6 @@ export async function savePlan(p: ParticipantRow, body: Record<string, unknown> 
     updated_at: now,
     ...(actor ? { stamp: { kind: "edit" as const, by: actor.name, byId: actor.id, at: now, seen: false } } : {}),
   });
-  if (actor) await logAction(actor, "edit_plan", { id: p.id, name: p.display_name });
+  if (actor) await logAction(trip.trip.id, actor, "edit_plan", { id: p.id, name: p.display_name });
   return json({ status: saved.status, updatedAt: saved.updated_at, submittedAt: saved.submitted_at });
 }

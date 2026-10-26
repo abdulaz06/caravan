@@ -5,7 +5,7 @@ import { STAY_ID, countItems, normalize, tripLength, type ItineraryData } from "
 import { nightsFor, tripDays, type Engine } from "@/engine/structure";
 import { balanceOf } from "@/engine/timeline";
 import { db, roleOf, type ItineraryRow, type ParticipantRow, type Role, type Stamp } from "./db";
-import { loadTrip } from "./trip";
+import type { TripContext } from "./trip";
 
 export type Person = {
   id: string;
@@ -23,10 +23,10 @@ export type Person = {
 /** Everyone except "zz-test-" users — what every count and list is built from. */
 export const realPeople = (people: Person[]) => people.filter((p) => !isTestName(p.name));
 
-/** Everyone and their (normalised) plans. */
-export async function loadPeople(e?: Engine): Promise<Person[]> {
-  const engine = e ?? (await loadTrip()).engine;
-  const [participants, itineraries] = await Promise.all([db().listParticipants(), db().listItineraries()]);
+/** Everyone on a trip and their (normalised) plans. */
+export async function loadPeople(trip: TripContext): Promise<Person[]> {
+  const engine = trip.engine;
+  const [participants, itineraries] = await Promise.all([db().listParticipants(trip.trip.id), db().listItineraries(trip.trip.id)]);
   const byId = new Map<string, ItineraryRow>(itineraries.map((i) => [i.participant_id, i]));
   return participants.map((p: ParticipantRow) => {
     const it = byId.get(p.id);
@@ -150,8 +150,7 @@ export type PublicCounts = {
   announcement: string | null;
 };
 
-export async function publicCounts(): Promise<PublicCounts> {
-  const trip = await loadTrip();
+export async function publicCounts(trip: TripContext): Promise<PublicCounts> {
   const e = trip.engine;
   const shape = {
     days: tripDays(e),
@@ -160,7 +159,7 @@ export async function publicCounts(): Promise<PublicCounts> {
     end: e.rules.window.end,
   };
   try {
-    const people = realPeople(await loadPeople(e));
+    const people = realPeople(await loadPeople(trip));
     return {
       joined: people.length,
       submitted: people.filter((p) => p.status === "submitted").length,

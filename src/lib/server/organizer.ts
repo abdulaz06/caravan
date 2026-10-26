@@ -2,6 +2,7 @@ import "server-only";
 import { db, isOrganizerRole, roleOf, type ParticipantRow } from "./db";
 import { error } from "./http";
 import { organizerGate, type Actor, type Gate } from "./session";
+import type { TripContext } from "./trip";
 
 const MESSAGES = {
   signin: "Sign in first",
@@ -14,15 +15,17 @@ export function gateError(gate: Extract<Gate, { ok: false }>) {
   return error(MESSAGES[gate.code], gate.status, { code: gate.code });
 }
 
-/** Run an admin route behind the server-side role check. */
-export async function asOrganizer(level: "admin" | "owner", fn: (actor: Actor) => Promise<Response>): Promise<Response> {
-  const gate = await organizerGate(level);
+/** Run an organizer route behind the server-side role check for this trip. */
+export async function asOrganizer(trip: TripContext, level: "admin" | "owner", fn: (actor: Actor) => Promise<Response>): Promise<Response> {
+  if (trip.trip.kind === "demo") return error("The demo's console is read-only", 403, { code: "demo" });
+  const gate = await organizerGate(trip.trip, level);
   if (!gate.ok) return gateError(gate);
   return fn(gate.actor);
 }
 
 /** Record an organizer action (or a peek). Never breaks the request if the log can't be written. */
 export async function logAction(
+  tripId: string,
   actor: { id: string | null; name: string },
   action: string,
   target?: { id: string; name: string } | null,
@@ -30,6 +33,7 @@ export async function logAction(
 ) {
   try {
     await db().addLog({
+      trip_id: tripId,
       actor_id: actor.id,
       actor_name: actor.name,
       action,

@@ -1,7 +1,7 @@
 import "server-only";
 import { db, isOrganizerRole, roleOf, type ParticipantRow, type Role } from "./db";
 import { organizersOf } from "./organizer";
-import { loadTrip, type TripContext } from "./trip";
+import type { TripContext } from "./trip";
 
 export type PageContext = {
   trip: TripContext;
@@ -14,8 +14,8 @@ export type PageContext = {
 };
 
 /** What every signed-in page needs: the trip (preset + live rules), lock state, organizers and my role. */
-export async function pageContext(me: ParticipantRow): Promise<PageContext> {
-  const [trip, people] = await Promise.all([loadTrip(), db().listParticipants()]);
+export async function pageContext(trip: TripContext, me: ParticipantRow): Promise<PageContext> {
+  const people = await db().listParticipants(trip.trip.id);
   const orgs = organizersOf(people);
   const myRole = roleOf(people.find((p) => p.id === me.id) ?? me);
   return {

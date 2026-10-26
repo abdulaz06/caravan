@@ -3,24 +3,42 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { assertSafeInfra } from "@/lib/infra-guard";
 import type { ItineraryData, ItineraryStatus } from "@/engine/itinerary";
+import { assertSafeInfra } from "@/lib/infra-guard";
 
 // All database access lives here and only runs on the server, using the
-// Supabase service-role key (RLS is on with no public policies, so the anon
-// key can read nothing). In local development without Supabase credentials a
-// JSON file under .data/ stands in for the database.
+// Supabase secret key (RLS is on with no public policies, so the anon key can
+// read nothing). Everything belongs to a trip. In local development and tests
+// a JSON file under .data/ stands in for the database.
 
 export type Role = "owner" | "admin" | "member";
+export type TripKind = "live" | "demo";
+
+export type TripRow = {
+  id: string;
+  slug: string;
+  name: string;
+  preset_id: string;
+  edits_locked: boolean;
+  rules: unknown;
+  kind: TripKind;
+  creator_hash: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type NewTrip = Pick<TripRow, "slug" | "name" | "preset_id"> & Partial<Pick<TripRow, "kind" | "creator_hash" | "rules">>;
 
 export type ParticipantRow = {
   id: string;
+  trip_id: string;
   display_name: string;
   pin_hash: string;
   failed_attempts: number;
   locked_until: string | null;
-  /** Missing on rows read before the roles migration ran → member. */
-  role?: Role;
+  role: Role;
+  /** A demo guest ("Try it as a guest"), removed when the demo resets. */
+  guest: boolean;
   created_at: string;
 };
 
@@ -48,10 +66,9 @@ export type ItineraryRow = {
 /** A save writes these fields only — never the organizer stamp, unless given. */
 export type ItinerarySave = Omit<ItineraryRow, "stamp"> & { stamp?: Stamp | null };
 
-export type SettingsRow = { edits_locked: boolean; rules?: unknown; updated_at: string };
-
 export type LogEntry = {
   id: string;
+  trip_id: string;
   at: string;
   actor_id: string | null;
   actor_name: string;
@@ -62,30 +79,37 @@ export type LogEntry = {
 };
 export type NewLogEntry = Omit<LogEntry, "id" | "at">;
 
+export type NewParticipant = { name: string; pinHash: string; role?: Role; guest?: boolean };
+
 export const roleOf = (p: Pick<ParticipantRow, "role"> | null | undefined): Role => p?.role ?? "member";
 export const isOrganizerRole = (r: Role) => r === "owner" || r === "admin";
 
 export interface Store {
-  listParticipants(): Promise<ParticipantRow[]>;
+  // Trips
+  createTrip(trip: NewTrip): Promise<TripRow | null>;
+  getTrip(id: string): Promise<TripRow | null>;
+  getTripBySlug(slug: string): Promise<TripRow | null>;
+  updateTrip(id: string, patch: Partial<Pick<TripRow, "name" | "edits_locked" | "rules">>): Promise<void>;
+  deleteTrip(id: string): Promise<void>;
+  /** Trips created from a (hashed) address since a moment — for rate limiting. */
+  countTripsCreated(creatorHash: string | null, since: string): Promise<number>;
+  // People
+  listParticipants(tripId: string): Promise<ParticipantRow[]>;
   getParticipant(id: string): Promise<ParticipantRow | null>;
-  findParticipantByName(name: string): Promise<ParticipantRow | null>;
-  /** Returns null when the (case-insensitive) name is already taken. */
-  createParticipant(name: string, pinHash: string): Promise<ParticipantRow | null>;
-  updateParticipant(
-    id: string,
-    patch: Partial<Pick<ParticipantRow, "pin_hash" | "failed_attempts" | "locked_until" | "role">>,
-  ): Promise<void>;
+  findParticipantByName(tripId: string, name: string): Promise<ParticipantRow | null>;
+  /** Returns null when the (case-insensitive) name is already taken on this trip. */
+  createParticipant(tripId: string, p: NewParticipant): Promise<ParticipantRow | null>;
+  updateParticipant(id: string, patch: Partial<Pick<ParticipantRow, "pin_hash" | "failed_attempts" | "locked_until" | "role">>): Promise<void>;
   deleteParticipant(id: string): Promise<void>;
+  // Itineraries
   getItinerary(participantId: string): Promise<ItineraryRow | null>;
   /** Upserts only the fields given (a person's own save never touches the organizer stamp). */
   saveItinerary(row: ItinerarySave): Promise<ItineraryRow>;
   setStamp(participantId: string, stamp: Stamp | null): Promise<void>;
-  listItineraries(): Promise<ItineraryRow[]>;
-  getSettings(): Promise<SettingsRow>;
-  setEditsLocked(locked: boolean): Promise<void>;
-  setRules(rules: unknown): Promise<void>;
+  listItineraries(tripId: string): Promise<ItineraryRow[]>;
+  // Organizer log & peeks
   addLog(entry: NewLogEntry): Promise<void>;
-  listLog(limit: number): Promise<LogEntry[]>;
+  listLog(tripId: string, limit: number): Promise<LogEntry[]>;
   /** Counts a peek; `first` = this person had never peeked at that plan before. */
   recordPeek(peekerId: string, targetId: string): Promise<{ first: boolean }>;
   countPeekers(targetId: string): Promise<number>;
@@ -100,10 +124,51 @@ class SupabaseStore implements Store {
     if (error) throw new Error(`Database error: ${error.message}`);
   }
 
-  async listParticipants() {
+  async createTrip(trip: NewTrip) {
+    const { data, error } = await this.sb.from("trips").insert(trip).select("*").single();
+    if (error?.code === "23505") return null; // slug taken
+    this.fail(error);
+    return data as TripRow;
+  }
+
+  async getTrip(id: string) {
+    const { data, error } = await this.sb.from("trips").select("*").eq("id", id).maybeSingle();
+    this.fail(error);
+    return (data as TripRow) ?? null;
+  }
+
+  async getTripBySlug(slug: string) {
+    const { data, error } = await this.sb.from("trips").select("*").eq("slug", slug).maybeSingle();
+    this.fail(error);
+    return (data as TripRow) ?? null;
+  }
+
+  async updateTrip(id: string, patch: Partial<Pick<TripRow, "name" | "edits_locked" | "rules">>) {
+    const { error } = await this.sb
+      .from("trips")
+      .update({ ...patch, updated_at: new Date().toISOString() })
+      .eq("id", id);
+    this.fail(error);
+  }
+
+  async deleteTrip(id: string) {
+    const { error } = await this.sb.from("trips").delete().eq("id", id);
+    this.fail(error);
+  }
+
+  async countTripsCreated(creatorHash: string | null, since: string) {
+    let q = this.sb.from("trips").select("*", { count: "exact", head: true }).gte("created_at", since);
+    if (creatorHash) q = q.eq("creator_hash", creatorHash);
+    const { count, error } = await q;
+    this.fail(error);
+    return count ?? 0;
+  }
+
+  async listParticipants(tripId: string) {
     const { data, error } = await this.sb
       .from("participants")
       .select("*")
+      .eq("trip_id", tripId)
       .order("created_at", { ascending: true });
     this.fail(error);
     return (data ?? []) as ParticipantRow[];
@@ -115,24 +180,25 @@ class SupabaseStore implements Store {
     return (data as ParticipantRow) ?? null;
   }
 
-  async findParticipantByName(name: string) {
+  async findParticipantByName(tripId: string, name: string) {
     const escaped = name.replace(/[\\%_]/g, (c) => `\\${c}`);
     const { data, error } = await this.sb
       .from("participants")
       .select("*")
+      .eq("trip_id", tripId)
       .ilike("display_name", escaped)
       .limit(1);
     this.fail(error);
     return ((data ?? [])[0] as ParticipantRow) ?? null;
   }
 
-  async createParticipant(name: string, pinHash: string) {
+  async createParticipant(tripId: string, p: NewParticipant) {
     const { data, error } = await this.sb
       .from("participants")
-      .insert({ display_name: name, pin_hash: pinHash })
+      .insert({ trip_id: tripId, display_name: p.name, pin_hash: p.pinHash, role: p.role ?? "member", guest: !!p.guest })
       .select("*")
       .single();
-    if (error?.code === "23505") return null; // unique violation on lower(display_name)
+    if (error?.code === "23505") return null; // unique violation on (trip_id, lower(display_name))
     this.fail(error);
     return data as ParticipantRow;
   }
@@ -148,21 +214,13 @@ class SupabaseStore implements Store {
   }
 
   async getItinerary(participantId: string) {
-    const { data, error } = await this.sb
-      .from("itineraries")
-      .select("*")
-      .eq("participant_id", participantId)
-      .maybeSingle();
+    const { data, error } = await this.sb.from("itineraries").select("*").eq("participant_id", participantId).maybeSingle();
     this.fail(error);
     return (data as ItineraryRow) ?? null;
   }
 
   async saveItinerary(row: ItinerarySave) {
-    const { data, error } = await this.sb
-      .from("itineraries")
-      .upsert(row, { onConflict: "participant_id" })
-      .select("*")
-      .single();
+    const { data, error } = await this.sb.from("itineraries").upsert(row, { onConflict: "participant_id" }).select("*").single();
     this.fail(error);
     return data as ItineraryRow;
   }
@@ -172,31 +230,11 @@ class SupabaseStore implements Store {
     this.fail(error);
   }
 
-  async listItineraries() {
-    const { data, error } = await this.sb.from("itineraries").select("*");
+  async listItineraries(tripId: string) {
+    // Itineraries belong to a trip through their participant.
+    const { data, error } = await this.sb.from("itineraries").select("*, participants!inner(trip_id)").eq("participants.trip_id", tripId);
     this.fail(error);
-    return (data ?? []) as ItineraryRow[];
-  }
-
-  async getSettings() {
-    // "*" so this keeps working whichever optional columns exist.
-    const { data, error } = await this.sb.from("settings").select("*").eq("id", 1).maybeSingle();
-    this.fail(error);
-    return (data as SettingsRow) ?? { edits_locked: false, updated_at: new Date(0).toISOString() };
-  }
-
-  async setEditsLocked(locked: boolean) {
-    const { error } = await this.sb
-      .from("settings")
-      .upsert({ id: 1, edits_locked: locked, updated_at: new Date().toISOString() });
-    this.fail(error);
-  }
-
-  async setRules(rules: unknown) {
-    const { error } = await this.sb
-      .from("settings")
-      .upsert({ id: 1, rules, updated_at: new Date().toISOString() });
-    this.fail(error);
+    return ((data ?? []) as (ItineraryRow & { participants?: unknown })[]).map(({ participants: _, ...row }) => row as ItineraryRow);
   }
 
   async addLog(entry: NewLogEntry) {
@@ -204,20 +242,15 @@ class SupabaseStore implements Store {
     this.fail(error);
   }
 
-  async listLog(limit: number) {
-    const { data, error } = await this.sb.from("activity_log").select("*").order("at", { ascending: false }).limit(limit);
+  async listLog(tripId: string, limit: number) {
+    const { data, error } = await this.sb.from("activity_log").select("*").eq("trip_id", tripId).order("at", { ascending: false }).limit(limit);
     this.fail(error);
     return (data ?? []) as LogEntry[];
   }
 
   async recordPeek(peekerId: string, targetId: string) {
     const now = new Date().toISOString();
-    const { data: existing, error } = await this.sb
-      .from("peeks")
-      .select("count")
-      .eq("peeker_id", peekerId)
-      .eq("target_id", targetId)
-      .maybeSingle();
+    const { data: existing, error } = await this.sb.from("peeks").select("count").eq("peeker_id", peekerId).eq("target_id", targetId).maybeSingle();
     this.fail(error);
     if (existing) {
       const res = await this.sb
@@ -241,16 +274,16 @@ class SupabaseStore implements Store {
   }
 }
 
-// ── Local JSON file (development only) ────────────────────────────────
+// ── Local JSON file (development and tests) ───────────────────────────
 
 type PeekRow = { peeker_id: string; target_id: string; first_at: string; last_at: string; count: number };
 
 type FileDb = {
+  trips: TripRow[];
   participants: ParticipantRow[];
   itineraries: ItineraryRow[];
-  settings: SettingsRow;
-  log?: LogEntry[];
-  peeks?: PeekRow[];
+  log: LogEntry[];
+  peeks: PeekRow[];
 };
 
 class FileStore implements Store {
@@ -259,13 +292,12 @@ class FileStore implements Store {
 
   private async read(): Promise<FileDb> {
     try {
-      return JSON.parse(await fs.readFile(this.file, "utf8")) as FileDb;
+      const db = JSON.parse(await fs.readFile(this.file, "utf8")) as Partial<FileDb>;
+      // A file from before trips existed is ignored rather than mixed in.
+      if (!Array.isArray(db.trips)) throw new Error("old local db");
+      return { trips: db.trips, participants: db.participants ?? [], itineraries: db.itineraries ?? [], log: db.log ?? [], peeks: db.peeks ?? [] };
     } catch {
-      return {
-        participants: [],
-        itineraries: [],
-        settings: { edits_locked: false, updated_at: new Date().toISOString() },
-      };
+      return { trips: [], participants: [], itineraries: [], log: [], peeks: [] };
     }
   }
 
@@ -281,26 +313,76 @@ class FileStore implements Store {
     return run;
   }
 
-  async listParticipants() {
-    return (await this.read()).participants;
+  createTrip(trip: NewTrip) {
+    return this.mutate((db) => {
+      if (db.trips.some((t) => t.slug === trip.slug)) return null;
+      const now = new Date().toISOString();
+      const row: TripRow = {
+        id: randomUUID(),
+        slug: trip.slug,
+        name: trip.name,
+        preset_id: trip.preset_id,
+        edits_locked: false,
+        rules: trip.rules ?? {},
+        kind: trip.kind ?? "live",
+        creator_hash: trip.creator_hash ?? null,
+        created_at: now,
+        updated_at: now,
+      };
+      db.trips.push(row);
+      return row;
+    });
+  }
+  async getTrip(id: string) {
+    return (await this.read()).trips.find((t) => t.id === id) ?? null;
+  }
+  async getTripBySlug(slug: string) {
+    return (await this.read()).trips.find((t) => t.slug === slug) ?? null;
+  }
+  updateTrip(id: string, patch: Partial<Pick<TripRow, "name" | "edits_locked" | "rules">>) {
+    return this.mutate((db) => {
+      const t = db.trips.find((x) => x.id === id);
+      if (t) Object.assign(t, patch, { updated_at: new Date().toISOString() });
+    });
+  }
+  deleteTrip(id: string) {
+    return this.mutate((db) => {
+      const people = new Set(db.participants.filter((p) => p.trip_id === id).map((p) => p.id));
+      db.trips = db.trips.filter((t) => t.id !== id);
+      db.participants = db.participants.filter((p) => p.trip_id !== id);
+      db.itineraries = db.itineraries.filter((i) => !people.has(i.participant_id));
+      db.log = db.log.filter((l) => l.trip_id !== id);
+      db.peeks = db.peeks.filter((p) => !people.has(p.peeker_id) && !people.has(p.target_id));
+    });
+  }
+  async countTripsCreated(creatorHash: string | null, since: string) {
+    return (await this.read()).trips.filter((t) => t.created_at >= since && (!creatorHash || t.creator_hash === creatorHash)).length;
+  }
+
+  async listParticipants(tripId: string) {
+    return (await this.read()).participants.filter((p) => p.trip_id === tripId);
   }
   async getParticipant(id: string) {
     return (await this.read()).participants.find((p) => p.id === id) ?? null;
   }
-  async findParticipantByName(name: string) {
+  async findParticipantByName(tripId: string, name: string) {
     const n = name.toLowerCase();
-    return (await this.read()).participants.find((p) => p.display_name.toLowerCase() === n) ?? null;
+    return (await this.read()).participants.find((p) => p.trip_id === tripId && p.display_name.toLowerCase() === n) ?? null;
   }
-  createParticipant(name: string, pinHash: string) {
+  createParticipant(tripId: string, p: NewParticipant) {
     return this.mutate((db) => {
-      if (db.participants.some((p) => p.display_name.toLowerCase() === name.toLowerCase())) return null;
+      const mine = db.participants.filter((x) => x.trip_id === tripId);
+      if (mine.some((x) => x.display_name.toLowerCase() === p.name.toLowerCase())) return null;
+      if (p.role === "owner" && mine.some((x) => x.role === "owner")) return null;
       const row: ParticipantRow = {
         id: randomUUID(),
-        display_name: name,
-        pin_hash: pinHash,
+        trip_id: tripId,
+        display_name: p.name,
+        pin_hash: p.pinHash,
         failed_attempts: 0,
         locked_until: null,
-        role: "member",
+        role: p.role ?? "member",
+        guest: !!p.guest,
         created_at: new Date().toISOString(),
       };
       db.participants.push(row);
@@ -317,9 +399,10 @@ class FileStore implements Store {
     return this.mutate((db) => {
       db.participants = db.participants.filter((p) => p.id !== id);
       db.itineraries = db.itineraries.filter((i) => i.participant_id !== id);
-      db.peeks = (db.peeks ?? []).filter((p) => p.peeker_id !== id && p.target_id !== id);
+      db.peeks = db.peeks.filter((p) => p.peeker_id !== id && p.target_id !== id);
     });
   }
+
   async getItinerary(participantId: string) {
     return (await this.read()).itineraries.find((i) => i.participant_id === participantId) ?? null;
   }
@@ -338,33 +421,22 @@ class FileStore implements Store {
       if (it) it.stamp = stamp;
     });
   }
-  async listItineraries() {
-    return (await this.read()).itineraries;
+  async listItineraries(tripId: string) {
+    const db = await this.read();
+    const people = new Set(db.participants.filter((p) => p.trip_id === tripId).map((p) => p.id));
+    return db.itineraries.filter((i) => people.has(i.participant_id));
   }
-  async getSettings() {
-    return (await this.read()).settings;
-  }
-  setEditsLocked(locked: boolean) {
-    return this.mutate((db) => {
-      db.settings = { ...db.settings, edits_locked: locked, updated_at: new Date().toISOString() };
-    });
-  }
-  setRules(rules: unknown) {
-    return this.mutate((db) => {
-      db.settings = { ...db.settings, rules, updated_at: new Date().toISOString() };
-    });
-  }
+
   addLog(entry: NewLogEntry) {
     return this.mutate((db) => {
-      db.log = [{ ...entry, id: randomUUID(), at: new Date().toISOString() }, ...(db.log ?? [])].slice(0, 2000);
+      db.log = [{ ...entry, id: randomUUID(), at: new Date().toISOString() }, ...db.log].slice(0, 5000);
     });
   }
-  async listLog(limit: number) {
-    return ((await this.read()).log ?? []).slice(0, limit);
+  async listLog(tripId: string, limit: number) {
+    return (await this.read()).log.filter((l) => l.trip_id === tripId).slice(0, limit);
   }
   recordPeek(peekerId: string, targetId: string) {
     return this.mutate((db) => {
-      db.peeks ??= [];
       const now = new Date().toISOString();
       const row = db.peeks.find((p) => p.peeker_id === peekerId && p.target_id === targetId);
       if (row) {
@@ -377,7 +449,7 @@ class FileStore implements Store {
     });
   }
   async countPeekers(targetId: string) {
-    return ((await this.read()).peeks ?? []).filter((p) => p.target_id === targetId).length;
+    return (await this.read()).peeks.filter((p) => p.target_id === targetId).length;
   }
 }
 
@@ -401,15 +473,11 @@ export function db(): Store {
   if (forceLocal()) {
     store = new FileStore();
   } else if (url && key) {
-    store = new SupabaseStore(
-      createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } }),
-    );
+    store = new SupabaseStore(createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } }));
   } else if (process.env.NODE_ENV !== "production") {
     store = new FileStore();
   } else {
-    throw new Error(
-      "Supabase is not configured: set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY (see SETUP.md).",
-    );
+    throw new Error("Supabase is not configured: set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY (see SETUP.md).");
   }
   return store;
 }
