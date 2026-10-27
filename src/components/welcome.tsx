@@ -316,7 +316,10 @@ function DemoActions() {
         </Link>
       </div>
       <p className="mt-3 text-center text-[12.5px] leading-snug text-paper/65">
-        A demo trip with 12 fictional travellers. Plan your own version as a guest — everything resets every night.
+        A demo trip with 12 fictional travellers. Plan your own version as a guest — everything resets every night.{" "}
+        <Link href="/demo" className="font-semibold text-paper/85 underline decoration-white/40 underline-offset-2">
+          Switch demo
+        </Link>
       </p>
     </div>
   );

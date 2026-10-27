@@ -76,8 +76,6 @@ SUPABASE_SERVICE_ROLE_KEY=sb_secret_xxxxxxxxxxxxxxxxxxxxxxxx
 SESSION_SECRET=<a new long random string>
 ADMIN_PASSWORD=<a new password for /admin>
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
-# optional: the slug of the public demo trip shown on the front page
-# DEMO_TRIP_SLUG=demo-sri-lanka
 ```
 
 Generate fresh secrets — never reuse the ones from Lanks:
@@ -115,7 +113,7 @@ Every push to `main` redeploys. After changing an environment variable, redeploy
 
 ## The demo trip and past trips
 
-- **`/demo`** opens the public demo: a Sri Lanka trip with 12 fictional travellers (drafts, submitted plans, roommate picks, peeks). It's built the first time someone visits. Visitors **try it as a guest** (a throwaway traveller with no PIN) or **view as organizer (demo)** — the console, read-only (every write is refused server-side; exports work).
+- **`/demo`** lets visitors pick a demo: one trip per destination (`/t/demo-sri-lanka`, `/t/demo-georgia`), each with the same 12 fictional travellers (drafts, submitted plans, roommate picks, peeks). A demo is built the first time someone opens it (`/demo/<preset>`). Visitors **try it as a guest** (a throwaway traveller with no PIN) or **view as organizer (demo)** — the console, read-only (every write is refused server-side; exports work).
 - **Nightly reset:** `vercel.json` schedules `GET /api/cron/reset-demo` at 03:00 UTC. Vercel sends `Authorization: Bearer <CRON_SECRET>`; set `CRON_SECRET` in the project's environment variables or the endpoint refuses. To reset by hand: project → **Settings → Cron Jobs → Run**, or `curl -H "Authorization: Bearer <CRON_SECRET>" https://<your-domain>/api/cron/reset-demo`.
 - **Past trips** (`/past`) are JSON files in `content/past-trips/`: a preset id, real dates, the picks per day, and the story slides. They render with the same poster, route map and timeline as a live plan.
 
