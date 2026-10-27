@@ -388,14 +388,25 @@ export const presetSchema = z.strictObject({
     selfDrive: z.boolean().default(false),
   }),
   map: z.strictObject({
-    /** Equirectangular projection: x = (lng - minLng) × scale + pad, y = (maxLat - lat) × scale + pad. */
-    projection: z.strictObject({ minLng: z.number(), maxLat: z.number(), scale: z.number().positive(), pad: z.number().min(0) }),
+    /**
+     * Equirectangular projection: x = (lng - minLng) × scale × xScale + pad, y = (maxLat - lat) × scale + pad.
+     * xScale ≈ cos(latitude) keeps places far from the equator from looking stretched (1 = none).
+     */
+    projection: z.strictObject({
+      minLng: z.number(),
+      maxLat: z.number(),
+      scale: z.number().positive(),
+      pad: z.number().min(0),
+      xScale: z.number().positive().max(1).default(1),
+    }),
     width: z.number().positive(),
     height: z.number().positive(),
     /** Simplified outline paths (SVG, projected). */
     outline: z.array(z.string().min(1)).min(1),
     /** Full-resolution outline for the zoomed map and share images. */
     detail: z.string().min(1),
+    /** Neighbouring land (projected path), drawn muted so a land border doesn't read as coast. */
+    surroundings: z.string().optional(),
     /** The default frame: two corners [lat, lng]. Grows to fit every stop. */
     focus: z.tuple([latLng, latLng]),
     /** Towns along a road, in order: legs between two of them follow it. */

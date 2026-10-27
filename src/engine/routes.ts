@@ -15,8 +15,8 @@ export type DayRoute = { index: number; color: string; stops: RouteStop[]; legs:
 
 /** Map projection for the preset: [lat, lng] → SVG units. */
 export function projector(e: Engine) {
-  const { minLng, maxLat, scale, pad } = e.catalog.preset.map.projection;
-  return (lat: number, lng: number): [number, number] => [(lng - minLng) * scale + pad, (maxLat - lat) * scale + pad];
+  const { minLng, maxLat, scale, pad, xScale } = e.catalog.preset.map.projection;
+  return (lat: number, lng: number): [number, number] => [(lng - minLng) * scale * xScale + pad, (maxLat - lat) * scale + pad];
 }
 
 /** Screen point of a place or waypoint. */

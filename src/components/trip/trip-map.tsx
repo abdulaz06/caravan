@@ -174,6 +174,9 @@ export function TripMap({ routes, active, onActive, className }: Props) {
         const [, y] = regionPoint(e, [lat, preset.map.projection.minLng]);
         return <line key={lat} x1={full.x} x2={full.x + full.w} y1={y} y2={y} stroke="#ffffff" strokeOpacity="0.06" strokeWidth={H * 0.002} strokeDasharray={`${H * 0.01} ${H * 0.012}`} />;
       })}
+      {preset.map.surroundings && (
+        <path d={preset.map.surroundings} fill={pal.surface["400"]} fillOpacity={0.3} stroke={pal.surface["200"]} strokeOpacity={0.25} strokeWidth={H * 0.002} />
+      )}
       <path d={preset.map.detail} fill="url(#cm-land)" stroke={pal.paper} strokeWidth={H * 0.003} filter="url(#cm-shadow)" />
 
       {drawOrder.map((d) => {

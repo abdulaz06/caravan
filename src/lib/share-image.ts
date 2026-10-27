@@ -248,6 +248,11 @@ function drawMap(ctx: Ctx, f: Fonts, c: Colors, e: Engine, routes: DayRoute[], x
   // land
   ctx.save();
   ctx.setTransform(ctx.getTransform().multiply(new DOMMatrix([s, 0, 0, s, ox, oy])));
+  if (map.surroundings) {
+    // neighbouring countries: land, but quiet
+    ctx.fillStyle = rgba(c.land[1], 0.24);
+    ctx.fill(new Path2D(map.surroundings));
+  }
   const land = ctx.createLinearGradient(0, box.y, 0, box.y + box.h);
   land.addColorStop(0, c.land[0]);
   land.addColorStop(1, c.land[1]);

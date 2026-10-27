@@ -747,6 +747,12 @@
             "pad": {
               "type": "number",
               "minimum": 0
+            },
+            "xScale": {
+              "default": 1,
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 1
             }
           },
           "required": [
@@ -776,6 +782,9 @@
         "detail": {
           "type": "string",
           "minLength": 1
+        },
+        "surroundings": {
+          "type": "string"
         },
         "focus": {
           "type": "array",
