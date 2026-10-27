@@ -8,6 +8,7 @@ test("landing page links to everything", async ({ page }) => {
   await expect(page.getByRole("link", { name: /Start a trip/ }).first()).toHaveAttribute("href", "/new");
   await expect(page.getByRole("link", { name: /Try a demo trip/ })).toHaveAttribute("href", "/demo");
   await expect(page.getByRole("link", { name: "Watch the story", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Read the case study/ }).first()).toHaveAttribute("href", "/case-study");
   done();
 });
 
@@ -17,6 +18,11 @@ test("case study tells the story", async ({ page }) => {
   await expect(page.getByRole("heading", { name: /without the group chat/ })).toBeVisible();
   await expect(page.getByText("friends joined")).toBeVisible();
   await expect(page.getByRole("img", { name: /Architecture/ })).toBeVisible();
+  await expect(page.getByText("NYE beach party on the south coast")).toBeVisible();
+  await expect(page.getByRole("button", { name: /Play: Watch the 1-minute walkthrough/ })).toBeVisible();
+  // Shared links show the case study's own preview, not the site's.
+  const og = await page.locator('meta[property="og:image"]').first().getAttribute("content");
+  expect(og).toContain("/case-study/opengraph-image");
   done();
 });
 

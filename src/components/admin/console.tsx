@@ -218,7 +218,10 @@ export function Console({ actor, people, rules: initialRules, editsLocked, log, 
           <p role="status" className="mt-3 flex items-start gap-2 rounded-2xl bg-secondary-800 px-3.5 py-3 text-[13.5px] leading-snug text-paper">
             <Eye className="mt-0.5 size-4 shrink-0 text-highlight-400" />
             <span>
-              <b>Demo console · read-only.</b> <span className="text-paper/75">Look around everything an organizer sees — the switches are just for show.</span>
+              <b>Demo console · read-only.</b> <span className="text-paper/75">Look around everything an organizer sees — the switches are just for show.</span>{" "}
+              <Link href="/case-study" className="font-semibold text-highlight-400 underline underline-offset-2">
+                Read the case study
+              </Link>
             </span>
           </p>
         )}

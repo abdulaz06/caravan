@@ -25,6 +25,9 @@ export default function NotFound() {
           <Link href="/" className="inline-flex h-12 items-center justify-center rounded-full font-semibold text-ink-2 hover:bg-surface-200">
             Caravan home
           </Link>
+          <Link href="/case-study" className="inline-flex h-10 items-center justify-center rounded-full text-[14px] font-semibold text-accent-600 hover:underline">
+            Read the case study
+          </Link>
         </div>
         <Lockup size="sm" className="mt-12 opacity-70" />
       </div>

@@ -12,6 +12,7 @@ import { Button, ButtonLink } from "../ui/button";
 import { Photo } from "../ui/photo";
 import { PinInput } from "../ui/pin-input";
 import { useToast } from "../ui/toast";
+import { CaseStudyLink } from "./case-study-link";
 
 type Created = { slug: string; name: string; url: string; presetId: string };
 type Err = { field?: string; message: string } | null;
@@ -27,6 +28,7 @@ export function NewTrip({ destinations, initial }: { destinations: Destination[]
             <ArrowLeft className="size-4" />
             <Lockup size="sm" />
           </Link>
+          <CaseStudyLink />
         </header>
         <AnimatePresence mode="wait" initial={false}>
           {created ? (

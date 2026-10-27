@@ -24,6 +24,16 @@ export function SiteFooter({ tone = "ink", className }: { tone?: "ink" | "light"
           Photos by Wikimedia Commons contributors, credited on each option.
         </p>
       )}
+      {trip?.kind === "demo" && (
+        <p className="flex gap-4 text-[13px] font-semibold">
+          <Link href="/case-study" className={light ? "text-highlight-400 hover:underline" : "text-accent-600 hover:underline"}>
+            Read the case study
+          </Link>
+          <Link href="/demo" className={light ? "text-paper/80 hover:underline" : "text-ink-2 hover:underline"}>
+            Other demos
+          </Link>
+        </p>
+      )}
     </footer>
   );
 }

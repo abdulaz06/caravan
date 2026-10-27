@@ -12,6 +12,7 @@ import { Lockup } from "../brand/wordmark";
 import { ItineraryTimeline } from "../trip/itinerary-timeline";
 import { TripPoster } from "../trip/trip-poster";
 import { Photo } from "../ui/photo";
+import { CaseStudyLink } from "../caravan/case-study-link";
 
 export type PastTripSummary = {
   id: string;
@@ -37,7 +38,8 @@ export function PastTripView({ trip, data }: { trip: PastTripSummary; data: Itin
           <ArrowLeft className="size-4" /> Past trips
         </Link>
         <span className="flex-1" />
-        <Link href="/" aria-label={`${BRAND.name} home`}>
+        <CaseStudyLink className="mr-1" />
+        <Link href="/" aria-label={`${BRAND.name} home`} className="hidden sm:block">
           <Lockup size="sm" />
         </Link>
       </header>

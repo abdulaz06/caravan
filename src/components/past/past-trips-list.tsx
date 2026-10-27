@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { Photo as PhotoT } from "@/engine/catalog";
 import { Lockup } from "../brand/wordmark";
 import { Photo } from "../ui/photo";
+import { CaseStudyLink } from "../caravan/case-study-link";
 
 type Item = { id: string; title: string; dates: string; summary: string; days: number; cover: PhotoT | null };
 
@@ -16,6 +17,7 @@ export function PastTripsList({ trips }: { trips: Item[] }) {
             <ArrowLeft className="size-4" />
             <Lockup size="sm" />
           </Link>
+          <CaseStudyLink />
         </header>
         <h1 className="font-display mt-4 text-[40px] font-semibold leading-[1] tracking-[-0.03em]">
           Past <span className="italic text-accent-600">trips</span>

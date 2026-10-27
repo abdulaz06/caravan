@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { Destination } from "@/lib/server/destinations";
 import { Lockup } from "../brand/wordmark";
 import { Photo } from "../ui/photo";
+import { CaseStudyLink } from "./case-study-link";
 
 /** Pick a demo: one live trip per destination, 12 fictional travellers mid-planning. */
 export function DemoChooser({ destinations }: { destinations: Destination[] }) {
@@ -14,6 +15,7 @@ export function DemoChooser({ destinations }: { destinations: Destination[] }) {
             <ArrowLeft className="size-4" />
             <Lockup size="sm" />
           </Link>
+          <CaseStudyLink />
         </header>
         <h1 className="font-display mt-4 text-[40px] font-semibold leading-[1] tracking-[-0.03em]">
           Try a <span className="italic text-accent-600">demo trip</span>

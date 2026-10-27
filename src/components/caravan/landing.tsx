@@ -1,5 +1,6 @@
 import {
   ArrowRight,
+  BookOpen,
   Play,
   ArrowUpRight,
   CalendarHeart,
@@ -12,6 +13,7 @@ import {
   Swords,
   Wallet,
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { BRAND } from "@/lib/brand";
 import { cn } from "@/lib/cn";
@@ -77,10 +79,10 @@ export function Landing({
         <nav className="relative z-10 mx-auto flex h-16 max-w-6xl items-center justify-between px-5 pt-[env(safe-area-inset-top)]">
           <Lockup size="sm" tone="light" />
           <span className="flex-1" />
-          <Link href="/case-study" className="hidden rounded-full px-3 py-2 text-[13.5px] font-semibold text-paper/80 hover:text-paper sm:block">
+          <Link href="/case-study" className="mr-1 rounded-full px-3 py-2 text-[13.5px] font-semibold text-paper/85 hover:text-paper">
             Case study
           </Link>
-          <Link href="/past" className="mr-1 rounded-full px-3 py-2 text-[13.5px] font-semibold text-paper/80 hover:text-paper">
+          <Link href="/past" className="mr-1 hidden rounded-full px-3 py-2 text-[13.5px] font-semibold text-paper/80 hover:text-paper sm:block">
             Past trips
           </Link>
           <Link
@@ -119,6 +121,19 @@ export function Landing({
                 </Link>
               )}
             </div>
+            <Link
+              href="/case-study"
+              className="group mt-4 flex items-center gap-3.5 rounded-2xl bg-white/[0.07] px-4 py-3 ring-1 ring-white/15 backdrop-blur transition hover:bg-white/[0.12] sm:max-w-[30rem]"
+            >
+              <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-highlight-500 text-ink">
+                <BookOpen className="size-5" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-[15px] font-semibold">Read the case study</span>
+                <span className="block text-[13px] text-paper/65">How 13 friends planned a trip without the group chat</span>
+              </span>
+              <ArrowRight className="size-4.5 shrink-0 text-paper/60 transition group-hover:translate-x-0.5" />
+            </Link>
             <p className="mt-6 text-[13px] text-paper/55">Free · no accounts · works great on a phone</p>
           </div>
           {lead && <HeroVisual d={lead} />}
@@ -172,6 +187,9 @@ export function Landing({
           ))}
         </ol>
       </section>
+
+      {/* ── Case study ─────────────────────────────────────────── */}
+      <CaseStudyBand />
 
       {/* ── Features ───────────────────────────────────────────── */}
       <section className="mx-auto max-w-6xl px-5 pt-16 lg:pt-24" aria-labelledby="features">
@@ -411,6 +429,46 @@ function ArchiveSection({ trip }: { trip: ArchiveTrip }) {
           </span>
         </Link>
       </div>
+    </section>
+  );
+}
+
+/** The case study, pitched where reviewers will see it: the real trip's numbers and the phones. */
+function CaseStudyBand() {
+  return (
+    <section className="mx-auto max-w-6xl px-5 pt-16 lg:pt-24" aria-labelledby="case-study">
+      <Link
+        href="/case-study"
+        className="group grid overflow-hidden rounded-[32px] bg-primary-900 text-paper shadow-card transition hover:-translate-y-0.5 lg:grid-cols-[1fr_1.15fr]"
+      >
+        <div className="flex flex-col justify-center p-6 sm:p-10">
+          <p className="label text-highlight-400">Case study</p>
+          <h2 id="case-study" className="font-display mt-3 text-[34px] font-semibold leading-[1.02] tracking-[-0.03em] sm:text-[44px]">
+            Planning a group trip <span className="italic text-highlight-400">without the group chat.</span>
+          </h2>
+          <p className="mt-4 max-w-md text-[15.5px] leading-relaxed text-paper/75">
+            The problem, the design decisions, the architecture and the hard parts — and what happened when 13 friends used it.
+          </p>
+          <dl className="mt-6 flex gap-6">
+            {[
+              ["13", "joined"],
+              ["8", "full plans"],
+              ["1", "week"],
+            ].map(([v, l]) => (
+              <div key={l}>
+                <dt className="font-display text-[36px] font-semibold leading-none">{v}</dt>
+                <dd className="mt-1 text-[13px] text-paper/60">{l}</dd>
+              </div>
+            ))}
+          </dl>
+          <span className="mt-7 inline-flex items-center gap-2 text-[15px] font-semibold text-highlight-400">
+            Read the case study <ArrowRight className="size-4.5 transition group-hover:translate-x-0.5" />
+          </span>
+        </div>
+        <div className="relative min-h-[240px] sm:min-h-[320px]">
+          <Image src="/case-study/hero.webp" alt="" fill sizes="(min-width: 1024px) 640px, 100vw" className="object-cover object-center" />
+        </div>
+      </Link>
     </section>
   );
 }

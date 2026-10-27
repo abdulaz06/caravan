@@ -320,6 +320,10 @@ function DemoActions() {
         <Link href="/demo" className="font-semibold text-paper/85 underline decoration-white/40 underline-offset-2">
           Switch demo
         </Link>
+        {" · "}
+        <Link href="/case-study" className="font-semibold text-paper/85 underline decoration-white/40 underline-offset-2">
+          Read the case study
+        </Link>
       </p>
     </div>
   );
