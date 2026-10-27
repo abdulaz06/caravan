@@ -11,7 +11,10 @@ Start a trip, drop one link in the group chat, and each friend:
 
 The organizer gets a console per trip: owner/admin roles, live trip rules, edit locks, announcements, and JSON/CSV exports for planning the final itinerary.
 
-Destinations are **presets** — typed, validated JSON describing the options, day structure, drive times, map and theme ([`docs/PRESETS.md`](./docs/PRESETS.md)). Sri Lanka ships today.
+Destinations are **presets** — typed, validated JSON describing the options, day structure, drive times, map and theme ([`docs/PRESETS.md`](./docs/PRESETS.md)). Two ship today: **Sri Lanka** (tropical, Colombo → Galle by van) and **Georgia in winter** (alpine, a Tbilisi base with self-drive rental cars), each with its own look.
+
+- **`/demo`** — a live demo trip with 12 fictional travellers: try it as a guest or open the organizer console read-only. It resets every night.
+- **`/past`** — past trips as stories: 9:16 tap-through slides, the route map and the full timeline.
 
 ```bash
 npm install

@@ -29,7 +29,7 @@ const shot = async (label, full = false) => {
 // Caravan's front page, then start a trip (you become its owner).
 await page.goto(base);
 await shot("landing");
-await page.goto(`${base}/new`);
+await page.goto(`${base}/new?preset=sri-lanka`);
 await page.locator("#trip-name").fill(`Smoke trip ${Date.now().toString(36).slice(-4)}`);
 await page.locator("#owner-name").fill(name);
 await page.locator("#owner-pin").fill("4826");

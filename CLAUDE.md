@@ -17,9 +17,10 @@ Next.js 16 (App Router; read `node_modules/next/dist/docs` before using an API y
 | `presets/<id>/` | A destination: `preset.json`, `photos.json` (+ picks/queries), `images/`. Registered in `src/presets/registry.ts` (server-only). `docs/PRESETS.md` explains every field. |
 | `src/engine/` | The trip engine, destination-agnostic and pure: preset schema + validation, catalog compilation, day structure, rules, itinerary normalisation/migration, timeline, budget, quick fill, routes, family-friendly mode, highlights, popular picks. Every function takes the `Engine` (`{ catalog, rules, plans }`) explicitly — no globals. |
 | `src/lib/server/` | Server-only: the store (`db.ts`: Supabase or the local JSON store), sessions, trip context (`trip.ts`), route helpers (`withTrip`), organizer checks (`asOrganizer`), saving plans, group stats, popular picks, exports, trip creation (`new-trip.ts`), destinations for Caravan's own pages. |
-| `src/app/` | `/` landing · `/new` start a trip · `/t/[slug]/…` a trip (welcome, join, trip builder, group, person, peek, `admin` console) · `/api/trips` · `/api/t/[slug]/…` trip APIs. |
+| `src/app/` | `/` landing · `/new` start a trip · `/t/[slug]/…` a trip (welcome, join, trip builder, group, person, peek, `admin` console) · `/demo` · `/past`, `/past/[id]`, `/past/[id]/story` · `/api/trips` · `/api/t/[slug]/…` trip APIs · `/api/cron/reset-demo`. |
+| `content/past-trips/` | Past trips (anonymised real trips): preset id, dates, picks per day, story slides. Loaded by `src/lib/server/past-trips.ts`. |
 | `src/components/` | `caravan/` (landing, new trip) · `trip/` (builder) · `group/` · `admin/` · `brand/` · `ui/`. Client components get the engine and trip paths from context: `useEngine()`, `useTrip()` (`href(path)`, `api(path)`, `demo`). Never hard-code `/trip` or `/api/...` — always `trip.href()` / `trip.api()`. |
-| `scripts/` | `dev-local.mjs` (port 3100, local store), `smoke.mjs`, `shoot.mjs`, `validate-presets.ts`, `sync-presets.mjs` (preset images → `public/presets/`, gitignored), `fetch-photos.mjs`, `image-candidates.mjs`, `make-brand-assets.mjs`, `make-share-fonts.py`. |
+| `scripts/` | `dev-local.mjs` (port 3100, local store), `smoke.mjs`, `shoot.mjs`, `validate-presets.ts`, `sync-presets.mjs` (preset images → `public/presets/`, gitignored), `fetch-photos.mjs`, `image-candidates.mjs`, `make-map-outline.py` (Natural Earth → preset map), `make-brand-assets.mjs`, `make-share-fonts.py`. |
 | `supabase/migrations/` | SQL to paste into the Supabase SQL editor, idempotent, in date order. |
 
 ## Trips and identity
@@ -27,7 +28,7 @@ Next.js 16 (App Router; read `node_modules/next/dist/docs` before using an API y
 - No accounts: join a trip with a display name (unique per trip, case-insensitive) + 4-digit PIN. 5 wrong PINs lock that name for 5 minutes. The session cookie maps trip → participant (up to 20 trips per device).
 - Whoever starts a trip is its **owner**. Owner-only: make/remove admins, delete an admin, reset an admin's or the owner's PIN. Nobody can demote or delete the owner. Every `/api/t/[slug]/admin/*` endpoint checks the role server-side; the console asks organizers to re-confirm their PIN (12-hour console session). `ADMIN_PASSWORD` is a break-glass owner login.
 - Trip creation is rate limited (`src/lib/server/new-trip.ts`) by a salted hash of the IP — never store raw IPs — and has a honeypot field.
-- Demo trips (`kind: "demo"`) are read-only in the console (`asOrganizer` returns 403 `demo`).
+- **The demo trip** (`/demo`, slug `DEMO_TRIP_SLUG`, `src/lib/server/demo.ts`): 12 fictional travellers, rebuilt from scratch on first visit and nightly by Vercel Cron (`CRON_SECRET`). Visitors join as **guests** (`participants.guest`, no PIN), who never appear in counts, lists, popular picks or exports except to themselves. Join/login are refused there. Its console is open to anyone and read-only: `asOrganizer` refuses every write with 403 `demo`; read-only routes (exports) pass `{ readOnly: true }`.
 
 ## Data safety (non-negotiable)
 - Itinerary `data` is versioned (`version: 3`). Changes must be backward compatible: new fields optional; a field an older client doesn't send means "unchanged"; migrations are safe and idempotent and never lose picks they can keep. Rules changes that invalidate plans show an impact preview first, then migrate and stamp a one-time note.
