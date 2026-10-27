@@ -6,9 +6,7 @@
 
 ![Caravan on a phone: the landing page, a this-or-that matchup, a trip poster with its route map, and a past trip told as a story](docs/media/hero.png)
 
-**Live:** [caravan-prod.vercel.app](https://caravan-prod.vercel.app) · **Try a demo trip:** [/demo](https://caravan-prod.vercel.app/demo) · **Case study:** [/case-study](https://caravan-prod.vercel.app/case-study) · **A past trip, as a story:** [/past/georgia-2025/story](https://caravan-prod.vercel.app/past/georgia-2025/story)
-
-<!-- TODO(Abdul): decide whether to mention AI assistance (Claude Code) here too — see content/case-study-stats.json → aiAssistance. -->
+**Live:** [caravan-prod.vercel.app](https://caravan-prod.vercel.app) · **📖 Case study:** [/case-study](https://caravan-prod.vercel.app/case-study) · **Try a demo trip:** [/demo](https://caravan-prod.vercel.app/demo) · **A past trip, as a story:** [/past/georgia-2025/story](https://caravan-prod.vercel.app/past/georgia-2025/story)
 
 ---
 
@@ -18,13 +16,13 @@ Group chats are where trip plans go to die: nobody commits, the loudest voice wi
 
 ## How it works
 
-<img src="docs/media/demo.gif" alt="Picking between two options in a matchup, then quick-filling the rest of the trip" width="300" align="right" />
+<img src="docs/media/demo.gif" alt="Picking between two options in a matchup, then quick-filling the rest of the trip" width="320" align="right" />
 
 1. **Start a trip** at `/new`: pick a destination, name the trip, choose a name and a 4-digit PIN. You get one invite link.
 2. **Everyone builds their own version.** Friends open the link (no accounts), drag a date window onto the calendar, and fill each day and evening — starting from a this-or-that matchup between two real, photographed options, with a catalog for more.
 3. **See the overlap.** A date heatmap with the sweet spot, the most-picked options, everyone on one nature ↔ nightlife line, roommate matches, and JSON/CSV exports for planning the final itinerary.
 
-▶ **[Watch the 60-second walkthrough (MP4)](docs/media/demo.mp4)**
+▶ **[Desktop walkthrough — 1 min, 16:9](public/case-study/walkthrough.mp4)** · **[Phone walkthrough — 60 s](docs/media/demo.mp4)**
 
 <br clear="right" />
 
@@ -112,7 +110,7 @@ npm run e2e              # Playwright: iPhone 14, iPhone SE and desktop, on a th
 npm run build
 ```
 
-[GitHub Actions](.github/workflows/ci.yml) runs all of them on every push. `node scripts/record-demo.mjs` re-records the walkthrough and the screenshots in `docs/media/` and `public/case-study/`.
+[GitHub Actions](.github/workflows/ci.yml) runs all of them on every push. `node scripts/record-demo.mjs` re-records the phone walkthrough, GIF, hero and case-study screenshots; `node scripts/record-desktop.mjs` the 16:9 desktop walkthrough (both need a local server and ffmpeg).
 
 ## Project layout
 
