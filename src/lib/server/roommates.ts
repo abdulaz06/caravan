@@ -9,7 +9,7 @@ export async function roommateCandidates(tripId: string, excludeId: string): Pro
   const [people, plans] = await Promise.all([db().listParticipants(tripId), db().listItineraries(tripId)]);
   const started = new Set(plans.map((p) => p.participant_id));
   return people
-    .filter((p) => p.id !== excludeId && started.has(p.id) && !isTestName(p.display_name))
+    .filter((p) => p.id !== excludeId && started.has(p.id) && !isTestName(p.display_name) && !p.guest)
     .map((p) => ({ id: p.id, name: p.display_name }))
     .sort((a, b) => a.name.localeCompare(b.name));
 }

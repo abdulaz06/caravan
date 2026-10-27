@@ -8,6 +8,7 @@ import { pinSchema } from "@/lib/validation";
 
 export async function POST(req: Request, ctx: RouteContext<"/api/t/[slug]/auth/login">) {
   return withTrip(ctx, async (trip) => {
+    if (trip.trip.kind === "demo") return error("On the demo trip, use “Try it as a guest”.", 403);
     const body = await readJson(req);
     const id = z.string().uuid().safeParse(body?.id);
     const pin = pinSchema.safeParse(body?.pin);

@@ -4,6 +4,7 @@ import { Console } from "@/components/admin/console";
 import { roommateBoard } from "@/lib/roommates";
 import { db, isOrganizerRole, isUsingLocalStore, roleOf } from "@/lib/server/db";
 import { loadPeople, realPeople } from "@/lib/server/group";
+import { DEMO_ACTOR } from "@/lib/server/organizer";
 import { consoleActor, currentParticipant } from "@/lib/server/session";
 import { tripFromParams } from "@/lib/server/trip";
 import { isTestName } from "@/lib/test-users";
@@ -14,13 +15,15 @@ export default async function AdminPage({ params }: PageProps<"/t/[slug]/admin">
   const trip = await tripFromParams(params);
   // The demo's console is open to everyone, read-only (every organizer endpoint refuses demo writes).
   const demo = trip.trip.kind === "demo";
-  const actor = demo ? { name: "Demo visitor", role: "owner" as const, breakGlass: false, id: null } : await consoleActor(trip.trip);
+  const actor = demo ? DEMO_ACTOR : await consoleActor(trip.trip);
   if (!actor) {
     const me = await currentParticipant(trip.trip);
     if (me && isOrganizerRole(roleOf(me))) return <ConfirmPin name={me.display_name} />;
     return <AdminLogin />;
   }
-  const [people, log] = await Promise.all([loadPeople(trip), db().listLog(trip.trip.id, 300).catch(() => [])]);
+  const [everyone, log] = await Promise.all([loadPeople(trip), db().listLog(trip.trip.id, 300).catch(() => [])]);
+  // Demo guests come and go with the nightly reset; they aren't part of the trip.
+  const people = everyone.filter((p) => !p.guest);
   const peekers = await Promise.all(people.map((p) => db().countPeekers(p.id).catch(() => 0)));
   return (
     <Console

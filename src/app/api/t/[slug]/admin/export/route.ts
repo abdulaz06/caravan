@@ -11,7 +11,7 @@ export async function GET(req: NextRequest, ctx: RouteContext<"/api/t/[slug]/adm
       // "zz-test-…" users never make it into an export.
       const people = realPeople(await loadPeople(trip));
       const stamp = new Date().toISOString().slice(0, 10);
-      await logAction(trip.trip.id, actor, "export", null, { format });
+      if (trip.trip.kind !== "demo") await logAction(trip.trip.id, actor, "export", null, { format });
 
       const file = (body: string, name: string, type: string) =>
         new Response(body, {
@@ -26,6 +26,6 @@ export async function GET(req: NextRequest, ctx: RouteContext<"/api/t/[slug]/adm
       if (format === "csv") return file(exportWideCsv(trip.engine, people), `${base}-people-${stamp}.csv`, "text/csv");
       if (format === "csv-long") return file(exportLongCsv(trip.engine, people), `${base}-picks-${stamp}.csv`, "text/csv");
       return file(JSON.stringify(exportJson(trip, people), null, 2), `${base}-export-${stamp}.json`, "application/json");
-    }),
+    }, { readOnly: true }),
   );
 }

@@ -21,9 +21,9 @@ export default async function GroupPage({ params }: PageProps<"/t/[slug]/group">
   const me = await currentParticipant(trip.trip);
   if (!me) redirect(tripPath(trip.trip.slug, "/join"));
   const ctx = await pageContext(trip, me);
-  // Test users ("zz-test-…") never show up or count here — except to themselves.
+  // Test users ("zz-test-…") and demo guests never show up or count here — except to themselves.
   const [all, rates, popular] = await Promise.all([loadPeople(trip), getRates(), getPopular(trip)]);
-  const people = all.filter((p) => p.id === me.id || !isTestName(p.name));
+  const people = all.filter((p) => p.id === me.id || (!isTestName(p.name) && !p.guest));
   const stats = computeStats(ctx.trip.engine, realPeople(people));
   const mine = people.find((p) => p.id === me.id);
   // Browsing others: after submitting (default), always, or off — a Trip rule.

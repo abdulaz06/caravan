@@ -15,9 +15,20 @@ export function gateError(gate: Extract<Gate, { ok: false }>) {
   return error(MESSAGES[gate.code], gate.status, { code: gate.code });
 }
 
-/** Run an organizer route behind the server-side role check for this trip. */
-export async function asOrganizer(trip: TripContext, level: "admin" | "owner", fn: (actor: Actor) => Promise<Response>): Promise<Response> {
-  if (trip.trip.kind === "demo") return error("The demo's console is read-only", 403, { code: "demo" });
+/** Who's looking at the demo trip's (read-only) console. */
+export const DEMO_ACTOR: Actor = { id: null, name: "Demo visitor", role: "owner", breakGlass: false };
+
+/**
+ * Run an organizer route behind the server-side role check for this trip.
+ * Demo trips refuse every write; `readOnly` routes (exports) run for anyone there.
+ */
+export async function asOrganizer(
+  trip: TripContext,
+  level: "admin" | "owner",
+  fn: (actor: Actor) => Promise<Response>,
+  opts: { readOnly?: boolean } = {},
+): Promise<Response> {
+  if (trip.trip.kind === "demo") return opts.readOnly ? fn(DEMO_ACTOR) : error("The demo's console is read-only", 403, { code: "demo" });
   const gate = await organizerGate(trip.trip, level);
   if (!gate.ok) return gateError(gate);
   return fn(gate.actor);

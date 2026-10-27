@@ -1,8 +1,10 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ArrowRight, CalendarHeart, Lock, Megaphone, Swords, PartyPopper } from "lucide-react";
+import { ArrowRight, CalendarHeart, Loader2, Lock, Megaphone, ShieldCheck, Swords, PartyPopper } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { Photo } from "./ui/photo";
 import { Lockup, Stamp } from "./brand/wordmark";
 import { SiteFooter } from "./brand/site-footer";
@@ -150,6 +152,11 @@ export function Welcome({ counts }: { counts: PublicCounts }) {
               <Lock className="size-4 shrink-0 text-highlight-400" /> Edits are closed — the final plan is coming!
             </motion.p>
           )}
+          {trip.demo ? (
+            <motion.div variants={rise}>
+              <DemoActions />
+            </motion.div>
+          ) : (
           <motion.div variants={rise} className="mt-6 flex flex-col gap-3 [@media(max-height:740px)]:mt-4 [@media(max-height:740px)]:gap-2">
             <Link href={trip.href("/join")} className="group">
               <span className="flex h-14 w-full items-center justify-center gap-2 rounded-full bg-accent-500 text-base font-semibold text-white shadow-[0_4px_0_0_var(--color-accent-700)] transition group-active:translate-y-[3px] group-active:shadow-[0_1px_0_0_var(--color-accent-700)]">
@@ -164,6 +171,7 @@ export function Welcome({ counts }: { counts: PublicCounts }) {
               I&apos;ve been here before
             </Link>
           </motion.div>
+          )}
         </motion.div>
         {hero && (
           <a
@@ -233,17 +241,83 @@ export function Welcome({ counts }: { counts: PublicCounts }) {
           </h2>
           <p className="mt-3 max-w-xs text-paper/80">You decide. Everyone&apos;s picks shape the final plan.</p>
           <div className="mt-7 flex items-center gap-4">
+            {trip.demo ? (
+              <GuestButton className="inline-flex h-14 items-center gap-2 rounded-full bg-highlight-500 px-7 font-semibold text-ink shadow-[0_4px_0_0_var(--color-highlight-600)] transition active:translate-y-[3px] active:shadow-[0_1px_0_0_var(--color-highlight-600)]">
+                Start building
+              </GuestButton>
+            ) : (
             <Link
               href={trip.href("/join")}
               className="inline-flex h-14 items-center gap-2 rounded-full bg-highlight-500 px-7 font-semibold text-ink shadow-[0_4px_0_0_var(--color-highlight-600)] transition active:translate-y-[3px] active:shadow-[0_1px_0_0_var(--color-highlight-600)]"
             >
               Start building <ArrowRight className="size-5" strokeWidth={2.5} />
             </Link>
+            )}
             <Vehicle className="w-20 animate-float text-highlight-400" />
           </div>
         </div>
         <SiteFooter tone="light" className="relative mt-12 border-t border-white/10 px-0 pb-0" />
       </section>
+    </div>
+  );
+}
+
+/** "Try it as a guest": a throwaway traveller on the demo trip, straight into the planner. */
+function GuestButton({ className, children }: { className: string; children: React.ReactNode }) {
+  const trip = useTrip();
+  const router = useRouter();
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  async function go() {
+    setBusy(true);
+    setErr(null);
+    try {
+      const res = await fetch(trip.api("/auth/guest"), { method: "POST" });
+      const body = await res.json().catch(() => ({}));
+      if (res.ok) {
+        router.push(trip.href("/trip"));
+        router.refresh();
+        return;
+      }
+      setErr(body.error ?? "Couldn't start — try again.");
+    } catch {
+      setErr("Couldn't reach the server — check your connection.");
+    }
+    setBusy(false);
+  }
+  return (
+    <>
+      <button type="button" onClick={go} disabled={busy} className={className}>
+        {children} {busy ? <Loader2 className="size-5 animate-spin" /> : <ArrowRight className="size-5" strokeWidth={2.5} />}
+      </button>
+      {err && (
+        <p role="alert" className="mt-2 text-sm font-semibold text-highlight-200">
+          {err}
+        </p>
+      )}
+    </>
+  );
+}
+
+/** The demo trip's front door: plan as a guest, or look around the organizer console. */
+function DemoActions() {
+  const trip = useTrip();
+  return (
+    <div className="mt-6 [@media(max-height:740px)]:mt-4">
+      <div className="flex flex-col gap-3 [@media(max-height:740px)]:gap-2">
+        <GuestButton className="flex h-14 w-full items-center justify-center gap-2 rounded-full bg-accent-500 text-base font-semibold text-white shadow-[0_4px_0_0_var(--color-accent-700)] transition active:translate-y-[3px] active:shadow-[0_1px_0_0_var(--color-accent-700)] disabled:opacity-70">
+          Try it as a guest
+        </GuestButton>
+        <Link
+          href={trip.href("/admin")}
+          className="flex h-12 items-center justify-center gap-2 rounded-full text-[15px] font-semibold text-paper/90 ring-1 ring-white/30 backdrop-blur-md transition hover:bg-white/10"
+        >
+          <ShieldCheck className="size-4 text-highlight-400" /> View as organizer (demo)
+        </Link>
+      </div>
+      <p className="mt-3 text-center text-[12.5px] leading-snug text-paper/65">
+        A demo trip with 12 fictional travellers. Plan your own version as a guest — everything resets every night.
+      </p>
     </div>
   );
 }

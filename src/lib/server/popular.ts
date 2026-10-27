@@ -18,7 +18,7 @@ export async function getPopular(trip: TripContext): Promise<PopularPayload> {
   const hit = cache.get(trip.trip.id);
   if (hit && hit.key === key && Date.now() - hit.at < TTL_MS) return hit.value;
   try {
-    const people = (await loadPeople(trip)).filter((p) => p.data && !isTestName(p.name));
+    const people = (await loadPeople(trip)).filter((p) => p.data && !isTestName(p.name) && !p.guest);
     const r = computePopular(trip.engine, people.map((p) => p.data!), rules.hidden);
     const value: PopularPayload = { on: true, counts: r.counts, threshold: r.threshold, updatedAt: new Date().toISOString() };
     cache.set(trip.trip.id, { at: Date.now(), key, value });

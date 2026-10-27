@@ -18,10 +18,12 @@ export type Person = {
   submittedAt: string | null;
   picks: number;
   data: ItineraryData | null;
+  /** A demo visitor ("Try it as a guest"): never counted or listed, except to themselves. */
+  guest: boolean;
 };
 
-/** Everyone except "zz-test-" users — what every count and list is built from. */
-export const realPeople = (people: Person[]) => people.filter((p) => !isTestName(p.name));
+/** Everyone except "zz-test-" users and demo guests — what every count and list is built from. */
+export const realPeople = (people: Person[]) => people.filter((p) => !isTestName(p.name) && !p.guest);
 
 /** Everyone on a trip and their (normalised) plans. */
 export async function loadPeople(trip: TripContext): Promise<Person[]> {
@@ -42,6 +44,7 @@ export async function loadPeople(trip: TripContext): Promise<Person[]> {
       submittedAt: it?.submitted_at ?? null,
       picks: data ? countItems(data) : 0,
       data,
+      guest: !!p.guest,
     };
   });
 }
