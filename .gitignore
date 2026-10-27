@@ -43,3 +43,6 @@ next-env.d.ts
 
 # preset images copied from presets/<id>/images (scripts/sync-presets.mjs)
 public/presets/
+
+# full-size screenshots from scripts/record-demo.mjs (the committed media is hero.png, demo.mp4/.gif)
+docs/media/shots/
