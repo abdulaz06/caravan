@@ -1,11 +1,11 @@
 {
-  "id": "georgia-2024",
+  "id": "georgia-2025",
   "presetId": "georgia",
   "title": "Georgia, in the snow",
   "kicker": "The Georgia itinerary",
   "crew": "A group of friends",
-  "start": "2024-12-25",
-  "end": "2025-01-02",
+  "start": "2025-12-25",
+  "end": "2026-01-02",
   "summary": "Nine days from a house in Tbilisi with three rental cars: techno under a stadium, a ski day in Gudauri, a canyon and a cloud-line village out west, and New Year's Eve with the whole city setting off fireworks at once.",
   "days": [
     { "day": [], "night": ["left-bank"], "note": "Landed, straight out" },
@@ -30,7 +30,7 @@
     { "day": 4, "title": "Day trip", "place": "Martvili Canyon", "photo": "martvili-canyon" },
     { "day": 5, "title": "Mountains", "place": "Gomis Mta", "photo": "gomis-mta", "text": "+ a campfire" },
     { "day": 6, "title": "New Year's Eve", "place": "Liberty Square", "photo": "nye-liberty-square", "text": "Bowling first" },
-    { "day": 6, "title": "Countdown", "place": "2025", "photo": "nye-mtatsminda-feast" },
+    { "day": 6, "title": "Countdown", "place": "2026", "photo": "nye-mtatsminda-feast" },
     { "day": 7, "title": "Recovery", "place": "Chill day at the house", "photo": "stay-in" },
     { "day": 8, "title": "Departure", "place": "See you, Tbilisi", "photo": "region-airport" }
   ],

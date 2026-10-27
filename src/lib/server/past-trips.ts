@@ -6,7 +6,7 @@ import { defaultRules, type TripRules } from "@/engine/rules";
 import { createEngine } from "@/engine/structure";
 import { addDays } from "@/lib/dates";
 import { loadPreset, type LoadedPreset } from "@/presets/registry";
-import georgia2024 from "../../../content/past-trips/georgia-2024.json";
+import georgia2025 from "../../../content/past-trips/georgia-2025.json";
 
 // Past trips: real trips, anonymised, kept as an archive. Each one is plain
 // JSON in content/past-trips/ — its days are picks from a preset, so the app
@@ -38,7 +38,7 @@ const pastTripSchema = z.strictObject({
 });
 type PastTripJson = z.output<typeof pastTripSchema>;
 
-const ALL: PastTripJson[] = [pastTripSchema.parse(georgia2024)];
+const ALL: PastTripJson[] = [pastTripSchema.parse(georgia2025)];
 
 export type StorySlide = { kicker: string; title: string; place: string; time?: string; text?: string; photo: Photo | null };
 
