@@ -1,29 +1,19 @@
 import { useId } from "react";
+import { BRAND, MARK } from "@/lib/brand";
 import { cn } from "@/lib/cn";
 import { SunMark } from "./illustrations";
 
 type Tone = "ink" | "light";
 
-/** Plain "☀ Lanks" mark. Prefer <Lockup> anywhere the brand is presented. */
-export function Wordmark({ className, tone = "ink" }: { className?: string; tone?: Tone }) {
+/** The Caravan mark: three overlapping discs on a rising line (see src/lib/brand.ts). */
+export function CaravanMark({ tone = "ink", className }: { tone?: Tone; className?: string }) {
+  const discs = MARK[tone === "light" ? "dark" : "light"];
   return (
-    <span
-      className={cn(
-        "font-display inline-flex items-center gap-[0.22em] text-[22px] font-black italic leading-none tracking-[-0.02em]",
-        tone === "light" ? "text-paper" : "text-ink",
-        className,
-      )}
-    >
-      <SunMark className="size-[0.95em] -translate-y-[0.04em] text-highlight-500" />
-      Lanks
-    </span>
-  );
-}
-
-/** The "10hyaya" rubber stamp. Always lowercase, exactly "10hyaya". */
-export function TenHyaya({ tone = "ink", className }: { tone?: Tone; className?: string }) {
-  return (
-    <span className={cn("stamp-10h", tone === "light" ? "text-highlight-400" : "text-accent-600", className)}>10hyaya</span>
+    <svg viewBox="0 0 32 32" className={className} aria-hidden="true">
+      {discs.map((d) => (
+        <circle key={d.cx} cx={d.cx} cy={d.cy} r={d.r} fill={d.color} fillOpacity={0.92} />
+      ))}
+    </svg>
   );
 }
 
@@ -35,8 +25,9 @@ const SIZES = {
 } as const;
 
 /**
- * Brand lockup: "Lanks" wordmark with a smaller "by [10hyaya]" stamp tucked
- * underneath, right-aligned like a signature. Font size drives everything.
+ * Brand lockup: the mark and the "Caravan" wordmark. It always uses the brand
+ * font, never a trip's display font, so it reads the same on every trip.
+ * Font size drives everything.
  */
 export function Lockup({
   size = "md",
@@ -48,33 +39,22 @@ export function Lockup({
   className?: string;
 }) {
   return (
-    <span className={cn("inline-grid justify-items-end leading-none", SIZES[size], className)}>
-      <span
-        className={cn(
-          "font-display flex items-center gap-[0.22em] font-black italic tracking-[-0.02em]",
-          tone === "light" ? "text-paper" : "text-ink",
-        )}
-      >
-        <SunMark className="size-[0.95em] -translate-y-[0.04em] text-highlight-500" />
-        Lanks
-      </span>
-      <span className="-mr-[0.04em] mt-[0.02em] flex items-center gap-[0.18em]">
-        <span
-          className={cn(
-            "font-display text-[max(0.3em,9px)] font-medium italic",
-            tone === "light" ? "text-paper/75" : "text-ink-2",
-          )}
-        >
-          by
-        </span>
-        <TenHyaya tone={tone} />
-      </span>
+    <span
+      className={cn(
+        "font-brand inline-flex items-center gap-[0.26em] font-semibold italic leading-none tracking-[-0.025em]",
+        tone === "light" ? "text-paper" : "text-ink",
+        SIZES[size],
+        className,
+      )}
+    >
+      <CaravanMark tone={tone} className="size-[1.08em] shrink-0 -translate-y-[0.03em]" />
+      {BRAND.name}
     </span>
   );
 }
 
 /** Rotating circular "passport stamp" badge. */
-export function Stamp({ className, text = "SRI LANKA · DEC 2026 – JAN 2027 · " }: { className?: string; text?: string }) {
+export function Stamp({ className, text }: { className?: string; text: string }) {
   const id = useId();
   return (
     <div className={cn("relative grid place-items-center", className)} aria-hidden="true">
@@ -84,7 +64,7 @@ export function Stamp({ className, text = "SRI LANKA · DEC 2026 – JAN 2027 ·
         </defs>
         <circle cx="60" cy="60" r="58" fill="currentColor" />
         <circle cx="60" cy="60" r="54" fill="none" stroke="rgb(0 0 0 / 0.25)" strokeWidth="1" strokeDasharray="2 3" />
-        <text fontSize="11.5" fontWeight="800" letterSpacing="2.2" fill="#1d1914" fontFamily="var(--font-instrument)">
+        <text fontSize="11.5" fontWeight="800" letterSpacing="2.2" fill="#1d1914" fontFamily="var(--font-sans)">
           <textPath href={`#${id}`}>{text}</textPath>
         </text>
       </svg>
