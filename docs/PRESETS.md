@@ -59,7 +59,7 @@ last day                  check out & fly home — no slots
 ```
 
 - **Sri Lanka** — Colombo 1 + Galle 4: *arrival · road trip · Galle · Galle · Galle · fly home*. The road trip's daytime draws from `enroute` (stops along the coast road, placed by `routeKm`); its evening is already in Galle.
-- **One base** (e.g. Tbilisi 8 nights): *arrival · seven Tbilisi days · fly home*.
+- **One base** — **Georgia**, Tbilisi 8 nights: *arrival · seven Tbilisi days · fly home*, with self-drive rental cars (`travel.selfDrive`, `costs.dailyUsd`) and big day trips out to Gudauri, Kazbegi, Kakheti and the canyons of the west.
 - Organizers can change the nights per base live; saved plans move over (each base's days map to that base's days, in order) after an impact preview.
 
 ### Activities
@@ -131,7 +131,7 @@ same screens look tropical in Sri Lanka and wintry in Georgia.
 1. **Copy a preset.** `cp -r presets/sri-lanka presets/<id>` and set `"id": "<id>"`. Keep `"$schema": "../preset.schema.json"` for autocomplete.
 2. **Shape the trip.** Edit `structure.bases` (one or more), `transfers` between consecutive bases, `areas` (one per base, plus a route pool if a transfer has stops), and the arrival/departure `legs`.
 3. **Places & travel.** List every place in `regions` with real coordinates. Add drive times you know to `travel.known`; everything else is estimated from distance with `travel.estimate` (tune `kmh` to the roads).
-4. **The map.** Generate an outline (e.g. from Natural Earth, public domain) in the projection you set in `map.projection`, a simplified `outline` and a detailed `detail` path. Set `map.focus` to the area the trip happens in; add `chains` for roads that link towns in order and `roads` for winding routes.
+4. **The map.** `python scripts/make-map-outline.py ne_10m_admin_0_countries.geojson "<Country>" --scale 80` turns Natural Earth's public-domain country polygons into `projection`, `width`, `height`, a simplified `outline` and a detailed `detail` path. Away from the equator it sets `projection.xScale` (≈ cos latitude) so the country isn't stretched sideways. For a country with land borders, add `--surround "Neighbour,Neighbour"`: the `surroundings` path is drawn as quiet land, so only real sea reads as water (Georgia uses Russia, Turkey, Armenia and Azerbaijan). Set `map.focus` to the area the trip happens in; add `chains` for roads that link towns in order and `roads` for winding routes.
 5. **The catalog.** Research real, currently operating places (two recent sources each, real traveller reviews over listicles), then write `activities` and `pairs` — at least one daytime and one evening matchup per pool. Give every nightlife item a `familySwap`.
 6. **Photos.** List Wikimedia Commons files per key in `photos.picks.json` (`node scripts/image-candidates.mjs <id> <outDir>` builds contact sheets from `photos.queries.json`), then run `npm run photos -- <id>`. Check the licences allow reuse; credits are shown in the app.
 7. **Theme.** Pick a palette that suits the place, fonts and an illustration set.

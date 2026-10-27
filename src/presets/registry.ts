@@ -8,9 +8,12 @@ import { presetSchema, photoSetSchema, type PhotoSet, type TripPreset } from "@/
 import { validatePreset } from "@/engine/validate";
 import sriLanka from "../../presets/sri-lanka/preset.json";
 import sriLankaPhotos from "../../presets/sri-lanka/photos.json";
+import georgia from "../../presets/georgia/preset.json";
+import georgiaPhotos from "../../presets/georgia/photos.json";
 
 const RAW: Record<string, { preset: unknown; photos: unknown }> = {
   "sri-lanka": { preset: sriLanka, photos: sriLankaPhotos },
+  georgia: { preset: georgia, photos: georgiaPhotos },
 };
 
 export type LoadedPreset = { preset: TripPreset; photos: PhotoSet; catalog: Catalog };

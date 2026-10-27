@@ -1,0 +1,2972 @@
+{
+  "$schema": "../preset.schema.json",
+  "id": "georgia",
+  "version": 1,
+  "name": "Georgia",
+  "destination": {
+    "country": "Georgia",
+    "timezone": "Asia/Tbilisi",
+    "headline": [
+      "Georgia,",
+      "in the snow."
+    ],
+    "tagline": "Old Tbilisi, ski days, canyons and techno",
+    "familyTagline": "Old Tbilisi, ski days, canyons and mountain monasteries",
+    "season": "Dec 2026 – Jan 2027",
+    "blurb": "Build your dream version of a winter in Georgia — then see where the whole group overlaps.",
+    "heroPhoto": "hero",
+    "farewell": "Nakhvamdis, Sakartvelo 👋",
+    "stampText": "YOU'RE IN · SEE YOU IN TBILISI · ",
+    "showcase": [
+      "gudauri-ski",
+      "kazbegi-gergeti",
+      "old-tbilisi-walk",
+      "martvili-canyon",
+      "sulfur-baths",
+      "tbilisi-sea-chronicles",
+      "mtskheta-jvari",
+      "sighnaghi-kakheti",
+      "gomis-mta",
+      "tbilisi-food-crawl",
+      "nye-liberty-square",
+      "bassiani"
+    ],
+    "teaser": [
+      "Ski day or sulfur baths?",
+      "Canyon or cable car?"
+    ]
+  },
+  "currency": {
+    "local": "GEL",
+    "default": "USD"
+  },
+  "dates": {
+    "window": {
+      "start": "2026-12-01",
+      "end": "2027-01-31"
+    },
+    "outer": {
+      "start": "2026-11-01",
+      "end": "2027-03-31"
+    }
+  },
+  "structure": {
+    "bases": [
+      {
+        "id": "tbilisi",
+        "name": "Tbilisi",
+        "region": "tbilisi",
+        "area": "tbilisi",
+        "nights": {
+          "default": 8,
+          "min": 3,
+          "max": 12
+        },
+        "tagline": "A house in the city, rental cars and the mountains on the doorstep",
+        "covers": "Tbilisi, plus day trips to Mtskheta, Gudauri, Kazbegi, Kakheti and the canyons of the west",
+        "photo": "region-tbilisi",
+        "dayName": "Tbilisi base",
+        "arrivalName": "Land in Tbilisi",
+        "arrivalNote": {
+          "one": "★ Land, grab the rental cars · {nights} night in Tbilisi",
+          "many": "★ Land, grab the rental cars · {nights} nights in Tbilisi"
+        },
+        "reorderable": true
+      }
+    ],
+    "arrival": {
+      "leg": "arrival",
+      "label": "Land"
+    },
+    "transfers": [],
+    "departure": {
+      "name": "Drop the cars & fly home",
+      "short": "Fly home",
+      "leg": "departure",
+      "text": "Pack the house, fill the tanks and drop the rental cars at the airport. No plans today — just the drive to TBS."
+    },
+    "preview": true,
+    "slots": {
+      "day": {
+        "label": "Daytime",
+        "limitHours": 11
+      },
+      "night": {
+        "label": "Evening",
+        "limitHours": 7
+      }
+    }
+  },
+  "areas": [
+    {
+      "id": "tbilisi",
+      "name": "Tbilisi & day trips",
+      "home": "tbilisi",
+      "movable": true
+    }
+  ],
+  "regions": [
+    {
+      "id": "airport",
+      "name": "Tbilisi Airport (TBS)",
+      "short": "TBS airport",
+      "lat": 41.6692,
+      "lng": 44.9547,
+      "blurb": "Shota Rustaveli Tbilisi International — rental cars are collected and dropped here.",
+      "photos": [
+        "region-airport"
+      ]
+    },
+    {
+      "id": "tbilisi",
+      "name": "Tbilisi",
+      "short": "Tbilisi",
+      "lat": 41.6938,
+      "lng": 44.8015,
+      "blurb": "The capital: old town, sulfur baths, techno and the base for every day trip.",
+      "photos": [
+        "region-tbilisi"
+      ]
+    },
+    {
+      "id": "tbilisi-sea",
+      "name": "Tbilisi Sea",
+      "short": "Tbilisi Sea",
+      "lat": 41.7858,
+      "lng": 44.8352,
+      "blurb": "The reservoir everyone calls a sea, with the Chronicles of Georgia above it.",
+      "photos": [
+        "tbilisi-sea-chronicles"
+      ]
+    },
+    {
+      "id": "mtskheta",
+      "name": "Mtskheta",
+      "short": "Mtskheta",
+      "lat": 41.8452,
+      "lng": 44.7188,
+      "blurb": "The ancient capital and Jvari Monastery, 30 minutes north.",
+      "photos": [
+        "mtskheta-jvari"
+      ]
+    },
+    {
+      "id": "ananuri",
+      "name": "Ananuri",
+      "short": "Ananuri",
+      "lat": 42.1636,
+      "lng": 44.7031,
+      "blurb": "Fortress on the Zhinvali reservoir, on the Military Road.",
+      "photos": [
+        "ananuri-stop"
+      ]
+    },
+    {
+      "id": "gudauri",
+      "name": "Gudauri",
+      "short": "Gudauri",
+      "lat": 42.4775,
+      "lng": 44.4797,
+      "blurb": "Georgia's biggest ski resort, 2,200–3,280 m.",
+      "photos": [
+        "gudauri-ski"
+      ]
+    },
+    {
+      "id": "kazbegi",
+      "name": "Stepantsminda (Kazbegi)",
+      "short": "Kazbegi",
+      "lat": 42.6577,
+      "lng": 44.6434,
+      "blurb": "Mountain town under Kazbek and Gergeti Trinity Church.",
+      "photos": [
+        "kazbegi-gergeti"
+      ]
+    },
+    {
+      "id": "uplistsikhe",
+      "name": "Uplistsikhe",
+      "short": "Uplistsikhe",
+      "lat": 41.9669,
+      "lng": 44.2073,
+      "blurb": "Rock-cut cave town near Gori.",
+      "photos": [
+        "uplistsikhe"
+      ]
+    },
+    {
+      "id": "sighnaghi",
+      "name": "Sighnaghi",
+      "short": "Sighnaghi",
+      "lat": 41.6194,
+      "lng": 45.9222,
+      "blurb": "Walled hill town in Kakheti, with Bodbe Monastery.",
+      "photos": [
+        "sighnaghi-kakheti"
+      ]
+    },
+    {
+      "id": "kutaisi",
+      "name": "Kutaisi",
+      "short": "Kutaisi",
+      "lat": 42.2679,
+      "lng": 42.7181,
+      "blurb": "Western Georgia's big town, on the way to the canyons.",
+      "photos": [
+        "region-kutaisi"
+      ]
+    },
+    {
+      "id": "martvili",
+      "name": "Martvili Canyon",
+      "short": "Martvili",
+      "lat": 42.4573,
+      "lng": 42.3775,
+      "blurb": "Turquoise canyon in Samegrelo, open in winter.",
+      "photos": [
+        "martvili-canyon"
+      ]
+    },
+    {
+      "id": "gomis-mta",
+      "name": "Gomis Mta",
+      "short": "Gomis Mta",
+      "lat": 41.8236,
+      "lng": 42.1589,
+      "blurb": "A 2,000 m ridge village in Guria above a sea of clouds.",
+      "photos": [
+        "gomis-mta"
+      ]
+    }
+  ],
+  "travel": {
+    "known": [
+      [
+        "airport",
+        "tbilisi",
+        0.5
+      ],
+      [
+        "tbilisi",
+        "tbilisi-sea",
+        0.4
+      ],
+      [
+        "tbilisi",
+        "mtskheta",
+        0.5
+      ],
+      [
+        "tbilisi",
+        "ananuri",
+        1.25
+      ],
+      [
+        "tbilisi",
+        "gudauri",
+        2.5
+      ],
+      [
+        "tbilisi",
+        "kazbegi",
+        3.25
+      ],
+      [
+        "gudauri",
+        "kazbegi",
+        0.75
+      ],
+      [
+        "ananuri",
+        "gudauri",
+        1.25
+      ],
+      [
+        "tbilisi",
+        "uplistsikhe",
+        1.25
+      ],
+      [
+        "tbilisi",
+        "sighnaghi",
+        2
+      ],
+      [
+        "tbilisi",
+        "kutaisi",
+        3.5
+      ],
+      [
+        "tbilisi",
+        "martvili",
+        4.5
+      ],
+      [
+        "kutaisi",
+        "martvili",
+        1
+      ],
+      [
+        "tbilisi",
+        "gomis-mta",
+        5.5
+      ],
+      [
+        "martvili",
+        "gomis-mta",
+        2.75
+      ],
+      [
+        "kutaisi",
+        "gomis-mta",
+        2.5
+      ]
+    ],
+    "estimate": {
+      "detour": 1.35,
+      "kmh": 55,
+      "overhead": 0.1
+    },
+    "legs": {
+      "arrival": {
+        "from": "airport",
+        "to": "tbilisi",
+        "title": "TBS → Tbilisi · pick up the rental cars",
+        "hours": 0.5,
+        "label": "~30 min",
+        "detail": "Collect the 4x4s at the airport and drive into town — or taxi in and collect them tomorrow.",
+        "vehicleCostUsd": [
+          2,
+          6
+        ]
+      },
+      "departure": {
+        "from": "tbilisi",
+        "to": "airport",
+        "title": "Tbilisi → TBS · drop the rental cars",
+        "hours": 0.5,
+        "label": "~30 min",
+        "detail": "Return the cars at the airport. Leave ~3 hrs before your flight.",
+        "vehicleCostUsd": [
+          2,
+          6
+        ]
+      }
+    },
+    "routes": {},
+    "vehicle": "rental car",
+    "selfDrive": true
+  },
+  "map": {
+    "projection": {
+      "minLng": 39.986,
+      "maxLat": 43.5758,
+      "scale": 80.0,
+      "pad": 6,
+      "xScale": 0.7395
+    },
+    "width": 409,
+    "height": 215,
+    "outline": [
+      "M98.6 99.6L95.6 80.8L93.0 75.0L91.1 72.9L88.7 71.5L84.2 70.7L79.3 67.9L75.5 68.8L74.9 68.4L72.2 64.3L70.8 59.4L67.4 52.9L63.6 54.0L62.1 53.4L57.5 47.0L53.2 45.3L47.2 44.5L41.8 45.2L37.6 41.9L30.4 39.1L28.2 38.8L26.7 40.8L22.7 34.8L23.0 32.2L19.8 26.5L14.7 24.7L12.0 22.4L6.0 20.9L11.1 8.0L16.5 6.0L20.6 6.0L35.2 11.4L37.6 11.7L43.2 9.2L45.4 8.9L50.6 12.4L58.6 15.6L66.7 22.0L68.5 22.5L74.7 21.7L76.7 22.1L82.5 25.4L86.7 24.6L88.5 25.3L90.4 28.8L95.9 31.3L100.2 34.8L106.7 34.5L114.5 36.0L120.4 35.6L127.7 37.6L136.1 34.0L146.1 33.2L150.2 33.7L156.8 38.9L161.5 41.1L165.0 38.8L169.6 37.9L174.2 38.6L179.3 42.3L184.3 44.2L183.7 47.9L184.2 48.7L193.5 56.7L195.8 57.9L214.9 63.2L219.0 65.2L223.5 69.7L231.7 72.4L232.3 74.7L227.2 79.7L227.1 82.1L228.7 84.2L236.7 85.7L239.9 87.9L241.9 86.9L244.2 84.0L246.7 82.8L252.4 82.6L255.2 81.7L259.6 75.9L264.8 75.8L273.5 72.0L279.0 72.1L283.7 74.2L287.0 77.9L289.2 83.3L292.8 73.3L294.3 71.3L296.9 71.8L304.4 77.0L309.9 75.9L311.8 76.6L319.4 85.2L321.7 89.7L323.7 90.5L331.0 88.7L334.4 88.8L339.4 89.6L344.0 91.5L346.4 94.4L346.2 96.3L339.4 114.1L340.0 116.0L350.7 122.8L354.8 123.9L357.3 128.9L358.7 130.2L361.5 129.4L363.4 130.7L365.3 130.4L366.2 132.6L367.7 133.3L375.1 132.6L379.2 137.0L385.8 138.9L387.3 140.8L383.8 147.6L381.2 150.8L379.4 152.0L374.1 151.6L373.0 152.9L372.4 159.7L373.2 163.3L374.8 164.6L376.0 162.8L376.8 162.8L378.3 165.8L379.4 171.2L380.4 172.6L385.4 175.4L388.1 178.0L396.8 182.2L397.7 184.5L398.6 184.1L400.7 186.4L402.9 190.5L401.7 191.1L401.4 193.7L399.9 195.4L398.5 202.9L397.4 204.5L394.0 204.3L392.7 205.1L391.2 208.5L389.9 208.5L386.2 204.7L381.5 202.8L375.3 196.4L369.8 196.1L364.3 198.8L360.0 198.6L351.2 195.4L344.6 190.7L343.2 188.4L346.7 185.2L332.9 180.5L330.1 177.7L326.1 178.2L321.2 175.9L319.3 175.8L317.4 176.5L300.0 191.1L292.0 190.2L290.9 191.4L291.4 192.5L293.6 193.6L294.2 194.5L293.6 195.4L283.4 195.4L279.7 194.2L278.5 194.8L276.1 197.9L274.9 197.6L274.0 195.5L270.4 197.6L263.9 195.0L260.3 196.8L254.1 193.7L252.9 196.2L250.9 197.8L247.1 197.3L240.9 199.2L235.4 199.3L228.9 203.4L217.8 202.1L215.3 202.2L211.0 203.7L210.4 203.5L211.0 201.5L210.2 199.6L207.0 197.1L203.4 196.7L198.0 198.3L194.5 192.7L190.4 192.2L193.6 190.5L195.2 188.1L191.6 187.0L184.4 181.5L181.8 177.1L179.9 175.3L177.7 174.5L176.5 172.1L174.3 174.3L170.5 171.7L172.9 168.6L173.7 166.3L172.5 165.7L164.3 165.0L159.8 165.8L158.0 168.0L156.8 172.6L152.5 177.5L151.1 177.6L140.7 173.5L136.4 173.5L134.5 172.1L131.8 172.6L129.3 172.2L126.3 173.3L122.1 171.6L118.9 173.2L117.0 175.9L114.1 178.3L111.0 175.8L107.8 175.0L107.6 172.9L103.9 173.8L96.8 170.9L102.4 161.5L106.0 159.1L109.8 152.1L110.0 149.8L111.8 146.3L111.8 139.5L110.7 131.6L105.3 123.0L104.4 115.1L101.3 104.1L99.0 101.4L98.6 99.6Z"
+    ],
+    "detail": "M98.60 99.55L95.58 80.82L94.55 77.65L93.05 74.97L91.09 72.88L88.68 71.49L84.17 70.66L83.21 70.12L82.25 69.24L80.83 68.45L79.32 67.88L78.14 67.71L77.45 67.91L76.26 68.64L75.51 68.80L74.88 68.42L72.19 64.34L70.83 59.42L68.37 55.16L67.36 52.87L65.90 52.91L63.56 53.96L62.07 53.45L60.31 50.76L59.28 50.13L59.26 49.72L57.87 47.35L57.47 47.02L53.16 45.33L47.23 44.52L44.47 44.67L42.56 45.15L41.84 45.22L41.14 44.96L40.00 43.83L39.40 43.58L38.12 42.29L37.60 41.89L37.02 41.67L35.14 41.35L30.39 39.08L28.20 38.83L26.66 40.80L26.06 40.16L25.19 38.01L24.64 36.97L23.30 35.63L22.71 34.76L22.97 32.23L22.04 29.87L20.74 27.71L19.79 26.54L17.97 25.70L14.73 24.74L12.82 22.85L11.97 22.44L9.24 22.00L7.41 21.25L6.00 20.95L6.31 19.56L10.33 9.25L11.14 7.98L12.55 7.06L16.55 6.00L20.62 6.01L35.22 11.37L37.57 11.65L39.42 11.17L43.25 9.20L45.40 8.95L47.12 9.82L50.62 12.45L56.69 14.52L58.59 15.62L66.69 22.03L68.50 22.48L74.67 21.68L76.69 22.09L78.60 23.04L80.42 24.53L82.48 25.41L86.71 24.60L88.51 25.29L89.05 26.08L89.88 27.95L90.43 28.76L91.29 29.41L94.37 30.37L95.93 31.28L98.56 33.97L100.16 34.84L102.32 35.03L106.66 34.45L108.81 34.69L112.66 35.78L114.52 35.97L118.64 35.51L120.38 35.59L122.09 36.06L123.95 36.97L125.82 37.52L127.72 37.62L129.61 37.25L134.61 34.49L136.12 34.03L146.13 33.19L150.17 33.75L153.53 36.00L155.09 37.54L156.80 38.86L160.40 40.87L161.55 41.11L162.39 40.77L163.98 39.28L165.00 38.80L166.86 38.75L169.61 37.91L171.97 37.97L174.24 38.57L175.89 39.63L177.56 41.20L179.27 42.31L184.32 44.17L184.32 45.24L183.87 46.56L183.71 47.85L184.25 48.69L187.17 50.71L193.52 56.68L195.81 57.93L214.92 63.23L219.00 65.22L219.99 66.08L222.43 68.98L223.53 69.68L229.04 71.02L231.68 72.35L232.34 74.69L230.97 76.62L228.91 78.09L227.25 79.72L227.06 82.08L228.75 84.17L231.42 84.88L234.30 85.10L236.69 85.73L238.79 87.34L239.91 87.89L241.01 87.71L241.89 86.95L243.36 84.92L244.15 84.04L246.73 82.84L252.40 82.57L255.15 81.74L257.09 79.76L258.18 77.51L259.57 75.88L264.81 75.77L267.22 74.99L271.83 72.52L273.53 72.04L276.50 71.82L279.03 72.14L281.48 72.93L283.67 74.17L284.59 74.93L286.34 76.78L287.04 77.86L288.50 82.53L289.23 83.30L289.76 82.74L290.71 78.33L292.43 74.63L292.80 73.34L294.31 71.31L296.90 71.82L303.35 76.44L304.40 76.97L305.48 77.20L306.60 76.99L308.78 76.02L309.91 75.89L311.83 76.61L313.53 78.08L319.36 85.16L320.01 86.23L321.13 88.73L321.73 89.66L323.69 90.47L326.21 90.12L330.99 88.68L334.40 88.76L339.35 89.64L343.97 91.46L346.39 94.35L346.20 96.26L339.40 114.11L339.99 115.97L341.78 117.13L344.15 118.25L350.65 122.83L354.78 123.90L355.59 124.72L357.27 128.90L357.90 129.79L358.69 130.23L359.81 130.30L360.23 130.14L361.01 129.51L361.51 129.39L361.89 129.59L362.88 130.46L363.38 130.72L364.45 130.65L365.25 130.44L365.84 130.84L366.23 132.59L367.66 133.26L369.48 133.31L373.99 132.38L375.07 132.59L376.62 133.85L379.20 136.98L380.88 137.75L384.40 138.05L385.85 138.86L387.29 140.83L385.03 145.53L383.76 147.61L381.22 150.75L380.36 151.54L379.41 152.00L378.18 152.12L375.41 151.48L374.12 151.63L372.98 152.86L372.42 155.60L372.45 159.65L373.20 163.25L374.79 164.60L375.31 164.17L375.61 163.43L376.00 162.83L376.82 162.79L376.95 163.24L378.27 165.80L378.83 169.50L379.35 171.24L380.37 172.57L383.46 174.74L384.15 175.07L385.36 175.37L388.13 177.99L393.89 180.47L396.79 182.23L397.73 184.47L398.65 184.10L399.13 184.42L399.53 185.11L400.67 186.42L402.53 189.32L402.90 190.48L402.72 190.58L402.23 190.51L401.71 191.13L401.59 191.75L401.53 193.15L401.40 193.68L401.06 194.18L400.27 194.93L399.92 195.43L399.35 197.58L399.04 200.33L398.54 202.90L397.40 204.55L396.24 204.74L395.11 204.42L393.95 204.31L392.70 205.11L392.04 206.39L391.71 207.65L391.19 208.48L389.89 208.54L388.83 207.87L387.18 205.59L386.21 204.72L382.69 203.54L381.46 202.80L377.97 199.56L376.25 197.37L375.32 196.43L374.26 196.05L369.81 196.07L368.49 196.38L365.43 198.39L364.26 198.83L362.83 198.96L359.97 198.60L351.19 195.36L347.07 192.79L344.62 190.65L343.21 188.37L344.53 186.70L345.88 186.21L346.73 185.73L346.65 185.24L345.27 184.68L341.42 183.88L332.92 180.50L330.99 178.65L330.13 177.65L329.26 177.49L327.30 178.10L326.11 178.21L325.19 178.02L321.24 175.94L319.30 175.83L317.40 176.51L302.78 188.83L302.04 189.31L300.70 190.55L299.98 191.05L297.74 191.13L292.03 190.20L290.88 191.39L291.37 192.51L293.59 193.61L294.22 194.52L293.63 195.35L292.08 195.57L283.40 195.39L280.93 194.38L279.73 194.22L278.46 194.81L277.70 195.84L276.97 197.11L276.10 197.91L274.89 197.55L274.57 196.94L274.35 196.12L274.04 195.52L273.40 195.54L273.02 195.84L271.83 197.20L270.39 197.63L269.06 197.53L267.77 197.05L264.61 195.09L263.88 195.01L263.18 195.24L262.27 196.18L261.72 196.56L260.33 196.80L259.24 196.37L256.38 194.34L254.77 193.66L254.14 193.67L253.44 194.18L253.29 194.78L253.25 195.45L252.94 196.24L252.01 197.18L250.85 197.82L249.61 198.05L247.10 197.34L245.92 197.46L243.54 198.56L240.86 199.23L235.38 199.35L232.85 200.43L230.09 202.91L228.93 203.41L227.48 203.53L217.83 202.14L215.32 202.24L212.13 203.57L211.55 203.71L210.96 203.69L210.37 203.54L211.04 201.46L210.20 199.57L208.60 198.05L206.99 197.09L205.12 196.58L203.40 196.70L197.96 198.26L197.10 197.62L195.69 194.07L194.49 192.68L193.33 192.54L192.02 192.68L190.41 192.16L193.62 190.49L194.48 189.72L195.28 188.56L195.20 188.15L193.47 187.92L191.64 187.03L188.79 184.48L184.43 181.45L183.58 180.49L181.81 177.11L181.35 176.57L180.83 176.36L179.94 175.34L178.20 174.74L177.75 174.47L177.26 173.57L176.93 172.57L176.50 172.05L175.71 172.56L174.25 174.27L173.14 173.89L172.02 172.64L170.50 171.72L171.00 170.93L172.16 169.92L172.64 169.34L172.88 168.63L173.20 167.03L173.66 166.28L172.54 165.73L164.26 165.01L161.27 165.26L159.78 165.77L158.59 166.70L157.98 168.04L157.43 171.30L156.83 172.59L155.55 173.97L153.78 176.69L152.55 177.52L151.06 177.60L140.68 173.48L137.77 173.65L136.35 173.53L135.37 172.59L134.52 172.08L133.62 172.05L131.76 172.59L130.92 172.20L130.09 172.06L129.26 172.18L128.40 172.59L126.31 173.26L122.07 171.62L119.69 172.59L118.88 173.22L117.03 175.92L114.66 177.99L114.09 178.32L113.37 178.01L111.01 175.78L110.23 175.52L108.50 175.30L107.81 175.02L107.56 174.51L107.64 173.26L107.56 172.94L107.10 172.94L105.62 173.63L103.85 173.77L103.10 173.63L96.80 170.93L100.68 163.85L102.42 161.46L105.99 159.09L106.98 156.68L109.76 152.08L110.00 149.78L110.36 149.07L111.33 147.73L111.65 147.06L111.78 146.34L111.78 139.51L111.07 134.48L110.97 132.66L110.70 131.55L106.51 124.15L105.28 122.95L104.99 121.43L104.87 118.70L104.40 115.09L101.26 104.11L100.61 103.04L99.02 101.44L98.82 100.88L98.60 99.55Z",
+    "surroundings": "M438.2 -122.0L436.4 -114.7L434.4 -110.6L432.9 -105.5L431.6 -106.1L430.8 -105.3L429.6 -102.3L428.5 -104.0L427.6 -104.6L426.8 -104.4L427.6 -97.5L426.0 -93.3L425.6 -90.7L425.2 -90.7L422.4 -95.4L421.1 -101.7L420.3 -101.2L420.0 -99.4L421.6 -94.3L418.7 -89.1L417.6 -89.9L416.5 -89.7L413.1 -87.2L411.0 -83.6L408.6 -84.4L405.9 -80.3L404.5 -80.4L403.7 -73.5L404.6 -71.9L402.9 -71.4L402.1 -70.2L403.3 -63.6L403.9 -62.5L406.7 -60.0L407.5 -59.5L412.2 -59.7L422.5 -56.7L424.2 -54.1L425.6 -49.1L428.2 -45.8L431.6 -44.2L434.1 -46.4L435.5 -44.9L438.1 -35.4L439.7 -32.6L442.1 -29.6L443.8 -24.5L446.0 -20.6L446.6 -18.0L447.9 -17.6L448.3 -16.8L447.1 -13.5L449.5 -13.9L450.7 -10.4L450.3 -9.1L448.1 -8.3L447.3 -7.0L446.6 -5.2L447.9 -3.0L446.3 -1.4L444.2 3.6L442.6 2.4L443.4 7.3L444.9 8.6L444.9 11.2L446.1 11.7L447.5 10.6L448.5 7.9L449.2 0.6L451.0 -2.8L450.7 -5.1L452.5 -10.0L453.2 -17.2L453.8 -18.1L456.2 -20.0L459.6 -19.7L462.5 -17.9L459.0 -14.3L456.5 -9.2L453.1 1.9L451.7 10.5L450.0 15.0L449.5 18.3L449.5 21.7L450.3 24.4L449.8 27.2L450.1 28.4L451.1 28.7L452.6 26.4L454.7 25.4L455.4 26.4L455.6 28.1L454.4 30.6L451.5 32.6L449.7 35.0L449.4 35.9L449.8 37.6L449.2 39.3L449.5 41.9L447.9 44.1L448.3 50.4L452.3 55.1L455.9 56.7L457.7 59.7L462.3 62.7L463.1 65.5L463.3 71.5L463.6 71.5L463.3 76.3L464.0 79.0L465.4 81.1L470.5 83.7L472.3 85.3L476.5 93.6L479.7 98.5L481.5 100.6L485.8 104.1L493.3 118.1L497.6 123.1L497.6 168.5L492.1 172.6L485.2 173.9L483.3 175.2L480.2 183.1L478.9 183.9L477.4 183.6L476.7 184.3L475.9 187.0L473.7 189.4L473.9 194.5L470.0 196.2L465.0 196.7L459.0 193.9L457.8 193.7L454.5 195.6L453.3 195.6L450.6 192.4L443.2 191.3L436.8 187.8L435.8 186.8L435.2 185.0L435.1 178.8L432.8 175.5L432.0 173.2L430.4 171.8L429.3 167.9L428.4 166.8L427.3 166.5L422.6 167.5L421.7 166.0L421.2 163.6L419.7 161.2L416.0 157.6L415.2 155.0L411.2 153.6L407.3 150.0L406.4 148.0L405.6 144.0L403.1 145.8L399.5 146.7L396.5 149.1L395.4 149.1L394.3 148.2L394.0 146.9L394.3 143.6L394.0 142.1L392.9 141.5L387.3 140.8L385.8 138.9L384.4 138.0L380.9 137.7L379.2 137.0L375.1 132.6L374.0 132.4L367.7 133.3L366.2 132.6L365.8 130.8L365.3 130.4L363.4 130.7L361.5 129.4L359.8 130.3L357.9 129.8L355.6 124.7L354.8 123.9L350.7 122.8L344.2 118.2L340.0 116.0L339.4 114.1L346.2 96.3L346.4 94.4L344.0 91.5L339.4 89.6L334.4 88.8L331.0 88.7L323.7 90.5L321.7 89.7L319.4 85.2L313.5 78.1L311.8 76.6L309.9 75.9L306.6 77.0L304.4 77.0L296.9 71.8L294.3 71.3L292.8 73.3L290.7 78.3L289.8 82.7L289.2 83.3L288.5 82.5L287.0 77.9L283.7 74.2L279.0 72.1L273.5 72.0L264.8 75.8L259.6 75.9L257.1 79.8L255.2 81.7L252.4 82.6L246.7 82.8L244.2 84.0L241.9 86.9L241.0 87.7L239.9 87.9L236.7 85.7L228.7 84.2L227.1 82.1L227.2 79.7L231.0 76.6L232.3 74.7L231.7 72.4L229.0 71.0L223.5 69.7L219.0 65.2L214.9 63.2L195.8 57.9L193.5 56.7L187.2 50.7L184.2 48.7L183.7 47.9L184.3 44.2L179.3 42.3L174.2 38.6L169.6 37.9L166.9 38.8L165.0 38.8L161.5 41.1L156.8 38.9L150.2 33.7L146.1 33.2L136.1 34.0L129.6 37.2L127.7 37.6L125.8 37.5L120.4 35.6L114.5 36.0L106.7 34.5L102.3 35.0L100.2 34.8L98.6 34.0L95.9 31.3L90.4 28.8L88.5 25.3L86.7 24.6L82.5 25.4L76.7 22.1L74.7 21.7L68.5 22.5L66.7 22.0L58.6 15.6L56.7 14.5L50.6 12.4L45.4 8.9L43.2 9.2L37.6 11.7L35.2 11.4L20.6 6.0L16.5 6.0L12.6 7.1L11.1 8.0L6.0 20.9L4.6 20.7L1.5 18.0L-1.0 12.4L-9.8 6.6L-11.5 3.0L-15.7 0.5L-18.4 -3.0L-25.3 -9.6L-29.2 -15.6L-32.8 -19.6L-45.4 -29.8L-48.7 -34.0L-51.6 -36.0L-53.6 -39.8L-56.0 -41.0L-59.8 -41.8L-65.6 -48.8L-67.7 -50.5L-76.3 -54.5L-88.7 -56.5L-88.7 -122.0ZM471.3 -27.9L472.2 -27.2L472.2 -26.6L466.1 -22.2L461.4 -23.1L461.2 -24.0L459.0 -23.5L458.1 -24.9L458.7 -26.4L460.3 -27.6L471.3 -27.9ZM301.4 205.5L303.8 206.1L304.4 208.4L303.6 210.2L301.4 209.5L300.7 208.5L300.5 206.2L301.4 205.5ZM302.8 188.8L317.4 176.5L319.3 175.8L321.2 175.9L326.1 178.2L330.1 177.7L332.9 180.5L341.4 183.9L346.7 185.2L346.7 185.7L344.5 186.7L343.2 188.4L344.6 190.7L347.1 192.8L351.2 195.4L360.0 198.6L362.8 199.0L365.4 198.4L368.5 196.4L374.3 196.1L375.3 196.4L381.5 202.8L386.2 204.7L388.8 207.9L389.9 208.5L391.2 208.5L392.7 205.1L394.0 204.3L397.4 204.5L398.5 202.9L399.9 195.4L401.4 193.7L401.7 191.1L402.9 190.5L402.5 189.3L399.1 184.4L398.6 184.1L397.7 184.5L396.8 182.2L393.9 180.5L388.1 178.0L385.4 175.4L383.5 174.7L380.4 172.6L379.4 171.2L378.3 165.8L376.8 162.8L376.0 162.8L374.8 164.6L373.2 163.3L372.4 159.7L372.4 155.6L373.0 152.9L374.1 151.6L375.4 151.5L378.2 152.1L380.4 151.5L383.8 147.6L387.3 140.8L392.9 141.5L394.0 142.1L394.3 143.6L394.0 146.9L394.3 148.2L395.4 149.1L396.5 149.1L399.5 146.7L403.1 145.8L405.6 144.0L406.4 148.0L407.3 150.0L411.2 153.6L415.2 155.0L416.0 157.6L419.7 161.2L421.2 163.6L421.7 166.0L422.6 167.5L427.3 166.5L428.4 166.8L429.3 167.9L430.4 171.8L432.0 173.2L432.8 175.5L435.1 178.8L435.2 185.0L435.8 186.8L441.3 190.6L443.2 191.3L450.6 192.4L453.3 195.6L454.5 195.6L457.8 193.7L459.0 193.9L465.0 196.7L470.0 196.2L472.5 195.4L473.9 194.5L474.1 193.7L473.6 191.1L473.7 189.4L475.9 187.0L476.7 184.3L477.4 183.6L478.9 183.9L480.2 183.1L483.3 175.2L485.2 173.9L492.1 172.6L497.6 168.5L497.6 336.5L493.1 332.5L483.2 320.1L479.6 316.5L477.6 315.5L476.3 317.1L469.7 317.6L465.0 322.2L456.9 327.0L453.0 330.9L447.5 332.5L445.0 333.9L442.4 336.5L384.9 336.5L390.9 334.8L391.3 333.4L390.9 331.3L392.5 330.0L393.0 329.0L392.8 327.7L392.1 326.7L390.2 325.8L385.2 325.9L382.1 322.6L380.1 322.4L376.1 324.6L374.0 325.0L372.7 324.6L369.6 319.9L366.3 318.6L364.5 317.1L362.2 312.2L360.6 310.6L356.8 309.4L353.6 307.7L351.0 304.9L347.9 298.3L346.6 296.8L345.0 296.0L338.8 295.3L336.9 294.5L336.7 292.6L340.5 290.0L350.2 291.7L354.3 291.3L355.5 289.7L356.4 285.5L358.9 282.7L359.6 280.7L360.7 275.6L360.6 274.2L359.0 272.1L357.3 270.8L353.6 271.2L351.1 268.2L337.3 260.2L333.8 256.8L331.4 251.6L329.6 250.2L328.9 246.8L325.6 243.3L324.7 241.5L324.7 238.0L326.2 235.4L328.5 233.4L335.5 229.9L337.1 228.1L338.2 224.8L338.1 223.1L334.5 222.0L331.0 217.7L327.3 215.2L327.8 212.6L327.4 210.7L325.8 210.9L322.5 212.6L321.1 212.3L318.5 211.2L315.7 210.9L309.7 205.7L309.2 208.1L308.1 208.0L306.8 207.1L306.0 205.8L306.6 203.2L312.5 203.4L314.5 201.9L314.5 200.7L313.7 199.5L310.6 197.0L305.7 196.7L304.7 196.3L304.4 195.3L305.0 193.6L302.8 188.8ZM300.0 336.5L300.4 335.8L299.1 334.6L298.4 333.0L295.9 323.6L294.7 322.7L295.1 322.1L292.4 321.8L291.4 321.1L290.6 319.9L289.3 315.8L291.0 315.1L298.3 314.1L302.4 311.2L304.6 310.4L306.6 311.5L311.0 317.3L311.9 320.1L311.2 324.9L311.4 326.0L312.6 326.8L314.7 326.3L316.4 324.6L318.0 324.1L321.2 329.4L324.8 330.0L327.7 332.6L329.0 333.1L337.3 328.4L344.9 326.5L346.3 326.5L347.9 327.1L349.8 329.2L349.6 332.6L350.1 336.5ZM210.4 203.5L210.1 205.4L211.6 210.2L212.7 211.3L215.2 211.7L217.8 213.0L220.1 215.0L222.0 217.4L222.6 219.0L223.3 223.9L226.9 231.0L227.5 237.9L225.7 241.3L226.2 243.1L223.6 246.1L222.9 247.8L222.9 249.7L221.7 249.1L222.1 250.3L220.7 250.4L219.4 251.3L217.4 253.8L217.7 254.9L221.3 258.5L219.5 264.4L224.3 270.8L225.2 273.0L224.1 273.8L227.0 278.5L226.4 279.6L223.7 280.2L222.9 280.9L223.7 283.3L226.4 284.8L231.8 286.4L238.3 290.1L245.4 291.4L249.7 289.2L251.5 290.3L258.6 288.6L260.6 288.6L262.7 289.3L270.9 294.3L274.4 297.4L276.6 300.3L277.0 302.2L278.4 303.4L278.9 305.6L279.7 305.1L281.8 307.7L284.4 308.6L289.9 316.8L290.6 319.9L291.2 320.9L285.3 316.2L281.7 314.5L278.4 310.3L276.9 310.8L270.7 316.2L270.5 321.0L268.0 327.2L268.1 331.6L267.2 334.4L267.4 336.5L-88.7 336.5L-88.7 218.0L-84.7 218.7L-84.1 218.2L-79.6 217.9L-76.5 215.1L-73.8 214.0L-73.1 214.0L-71.4 216.2L-69.0 215.7L-66.8 214.0L-65.1 211.9L-59.7 210.6L-57.8 209.1L-56.6 208.7L-49.9 208.6L-45.1 207.5L-42.4 205.7L-39.3 206.2L-37.5 207.8L-36.2 208.0L-31.7 206.2L-26.9 203.1L-23.2 204.0L-20.8 206.9L-17.3 210.1L-15.1 211.4L-12.7 211.9L-9.1 210.7L-7.5 211.9L-5.1 212.0L-1.5 214.9L0.7 215.7L1.6 215.0L6.8 213.5L11.9 218.0L15.3 218.2L24.6 214.6L34.3 208.0L36.4 209.0L38.1 209.2L39.8 208.7L43.9 205.5L46.5 205.0L48.1 204.2L51.6 199.4L55.8 196.2L57.4 196.1L59.9 197.1L61.4 196.8L63.6 195.2L68.5 193.5L73.2 189.2L77.3 188.4L82.9 183.8L86.3 182.3L89.1 181.7L91.1 179.4L91.9 176.0L96.0 172.4L96.8 170.9L103.9 173.8L107.6 172.9L107.8 175.0L111.0 175.8L114.1 178.3L117.0 175.9L118.9 173.2L122.1 171.6L126.3 173.3L129.3 172.2L131.8 172.6L134.5 172.1L136.4 173.5L140.7 173.5L151.1 177.6L152.5 177.5L153.8 176.7L156.8 172.6L158.6 166.7L161.3 165.3L164.3 165.0L172.5 165.7L173.7 166.3L172.6 169.3L170.5 171.7L173.1 173.9L174.3 174.3L176.5 172.1L177.7 174.5L179.9 175.3L181.8 177.1L184.4 181.5L191.6 187.0L195.2 188.1L193.6 190.5L190.4 192.2L192.0 192.7L194.5 192.7L195.7 194.1L197.1 197.6L198.0 198.3L203.4 196.7L205.1 196.6L207.0 197.1L210.2 199.6L211.0 201.5L210.4 203.5ZM302.8 188.8L305.0 193.6L304.4 195.3L304.7 196.3L305.7 196.7L310.6 197.0L313.7 199.5L314.5 200.7L314.5 201.9L312.5 203.4L306.6 203.2L306.0 205.8L306.8 207.1L308.1 208.0L309.2 208.1L309.7 205.7L315.7 210.9L318.5 211.2L321.1 212.3L322.5 212.6L325.8 210.9L327.4 210.7L327.8 212.6L327.3 215.2L331.0 217.7L334.5 222.0L338.1 223.1L338.2 224.8L337.1 228.1L335.5 229.9L328.5 233.4L326.2 235.4L324.7 238.0L324.7 241.5L325.6 243.3L328.9 246.8L329.6 250.2L331.4 251.6L333.8 256.8L337.3 260.2L351.1 268.2L353.6 271.2L357.3 270.8L359.0 272.1L360.6 274.2L360.7 275.6L359.6 280.7L358.9 282.7L356.4 285.5L355.5 289.7L354.3 291.3L350.2 291.7L340.5 290.0L336.7 292.6L336.9 294.5L338.8 295.3L345.0 296.0L346.6 296.8L347.9 298.3L351.0 304.9L353.6 307.7L356.8 309.4L360.6 310.6L362.2 312.2L364.5 317.1L366.3 318.6L369.6 319.9L372.7 324.6L374.0 325.0L376.1 324.6L380.1 322.4L382.1 322.6L385.2 325.9L390.2 325.8L392.1 326.7L392.8 327.7L393.0 329.0L392.5 330.0L390.9 331.3L391.3 333.4L390.9 334.8L384.9 336.5L350.1 336.5L349.6 332.6L349.8 329.2L349.3 328.2L346.3 326.5L337.3 328.4L331.0 332.3L328.4 333.0L324.8 330.0L321.2 329.4L318.0 324.1L316.4 324.6L314.7 326.3L312.6 326.8L311.4 326.0L311.6 318.7L306.6 311.5L304.6 310.4L302.4 311.2L298.3 314.1L291.0 315.1L289.3 315.8L284.4 308.6L281.8 307.7L279.7 305.1L278.9 305.6L278.4 303.4L277.0 302.2L276.6 300.3L274.4 297.4L270.9 294.3L262.7 289.3L260.6 288.6L258.6 288.6L251.5 290.3L249.7 289.2L245.4 291.4L238.3 290.1L231.8 286.4L226.4 284.8L223.7 283.3L222.9 280.9L223.7 280.2L226.4 279.6L227.0 278.5L224.1 273.8L225.2 273.0L224.3 270.8L219.5 264.4L221.3 258.5L217.7 254.9L217.4 253.8L219.4 251.3L220.7 250.4L222.1 250.3L221.7 249.1L222.9 249.7L222.9 247.8L223.6 246.1L226.2 243.1L225.7 241.3L227.5 237.9L226.9 231.0L223.3 223.9L222.6 219.0L222.0 217.4L220.1 215.0L217.8 213.0L215.2 211.7L212.7 211.3L211.6 210.2L210.1 205.4L210.4 203.5L211.5 203.7L215.3 202.2L217.8 202.1L228.9 203.4L230.1 202.9L232.8 200.4L235.4 199.3L240.9 199.2L247.1 197.3L249.6 198.1L250.9 197.8L252.9 196.2L253.4 194.2L254.1 193.7L256.4 194.3L260.3 196.8L261.7 196.6L263.9 195.0L267.8 197.0L270.4 197.6L271.8 197.2L273.4 195.5L274.0 195.5L274.9 197.6L276.1 197.9L278.5 194.8L279.7 194.2L283.4 195.4L293.6 195.4L294.2 194.5L293.6 193.6L291.4 192.5L290.9 191.4L292.0 190.2L297.7 191.1L300.0 191.1L302.8 188.8ZM333.0 243.9L331.0 243.3L330.6 240.8L331.7 239.5L334.3 239.4L335.8 240.3L335.0 242.3L333.0 243.9Z",
+    "focus": [
+      [
+        42.78,
+        43.95
+      ],
+      [
+        41.3,
+        46.15
+      ]
+    ],
+    "chains": [
+      [
+        "airport",
+        "tbilisi",
+        "mtskheta",
+        "ananuri",
+        "gudauri",
+        "kazbegi"
+      ],
+      [
+        "tbilisi",
+        "uplistsikhe",
+        "kutaisi",
+        "martvili"
+      ]
+    ],
+    "roads": [
+      {
+        "from": "tbilisi",
+        "to": "sighnaghi",
+        "via": [
+          [
+            41.8,
+            45.05
+          ],
+          [
+            41.86,
+            45.3
+          ],
+          [
+            41.8,
+            45.55
+          ],
+          [
+            41.66,
+            45.8
+          ]
+        ]
+      },
+      {
+        "from": "tbilisi",
+        "to": "tbilisi-sea",
+        "via": [
+          [
+            41.74,
+            44.81
+          ]
+        ]
+      },
+      {
+        "from": "tbilisi",
+        "to": "gomis-mta",
+        "via": [
+          [
+            41.97,
+            44.21
+          ],
+          [
+            41.98,
+            43.6
+          ],
+          [
+            42.25,
+            42.75
+          ],
+          [
+            42.15,
+            42.4
+          ],
+          [
+            41.92,
+            42.01
+          ]
+        ]
+      }
+    ],
+    "label": "Georgia",
+    "waterLabel": {
+      "text": "Black Sea",
+      "at": [
+        42.35,
+        40.6
+      ]
+    }
+  },
+  "stayIn": {
+    "day": {
+      "title": "Stay in",
+      "tagline": "Slow morning at the house, nap, no plans.",
+      "description": "A day with zero agenda: sleep in, a long breakfast of khachapuri and strong coffee, a film and a nap while the snow does its thing. Perfect after a big night or a long drive.",
+      "highlights": [
+        "Sleep in & a long breakfast",
+        "Films, games & a nap",
+        "Maybe a walk to the bakery",
+        "Pick it as often as you like"
+      ],
+      "photos": [
+        "stay-in"
+      ],
+      "meta": "No driving"
+    },
+    "night": {
+      "title": "Stay in",
+      "tagline": "Dinner and hangs at the house.",
+      "description": "Sometimes the best night is the one where nobody has to go anywhere: order khinkali in, cook a pot of something, play cards and get a proper night's sleep before the next mountain.",
+      "highlights": [
+        "Dinner at the house",
+        "Cards, music & films",
+        "Early night before a big day",
+        "Pick it as often as you like"
+      ],
+      "photos": [
+        "stay-in"
+      ],
+      "meta": "No driving"
+    }
+  },
+  "specialDates": [
+    {
+      "id": "nye",
+      "date": "12-31",
+      "name": "New Year's Eve",
+      "short": "NYE",
+      "slot": "night",
+      "pairs": {
+        "tbilisi": "nye-tbilisi"
+      },
+      "intro": "The big one. Your New Year's Eve pick stays pinned to 31 December, even if you reorder your days.",
+      "departureNote": "You'd be flying on New Year's Eve!",
+      "calendarNote": "31 Dec has its own NYE picks"
+    }
+  ],
+  "categories": [
+    {
+      "id": "adventure",
+      "label": "Adventure",
+      "emoji": "⛷️"
+    },
+    {
+      "id": "nature",
+      "label": "Mountains & nature",
+      "emoji": "🏔️"
+    },
+    {
+      "id": "culture",
+      "label": "Culture",
+      "emoji": "⛪"
+    },
+    {
+      "id": "food",
+      "label": "Food",
+      "emoji": "🥟"
+    },
+    {
+      "id": "party",
+      "label": "Party",
+      "emoji": "🪩"
+    },
+    {
+      "id": "chill",
+      "label": "Chill / Stay in",
+      "emoji": "♨️"
+    }
+  ],
+  "activities": [
+    {
+      "id": "old-tbilisi-walk",
+      "kind": "option",
+      "slots": [
+        "day"
+      ],
+      "areas": [
+        "tbilisi"
+      ],
+      "title": "Old Tbilisi: Narikala by cable car & the bath-house domes",
+      "region": "tbilisi",
+      "categories": [
+        "culture"
+      ],
+      "tagline": "Ride up to the fortress, wander down through 1,500 years.",
+      "loved": "Travellers rate the cable car over the Mtkvari as the best 2.5 lari in town, and the walk down — fortress walls, the hidden waterfall, carved wooden balconies — as the city at its most photogenic.",
+      "description": "Take the cable car from Rike Park up to Narikala fortress and the Mother of Georgia statue, then walk down through the old town: the brick domes of the sulfur-bath quarter, the waterfall in Leghvtakhevi gorge, the Bridge of Peace and the leaning clock tower. Short winter days suit it — the old town lights up early.",
+      "highlights": [
+        "Cable car to Narikala (2.5 GEL)",
+        "Mother of Georgia & fortress walls",
+        "Leghvtakhevi waterfall & bath-house domes",
+        "Bridge of Peace & the clock tower"
+      ],
+      "duration": "~4 hrs",
+      "hours": 4,
+      "estCostUsd": [
+        3,
+        15
+      ],
+      "vibe": 0,
+      "intensity": "easy",
+      "tags": [
+        "walking tour",
+        "history",
+        "architecture",
+        "views",
+        "cable car"
+      ],
+      "sources": [
+        {
+          "label": "Eurasia Travel — Tbilisi aerial tramway (Rike Park → Narikala, 2.5 GEL)",
+          "url": "https://eurasia.travel/georgia/tbilisi/aerial-tramway/"
+        },
+        {
+          "label": "Wander-Lush — Tbilisi in winter: 25 cold-weather things to do (2025–26 update)",
+          "url": "https://wander-lush.org/tbilisi-in-winter"
+        },
+        {
+          "label": "Sakhva Travel — Tbilisi cable cars",
+          "url": "https://sakhva-travel.com/en/blog/tbilisi-cable-car/"
+        }
+      ]
+    },
+    {
+      "id": "sulfur-baths",
+      "kind": "option",
+      "slots": [
+        "day"
+      ],
+      "areas": [
+        "tbilisi"
+      ],
+      "title": "Private room at the sulfur baths",
+      "region": "tbilisi",
+      "categories": [
+        "chill"
+      ],
+      "tagline": "Hot spring water under brick domes, a kisi scrub, zero plans.",
+      "loved": "The private rooms are what reviewers love most: your own steaming pool, a cold plunge and an attendant's kisi scrub that leaves you new — best split between friends, by the hour.",
+      "description": "Tbilisi was founded on these springs. In Abanotubani, book a private room (by the hour, for the group) at a bath house like Chreli Abano or the Orbeliani Baths: a hot sulfur pool, a cold plunge, a sauna and a scrub from an attendant. In December it's the warmest hour of the trip.",
+      "highlights": [
+        "Your own hot pool & cold plunge",
+        "Kisi scrub & massage add-ons",
+        "Historic brick-domed bath houses",
+        "Split the room by the hour"
+      ],
+      "duration": "~2 hrs",
+      "hours": 2,
+      "estCostUsd": [
+        15,
+        40
+      ],
+      "vibe": -1,
+      "tags": [
+        "baths",
+        "wellness",
+        "history",
+        "spa"
+      ],
+      "goodToKnow": "Rooms are priced per room per hour (roughly 150–250 GEL for a big one), so the more of you, the cheaper. Book a day ahead around New Year.",
+      "sources": [
+        {
+          "label": "Big World Small Pockets — Tbilisi sulphur baths guide (Abanotubani & Orbeliani)",
+          "url": "https://www.bigworldsmallpockets.com/sulphur-baths-tbilisi/"
+        },
+        {
+          "label": "JetSetting Fools — our Tbilisi sulphur bath experience",
+          "url": "https://jetsettingfools.com/tbilisi-sulphur-baths-experience"
+        },
+        {
+          "label": "Travelness — Tbilisi sulfur baths: what they are and where to go",
+          "url": "https://travelness.com/tbilisi-sulfur-baths-guide"
+        }
+      ]
+    },
+    {
+      "id": "tbilisi-sea-chronicles",
+      "kind": "option",
+      "slots": [
+        "day"
+      ],
+      "areas": [
+        "tbilisi"
+      ],
+      "title": "Chronicles of Georgia & a lakeside BBQ at the Tbilisi Sea",
+      "region": "tbilisi-sea",
+      "categories": [
+        "culture",
+        "food"
+      ],
+      "tagline": "Sixteen giant carved pillars above a reservoir — then mtsvadi on the grill.",
+      "loved": "Visitors are floored by the scale of the Chronicles — 30-metre pillars carved with Georgian history and Bible scenes — and how empty it is, twenty minutes from the city.",
+      "description": "Drive 20 minutes out to the Tbilisi Sea, the reservoir everyone calls a sea, and climb to the Chronicles of Georgia: sixteen bronze-and-stone pillars, each 30–35 m tall, telling the country's story. Then grab the rental cars' boot space for a lakeside barbecue of mtsvadi (Georgian skewers), lavash and pickles.",
+      "highlights": [
+        "16 pillars, 30–35 m tall",
+        "Views over the Tbilisi Sea",
+        "Mtsvadi barbecue by the water",
+        "Easy first drive in the rental cars"
+      ],
+      "duration": "~4 hrs",
+      "hours": 4,
+      "estCostUsd": [
+        8,
+        25
+      ],
+      "vibe": -1,
+      "intensity": "easy",
+      "tags": [
+        "history",
+        "art",
+        "views",
+        "food",
+        "lake"
+      ],
+      "goodToKnow": "It's windy and cold up on the hill in December — wrap up. Free to visit.",
+      "sources": [
+        {
+          "label": "Wander-Lush — Tbilisi in winter: 25 cold-weather things to do (2025–26 update)",
+          "url": "https://wander-lush.org/tbilisi-in-winter"
+        },
+        {
+          "label": "Le Long Weekend — winter in Tbilisi guide",
+          "url": "https://lelongweekend.com/?p=8854"
+        }
+      ]
+    },
+    {
+      "id": "offroad-karting",
+      "kind": "option",
+      "slots": [
+        "day"
+      ],
+      "areas": [
+        "tbilisi"
+      ],
+      "title": "Off-road buggies & karting by the Tbilisi Sea",
+      "region": "tbilisi-sea",
+      "categories": [
+        "adventure"
+      ],
+      "tagline": "Mud, jumps and a 1000cc buggy, half an hour from town.",
+      "loved": "The buggy trails above the Tbilisi Sea get top marks for how fast it gets serious — a practice loop, then proper hills, ruts and views over the city.",
+      "description": "At the off-road park by the Tbilisi Sea you get a briefing and a practice lap on obstacles, then take 1000cc side-by-side buggies out on dirt trails and hills above the reservoir with a guide. Two to a buggy, helmets on, filthy by the end — a perfect group morning.",
+      "highlights": [
+        "1000cc side-by-side buggies",
+        "Practice loop, then real trails",
+        "Views over the Tbilisi Sea",
+        "Two to a buggy"
+      ],
+      "duration": "~2.5 hrs",
+      "hours": 2.5,
+      "estCostUsd": [
+        45,
+        130
+      ],
+      "vibe": -1,
+      "intensity": "moderate",
+      "tags": [
+        "off-road",
+        "driving",
+        "adrenaline"
+      ],
+      "goodToKnow": "Priced per buggy and by group size; winter mud is part of the fun, so wear clothes you can lose.",
+      "sources": [
+        {
+          "label": "Lokalee — buggy driving around the Tbilisi Sea",
+          "url": "https://lokalee.app/tours/buggy-driving-around-tbilisi-sea"
+        },
+        {
+          "label": "Expedia — Tbilisi self-drive mountain off-road buggy",
+          "url": "https://www.expedia.com.au/things-to-do/tbilisi-self-drive-mountain-off-road-buggy-adventure.a53313737.activity-details"
+        }
+      ]
+    },
+    {
+      "id": "mtskheta-jvari",
+      "kind": "option",
+      "slots": [
+        "day"
+      ],
+      "areas": [
+        "tbilisi"
+      ],
+      "title": "Mtskheta & Jvari Monastery",
+      "region": "mtskheta",
+      "categories": [
+        "culture"
+      ],
+      "tagline": "The ancient capital where two rivers meet, half an hour away.",
+      "loved": "People say the view from Jvari — two rivers of different colours meeting below a 6th-century church — is the moment Georgia clicks.",
+      "description": "Georgia's old capital and spiritual heart, a UNESCO site 30 minutes from Tbilisi. Drive the switchbacks up to 6th-century Jvari Monastery for the view over the rivers' confluence, then wander Svetitskhoveli Cathedral and Mtskheta's lanes of churchkhela stalls and tone-oven bakeries.",
+      "highlights": [
+        "Jvari Monastery above the confluence",
+        "Svetitskhoveli Cathedral (UNESCO)",
+        "Churchkhela & fresh shoti bread",
+        "Only ~30 min from Tbilisi"
+      ],
+      "duration": "~4 hrs",
+      "hours": 4,
+      "estCostUsd": [
+        0,
+        12
+      ],
+      "vibe": -1,
+      "intensity": "easy",
+      "tags": [
+        "church",
+        "monastery",
+        "history",
+        "views"
+      ],
+      "sources": [
+        {
+          "label": "Vagabond Journey — day trips from Tbilisi by car (Mtskheta, Ananuri drive times)",
+          "url": "https://www.vagabondjourney.com/the-best-day-trips-from-tbilisi-by-car-where-you-can-actually-go-in-one-day/"
+        },
+        {
+          "label": "Georgian Holidays — Mtskheta, Jvari, Ananuri & Gudauri day (route & timings)",
+          "url": "https://www.georgianholidays.com/tour/cultural-holidays/full-day-mtskheta-gudauri-tour"
+        },
+        {
+          "label": "Sakhva Travel — Mtskheta-Mtianeti region guide",
+          "url": "https://sakhva-travel.com/en/mtskheta-mtianeti/"
+        }
+      ]
+    },
+    {
+      "id": "uplistsikhe",
+      "kind": "option",
+      "slots": [
+        "day"
+      ],
+      "areas": [
+        "tbilisi"
+      ],
+      "title": "Uplistsikhe cave town",
+      "region": "uplistsikhe",
+      "categories": [
+        "culture",
+        "adventure"
+      ],
+      "tagline": "A 3,000-year-old city carved into the rock above the Mtkvari.",
+      "loved": "Visitors love scrambling between rock-cut halls, a theatre and a pharmacy older than Rome — and having it nearly to themselves in winter.",
+      "description": "An hour and a quarter west of Tbilisi, Uplistsikhe is a rock-cut town on a cliff above the river: halls, wine cellars and a basilica hewn from sandstone across 3,000 years. Pair it with Gori on the way back. Open year-round; the stone gets icy, so good shoes matter.",
+      "highlights": [
+        "Rock-cut halls, theatre & basilica",
+        "Views over the Mtkvari valley",
+        "Quiet in winter",
+        "~1.25 hrs from Tbilisi"
+      ],
+      "duration": "~5 hrs",
+      "hours": 5,
+      "estCostUsd": [
+        3,
+        12
+      ],
+      "vibe": -1,
+      "intensity": "easy",
+      "tags": [
+        "history",
+        "architecture",
+        "hike"
+      ],
+      "familyText": {
+        "description": "An hour and a quarter west of Tbilisi, Uplistsikhe is a rock-cut town on a cliff above the river: halls, storerooms and a basilica hewn from sandstone across 3,000 years. Pair it with Gori on the way back. Open year-round; the stone gets icy, so good shoes matter."
+      },
+      "sources": [
+        {
+          "label": "Sakhva Travel — Uplistsikhe cave city",
+          "url": "https://sakhva-travel.com/en/blog/uplistsikhe-cave-city/"
+        },
+        {
+          "label": "TripLinkHub — Uplistsikhe: open 10:00–18:00 year-round",
+          "url": "https://www.triplinkhub.com/en/georgia/gori/places/uplistsikhe"
+        }
+      ]
+    },
+    {
+      "id": "gudauri-ski",
+      "kind": "option",
+      "slots": [
+        "day"
+      ],
+      "areas": [
+        "tbilisi"
+      ],
+      "title": "Ski or snowboard day in Gudauri",
+      "region": "gudauri",
+      "categories": [
+        "adventure",
+        "nature"
+      ],
+      "tagline": "Wide open pistes in the Caucasus, two and a half hours from Tbilisi.",
+      "loved": "Skiers love the wide, empty treeless runs, the views of the Caucasus from the top of Kudebi, and lift passes that cost a fraction of the Alps.",
+      "description": "Drive the Georgian Military Road to Gudauri (2,200–3,280 m) for a full day on the mountain: around 70 km of pistes, gondolas and chairlifts, and big open powder fields. Rent gear at the base, book a lesson if you're new, and stop at Ananuri on the way back while it's still light.",
+      "highlights": [
+        "~70 km of pistes up to 3,280 m",
+        "Day pass ~70 GEL (~$26)",
+        "Gear rental & lessons at the base",
+        "Ananuri on the way home"
+      ],
+      "duration": "Full day (~11 hrs door to door)",
+      "hours": 6,
+      "estCostUsd": [
+        45,
+        100
+      ],
+      "vibe": -2,
+      "intensity": "moderate",
+      "tags": [
+        "ski",
+        "snowboard",
+        "snow",
+        "mountain"
+      ],
+      "goodToKnow": "The 2025/26 season ran from about 27 Dec to 19 April; opening day depends on snow, so late-December dates aren't guaranteed. Winter tyres or chains for the drive; lifts run ~10:00–17:00.",
+      "onlyBaseDays": true,
+      "bring": [
+        "Ski jacket & gloves",
+        "Sunglasses or goggles",
+        "Cash for rentals"
+      ],
+      "sources": [
+        {
+          "label": "Wander-Lush — 18 things to know before you visit Gudauri (2025/26 season dates)",
+          "url": "https://wander-lush.org/visit-gudauri-travel-tips/"
+        },
+        {
+          "label": "Skiresort.info — Gudauri: lifts, pistes and season dates",
+          "url": "https://skiresort.info/ski-resort/gudauri"
+        },
+        {
+          "label": "Loudavým krokem — skiing Gudauri & Bakuriani in 2026 (lift prices)",
+          "url": "https://loudavymkrokem.cz/en/skiing-georgia-gudauri-bakuriani/"
+        },
+        {
+          "label": "GoTrip — Tbilisi ↔ Gudauri: ~120 km, 2–3 hrs in winter",
+          "url": "https://gotrip.ge/blog/en/travel/how-to-get-from-gudauri-to-tbilisi-4-options-in-2024-2025/"
+        }
+      ]
+    },
+    {
+      "id": "gudauri-paragliding",
+      "kind": "option",
+      "slots": [
+        "day"
+      ],
+      "areas": [
+        "tbilisi"
+      ],
+      "title": "Tandem paragliding over snowy Gudauri",
+      "region": "gudauri",
+      "categories": [
+        "adventure",
+        "nature"
+      ],
+      "tagline": "Take off from Kudebi and float over the Caucasus in the snow.",
+      "loved": "Flyers call it the highlight of their Georgia trip — 15 minutes of silence over white ridges, with the pilot filming the whole thing.",
+      "description": "Ride the gondola up Kudebi in Gudauri, clip in with a licensed tandem pilot and run off the mountain: 15–20 minutes over the snowy valleys of the Caucasus, landing near the resort. No experience needed. Make a day of it with the Ananuri fortress and the Zhinvali reservoir on the way.",
+      "highlights": [
+        "15–20 min tandem flight",
+        "Take-off by gondola in winter",
+        "Video of your flight",
+        "Ananuri & Zhinvali on the way"
+      ],
+      "duration": "Full day (~10 hrs door to door)",
+      "hours": 4,
+      "estCostUsd": [
+        110,
+        190
+      ],
+      "vibe": -2,
+      "intensity": "easy",
+      "tags": [
+        "paragliding",
+        "snow",
+        "mountain",
+        "views"
+      ],
+      "goodToKnow": "Weather decides: flights are cancelled in high wind or cloud, so keep a flexible slot. Add the gondola ticket if your package doesn't include it.",
+      "onlyBaseDays": true,
+      "sources": [
+        {
+          "label": "Georgia.travel — paragliding from Kudebi, Gudauri (winter take-off by cable car)",
+          "url": "https://georgia.travel/paragliding-in-gudauri-kudebi-mountain"
+        },
+        {
+          "label": "Cool Destinations — Gudauri tandem flights (traveller reviews)",
+          "url": "https://www.cooldestinations.com/activity/gudauri/paragliding-tandem-flights-in-georgia/"
+        },
+        {
+          "label": "GoTrip — Tbilisi ↔ Gudauri: ~120 km, 2–3 hrs in winter",
+          "url": "https://gotrip.ge/blog/en/travel/how-to-get-from-gudauri-to-tbilisi-4-options-in-2024-2025/"
+        }
+      ]
+    },
+    {
+      "id": "kazbegi-gergeti",
+      "kind": "option",
+      "slots": [
+        "day"
+      ],
+      "areas": [
+        "tbilisi"
+      ],
+      "title": "Kazbegi & Gergeti Trinity Church",
+      "region": "kazbegi",
+      "categories": [
+        "nature",
+        "culture"
+      ],
+      "tagline": "Georgia's postcard: a lone church under 5,047-metre Kazbek.",
+      "loved": "Everyone who makes it up says the same thing — the photos don't do it justice: a 14th-century church on a ridge, snow everywhere, Kazbek glowing behind it.",
+      "description": "Follow the Georgian Military Road past Ananuri and over the Jvari Pass to Stepantsminda, then take a local 4x4 up to Gergeti Trinity Church (2,170 m) beneath Mount Kazbek. Lunch on khinkali in town and drive back before dark. The road is kept open in winter but can close for a day after heavy snow.",
+      "highlights": [
+        "Gergeti Trinity Church at 2,170 m",
+        "Mount Kazbek (5,047 m)",
+        "Ananuri fortress & Jvari Pass",
+        "4x4 up the last stretch"
+      ],
+      "duration": "Full day (~11 hrs door to door)",
+      "hours": 4,
+      "estCostUsd": [
+        15,
+        40
+      ],
+      "vibe": -2,
+      "intensity": "easy",
+      "tags": [
+        "church",
+        "monastery",
+        "mountain",
+        "snow",
+        "views"
+      ],
+      "goodToKnow": "Check the Jvari Pass the morning of: it shuts after heavy snowfall. Winter tyres are required Nov–March; the last climb to the church is 4x4 only (~50–80 GEL a jeep).",
+      "onlyBaseDays": true,
+      "bring": [
+        "Warm layers & boots",
+        "Cash for the 4x4"
+      ],
+      "sources": [
+        {
+          "label": "Loudavým krokem — Kazbegi: 18 things to see (2026)",
+          "url": "https://loudavymkrokem.cz/en/kazbegi-georgia-things-to-see/"
+        },
+        {
+          "label": "Sakhva Travel — things to see in Kazbegi",
+          "url": "https://sakhva-travel.com/en/blog/things-to-see-kazbegi/"
+        },
+        {
+          "label": "Georgian Holidays — winter in Kazbegi (winter tyres Nov–Mar, 4x4 to Gergeti)",
+          "url": "https://www.georgianholidays.com/tour/winter-tours/winter-in-kazbegi"
+        }
+      ]
+    },
+    {
+      "id": "sighnaghi-kakheti",
+      "kind": "option",
+      "slots": [
+        "day"
+      ],
+      "areas": [
+        "tbilisi"
+      ],
+      "title": "Sighnaghi & Bodbe Monastery, Kakheti",
+      "region": "sighnaghi",
+      "categories": [
+        "culture",
+        "food"
+      ],
+      "tagline": "A walled hill town over the Alazani valley, with the Caucasus behind.",
+      "loved": "Visitors love Sighnaghi's 18th-century walls and balconies, the view across the Alazani valley to snowy peaks, and how peaceful it is out of season.",
+      "description": "Cross the Gombori Pass into Kakheti, Georgia's wine country, to Sighnaghi — a hilltop town ringed by 18th-century walls with views across the Alazani valley to the snow-capped Caucasus. Walk the walls, visit Bodbe Monastery 2 km away, and stop at a family marani for a tasting and a long lunch.",
+      "highlights": [
+        "Walk the 18th-century town walls",
+        "Bodbe Monastery",
+        "Alazani valley & Caucasus views",
+        "Long Kakhetian lunch"
+      ],
+      "duration": "Full day (~9 hrs door to door)",
+      "hours": 5,
+      "estCostUsd": [
+        15,
+        45
+      ],
+      "vibe": -1,
+      "intensity": "easy",
+      "tags": [
+        "history",
+        "monastery",
+        "views",
+        "food"
+      ],
+      "goodToKnow": "Heavy snow on the Gombori Pass can mean taking the longer road round; the walls have steep, uneven steps.",
+      "familyText": {
+        "description": "Cross the Gombori Pass into Kakheti to Sighnaghi — a hilltop town ringed by 18th-century walls with views across the Alazani valley to the snow-capped Caucasus. Walk the walls, visit Bodbe Monastery 2 km away, and stop for a long Kakhetian lunch of mtsvadi, shoti bread and churchkhela."
+      },
+      "onlyBaseDays": true,
+      "sources": [
+        {
+          "label": "Sakhva Travel — Sighnaghi day trip from Tbilisi (winter booking & Gombori Pass)",
+          "url": "https://sakhva-travel.com/en/ekskursiya/ekskursiya-sighnaghi-iz-tbilisi/"
+        },
+        {
+          "label": "Eurasia Travel — Kakheti winter tale tour",
+          "url": "https://eurasia.travel/tour/kakheti-winter-tale-tour/"
+        },
+        {
+          "label": "Georgian Holidays — day trip to Bodbe and Sighnaghi",
+          "url": "https://www.georgianholidays.com/tour/cultural-holidays/day-trip-to-bodbe-and-sighnaghi"
+        }
+      ]
+    },
+    {
+      "id": "martvili-canyon",
+      "kind": "option",
+      "slots": [
+        "day"
+      ],
+      "areas": [
+        "tbilisi"
+      ],
+      "title": "Martvili Canyon by boat",
+      "region": "martvili",
+      "categories": [
+        "nature",
+        "adventure"
+      ],
+      "tagline": "Turquoise water between mossy limestone walls — big day trip west.",
+      "loved": "Visitors call the boat ride the most beautiful 20 minutes in Georgia: emerald water, waterfalls and dripping ferns, and it's one of the few canyons still open in winter.",
+      "description": "A long drive west (about 280 km) to Samegrelo for Martvili Canyon: walk the paths above the gorge, then take the inflatable boat through the narrowest, most turquoise stretch. It stays open in winter when other canyons close. A big day — leave early and share the driving.",
+      "highlights": [
+        "Boat ride through the gorge (~20 min)",
+        "Waterfalls & limestone walls",
+        "Open in winter",
+        "Big day trip · ~4.5 hrs each way"
+      ],
+      "duration": "Full day (~13–14 hrs door to door)",
+      "hours": 3,
+      "estCostUsd": [
+        15,
+        30
+      ],
+      "vibe": -2,
+      "intensity": "easy",
+      "tags": [
+        "boat",
+        "waterfall",
+        "canyon",
+        "big day trip",
+        "hike"
+      ],
+      "goodToKnow": "Winter hours are about 10:00–18:00; boats can pause after heavy rain. Entry ~20–25 GEL plus ~20 GEL for the boat. Best as one day of a two-day trip west.",
+      "onlyBaseDays": true,
+      "bring": [
+        "Waterproof jacket",
+        "Snacks for the drive"
+      ],
+      "sources": [
+        {
+          "label": "National Parks of Georgia — Martvili Canyon (winter hours)",
+          "url": "https://nationalparks.ge/en/site/martvilicanyon"
+        },
+        {
+          "label": "Wander-Lush — visiting Martvili Canyon: tips, boats and prices",
+          "url": "https://wander-lush.org/visit-martvili-canyon-tips/"
+        },
+        {
+          "label": "Agency of Protected Areas — Martvili Canyon services & tariffs",
+          "url": "https://apa.gov.ge/en/eco-tourism/servisebi-da-tarifebi/martvilis-kanioni"
+        }
+      ]
+    },
+    {
+      "id": "gomis-mta",
+      "kind": "option",
+      "slots": [
+        "day"
+      ],
+      "areas": [
+        "tbilisi"
+      ],
+      "title": "Gomis Mta: above the clouds, by the campfire",
+      "region": "gomis-mta",
+      "categories": [
+        "nature",
+        "adventure"
+      ],
+      "tagline": "A 2,000-metre ridge village where the clouds sit below you.",
+      "loved": "People who make it up describe standing on a meadow above a sea of cloud with the Black Sea glinting in the distance — and nights round a fire under every star there is.",
+      "description": "Gomis Mta sits at 2,000 m in the Meskheti range of Guria, a village of wooden summer houses famous for its sea of clouds. In winter the last stretch is deep snow and 4x4 only, so it's best as part of a trip west with a night in a cabin and a campfire. The real adventure of the trip — and the furthest.",
+      "highlights": [
+        "Sea of clouds at ~2,000 m",
+        "Wooden cabins & a campfire",
+        "Snow up to your knees",
+        "Furthest trip · ~5.5 hrs from Tbilisi"
+      ],
+      "duration": "Full day + night (overnight trip)",
+      "hours": 5,
+      "estCostUsd": [
+        25,
+        70
+      ],
+      "vibe": -2,
+      "intensity": "tough",
+      "tags": [
+        "mountain",
+        "snow",
+        "views",
+        "big day trip",
+        "campfire"
+      ],
+      "goodToKnow": "The Roads Department closes the road up after heavy snow — check the day before. 4x4 with chains only for the last stretch, or walk in with a local guide. Plan it as an overnight from Kutaisi or Martvili rather than a day from Tbilisi.",
+      "onlyBaseDays": true,
+      "bring": [
+        "Snow boots & a warm layer",
+        "Head torch",
+        "Food for the campfire"
+      ],
+      "sources": [
+        {
+          "label": "Georgia.travel — Gomismta",
+          "url": "https://georgia.travel/gomismta"
+        },
+        {
+          "label": "Georgian Travel Guide — Gomismta (4x4 roads, reviews)",
+          "url": "https://georgiantravelguide.com/en/gomismta"
+        },
+        {
+          "label": "Frontnews — roads to Gomismta and Bakhmaro closed by heavy snow",
+          "url": "https://www.frontnews.ge/en/news/roads-to-gomis-mta-bakhmaro-resorts-closed-due-to-heavy-snow"
+        }
+      ]
+    },
+    {
+      "id": "tbilisi-food-crawl",
+      "kind": "option",
+      "slots": [
+        "day"
+      ],
+      "areas": [
+        "tbilisi"
+      ],
+      "title": "Tbilisi food crawl: khinkali, khachapuri & the bazaar",
+      "region": "tbilisi",
+      "categories": [
+        "food",
+        "culture"
+      ],
+      "tagline": "Soup dumplings, cheese boats and churchkhela, stall by stall.",
+      "loved": "Food lovers single out Dezerter Bazaar's spice and cheese halls and their first proper khinkali — slurp, don't spill — as the best way into the city.",
+      "description": "Start at the Dezerter Bazaar among spices, cheeses and hanging churchkhela, then work through the classics: khinkali dumplings, molten Adjarian khachapuri with an egg on top, lobiani bean bread straight from a tone oven, and pkhali. Finish with tea and pastries in Sololaki.",
+      "highlights": [
+        "Dezerter Bazaar's halls",
+        "Khinkali & Adjarian khachapuri",
+        "Tone-oven bread",
+        "Churchkhela & pastries"
+      ],
+      "duration": "~3.5 hrs",
+      "hours": 3.5,
+      "estCostUsd": [
+        15,
+        35
+      ],
+      "vibe": 0,
+      "intensity": "easy",
+      "tags": [
+        "food",
+        "street food",
+        "market",
+        "walking tour"
+      ],
+      "sources": [
+        {
+          "label": "Wander-Lush — Tbilisi in winter: 25 cold-weather things to do (2025–26 update)",
+          "url": "https://wander-lush.org/tbilisi-in-winter"
+        },
+        {
+          "label": "Georgia.to — 15 things to do in Tbilisi this Christmas",
+          "url": "https://georgia.to/things-to-do-in-tbilisi-this-christmas/"
+        }
+      ]
+    },
+    {
+      "id": "khinkali-class",
+      "kind": "option",
+      "slots": [
+        "day"
+      ],
+      "areas": [
+        "tbilisi"
+      ],
+      "title": "Khinkali & khachapuri cooking class",
+      "region": "tbilisi",
+      "categories": [
+        "food",
+        "culture"
+      ],
+      "tagline": "Learn the 19 pleats, then eat everything you made.",
+      "loved": "Cooking-class reviewers love the chaos of everyone's first khinkali and the long table at the end — the closest thing to being adopted by a Georgian family.",
+      "description": "In a small group with a local host, knead and pleat your own khinkali (the goal is 19 folds), bake Imeretian khachapuri and learn the stories behind them — then sit down to eat the lot as a proper Georgian feast with toasts.",
+      "highlights": [
+        "Pleat your own khinkali",
+        "Bake khachapuri",
+        "A host's family recipes",
+        "Feast together at the end"
+      ],
+      "duration": "~3 hrs",
+      "hours": 3,
+      "estCostUsd": [
+        35,
+        65
+      ],
+      "vibe": 0,
+      "intensity": "easy",
+      "tags": [
+        "food",
+        "cooking",
+        "culture"
+      ],
+      "sources": [
+        {
+          "label": "byFood — small-group khinkali & khachapuri class in Tbilisi",
+          "url": "https://www.byfood.com/experiences/small-group-khinkali-and-khachapuri-cooking-class-in-tbilisi-33635"
+        },
+        {
+          "label": "Georgia.to — Georgian cooking with a local family",
+          "url": "https://georgia.to/things-to-do/masterclass/georgian-cooking-with-local-family"
+        }
+      ]
+    },
+    {
+      "id": "dry-bridge-market",
+      "kind": "option",
+      "slots": [
+        "day"
+      ],
+      "areas": [
+        "tbilisi"
+      ],
+      "title": "Dry Bridge flea market & Fabrika",
+      "region": "tbilisi",
+      "categories": [
+        "culture",
+        "food"
+      ],
+      "tagline": "Soviet badges, old cameras and enamel signs — then coffee in a former factory.",
+      "loved": "Browsers love the Dry Bridge market's oddities — medals, vinyl, cameras, antique horns — and bargaining in the cold with a hot coffee in hand.",
+      "description": "Hunt for treasures at the open-air Dry Bridge market (daily, busiest at weekends): Soviet memorabilia, vintage cameras, silver, vinyl and paintings. Cross the river to Fabrika, a Soviet sewing factory turned courtyard of cafés, shops and street art, for lunch.",
+      "highlights": [
+        "Dry Bridge market (daily)",
+        "Soviet memorabilia & antiques",
+        "Fabrika courtyard & street art",
+        "Cash for stalls"
+      ],
+      "duration": "~3.5 hrs",
+      "hours": 3.5,
+      "estCostUsd": [
+        5,
+        30
+      ],
+      "vibe": 0,
+      "intensity": "easy",
+      "tags": [
+        "market",
+        "shopping",
+        "art",
+        "history"
+      ],
+      "sources": [
+        {
+          "label": "Eurasia Travel — the Dry Bridge flea market",
+          "url": "https://eurasia.travel/georgia/tbilisi/flea-market/"
+        },
+        {
+          "label": "Sakhva Travel — Fabrika Tbilisi: the courtyard, street art and people",
+          "url": "https://sakhva-travel.com/en/blog/fabrika-tbilisi/"
+        }
+      ]
+    },
+    {
+      "id": "mtatsminda-park",
+      "kind": "option",
+      "slots": [
+        "day"
+      ],
+      "areas": [
+        "tbilisi"
+      ],
+      "title": "Funicular up Mtatsminda & the park on top",
+      "region": "tbilisi",
+      "categories": [
+        "chill",
+        "culture"
+      ],
+      "tagline": "The city's highest viewpoint, by a funicular from 1905.",
+      "loved": "Visitors say the funicular ride and the view from the top — the whole city in its valley, snowy mountains beyond — are worth it for the ponchiki doughnuts alone.",
+      "description": "Ride the 1905 funicular up to Mtatsminda, the hill above the city with its TV tower: a park with a Ferris wheel and rides, the best panorama in Tbilisi, and the Funicular restaurant famous for its ponchiki (cream doughnuts). Walk down via the Pantheon of writers and artists.",
+      "highlights": [
+        "1905 funicular (~5 GEL)",
+        "Best panorama in Tbilisi",
+        "Ponchiki at the top",
+        "Pantheon on the way down"
+      ],
+      "duration": "~3 hrs",
+      "hours": 3,
+      "estCostUsd": [
+        5,
+        20
+      ],
+      "vibe": 0,
+      "intensity": "easy",
+      "tags": [
+        "views",
+        "history",
+        "games"
+      ],
+      "sources": [
+        {
+          "label": "Eurasia Travel — Tbilisi funicular to Mtatsminda",
+          "url": "https://eurasia.travel/georgia/tbilisi/funicular/"
+        },
+        {
+          "label": "Sakhva Travel — Tbilisi cable cars",
+          "url": "https://sakhva-travel.com/en/blog/tbilisi-cable-car/"
+        }
+      ]
+    },
+    {
+      "id": "bassiani",
+      "kind": "option",
+      "slots": [
+        "night"
+      ],
+      "areas": [
+        "tbilisi"
+      ],
+      "title": "Bassiani: techno under the stadium",
+      "region": "tbilisi",
+      "categories": [
+        "party"
+      ],
+      "tagline": "One of the world's great techno clubs, in a drained pool under the Dinamo Arena.",
+      "loved": "Ravers describe it as a pilgrimage: a concrete pool, a relentless sound system, no phones on the floor and a crowd that's there for the music until long after sunrise.",
+      "description": "Bassiani sits in a former swimming pool beneath the Dinamo Arena — a dark, cavernous room with a famously powerful system and international and Georgian DJs. Saturdays are the big nights; queues start around midnight, phone cameras get stickered and the door is selective.",
+      "highlights": [
+        "Drained-pool main room",
+        "World-class techno line-ups",
+        "Saturdays are the big nights",
+        "No photos on the floor"
+      ],
+      "duration": "~6 hrs (midnight → morning)",
+      "hours": 6,
+      "estCostUsd": [
+        15,
+        40
+      ],
+      "vibe": 2,
+      "tags": [
+        "club",
+        "techno",
+        "dj",
+        "late"
+      ],
+      "goodToKnow": "Entry isn't guaranteed — check the line-up and registration on the club's site for your date, dress dark, arrive in small groups.",
+      "availableDays": [
+        5,
+        6
+      ],
+      "familySwap": "family-old-town-lights",
+      "sources": [
+        {
+          "label": "Mixmag — Bassiani re-opened after forced closure",
+          "url": "https://mixmag.net/read/tblisi-club-bassiani-has-re-opened-after-forced-closure-news"
+        },
+        {
+          "label": "Sakhva Travel — Saturday in Tbilisi (Bassiani queues from midnight)",
+          "url": "https://sakhva-travel.com/en/blog/saturday-in-tbilisi/"
+        },
+        {
+          "label": "Resident Advisor — Bassiani events",
+          "url": "https://ra.co/events/1900896"
+        }
+      ]
+    },
+    {
+      "id": "left-bank",
+      "kind": "option",
+      "slots": [
+        "night"
+      ],
+      "areas": [
+        "tbilisi"
+      ],
+      "title": "Left Bank: riverside club nights",
+      "region": "tbilisi",
+      "categories": [
+        "party"
+      ],
+      "tagline": "Two dancefloors and a courtyard on the Mtkvari embankment.",
+      "loved": "Clubbers like that it's looser than the big techno temples — house, electro and techno across two rooms, a courtyard to cool off, and a friendlier door.",
+      "description": "Left Bank on the Baratashvili embankment has two indoor dancefloors and an outdoor courtyard with its own DJ booth and bar, mixing Georgian and international DJs across house, techno and electro. Fridays and Saturdays are club nights; Thursdays and Sundays bring live shows.",
+      "highlights": [
+        "Two rooms + a courtyard",
+        "House, techno & electro",
+        "Fri & Sat club nights",
+        "Riverside, close to the old town"
+      ],
+      "duration": "~5 hrs",
+      "hours": 5,
+      "estCostUsd": [
+        10,
+        30
+      ],
+      "vibe": 2,
+      "tags": [
+        "club",
+        "dj",
+        "late"
+      ],
+      "goodToKnow": "18+. Thursday and Sunday are live nights rather than club nights.",
+      "availableDays": [
+        4,
+        5,
+        6,
+        0
+      ],
+      "familySwap": "family-old-town-lights",
+      "sources": [
+        {
+          "label": "Techno Airlines — Left Bank Tbilisi (rooms, nights, door)",
+          "url": "https://www.technoairlines.com/club/left-bank-tbilisi"
+        },
+        {
+          "label": "Mixmag — Left Bank's Space One becomes a café, bar and record shop",
+          "url": "https://mixmag.net/read/left-bank-tbilisi-space-one-cafe-bar-record-book-shop-news"
+        }
+      ]
+    },
+    {
+      "id": "fabrika-night",
+      "kind": "option",
+      "slots": [
+        "night"
+      ],
+      "areas": [
+        "tbilisi"
+      ],
+      "title": "Fabrika courtyard night",
+      "region": "tbilisi",
+      "categories": [
+        "party",
+        "food"
+      ],
+      "tagline": "A Soviet factory courtyard full of bars, street art and strangers.",
+      "loved": "People love that there's no door and no dress code — just a courtyard of bars under string lights where locals and travellers end up at the same table.",
+      "description": "Fabrika, a former sewing factory in Marjanishvili, is one big courtyard of bars, a cocktail cellar, pizza and street food under murals and string lights. No cover, no dress code — the night grows on its own, and it's an easy walk to the clubs after.",
+      "highlights": [
+        "Courtyard of bars & food",
+        "Street art & string lights",
+        "No cover, no dress code",
+        "Busiest on weekends"
+      ],
+      "duration": "~3.5 hrs",
+      "hours": 3.5,
+      "estCostUsd": [
+        12,
+        30
+      ],
+      "vibe": 1,
+      "tags": [
+        "bars",
+        "cocktails",
+        "street food"
+      ],
+      "familySwap": "new-year-market",
+      "sources": [
+        {
+          "label": "Sakhva Travel — Fabrika Tbilisi: the courtyard, street art and people",
+          "url": "https://sakhva-travel.com/en/blog/fabrika-tbilisi/"
+        },
+        {
+          "label": "Wander-Lush — Fabrika Tbilisi review",
+          "url": "https://wander-lush.org/fabrika-tbilisi-georgia-hostel-hotel-review-blog/"
+        },
+        {
+          "label": "Sakhva Travel — Tbilisi nightlife guide",
+          "url": "https://sakhva-travel.com/en/blog/tbilisi-nightlife/"
+        }
+      ]
+    },
+    {
+      "id": "pub-golf-tbilisi",
+      "kind": "option",
+      "slots": [
+        "night"
+      ],
+      "areas": [
+        "tbilisi"
+      ],
+      "title": "Pub Golf through Old Tbilisi",
+      "region": "tbilisi",
+      "categories": [
+        "party"
+      ],
+      "tagline": "Six holes, one scorecard, golf caps compulsory.",
+      "loved": "Groups say it's the night everyone retells: a dress code, a scorecard and a route through the old town's cellar bars, wine bars and shot bars.",
+      "description": "Our own course through Sololaki and the old town: each bar is a hole with a par, you count your sips, and the lowest score at the 18th... well, the 6th, wins. Starts at Freedom Square, ends near the clubs. Commit to the outfits.",
+      "highlights": [
+        "6-hole course through the old town",
+        "Scorecard & penalties",
+        "Golf caps & polos",
+        "Ends near the clubs"
+      ],
+      "duration": "~4 hrs",
+      "hours": 4,
+      "estCostUsd": [
+        20,
+        45
+      ],
+      "vibe": 2,
+      "tags": [
+        "bars",
+        "pub crawl",
+        "games"
+      ],
+      "goodToKnow": "Venues change — re-check the course closer to the date.",
+      "rules": {
+        "title": "Pub Golf rules",
+        "items": [
+          "Each bar is a hole. Par is the number of sips to finish your drink.",
+          "Count your sips; lowest total after six holes wins the green jacket.",
+          "Hole in one (finish in one sip): −1 bonus.",
+          "Soft drinks count — the score is sips, not units.",
+          "Water hazard: a glass of water at every hole, or take a +1.",
+          "Bunker: phone out at the bar = +1.",
+          "Dress code: golf caps, polos, plaid — commit to the bit.",
+          "Know your limit. Anyone can switch to softs and keep playing."
+        ]
+      },
+      "course": [
+        {
+          "venue": "Tee-off at Freedom Square",
+          "area": "Freedom Square",
+          "par": 0,
+          "note": "Group photo with the golden St George"
+        },
+        {
+          "venue": "A Pushkin Street shot bar",
+          "area": "Freedom Square",
+          "par": 2
+        },
+        {
+          "venue": "Vino Underground",
+          "area": "Tabidze St",
+          "par": 3,
+          "note": "Natural wine in a cellar"
+        },
+        {
+          "venue": "A cellar bar in Sololaki",
+          "area": "Sololaki",
+          "par": 3
+        },
+        {
+          "venue": "Shardeni Street",
+          "area": "Old Town",
+          "par": 4
+        },
+        {
+          "venue": "A bar on the Meidan",
+          "area": "Old Town",
+          "par": 4
+        },
+        {
+          "venue": "Café Gallery",
+          "area": "Rustaveli",
+          "par": 5,
+          "note": "Finish on the dance floor"
+        }
+      ],
+      "familySwap": "family-khachapuri-golf",
+      "sources": [
+        {
+          "label": "Wander-Lush — the best bars in Tbilisi",
+          "url": "https://wander-lush.org/best-bars-in-tbilisi-georgia/"
+        },
+        {
+          "label": "Sakhva Travel — Tbilisi nightlife guide",
+          "url": "https://sakhva-travel.com/en/blog/tbilisi-nightlife/"
+        }
+      ]
+    },
+    {
+      "id": "supra-dinner",
+      "kind": "option",
+      "slots": [
+        "night"
+      ],
+      "areas": [
+        "tbilisi"
+      ],
+      "title": "Georgian supra feast with folk songs",
+      "region": "tbilisi",
+      "categories": [
+        "food",
+        "culture"
+      ],
+      "tagline": "A table that never empties, a tamada and polyphonic singing.",
+      "loved": "Travellers say a supra is the real Georgia: dish after dish until there's no table left, toasts that turn into speeches, and singing that gives everyone goosebumps.",
+      "description": "Book a long table at a traditional restaurant with live polyphonic singing and folk dance: pkhali, badrijani, khachapuri, mtsvadi, khinkali and more keep arriving while a tamada (toastmaster) leads the toasts. The perfect group dinner after a big day out.",
+      "highlights": [
+        "Dish after dish of Georgian classics",
+        "A tamada leads the toasts",
+        "Polyphonic singing & folk dance",
+        "Long table for the whole group"
+      ],
+      "duration": "~3 hrs",
+      "hours": 3,
+      "estCostUsd": [
+        20,
+        45
+      ],
+      "vibe": 0,
+      "intensity": "easy",
+      "tags": [
+        "food",
+        "dinner",
+        "culture",
+        "music"
+      ],
+      "sources": [
+        {
+          "label": "Georgia.to — Georgian cooking with a local family",
+          "url": "https://georgia.to/things-to-do/masterclass/georgian-cooking-with-local-family"
+        },
+        {
+          "label": "Wander-Lush — Tbilisi in winter: 25 cold-weather things to do (2025–26 update)",
+          "url": "https://wander-lush.org/tbilisi-in-winter"
+        }
+      ]
+    },
+    {
+      "id": "funicular-dinner",
+      "kind": "option",
+      "slots": [
+        "night"
+      ],
+      "areas": [
+        "tbilisi"
+      ],
+      "title": "Dinner above the lights at Mtatsminda",
+      "region": "tbilisi",
+      "categories": [
+        "food"
+      ],
+      "tagline": "The whole city glittering below, and ponchiki for dessert.",
+      "loved": "Diners rate the view from the top of the funicular as the best in Tbilisi at night — the city spread out in its valley — and the cream doughnuts as non-negotiable.",
+      "description": "Ride the funicular up after dark to the restaurant at the top of Mtatsminda: Georgian and European plates by the windows, the city lit up below, and the famous ponchiki doughnuts downstairs. Ride back down or walk the lit path.",
+      "highlights": [
+        "Night views over the city",
+        "Funicular ride up",
+        "Famous ponchiki",
+        "Book a window table"
+      ],
+      "duration": "~2.5 hrs",
+      "hours": 2.5,
+      "estCostUsd": [
+        25,
+        50
+      ],
+      "vibe": 0,
+      "intensity": "easy",
+      "tags": [
+        "food",
+        "dinner",
+        "views"
+      ],
+      "sources": [
+        {
+          "label": "Eurasia Travel — Tbilisi funicular to Mtatsminda",
+          "url": "https://eurasia.travel/georgia/tbilisi/funicular/"
+        },
+        {
+          "label": "Wander-Lush — Tbilisi in winter: 25 cold-weather things to do (2025–26 update)",
+          "url": "https://wander-lush.org/tbilisi-in-winter"
+        }
+      ]
+    },
+    {
+      "id": "sulfur-night",
+      "kind": "option",
+      "slots": [
+        "night"
+      ],
+      "areas": [
+        "tbilisi"
+      ],
+      "title": "Late-night sulfur bath",
+      "region": "tbilisi",
+      "categories": [
+        "chill"
+      ],
+      "tagline": "Steam under the brick domes after a cold day out.",
+      "loved": "After skiing or a long drive, people say a late private room at the baths is the best thing they did — hot water, cold plunge, bed.",
+      "description": "Some Abanotubani bath houses run late into the night: book a private room for the group after dinner, alternate between the hot sulfur pool and the cold plunge, and walk home through the lit-up old town.",
+      "highlights": [
+        "Private room, late",
+        "Hot pool & cold plunge",
+        "Perfect after a ski day",
+        "Old Town lights on the walk home"
+      ],
+      "duration": "~2 hrs",
+      "hours": 2,
+      "estCostUsd": [
+        15,
+        40
+      ],
+      "vibe": -1,
+      "intensity": "easy",
+      "tags": [
+        "baths",
+        "wellness",
+        "spa"
+      ],
+      "goodToKnow": "Late slots vary by bath house; book ahead over New Year.",
+      "sources": [
+        {
+          "label": "Big World Small Pockets — Tbilisi sulphur baths guide (Abanotubani & Orbeliani)",
+          "url": "https://www.bigworldsmallpockets.com/sulphur-baths-tbilisi/"
+        },
+        {
+          "label": "Travelness — Tbilisi sulfur baths: what they are and where to go",
+          "url": "https://travelness.com/tbilisi-sulfur-baths-guide"
+        }
+      ],
+      "photo": "sulfur-baths"
+    },
+    {
+      "id": "opera-ballet",
+      "kind": "option",
+      "slots": [
+        "night"
+      ],
+      "areas": [
+        "tbilisi"
+      ],
+      "title": "The Nutcracker at Tbilisi Opera",
+      "region": "tbilisi",
+      "categories": [
+        "culture"
+      ],
+      "tagline": "A New Year ballet in a Moorish-revival opera house.",
+      "loved": "Audiences love the gilded hall and tickets that cost a fraction of London or Paris — and the State Ballet of Georgia's Nutcracker is a holiday tradition.",
+      "description": "The Tbilisi Opera and Ballet Theatre on Rustaveli Avenue usually stages the Nutcracker over the New Year holidays (in 2024 it ran 21 Dec – 14 Jan). Dress up a little, sit in a gilded Moorish-revival hall, and walk Rustaveli's lights afterwards.",
+      "highlights": [
+        "State Ballet of Georgia",
+        "Moorish-revival opera house",
+        "Holiday season classic",
+        "Rustaveli lights after"
+      ],
+      "duration": "~2.5 hrs",
+      "hours": 2.5,
+      "estCostUsd": [
+        10,
+        40
+      ],
+      "vibe": 0,
+      "tags": [
+        "culture",
+        "music",
+        "architecture"
+      ],
+      "goodToKnow": "The programme is announced in the autumn — check tkt.ge for this season's dates before you count on it.",
+      "sources": [
+        {
+          "label": "1TV — Tbilisi Opera presents the Nutcracker for the New Year holidays",
+          "url": "https://1tv.ge/lang/en/news/tbilisi-state-opera-and-ballet-theater-presents-nutcracker/"
+        },
+        {
+          "label": "Georgian Holidays — Tbilisi Opera and Ballet: Nutcracker magic",
+          "url": "https://www.georgianholidays.com/blog/Tbilisi-Opera-and-Ballet-A-Symphony-of-Nutcracker-Magic/"
+        },
+        {
+          "label": "tkt.ge — Tbilisi Opera and Ballet Theatre tickets",
+          "url": "https://tkt.ge/en/opera"
+        }
+      ]
+    },
+    {
+      "id": "new-year-market",
+      "kind": "option",
+      "slots": [
+        "night"
+      ],
+      "areas": [
+        "tbilisi"
+      ],
+      "title": "New Year markets & the lights of Rustaveli",
+      "region": "tbilisi",
+      "categories": [
+        "culture",
+        "food"
+      ],
+      "tagline": "Mulled cider, churchkhela and a city wrapped in lights.",
+      "loved": "Visitors are charmed by how hard Tbilisi goes on lights — tunnels of them along Rustaveli, a giant tree, and markets selling gozinaki and hot treats.",
+      "description": "From mid-December the city fills with lights and markets: the main festive fair at First Republic Square, stalls at Fabrika and around the old town. Graze on gozinaki (honey-walnut brittle), churchkhela and hot snacks, then walk Rustaveli Avenue's light tunnels.",
+      "highlights": [
+        "Festive fair & stalls",
+        "Gozinaki & churchkhela",
+        "Rustaveli light tunnels",
+        "Free"
+      ],
+      "duration": "~2.5 hrs",
+      "hours": 2.5,
+      "estCostUsd": [
+        5,
+        20
+      ],
+      "vibe": 0,
+      "intensity": "easy",
+      "tags": [
+        "market",
+        "food",
+        "lights",
+        "walking tour"
+      ],
+      "sources": [
+        {
+          "label": "Georgia Today — Tbilisi's Christmas markets and holiday festivities",
+          "url": "https://georgiatoday.ge/tbilisis-christmas-markets-and-holiday-festivities-in-full-swing"
+        },
+        {
+          "label": "Wanderlust — 9 festive experiences in Tbilisi",
+          "url": "https://www.wanderlustmagazine.com/inspiration/9-festive-experiences-to-enjoy-in-tbilisi-this-christmas/"
+        },
+        {
+          "label": "1TV — New Year celebrations at First Republic Square, 12 Dec – 7 Jan",
+          "url": "https://1tv.ge/lang/en/news/new-years-eve-celebrations-to-take-place-at-first-republic-square-from-december-12-to-january-7/"
+        }
+      ]
+    },
+    {
+      "id": "wine-cellar-crawl",
+      "kind": "option",
+      "slots": [
+        "night"
+      ],
+      "areas": [
+        "tbilisi"
+      ],
+      "title": "Natural wine cellars of Sololaki",
+      "region": "tbilisi",
+      "categories": [
+        "party",
+        "food"
+      ],
+      "tagline": "Amber qvevri wine, by the people who made it.",
+      "loved": "Wine lovers call Tbilisi's natural-wine bars the best in the world for the price — orange wine from clay qvevri, poured by the winemakers' friends.",
+      "description": "Georgia has made wine in buried clay qvevri for 8,000 years. Spend the evening between Sololaki's cellar wine bars — Vino Underground, the pioneer of natural wine in Tbilisi, and its neighbours — tasting amber and red qvevri wines with cheese and bread.",
+      "highlights": [
+        "Amber qvevri wines",
+        "Vino Underground",
+        "Cheese & bread plates",
+        "A cosy cellar crawl"
+      ],
+      "duration": "~3 hrs",
+      "hours": 3,
+      "estCostUsd": [
+        20,
+        45
+      ],
+      "vibe": 1,
+      "tags": [
+        "wine",
+        "bars",
+        "tasting"
+      ],
+      "familySwap": "supra-dinner",
+      "sources": [
+        {
+          "label": "Wander-Lush — the best bars in Tbilisi",
+          "url": "https://wander-lush.org/best-bars-in-tbilisi-georgia/"
+        },
+        {
+          "label": "Sakhva Travel — Tbilisi nightlife guide",
+          "url": "https://sakhva-travel.com/en/blog/tbilisi-nightlife/"
+        }
+      ]
+    },
+    {
+      "id": "nye-liberty-square",
+      "kind": "option",
+      "slots": [
+        "night"
+      ],
+      "areas": [
+        "tbilisi"
+      ],
+      "title": "New Year's Eve countdown at Liberty Square",
+      "region": "tbilisi",
+      "categories": [
+        "culture"
+      ],
+      "tagline": "The whole city lights the sky at midnight — be in the middle of it.",
+      "loved": "People who've done it say nothing prepares you: at midnight every balcony, roof and street in Tbilisi sets off fireworks at once, for what feels like an hour.",
+      "description": "Spend the evening around Liberty (Freedom) Square, under the golden St George and the giant tree, as the city's New Year concert plays nearby and the crowds build. At midnight Tbilisi erupts — fireworks from every hill and rooftop at once. Find a spot early and wrap up warm.",
+      "highlights": [
+        "Liberty Square & the giant tree",
+        "City New Year concert nearby",
+        "Fireworks from every rooftop at midnight",
+        "Free"
+      ],
+      "duration": "~4 hrs",
+      "hours": 4,
+      "estCostUsd": [
+        0,
+        15
+      ],
+      "vibe": 1,
+      "tags": [
+        "fireworks",
+        "new year",
+        "culture"
+      ],
+      "goodToKnow": "The city's main stage moves year to year (First Republic Square in 2025) — check the programme in December. Taxis are scarce after midnight: walk or plan your way home.",
+      "sources": [
+        {
+          "label": "Hotelier's Choice — Tbilisi New Year's Eve guide (Oct 2026)",
+          "url": "https://hotelierschoice.com/guides/tbilisi/tbilisi-new-years-eve/"
+        },
+        {
+          "label": "Georgia.travel — New Year's Eve in Georgia",
+          "url": "https://georgia.travel/new-years-eve-in-georgia"
+        },
+        {
+          "label": "1TV — New Year celebrations at First Republic Square, 12 Dec – 7 Jan",
+          "url": "https://1tv.ge/lang/en/news/new-years-eve-celebrations-to-take-place-at-first-republic-square-from-december-12-to-january-7/"
+        }
+      ]
+    },
+    {
+      "id": "nye-mtatsminda-feast",
+      "kind": "option",
+      "slots": [
+        "night"
+      ],
+      "areas": [
+        "tbilisi"
+      ],
+      "title": "NYE feast, then fireworks from above",
+      "region": "tbilisi",
+      "categories": [
+        "food"
+      ],
+      "tagline": "A long Georgian New Year table, then the whole city's fireworks from a hill.",
+      "loved": "Locals spend New Year at the table: satsivi, gozinaki and a feast that runs past midnight — then the fireworks, best watched from up high.",
+      "description": "Do New Year the Georgian way: a long table at the house (or a restaurant) with the New Year classics — satsivi turkey in walnut sauce, gozinaki, khachapuri — then head up to a viewpoint near Mtatsminda or Narikala before midnight to watch the entire city light up below.",
+      "highlights": [
+        "Satsivi, gozinaki & a long table",
+        "Viewpoint before midnight",
+        "The city's fireworks from above",
+        "Warm, cosy, together"
+      ],
+      "duration": "~5 hrs",
+      "hours": 5,
+      "estCostUsd": [
+        20,
+        50
+      ],
+      "vibe": 0,
+      "tags": [
+        "food",
+        "dinner",
+        "fireworks",
+        "views",
+        "new year"
+      ],
+      "sources": [
+        {
+          "label": "Georgia.travel — New Year's Eve in Georgia",
+          "url": "https://georgia.travel/new-years-eve-in-georgia"
+        },
+        {
+          "label": "Hotelier's Choice — Tbilisi New Year's Eve guide (Oct 2026)",
+          "url": "https://hotelierschoice.com/guides/tbilisi/tbilisi-new-years-eve/"
+        }
+      ]
+    },
+    {
+      "id": "bowling-east-point",
+      "kind": "extra",
+      "slots": [
+        "day",
+        "night"
+      ],
+      "areas": [
+        "tbilisi"
+      ],
+      "title": "Bowling",
+      "region": "tbilisi",
+      "categories": [
+        "chill"
+      ],
+      "tagline": "Twelve lanes, a scoreboard and old rivalries.",
+      "loved": "A reliable group hour when it's freezing out — and the trash talk is free.",
+      "description": "East Point mall's entertainment floor has 12 lanes with a café; Lebowski bowling in the city is the other classic.",
+      "highlights": [
+        "12 lanes",
+        "Café next to the lanes"
+      ],
+      "duration": "~1.5 hrs",
+      "hours": 1.5,
+      "estCostUsd": [
+        6,
+        15
+      ],
+      "vibe": 0,
+      "venue": "East Point mall or Lebowski",
+      "emoji": "🎳",
+      "tags": [
+        "bowling",
+        "games",
+        "indoor"
+      ],
+      "sources": [
+        {
+          "label": "Georgia Today — East Point mall: 12 bowling lanes",
+          "url": "https://gtarchive.georgiatoday.ge/news/1251/Georgia-Today-Meets-the-GM-of-East-Point-Mall"
+        },
+        {
+          "label": "Georgian Travel Guide — East Point shopping & entertainment",
+          "url": "https://georgiantravelguide.com/en/east-point-shopping-entertainment-city"
+        },
+        {
+          "label": "In Your Pocket — Lebowski bowling, Tbilisi",
+          "url": "https://inyourpocket.com/lebowski-bowl-club_143987v"
+        }
+      ]
+    },
+    {
+      "id": "karting-lilo",
+      "kind": "extra",
+      "slots": [
+        "day"
+      ],
+      "areas": [
+        "tbilisi"
+      ],
+      "title": "Go-karting",
+      "region": "tbilisi",
+      "categories": [
+        "adventure"
+      ],
+      "tagline": "Race the group on a proper outdoor track.",
+      "loved": "Karting Lilo became one of Tbilisi's busiest group activities soon after it opened — corporate tournaments and all.",
+      "description": "Karting Lilo near the airport has a ~1 km outdoor track; Rustavi International Motorpark, 20 km south, runs karting and track days too.",
+      "highlights": [
+        "~1 km outdoor track",
+        "Timed laps"
+      ],
+      "duration": "~1.5 hrs",
+      "hours": 1.5,
+      "estCostUsd": [
+        15,
+        35
+      ],
+      "vibe": 0,
+      "venue": "Karting Lilo or Rustavi Motorpark",
+      "emoji": "🏎️",
+      "tags": [
+        "karting",
+        "driving",
+        "games"
+      ],
+      "goodToKnow": "Outdoor tracks may close in snow or ice — call ahead.",
+      "sources": [
+        {
+          "label": "Georgia Today — Karting Lilo",
+          "url": "https://georgiatoday.ge/tag/karting-lilo/"
+        },
+        {
+          "label": "In Your Pocket — Rustavi International Motorpark (karting & track days)",
+          "url": "https://www.inyourpocket.com/Georgia/tbilisi/venues/rustavi-international-motorpark"
+        }
+      ]
+    },
+    {
+      "id": "cable-car-ride",
+      "kind": "extra",
+      "slots": [
+        "day",
+        "night"
+      ],
+      "areas": [
+        "tbilisi"
+      ],
+      "title": "Cable car to Narikala",
+      "region": "tbilisi",
+      "categories": [
+        "chill"
+      ],
+      "tagline": "Two minutes over the river for 2.5 lari.",
+      "loved": "The cheapest great view in Tbilisi — even better after dark.",
+      "description": "The aerial tramway runs from Rike Park over the Mtkvari to Narikala fortress until late; pay with a Metromoney card.",
+      "highlights": [
+        "2.5 GEL",
+        "Runs until late"
+      ],
+      "duration": "~45 min",
+      "hours": 0.75,
+      "estCostUsd": [
+        1,
+        3
+      ],
+      "vibe": 0,
+      "venue": "Rike Park",
+      "emoji": "🚡",
+      "tags": [
+        "views",
+        "cable car"
+      ],
+      "sources": [
+        {
+          "label": "Eurasia Travel — Tbilisi aerial tramway (Rike Park → Narikala, 2.5 GEL)",
+          "url": "https://eurasia.travel/georgia/tbilisi/aerial-tramway/"
+        },
+        {
+          "label": "Sakhva Travel — Tbilisi cable cars",
+          "url": "https://sakhva-travel.com/en/blog/tbilisi-cable-car/"
+        }
+      ]
+    },
+    {
+      "id": "snowmobile-gudauri",
+      "kind": "extra",
+      "slots": [
+        "day"
+      ],
+      "areas": [
+        "tbilisi"
+      ],
+      "title": "Snowmobile ride in Gudauri",
+      "region": "gudauri",
+      "categories": [
+        "adventure"
+      ],
+      "tagline": "Full throttle across the snowfields.",
+      "loved": "The easy adrenaline hit for anyone not skiing — and great for photos.",
+      "description": "Snowmobile operators at the base of Gudauri run short rides and guided loops across the snowfields; two can share one.",
+      "highlights": [
+        "Two to a snowmobile",
+        "Guided loops"
+      ],
+      "duration": "~1 hr",
+      "hours": 1,
+      "estCostUsd": [
+        25,
+        60
+      ],
+      "vibe": -1,
+      "venue": "Gudauri base area",
+      "emoji": "🛷",
+      "tags": [
+        "snow",
+        "mountain",
+        "adrenaline"
+      ],
+      "onlyWith": "gudauri-ski",
+      "sources": [
+        {
+          "label": "Out of Your Comfort Zone — the ultimate guide to skiing Gudauri (snowmobiles & more)",
+          "url": "https://outofyourcomfortzone.net/?p=33510"
+        },
+        {
+          "label": "Sakhva Travel — Georgia in winter: Gudauri",
+          "url": "https://sakhva-travel.com/en/blog/georgia-in-winter/"
+        }
+      ],
+      "photo": "gudauri-ski"
+    },
+    {
+      "id": "ananuri-stop",
+      "kind": "extra",
+      "slots": [
+        "day"
+      ],
+      "areas": [
+        "tbilisi"
+      ],
+      "title": "Ananuri fortress stop",
+      "region": "ananuri",
+      "categories": [
+        "culture"
+      ],
+      "tagline": "A fortress church on a turquoise reservoir, right on the road.",
+      "loved": "Everyone's favourite leg-stretch on the Military Road — towers, carvings and the Zhinvali reservoir below.",
+      "description": "The 17th-century Ananuri fortress, with two churches and a watchtower, sits on the Zhinvali reservoir about an hour from Tbilisi on the way to Gudauri.",
+      "highlights": [
+        "17th-century fortress & churches",
+        "Zhinvali reservoir views"
+      ],
+      "duration": "~45 min",
+      "hours": 0.75,
+      "estCostUsd": [
+        0,
+        3
+      ],
+      "vibe": -1,
+      "venue": "Georgian Military Road",
+      "emoji": "🏰",
+      "tags": [
+        "church",
+        "history",
+        "views"
+      ],
+      "onlyWith": "gudauri-ski",
+      "sources": [
+        {
+          "label": "Vagabond Journey — day trips from Tbilisi by car (Mtskheta, Ananuri drive times)",
+          "url": "https://www.vagabondjourney.com/the-best-day-trips-from-tbilisi-by-car-where-you-can-actually-go-in-one-day/"
+        },
+        {
+          "label": "Georgian Holidays — Mtskheta, Jvari, Ananuri & Gudauri day (route & timings)",
+          "url": "https://www.georgianholidays.com/tour/cultural-holidays/full-day-mtskheta-gudauri-tour"
+        }
+      ]
+    },
+    {
+      "id": "khachapuri-lunch",
+      "kind": "extra",
+      "slots": [
+        "day"
+      ],
+      "areas": [
+        "tbilisi"
+      ],
+      "title": "Adjarian khachapuri lunch",
+      "region": "tbilisi",
+      "categories": [
+        "food"
+      ],
+      "tagline": "A boat of bread, molten cheese, butter and an egg.",
+      "loved": "The dish everyone photographs — stir in the egg and butter, tear the crust, dip.",
+      "description": "Stop at a bakery or restaurant for Adjarian khachapuri: a boat-shaped bread filled with sulguni cheese, an egg yolk and butter.",
+      "highlights": [
+        "Molten sulguni",
+        "Stir in the egg"
+      ],
+      "duration": "~1 hr",
+      "hours": 1,
+      "estCostUsd": [
+        5,
+        12
+      ],
+      "vibe": 0,
+      "venue": "Anywhere good",
+      "emoji": "🧀",
+      "tags": [
+        "food"
+      ],
+      "sources": [
+        {
+          "label": "Wander-Lush — Tbilisi in winter: 25 cold-weather things to do (2025–26 update)",
+          "url": "https://wander-lush.org/tbilisi-in-winter"
+        },
+        {
+          "label": "Georgia.to — 15 things to do in Tbilisi this Christmas",
+          "url": "https://georgia.to/things-to-do-in-tbilisi-this-christmas/"
+        }
+      ]
+    },
+    {
+      "id": "dezerter-bazaar",
+      "kind": "extra",
+      "slots": [
+        "day"
+      ],
+      "areas": [
+        "tbilisi"
+      ],
+      "title": "Dezerter Bazaar wander",
+      "region": "tbilisi",
+      "categories": [
+        "food",
+        "culture"
+      ],
+      "tagline": "Spices, cheeses and churchkhela by the kilo.",
+      "loved": "The partly covered halls stay warm in winter — the best people-watching in the city.",
+      "description": "Tbilisi's big central market: spices, sulguni, pickles, dried fruit and churchkhela, sold by vendors who love giving tastes.",
+      "highlights": [
+        "Spices & cheese halls",
+        "Cash only"
+      ],
+      "duration": "~1 hr",
+      "hours": 1,
+      "estCostUsd": [
+        2,
+        10
+      ],
+      "vibe": 0,
+      "venue": "Near Station Square",
+      "emoji": "🌶️",
+      "tags": [
+        "market",
+        "food"
+      ],
+      "sources": [
+        {
+          "label": "Wander-Lush — Tbilisi in winter: 25 cold-weather things to do (2025–26 update)",
+          "url": "https://wander-lush.org/tbilisi-in-winter"
+        },
+        {
+          "label": "Eurasia Travel — the Dry Bridge flea market",
+          "url": "https://eurasia.travel/georgia/tbilisi/flea-market/"
+        }
+      ]
+    },
+    {
+      "id": "family-old-town-lights",
+      "kind": "family",
+      "slots": [
+        "night"
+      ],
+      "areas": [
+        "tbilisi"
+      ],
+      "title": "Old Town by night: lights, cable car & hot chocolate",
+      "region": "tbilisi",
+      "categories": [
+        "culture"
+      ],
+      "tagline": "The old town glowing, from the riverbank to the fortress.",
+      "loved": "Visitors say Tbilisi is prettiest after dark — the fortress floodlit, the Bridge of Peace glowing and the bath-house domes steaming in the cold.",
+      "description": "Ride the cable car up to the floodlit Narikala fortress, walk down past the steaming bath-house domes and over the Bridge of Peace, and warm up with hot chocolate and pastries in the old town.",
+      "highlights": [
+        "Cable car to the floodlit fortress",
+        "Bridge of Peace at night",
+        "Steaming bath-house domes",
+        "Hot chocolate stop"
+      ],
+      "duration": "~3 hrs",
+      "hours": 3,
+      "estCostUsd": [
+        5,
+        15
+      ],
+      "vibe": 0,
+      "tags": [
+        "walking tour",
+        "views",
+        "history",
+        "cable car"
+      ],
+      "sources": [
+        {
+          "label": "Eurasia Travel — Tbilisi aerial tramway (Rike Park → Narikala, 2.5 GEL)",
+          "url": "https://eurasia.travel/georgia/tbilisi/aerial-tramway/"
+        },
+        {
+          "label": "Wander-Lush — Tbilisi in winter: 25 cold-weather things to do (2025–26 update)",
+          "url": "https://wander-lush.org/tbilisi-in-winter"
+        }
+      ]
+    },
+    {
+      "id": "family-khachapuri-golf",
+      "kind": "family",
+      "slots": [
+        "night"
+      ],
+      "areas": [
+        "tbilisi"
+      ],
+      "title": "Khachapuri golf: an Old Town food crawl",
+      "region": "tbilisi",
+      "categories": [
+        "food"
+      ],
+      "tagline": "Six stops, one scorecard, and a lot of cheese.",
+      "loved": "The same fun as a crawl — a course, a scorecard, silly hats — with khinkali-eating as the sport.",
+      "description": "Our own six-hole course through the old town, food-style: khinkali, khachapuri, lobiani, pkhali, churchkhela and ponchiki. Par is the number of bites; lowest score wins the green jacket. Golf caps encouraged.",
+      "highlights": [
+        "Six food stops",
+        "Scorecard & silly rules",
+        "Golf caps encouraged",
+        "Ends with ponchiki"
+      ],
+      "duration": "~3.5 hrs",
+      "hours": 3.5,
+      "estCostUsd": [
+        15,
+        30
+      ],
+      "vibe": 0,
+      "tags": [
+        "food",
+        "street food",
+        "games"
+      ],
+      "sources": [
+        {
+          "label": "Wander-Lush — Tbilisi in winter: 25 cold-weather things to do (2025–26 update)",
+          "url": "https://wander-lush.org/tbilisi-in-winter"
+        },
+        {
+          "label": "Georgia.to — 15 things to do in Tbilisi this Christmas",
+          "url": "https://georgia.to/things-to-do-in-tbilisi-this-christmas/"
+        }
+      ],
+      "photo": "khachapuri-lunch"
+    }
+  ],
+  "pairs": [
+    {
+      "id": "climb-or-soak",
+      "slot": "day",
+      "area": "tbilisi",
+      "a": "old-tbilisi-walk",
+      "b": "sulfur-baths",
+      "theme": "Climb to the fortress or soak below it"
+    },
+    {
+      "id": "monuments-or-mud",
+      "slot": "day",
+      "area": "tbilisi",
+      "a": "tbilisi-sea-chronicles",
+      "b": "offroad-karting",
+      "theme": "Giant pillars or muddy buggies"
+    },
+    {
+      "id": "holy-or-hewn",
+      "slot": "day",
+      "area": "tbilisi",
+      "a": "mtskheta-jvari",
+      "b": "uplistsikhe",
+      "theme": "The holy capital or the cave city"
+    },
+    {
+      "id": "ski-or-fly",
+      "slot": "day",
+      "area": "tbilisi",
+      "a": "gudauri-ski",
+      "b": "gudauri-paragliding",
+      "theme": "Ski Gudauri or fly over it"
+    },
+    {
+      "id": "peaks-or-walls",
+      "slot": "day",
+      "area": "tbilisi",
+      "a": "kazbegi-gergeti",
+      "b": "sighnaghi-kakheti",
+      "theme": "Kazbek's church or Kakheti's walled town"
+    },
+    {
+      "id": "canyon-or-clouds",
+      "slot": "day",
+      "area": "tbilisi",
+      "a": "martvili-canyon",
+      "b": "gomis-mta",
+      "theme": "Big trip west: canyon or cloud line"
+    },
+    {
+      "id": "eat-or-make",
+      "slot": "day",
+      "area": "tbilisi",
+      "a": "tbilisi-food-crawl",
+      "b": "khinkali-class",
+      "theme": "Eat it or make it"
+    },
+    {
+      "id": "treasure-or-top",
+      "slot": "day",
+      "area": "tbilisi",
+      "a": "dry-bridge-market",
+      "b": "mtatsminda-park",
+      "theme": "Treasure hunt or top of the city"
+    },
+    {
+      "id": "pool-or-river",
+      "slot": "night",
+      "area": "tbilisi",
+      "a": "bassiani",
+      "b": "left-bank",
+      "theme": "Under the stadium or on the river"
+    },
+    {
+      "id": "courtyard-or-course",
+      "slot": "night",
+      "area": "tbilisi",
+      "a": "fabrika-night",
+      "b": "pub-golf-tbilisi",
+      "theme": "The courtyard or the course"
+    },
+    {
+      "id": "feast-or-view",
+      "slot": "night",
+      "area": "tbilisi",
+      "a": "supra-dinner",
+      "b": "funicular-dinner",
+      "theme": "A feast with songs or dinner above the lights"
+    },
+    {
+      "id": "steam-or-stage",
+      "slot": "night",
+      "area": "tbilisi",
+      "a": "sulfur-night",
+      "b": "opera-ballet",
+      "theme": "Steam or stage"
+    },
+    {
+      "id": "lights-or-cellars",
+      "slot": "night",
+      "area": "tbilisi",
+      "a": "new-year-market",
+      "b": "wine-cellar-crawl",
+      "theme": "Festive lights or qvevri cellars"
+    },
+    {
+      "id": "nye-tbilisi",
+      "slot": "night",
+      "area": "tbilisi",
+      "a": "nye-liberty-square",
+      "b": "nye-mtatsminda-feast",
+      "theme": "In the crowd or above it",
+      "special": "nye"
+    }
+  ],
+  "costs": {
+    "groupSize": 12,
+    "vehicles": 3,
+    "perHourUsd": [
+      7,
+      12
+    ],
+    "dailyUsd": [
+      45,
+      85
+    ],
+    "dailyLabel": "4x4 rental",
+    "accommodation": {
+      "hostel": {
+        "tbilisi": [
+          10,
+          20
+        ]
+      },
+      "boutique": {
+        "tbilisi": [
+          35,
+          75
+        ]
+      },
+      "villa": {
+        "tbilisi": [
+          22,
+          45
+        ]
+      },
+      "mix": {
+        "tbilisi": [
+          20,
+          50
+        ]
+      }
+    }
+  },
+  "preferences": {
+    "budgets": [
+      {
+        "id": "lt500",
+        "label": "Under $500",
+        "hint": "Hostel beds, shared cars, khinkali",
+        "usd": [
+          0,
+          500
+        ]
+      },
+      {
+        "id": "500_800",
+        "label": "$500 – 800",
+        "hint": "A shared house & a few big days",
+        "usd": [
+          500,
+          800
+        ]
+      },
+      {
+        "id": "800_1200",
+        "label": "$800 – 1,200",
+        "hint": "Ski days, nice dinners",
+        "usd": [
+          800,
+          1200
+        ]
+      },
+      {
+        "id": "1200_1800",
+        "label": "$1,200 – 1,800",
+        "hint": "Boutique stays, paragliding",
+        "usd": [
+          1200,
+          1800
+        ]
+      },
+      {
+        "id": "gt1800",
+        "label": "$1,800+",
+        "hint": "Treat yourself",
+        "usd": [
+          1800,
+          null
+        ]
+      }
+    ],
+    "stays": [
+      {
+        "id": "hostel",
+        "label": "Hostel",
+        "hint": "Cheap & social"
+      },
+      {
+        "id": "boutique",
+        "label": "Boutique hotel",
+        "hint": "Pretty & comfy"
+      },
+      {
+        "id": "villa",
+        "label": "A house together",
+        "hint": "Whole crew under one roof"
+      },
+      {
+        "id": "mix",
+        "label": "A mix",
+        "hint": "Depends on the night"
+      }
+    ],
+    "sharedRooms": [
+      {
+        "id": "yes",
+        "label": "Happy to share"
+      },
+      {
+        "id": "depends",
+        "label": "With the right people"
+      },
+      {
+        "id": "no",
+        "label": "Need my own room"
+      }
+    ],
+    "interests": [
+      {
+        "id": "skiing",
+        "label": "Skiing & snowboarding"
+      },
+      {
+        "id": "snow",
+        "label": "Snow & mountains"
+      },
+      {
+        "id": "hiking",
+        "label": "Hiking"
+      },
+      {
+        "id": "food",
+        "label": "Food"
+      },
+      {
+        "id": "culture",
+        "label": "Churches & history"
+      },
+      {
+        "id": "photography",
+        "label": "Photography"
+      },
+      {
+        "id": "nightlife",
+        "label": "Nightlife"
+      },
+      {
+        "id": "wellness",
+        "label": "Sulfur baths & spa"
+      },
+      {
+        "id": "roadtrips",
+        "label": "Road trips"
+      },
+      {
+        "id": "adrenaline",
+        "label": "Adrenaline"
+      },
+      {
+        "id": "markets",
+        "label": "Markets & shopping"
+      },
+      {
+        "id": "music",
+        "label": "Live music & ballet"
+      }
+    ],
+    "earlyMornings": [
+      {
+        "id": "yes",
+        "label": "Up for 6am drives",
+        "hint": "First lift, first tracks"
+      },
+      {
+        "id": "some",
+        "label": "Once or twice",
+        "hint": "If it's worth it"
+      },
+      {
+        "id": "no",
+        "label": "Let me sleep",
+        "hint": "Holidays start at 10"
+      }
+    ],
+    "transport": [
+      {
+        "id": "self-drive",
+        "label": "Rental cars",
+        "hint": "We drive ourselves"
+      },
+      {
+        "id": "van",
+        "label": "Van with a driver",
+        "hint": "Nobody has to drive"
+      },
+      {
+        "id": "taxi",
+        "label": "Taxis in town",
+        "hint": "Bolt is cheap"
+      },
+      {
+        "id": "any",
+        "label": "Don't mind",
+        "hint": "Whatever works"
+      }
+    ],
+    "dietary": [
+      {
+        "id": "vegetarian",
+        "label": "Vegetarian"
+      },
+      {
+        "id": "vegan",
+        "label": "Vegan"
+      },
+      {
+        "id": "pescatarian",
+        "label": "Pescatarian"
+      },
+      {
+        "id": "halal",
+        "label": "Halal"
+      },
+      {
+        "id": "no-pork",
+        "label": "No pork"
+      },
+      {
+        "id": "no-beef",
+        "label": "No beef"
+      },
+      {
+        "id": "gluten-free",
+        "label": "Gluten-free"
+      },
+      {
+        "id": "nut-allergy",
+        "label": "Nut allergy"
+      },
+      {
+        "id": "lactose-free",
+        "label": "Lactose-free"
+      }
+    ],
+    "flexibility": [
+      {
+        "id": "exact",
+        "label": "Exact dates",
+        "hint": "These are my dates"
+      },
+      {
+        "id": "few_days",
+        "label": "± a couple of days",
+        "hint": "Some wiggle room"
+      },
+      {
+        "id": "very",
+        "label": "Very flexible",
+        "hint": "Whatever the group picks"
+      }
+    ]
+  },
+  "nightlifeTags": [
+    "techno",
+    "wine"
+  ],
+  "highlightLabels": {
+    "temple": {
+      "one": "monastery",
+      "many": "monasteries",
+      "title": "Old stones & monasteries"
+    }
+  },
+  "theme": {
+    "palette": {
+      "primary": {
+        "950": "#0a1726",
+        "900": "#0f2236",
+        "800": "#16304b",
+        "700": "#1e4163",
+        "600": "#29567f",
+        "500": "#3a6fa0",
+        "300": "#8db1d6",
+        "100": "#e2edf8"
+      },
+      "secondary": {
+        "900": "#10231c",
+        "800": "#163126",
+        "700": "#1f4334",
+        "600": "#2b5b47",
+        "400": "#6c9884",
+        "100": "#e0ece6"
+      },
+      "accent": {
+        "700": "#8c1c1c",
+        "600": "#ad2525",
+        "500": "#cf3a2f",
+        "300": "#ec9a8f",
+        "100": "#fbe4e0"
+      },
+      "highlight": {
+        "600": "#bd8a20",
+        "500": "#d9a432",
+        "400": "#e9bf62",
+        "200": "#f5e1af",
+        "100": "#fcf3dc"
+      },
+      "pop": {
+        "600": "#8c2650",
+        "500": "#ad3666",
+        "300": "#dd8fb0",
+        "100": "#f8e1ea"
+      },
+      "night": {
+        "950": "#090c1b",
+        "900": "#0f1328",
+        "800": "#181e3a",
+        "700": "#242b50"
+      },
+      "surface": {
+        "50": "#f7f9fb",
+        "100": "#edf1f5",
+        "200": "#dde4ec",
+        "300": "#c6d1dd",
+        "400": "#a3b3c4"
+      },
+      "paper": "#fcfdfe",
+      "ink": {
+        "1": "#121821",
+        "2": "#3e4957",
+        "3": "#687483"
+      }
+    },
+    "fonts": {
+      "display": "playfair",
+      "body": "instrument"
+    },
+    "illustrations": "alpine",
+    "dayColors": [
+      "#29567f",
+      "#cf3a2f",
+      "#2b5b47",
+      "#ad3666",
+      "#d9a432",
+      "#6b4aa0",
+      "#1f8a8a",
+      "#c46a1e",
+      "#3a6fa0"
+    ],
+    "confetti": [
+      "#d9a432",
+      "#cf3a2f",
+      "#8db1d6",
+      "#ffffff",
+      "#ad3666",
+      "#2b5b47"
+    ]
+  }
+}

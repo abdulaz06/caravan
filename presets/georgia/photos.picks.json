@@ -1,0 +1,273 @@
+{
+  "_readme": "Photos per key (activity id, `photo` key, region photo key). First file = cover. Titles are Wikimedia Commons file names. Run `npm run photos -- georgia` after editing. No good photo yet: karting-lilo, snowmobile-gudauri (illustrated fallback). \"next-stop-japan\" is the teaser slide of the Georgia past trip (content/past-trips).",
+  "hero": {
+    "dir": "kazbegi",
+    "files": [
+      "File:Gergeti Trinity Church 01.jpg",
+      "File:2014 Tbilisi, Widoki z Twierdzy Narikala (23).jpg"
+    ]
+  },
+  "stay-in": {
+    "dir": "tbilisi",
+    "files": [
+      "File:Tbilisi Old Houses near Baths - panoramio.jpg",
+      "File:Balcony of old house in Tbilisi.jpg"
+    ]
+  },
+  "region-tbilisi": {
+    "dir": "tbilisi",
+    "files": [
+      "File:Looking out towards the Mother of Georgia statue (29707092441).jpg",
+      "File:2014 Tbilisi, Widoki z Twierdzy Narikala (23).jpg"
+    ]
+  },
+  "region-kutaisi": {
+    "dir": "west",
+    "files": [
+      "File:2014 Kutaisi, Katedra Bagrati (25).jpg"
+    ]
+  },
+  "region-airport": {
+    "dir": "tbilisi",
+    "files": [
+      "File:Tbilisi Airport, Georgia - panoramio.jpg"
+    ]
+  },
+  "old-tbilisi-walk": {
+    "dir": "tbilisi",
+    "files": [
+      "File:Narikala, Tiflis, Georgia, 2016-09-29, DD 91.jpg",
+      "File:Narikala fortress, Tbilisi, Georgia.jpg",
+      "File:2014 Tbilisi, Widoki z Twierdzy Narikala (41).jpg"
+    ]
+  },
+  "sulfur-baths": {
+    "dir": "tbilisi",
+    "files": [
+      "File:Roofs of the sulfur baths in Tbilisi.jpg",
+      "File:2014 Tbilisi, Łaźnie siarkowe w Abanotubani (24).jpg"
+    ]
+  },
+  "tbilisi-sea-chronicles": {
+    "dir": "tbilisi-sea",
+    "files": [
+      "File:Georgiaren Kronikak (Tbilisi) - The Chronicle of Georgia - Tagzania - 1775459624045.jpg",
+      "File:Georgiaren Kronikak (Tbilisi) - The Chronicle of Georgia - Tagzania - 1775459623441.jpg"
+    ]
+  },
+  "offroad-karting": {
+    "dir": "tbilisi-sea",
+    "files": [
+      "File:Tbilisi sea - view.jpg"
+    ]
+  },
+  "mtskheta-jvari": {
+    "dir": "mtskheta",
+    "files": [
+      "File:Georgia Jvari monastery IMG 9345 2070.jpg",
+      "File:Jvari Monastery 01.jpg"
+    ]
+  },
+  "uplistsikhe": {
+    "dir": "uplistsikhe",
+    "files": [
+      "File:Middle ages Basilica on the top of the cave, Uplistsikhe 20230920 (II).jpg",
+      "File:Ancient cave in Uplistsikhe 20230920.jpg"
+    ]
+  },
+  "gudauri-ski": {
+    "dir": "gudauri",
+    "files": [
+      "File:Gudauri Ski Resort, Gudauri, Georgia (Unsplash).jpg",
+      "File:Snowcap in Gudauri (1).jpg"
+    ]
+  },
+  "gudauri-paragliding": {
+    "dir": "gudauri",
+    "files": [
+      "File:Flygudauri wiki.jpg",
+      "File:Гудаури - panoramio (25).jpg",
+      "File:Aerobatic Paragliding in winter Gudauri Georgia with SkyAtlantida Team (1.webp"
+    ]
+  },
+  "kazbegi-gergeti": {
+    "dir": "kazbegi",
+    "files": [
+      "File:Gergeti Trinity Church with Mountain Backdrop - Outside Kazbegi - Georgia - 02 (18402439269) (2).jpg",
+      "File:Gergeti Trinity Church 01.jpg",
+      "File:Zemo Mleta, 2016 (2).jpg"
+    ]
+  },
+  "sighnaghi-kakheti": {
+    "dir": "kakheti",
+    "files": [
+      "File:Sighnagi 2009.jpg",
+      "File:Sighnaghi IMG 9071 1920.jpg"
+    ]
+  },
+  "martvili-canyon": {
+    "dir": "west",
+    "files": [
+      "File:Martvili Canyon Natural Monument June 2017.jpg",
+      "File:Martvili Canyon caída.jpg"
+    ]
+  },
+  "gomis-mta": {
+    "dir": "west",
+    "files": [
+      "File:Gomismta--clouds-without-people4.jpg",
+      "File:Gomismta--clouds2.jpg",
+      "File:Gomismta and the Lesser Caucasus mountains.jpg"
+    ]
+  },
+  "tbilisi-food-crawl": {
+    "dir": "food",
+    "files": [
+      "File:Khinkali - Batumi.jpg",
+      "File:Tbilisi, Khachapuri and khinkali, Georgian traditional food, Georgia.jpg"
+    ]
+  },
+  "khinkali-class": {
+    "dir": "food",
+    "files": [
+      "File:Khinkali, Restaurant Aragvi.jpg",
+      "File:Khinkali - Batumi València.jpg"
+    ]
+  },
+  "dry-bridge-market": {
+    "dir": "tbilisi",
+    "files": [
+      "File:2025-03-30 Dry Bridge Market, Tbilisi 5.jpg",
+      "File:2025-04-19 Dry Bridge Market, Tbilisi 2.jpg"
+    ]
+  },
+  "mtatsminda-park": {
+    "dir": "tbilisi",
+    "files": [
+      "File:Mtatsminda park January 2013 12.jpg",
+      "File:Mtatsminda park January 2013 23.jpg"
+    ]
+  },
+  "bassiani": {
+    "dir": "night",
+    "files": [
+      "File:Geo-Esp 11.09.12.jpg"
+    ]
+  },
+  "left-bank": {
+    "dir": "night",
+    "files": [
+      "File:Tbilisi at night, Kura, Georgia.jpg"
+    ]
+  },
+  "fabrika-night": {
+    "dir": "night",
+    "files": [
+      "File:Fabrika Tbilisi, an urban culture hub in the capital of Georgia.jpg",
+      "File:Tbilisi, Fabrika 2023-07-21 22-14-39.jpg"
+    ]
+  },
+  "pub-golf-tbilisi": {
+    "dir": "night",
+    "files": [
+      "File:Chardin Street, Tbilisi.JPG",
+      "File:Tbilisi (21).jpg"
+    ]
+  },
+  "supra-dinner": {
+    "dir": "food",
+    "files": [
+      "File:Georgian Feast (7).jpg",
+      "File:Georgian Feast.jpg"
+    ]
+  },
+  "funicular-dinner": {
+    "dir": "night",
+    "files": [
+      "File:2023-10-23 Tbilisi at night.jpg",
+      "File:View of Tbilisi. August 2022 02.jpg"
+    ]
+  },
+  "opera-ballet": {
+    "dir": "tbilisi",
+    "files": [
+      "File:National Opera House. Tbilisi, Georgia.jpg",
+      "File:Georgian National Opera Theater. Stage.jpg"
+    ]
+  },
+  "new-year-market": {
+    "dir": "night",
+    "files": [
+      "File:Tbilisi festive decoration.jpg",
+      "File:Koba Abzianidze Street with New Year decorations in Orkhevi, Tbilisi at dusk.jpg"
+    ]
+  },
+  "wine-cellar-crawl": {
+    "dir": "night",
+    "files": [
+      "File:Qvevri-Georgia-UNOG-2016-03.jpg",
+      "File:Qvevri Mesashunawines.jpg"
+    ]
+  },
+  "nye-liberty-square": {
+    "dir": "night",
+    "files": [
+      "File:New Year decorations at Liberty Square, Tbilisi, img 1.jpg",
+      "File:Freedom Square at night, Tbilisi, Georgia.jpg"
+    ]
+  },
+  "nye-mtatsminda-feast": {
+    "dir": "night",
+    "files": [
+      "File:Tbilisi at night, Fireworks 3, Holiday, Georgia.jpg",
+      "File:Tbilisi at night, Fireworks 2, Holiday, Georgia.jpg"
+    ]
+  },
+  "bowling-east-point": {
+    "dir": "tbilisi",
+    "files": [
+      "File:East point Tbilisi1902.jpg"
+    ]
+  },
+  "cable-car-ride": {
+    "dir": "tbilisi",
+    "files": [
+      "File:Tbilisi, Aerial tramway, Georgia.jpg",
+      "File:Tbilisi aerial tramway 2012.jpg"
+    ]
+  },
+  "ananuri-stop": {
+    "dir": "mtskheta",
+    "files": [
+      "File:Ananuri Fortress 02.jpg",
+      "File:Ananuri Fortress 01.jpg"
+    ]
+  },
+  "khachapuri-lunch": {
+    "dir": "food",
+    "files": [
+      "File:Adjarian Khachapuri. Saint Petersburg, 2024-07-24.jpg",
+      "File:Adjarian khachapuri.jpg"
+    ]
+  },
+  "dezerter-bazaar": {
+    "dir": "food",
+    "files": [
+      "File:Tbilisi CentralMarket.jpg",
+      "File:The central market in Tbilisi.jpg"
+    ]
+  },
+  "family-old-town-lights": {
+    "dir": "night",
+    "files": [
+      "File:Old Town and Narikala, Tbilisi.jpg",
+      "File:Tbilisi at night, Kura, Georgia.jpg"
+    ]
+  },
+  "next-stop-japan": {
+    "dir": "archive",
+    "files": [
+      "File:Kabukicho red gate and colorful neon street signs at night, Shinjuku, Tokyo, Japan.jpg"
+    ]
+  }
+}

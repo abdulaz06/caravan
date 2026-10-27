@@ -1,0 +1,755 @@
+{
+  "hero": [
+    {
+      "src": "images/kazbegi/hero-1.webp",
+      "credit": "Bernard Gagnon",
+      "source": "https://commons.wikimedia.org/wiki/File:Gergeti_Trinity_Church_01.jpg",
+      "license": "CC BY 4.0",
+      "width": 1600,
+      "height": 1067,
+      "blurDataURL": "data:image/webp;base64,UklGRlgAAABXRUJQVlA4IEwAAADwAQCdASoQAAsAA4BaJQBdgCIEZiqIwAAA/vIx5FuQq+2O/l2QUBQgLaRhy0xWbkW9AJkJExv28tyu3x1CBfKBXedWnrUmwqXBNAAA"
+    },
+    {
+      "src": "images/kazbegi/hero-2.webp",
+      "credit": "Marcin Konsek",
+      "source": "https://commons.wikimedia.org/wiki/File:2014_Tbilisi,_Widoki_z_Twierdzy_Narikala_(23).jpg",
+      "license": "CC BY-SA 4.0",
+      "width": 1600,
+      "height": 1067,
+      "blurDataURL": "data:image/webp;base64,UklGRlQAAABXRUJQVlA4IEgAAADwAQCdASoQAAsAA4BaJYwC7AEQCbzXiyAA/rH2miu/Bv1H7JAcG2Rsw2LmK06X+vOScLWD0o2KClWIoDp3wzttONrPa6VsAAA="
+    }
+  ],
+  "stay-in": [
+    {
+      "src": "images/tbilisi/stay-in-1.webp",
+      "credit": "Art Anderson",
+      "source": "https://commons.wikimedia.org/wiki/File:Tbilisi_Old_Houses_near_Baths_-_panoramio.jpg",
+      "license": "CC BY-SA 3.0",
+      "width": 1600,
+      "height": 1200,
+      "blurDataURL": "data:image/webp;base64,UklGRmwAAABXRUJQVlA4IGAAAADwAQCdASoQAAwAA4BaJQBOgB4PI0mN3EAA+ky1uXKKkS1EUAxixEe4+Cfjckutn99sXgzX00SW0FFXdOfEXnjXap8xk6+tA+fz5RD8Pp1RWTorwo9MofNKdQ9RKVPuAAA="
+    },
+    {
+      "src": "images/tbilisi/stay-in-2.webp",
+      "credit": "Eka Samkharadze",
+      "source": "https://commons.wikimedia.org/wiki/File:Balcony_of_old_house_in_Tbilisi.jpg",
+      "license": "CC BY-SA 4.0",
+      "width": 1600,
+      "height": 1118,
+      "blurDataURL": "data:image/webp;base64,UklGRmQAAABXRUJQVlA4IFgAAADwAQCdASoQAAsAA4BaJZQC7AELViOXDkAA/qYKnY5aRKLLIOcj8ebb2RxrwSIUeKqY1H7dbJPKvbBWgoi6/in/U/C5/13IqBYa5dpOZE11zvkr7d6EOAAA"
+    }
+  ],
+  "region-tbilisi": [
+    {
+      "src": "images/tbilisi/region-tbilisi-1.webp",
+      "credit": "shankar s. from Dubai, united arab emirates",
+      "source": "https://commons.wikimedia.org/wiki/File:Looking_out_towards_the_Mother_of_Georgia_statue_(29707092441).jpg",
+      "license": "CC BY 2.0",
+      "width": 1600,
+      "height": 1067,
+      "blurDataURL": "data:image/webp;base64,UklGRm4AAABXRUJQVlA4IGIAAACQAgCdASoQAAsAA4BaJYgCdGuADz0uH5aMyp0OgAD+qh5dIuNXlCdfjPUc+5znElLrA0e5vVeX3e0XcGUHbAsQ2+bmUTGAuWVCPsdTee8GQPO+9cZH3rQc8dDNBAxEgYAAAA=="
+    },
+    {
+      "src": "images/kazbegi/hero-2.webp",
+      "credit": "Marcin Konsek",
+      "source": "https://commons.wikimedia.org/wiki/File:2014_Tbilisi,_Widoki_z_Twierdzy_Narikala_(23).jpg",
+      "license": "CC BY-SA 4.0",
+      "width": 1600,
+      "height": 1067,
+      "blurDataURL": "data:image/webp;base64,UklGRlQAAABXRUJQVlA4IEgAAADwAQCdASoQAAsAA4BaJYwC7AEQCbzXiyAA/rH2miu/Bv1H7JAcG2Rsw2LmK06X+vOScLWD0o2KClWIoDp3wzttONrPa6VsAAA="
+    }
+  ],
+  "region-kutaisi": [
+    {
+      "src": "images/west/region-kutaisi-1.webp",
+      "credit": "Marcin Konsek",
+      "source": "https://commons.wikimedia.org/wiki/File:2014_Kutaisi,_Katedra_Bagrati_(25).jpg",
+      "license": "CC BY-SA 4.0",
+      "width": 1600,
+      "height": 1118,
+      "blurDataURL": "data:image/webp;base64,UklGRmIAAABXRUJQVlA4IFYAAABQAgCdASoQAAsAA4BaJagCdAYt9NCXkwlOvMAA/rn1DNuvfp555E/4r4vy5CHMCoK3FkFdjHy0Za5pSJ8DqW7w/iBiccHnxaT5UJuslc65sFjTmMwAAA=="
+    }
+  ],
+  "region-airport": [
+    {
+      "src": "images/tbilisi/region-airport-1.webp",
+      "credit": "Otpusk.ru",
+      "source": "https://commons.wikimedia.org/wiki/File:Tbilisi_Airport,_Georgia_-_panoramio.jpg",
+      "license": "CC BY-SA 3.0",
+      "width": 1600,
+      "height": 1195,
+      "blurDataURL": "data:image/webp;base64,UklGRmQAAABXRUJQVlA4IFgAAAAQAgCdASoQAAwAA4BaJYwAD4wQPPTWOHsAAP74t+ExQnTJtxGtjnukQggHp3hIMDCFui1jQMUTVqjJ4ixD/e4dKmN0VTpUzmqVGOT1mhQUKQOnmEDTAAAA"
+    }
+  ],
+  "old-tbilisi-walk": [
+    {
+      "src": "images/tbilisi/old-tbilisi-walk-1.webp",
+      "credit": "Diego Delso",
+      "source": "https://commons.wikimedia.org/wiki/File:Narikala,_Tiflis,_Georgia,_2016-09-29,_DD_91.jpg",
+      "license": "CC BY-SA 4.0",
+      "width": 1600,
+      "height": 869,
+      "blurDataURL": "data:image/webp;base64,UklGRloAAABXRUJQVlA4IE4AAAAQAgCdASoQAAkAA4BaJZACdGuAAkjtqcWAAP6yD4zbVj4x276t+UQIGlV6GqbPbhT5j6ih8InftUMyFmtFtK+DMBKAzVaWcfKEMsnUAAA="
+    },
+    {
+      "src": "images/tbilisi/old-tbilisi-walk-2.webp",
+      "credit": "This work is created by George Melashvili. You can redistribute it or modify it under the terms of the terms of Cc-by-sa-3.0 (See below)",
+      "source": "https://commons.wikimedia.org/wiki/File:Narikala_fortress,_Tbilisi,_Georgia.jpg",
+      "license": "CC BY-SA 3.0",
+      "width": 1600,
+      "height": 1066,
+      "blurDataURL": "data:image/webp;base64,UklGRlAAAABXRUJQVlA4IEQAAADQAQCdASoQAAsAA4BaJZwAAcbKJXNaAADfjLgUt+4sdqVCzAiJjGuxHGaZ/3d/c6Gu9GVjsBC0rqE8e6tOWI6DgBcAAA=="
+    },
+    {
+      "src": "images/tbilisi/old-tbilisi-walk-3.webp",
+      "credit": "Marcin Konsek",
+      "source": "https://commons.wikimedia.org/wiki/File:2014_Tbilisi,_Widoki_z_Twierdzy_Narikala_(41).jpg",
+      "license": "CC BY-SA 4.0",
+      "width": 1600,
+      "height": 1057,
+      "blurDataURL": "data:image/webp;base64,UklGRmAAAABXRUJQVlA4IFQAAADwAQCdASoQAAsAA4BaJYgCdAEOI2/xbQAA8UfWdGFXQZ/+GRksq2LWujZNHDDpH3D2+wStSkjgk5XBQ1u74sK08WOM4+ZJQ9QtnWcjqhd/QvK2+AA="
+    }
+  ],
+  "sulfur-baths": [
+    {
+      "src": "images/tbilisi/sulfur-baths-1.webp",
+      "credit": "Wowan1978",
+      "source": "https://commons.wikimedia.org/wiki/File:Roofs_of_the_sulfur_baths_in_Tbilisi.jpg",
+      "license": "CC BY-SA 4.0",
+      "width": 1600,
+      "height": 1067,
+      "blurDataURL": "data:image/webp;base64,UklGRlwAAABXRUJQVlA4IFAAAACQAQCdASoQAAsAA4BaJZQAAsyN6AAA/mnHhDAccynIwm3fO9s1dKf+oPprtKQ62o5pZRghnaR0Tdt6w4PoJGPRJYd325SoL8PsJMeqbNAAAA=="
+    },
+    {
+      "src": "images/tbilisi/sulfur-baths-2.webp",
+      "credit": "Marcin Konsek",
+      "source": "https://commons.wikimedia.org/wiki/File:2014_Tbilisi,_%C5%81a%C5%BAnie_siarkowe_w_Abanotubani_(24).jpg",
+      "license": "CC BY-SA 4.0",
+      "width": 1600,
+      "height": 1067,
+      "blurDataURL": "data:image/webp;base64,UklGRlwAAABXRUJQVlA4IFAAAAAwAgCdASoQAAsAA4BaJQBOgCPwG1CTiGDkAAD+YVEXEDCcvipRtMtmigjQx53g2azRxn1lNGPtbY+YV2Woej1NCsDw+BBxSJU4i5tMS4AAAA=="
+    }
+  ],
+  "tbilisi-sea-chronicles": [
+    {
+      "src": "images/tbilisi-sea/tbilisi-sea-chronicles-1.webp",
+      "credit": "MSO (Tagzania user ID: 3984)",
+      "source": "https://commons.wikimedia.org/wiki/File:Georgiaren_Kronikak_(Tbilisi)_-_The_Chronicle_of_Georgia_-_Tagzania_-_1775459624045.jpg",
+      "license": "CC BY-SA 4.0",
+      "width": 1500,
+      "height": 2000,
+      "blurDataURL": "data:image/webp;base64,UklGRoYAAABXRUJQVlA4IHoAAADQAwCdASoQABUAPu1iqU2ppaOiMAgBMB2JbACdABbhbkwxypQSArAA0n1P3JzJz3ZS03IDx1K/WvQdgS6UYL5HQasLTuF53uUbs+NtxSydka7Y/s4K+hG3BBtdKnH5WASO0TlcFQx7MZ/eCeSl/+D3qE+vGaBDvAAAAA=="
+    },
+    {
+      "src": "images/tbilisi-sea/tbilisi-sea-chronicles-2.webp",
+      "credit": "MSO (Tagzania user ID: 3984)",
+      "source": "https://commons.wikimedia.org/wiki/File:Georgiaren_Kronikak_(Tbilisi)_-_The_Chronicle_of_Georgia_-_Tagzania_-_1775459623441.jpg",
+      "license": "CC BY-SA 4.0",
+      "width": 1500,
+      "height": 2000,
+      "blurDataURL": "data:image/webp;base64,UklGRoYAAABXRUJQVlA4IHoAAACwAwCdASoQABUAPu1iqU2ppaOiMAgBMB2JZAAATq+I7365M8EqwAD2n1IGX1gtVSghtot7vxvlO9TPWia1mSJV6BtTE4t1emnooQ1lzHpUOJ35SzV83f6k1hAf3q/uMgaUf2gfgJ6EhNlhjRPz6AcmNw0ZicKtdDAAAA=="
+    }
+  ],
+  "offroad-karting": [
+    {
+      "src": "images/tbilisi-sea/offroad-karting-1.webp",
+      "credit": "Tiia Monto",
+      "source": "https://commons.wikimedia.org/wiki/File:Tbilisi_sea_-_view.jpg",
+      "license": "CC BY-SA 3.0",
+      "width": 1600,
+      "height": 383,
+      "blurDataURL": "data:image/webp;base64,UklGRk4AAABXRUJQVlA4IEIAAAAQAgCdASoQAAQAA4BaJQBOj+ACyy1x+5AAAMlIAM7Olfyyf8fEu2tCaxFkcMdFwIMY24lj8w3prkpE1YZpyNLAAAA="
+    }
+  ],
+  "mtskheta-jvari": [
+    {
+      "src": "images/mtskheta/mtskheta-jvari-1.webp",
+      "credit": "Alexxx1979",
+      "source": "https://commons.wikimedia.org/wiki/File:Georgia_Jvari_monastery_IMG_9345_2070.jpg",
+      "license": "CC BY-SA 4.0",
+      "width": 1600,
+      "height": 1067,
+      "blurDataURL": "data:image/webp;base64,UklGRloAAABXRUJQVlA4IE4AAAAQAgCdASoQAAsAA4BaJZACdAD0suHiMrdAAP7yEApDVktrcynRSpKEPVrle+mXkKbaHlDCPNX4Hm4olWxzcWOcEHd0Uz9I2vxKmlmAAAA="
+    },
+    {
+      "src": "images/mtskheta/mtskheta-jvari-2.webp",
+      "credit": "Bernard Gagnon",
+      "source": "https://commons.wikimedia.org/wiki/File:Jvari_Monastery_01.jpg",
+      "license": "CC BY 4.0",
+      "width": 1600,
+      "height": 1067,
+      "blurDataURL": "data:image/webp;base64,UklGRl4AAABXRUJQVlA4IFIAAAAwAgCdASoQAAsAA4BaJbACdAYuluAE8gsMgAD+83UyYjBZptV03Qo6Sw0tDZsDOl+oGROlneHIcrOodiU7UuiTtYOGYm2aubzS1OdyeZHSIAAA"
+    }
+  ],
+  "uplistsikhe": [
+    {
+      "src": "images/uplistsikhe/uplistsikhe-1.webp",
+      "credit": "This Photo was taken by Supanut Arunoprayote. Feel free to use any of my images, but please mention me as the author and may send me a message. (สามารถใช้ภาพได้อิสระ แต่กรุณาใส่เครดิตผู้ถ่ายและอาจส่งข้อความบอกกล่าวด้วย) Please do not upload an updated image here without consultation with the Author. The author would like to make corrections only at his own source. This ensures that the changes are preserved.Please if you think that any changes should be required, please inform the author.Otherwise you can upload a new image with a new name. Please use one of the templates derivative or extract.",
+      "source": "https://commons.wikimedia.org/wiki/File:Middle_ages_Basilica_on_the_top_of_the_cave,_Uplistsikhe_20230920_(II).jpg",
+      "license": "CC BY 4.0",
+      "width": 1600,
+      "height": 1067,
+      "blurDataURL": "data:image/webp;base64,UklGRngAAABXRUJQVlA4IGwAAAAwAgCdASoQAAsAA4BaJbACdAYtpsXs8O4IgAD+x4MGIZuTGp7suTkR75tw44sVnlRSvHlzWIyGqvRn1LCMddpgZCpuYjXliE2f9BgRa7EFUyinINpcIm++jq2ucN3B2spm9GAonr2tR1oIAAA="
+    },
+    {
+      "src": "images/uplistsikhe/uplistsikhe-2.webp",
+      "credit": "This Photo was taken by Supanut Arunoprayote. Feel free to use any of my images, but please mention me as the author and may send me a message. (สามารถใช้ภาพได้อิสระ แต่กรุณาใส่เครดิตผู้ถ่ายและอาจส่งข้อความบอกกล่าวด้วย) Please do not upload an updated image here without consultation with the Author. The author would like to make corrections only at his own source. This ensures that the changes are preserved.Please if you think that any changes should be required, please inform the author.Otherwise you can upload a new image with a new name. Please use one of the templates derivative or extract.",
+      "source": "https://commons.wikimedia.org/wiki/File:Ancient_cave_in_Uplistsikhe_20230920.jpg",
+      "license": "CC BY 4.0",
+      "width": 1600,
+      "height": 1067,
+      "blurDataURL": "data:image/webp;base64,UklGRnQAAABXRUJQVlA4IGgAAACQAgCdASoQAAsAA4BaJaACdGuAD0UQdFfVx2SxYAD+ajtli1WwLUUh3nzJUPP0V4N0c0Z5Fm9QYuy2Fhfl5O+ndksawSvb6+OgUqRVUs2c1nCsm7qg31AFQnRphTGwIEhkOy0Qj2z8AA=="
+    }
+  ],
+  "gudauri-ski": [
+    {
+      "src": "images/gudauri/gudauri-ski-1.webp",
+      "credit": "Alexey Okhrimenko alexeyok",
+      "source": "https://commons.wikimedia.org/wiki/File:Gudauri_Ski_Resort,_Gudauri,_Georgia_(Unsplash).jpg",
+      "license": "CC0",
+      "width": 1600,
+      "height": 822,
+      "blurDataURL": "data:image/webp;base64,UklGRkoAAABXRUJQVlA4ID4AAADQAQCdASoQAAgAA4BaJYwCdAEC9P29yAD9/LaBNrFMBMcVHXm7I/6cUuG+S0uW69wg+vce8eLuhMxovQgAAA=="
+    },
+    {
+      "src": "images/gudauri/gudauri-ski-2.webp",
+      "credit": "Vladimer Shioshvili",
+      "source": "https://commons.wikimedia.org/wiki/File:Snowcap_in_Gudauri_(1).jpg",
+      "license": "CC BY-SA 2.0",
+      "width": 1600,
+      "height": 1200,
+      "blurDataURL": "data:image/webp;base64,UklGRkYAAABXRUJQVlA4IDoAAADQAQCdASoQAAwAA4BaJZgCdAEflOT0UAD+yJN3JjknuOTpffvSY0+TdYfYOOkwgKAiqhi9MtG97QAA"
+    }
+  ],
+  "gudauri-paragliding": [
+    {
+      "src": "images/gudauri/gudauri-paragliding-1.webp",
+      "credit": "Mykhaylo Aleksyeyenko",
+      "source": "https://commons.wikimedia.org/wiki/File:Flygudauri_wiki.jpg",
+      "license": "CC BY-SA 3.0",
+      "width": 1600,
+      "height": 1071,
+      "blurDataURL": "data:image/webp;base64,UklGRkoAAABXRUJQVlA4ID4AAACwAQCdASoQAAsAA4BaJQBOgCDFZbgAAOGryZa1Zox7XvczYxI8ci1WhtRMvfXo/dmImBvOrcNbEL/2m0/AAA=="
+    },
+    {
+      "src": "images/gudauri/gudauri-paragliding-2.webp",
+      "credit": "Андрей Бобровский",
+      "source": "https://commons.wikimedia.org/wiki/File:%D0%93%D1%83%D0%B4%D0%B0%D1%83%D1%80%D0%B8_-_panoramio_(25).jpg",
+      "license": "CC BY 3.0",
+      "width": 1600,
+      "height": 1068,
+      "blurDataURL": "data:image/webp;base64,UklGRkgAAABXRUJQVlA4IDwAAAAQAgCdASoQAAsAA4BaJYwCdAEPEGY3gLIAAP7qhceURSyNq3uS6g3y2rjMn2ETs1DOj8bVlGEggIrq1gA="
+    },
+    {
+      "src": "images/gudauri/gudauri-paragliding-3.webp",
+      "credit": "Skyatlantid",
+      "source": "https://commons.wikimedia.org/wiki/File:Aerobatic_Paragliding_in_winter_Gudauri_Georgia_with_SkyAtlantida_Team_(1.webp",
+      "license": "CC BY-SA 4.0",
+      "width": 1600,
+      "height": 1200,
+      "blurDataURL": "data:image/webp;base64,UklGRnAAAABXRUJQVlA4IGQAAADwAQCdASoQAAwAA4BaJQBOgB5z93Z5oAAA/iWA2Zf/8ycY2r+xWmsmhrHyv5d0s7tP2Lwb0Dq8JLZGDCXqULKDCoEbrm//lLY4XhXAVwaBWmfT4NGa8+nqL4UJffNIq2A7+AAA"
+    }
+  ],
+  "kazbegi-gergeti": [
+    {
+      "src": "images/kazbegi/kazbegi-gergeti-1.webp",
+      "credit": "Adam Jones from Kelowna, BC, Canada",
+      "source": "https://commons.wikimedia.org/wiki/File:Gergeti_Trinity_Church_with_Mountain_Backdrop_-_Outside_Kazbegi_-_Georgia_-_02_(18402439269)_(2).jpg",
+      "license": "CC BY-SA 2.0",
+      "width": 1600,
+      "height": 1200,
+      "blurDataURL": "data:image/webp;base64,UklGRl4AAABXRUJQVlA4IFIAAAAQAgCdASoQAAwAA4BaJbACdAEDxR/Bn+QAAP6epTsZ8ORIj95iCIorW0qZ2N0UYXdPFGeEqg/ypFPxh+d051Qucltij3zDWun6IJhod5xBNEAA"
+    },
+    {
+      "src": "images/kazbegi/hero-1.webp",
+      "credit": "Bernard Gagnon",
+      "source": "https://commons.wikimedia.org/wiki/File:Gergeti_Trinity_Church_01.jpg",
+      "license": "CC BY 4.0",
+      "width": 1600,
+      "height": 1067,
+      "blurDataURL": "data:image/webp;base64,UklGRlgAAABXRUJQVlA4IEwAAADwAQCdASoQAAsAA4BaJQBdgCIEZiqIwAAA/vIx5FuQq+2O/l2QUBQgLaRhy0xWbkW9AJkJExv28tyu3x1CBfKBXedWnrUmwqXBNAAA"
+    },
+    {
+      "src": "images/kazbegi/kazbegi-gergeti-3.webp",
+      "credit": "shankar s. from Dubai, united arab emirates",
+      "source": "https://commons.wikimedia.org/wiki/File:Zemo_Mleta,_2016_(2).jpg",
+      "license": "CC BY 2.0",
+      "width": 1600,
+      "height": 1067,
+      "blurDataURL": "data:image/webp;base64,UklGRlQAAABXRUJQVlA4IEgAAADwAQCdASoQAAsAA4BaJQBOgCHv1K33gAAA/rI+7E5E4/OQc5WlKXqcXHfbsW20hbosrFXjSkqa0MJOH+K2ff3oA6Y0A7bgAAA="
+    }
+  ],
+  "sighnaghi-kakheti": [
+    {
+      "src": "images/kakheti/sighnaghi-kakheti-1.webp",
+      "credit": "George Nikoladze",
+      "source": "https://commons.wikimedia.org/wiki/File:Sighnagi_2009.jpg",
+      "license": "Public domain",
+      "width": 1600,
+      "height": 1032,
+      "blurDataURL": "data:image/webp;base64,UklGRmQAAABXRUJQVlA4IFgAAAAQAgCdASoQAAoAA4BaJQBOgCKmAuQNDZa4AP6EEI8DYD1nMWTS39nc0LTM2C+wjIDpajkrMa+Q8Yeiea2sQ2h9NgsiXi2OhO5Hcxv5th/BZuOO62GdAAAA"
+    },
+    {
+      "src": "images/kakheti/sighnaghi-kakheti-2.webp",
+      "credit": "Alexxx1979",
+      "source": "https://commons.wikimedia.org/wiki/File:Sighnaghi_IMG_9071_1920.jpg",
+      "license": "CC BY-SA 4.0",
+      "width": 1600,
+      "height": 1067,
+      "blurDataURL": "data:image/webp;base64,UklGRmAAAABXRUJQVlA4IFQAAAAQAgCdASoQAAsAA4BaJbACdAEUqdtmGanAAP6beye1XdBAzKJrH2jNQsPDZZm7lAK58vilQ3gXEJuA+94cEOMoFlwC6u5WN6NN6sADMbEC9ppYAAA="
+    }
+  ],
+  "martvili-canyon": [
+    {
+      "src": "images/west/martvili-canyon-1.webp",
+      "credit": "Jami430",
+      "source": "https://commons.wikimedia.org/wiki/File:Martvili_Canyon_Natural_Monument_June_2017.jpg",
+      "license": "CC BY-SA 4.0",
+      "width": 1600,
+      "height": 1067,
+      "blurDataURL": "data:image/webp;base64,UklGRmYAAABXRUJQVlA4IFoAAADQAQCdASoQAAsAA4BaJZgCdACeCk7rAAD+3U22oQtmZEMdq2RiR5byxTJuORPiMwglMm5vTwCBWgVAVF0WZffi1IxjB0nhYp2PW7snEGwqeCWoo72PBfjYAAA="
+    },
+    {
+      "src": "images/west/martvili-canyon-2.webp",
+      "credit": "Iscream icecream",
+      "source": "https://commons.wikimedia.org/wiki/File:Martvili_Canyon_ca%C3%ADda.jpg",
+      "license": "CC0",
+      "width": 1500,
+      "height": 2000,
+      "blurDataURL": "data:image/webp;base64,UklGRpgAAABXRUJQVlA4IIwAAAAQBACdASoQABUAPu1iqU2ppaOiMAgBMB2JQBdmUAA1piykV0yliv+UAAD+zxi+aliTwWcSQQ/IjeC28LeMpGI0tK0RC2qjKf1tHZO5wCrNOUKICkLpIc9xI2uiyR63LfbyfWsBpSkYjanBnT874s9aFeqs8n2dntgQ3zcXo8WDnHSXNdaUllHTOKgAAA=="
+    }
+  ],
+  "gomis-mta": [
+    {
+      "src": "images/west/gomis-mta-1.webp",
+      "credit": "Vitaly Zdanevich",
+      "source": "https://commons.wikimedia.org/wiki/File:Gomismta--clouds-without-people4.jpg",
+      "license": "CC BY-SA 4.0",
+      "width": 1600,
+      "height": 1200,
+      "blurDataURL": "data:image/webp;base64,UklGRkIAAABXRUJQVlA4IDYAAADwAQCdASoQAAwAA4BaJQBdgCHhZZj4AAAA/pFDP5925CkJI3Cbuc7td4TD0pal63TKmZzoAAA="
+    },
+    {
+      "src": "images/west/gomis-mta-2.webp",
+      "credit": "Vitaly Zdanevich",
+      "source": "https://commons.wikimedia.org/wiki/File:Gomismta--clouds2.jpg",
+      "license": "CC BY-SA 4.0",
+      "width": 1125,
+      "height": 2000,
+      "blurDataURL": "data:image/webp;base64,UklGRnwAAABXRUJQVlA4IHAAAAAwBACdASoQABwAPu1kqU2ppaOiMAgBMB2JQBbZDSv3HvY6nh/vc7ZDnAAA/vgImge2DUdKx+LMrP5tnq2JH6wuL23/bWkKBeANcjUZroHBB7gkhwhqiodaJ0PqNz5+go6S1PYtBDMqj05qL65+BQAA"
+    },
+    {
+      "src": "images/west/gomis-mta-3.webp",
+      "credit": "Lorenz King, university Giessen.de",
+      "source": "https://commons.wikimedia.org/wiki/File:Gomismta_and_the_Lesser_Caucasus_mountains.jpg",
+      "license": "CC BY-SA 4.0",
+      "width": 1600,
+      "height": 940,
+      "blurDataURL": "data:image/webp;base64,UklGRk4AAABXRUJQVlA4IEIAAAAwAgCdASoQAAkAA4BaJYgCdEf/gbijDGtqYAD+86WrbF/5EtbbYV2DwM3XnIt1Z7oRVtqYuyX8PyIARdP72DGgAAA="
+    }
+  ],
+  "tbilisi-food-crawl": [
+    {
+      "src": "images/food/tbilisi-food-crawl-1.webp",
+      "credit": "Francesc Fort",
+      "source": "https://commons.wikimedia.org/wiki/File:Khinkali_-_Batumi.jpg",
+      "license": "CC BY-SA 4.0",
+      "width": 1600,
+      "height": 1202,
+      "blurDataURL": "data:image/webp;base64,UklGRnoAAABXRUJQVlA4IG4AAADwAQCdASoQAAwAA4BaJZwAD4luhrKzU7AA/k9JqNaBar3pJNkv1HWGGomBlJqm9xpz3U83TIAr1nG58Od/svDG8D6Y6Mn7MY0lABDI3Ag9xPX3+Bws2eg8G51u+cPGkBfI4MyICqYiVedJyfAAAA=="
+    },
+    {
+      "src": "images/food/tbilisi-food-crawl-2.webp",
+      "credit": "Vyacheslav Argenberg",
+      "source": "https://commons.wikimedia.org/wiki/File:Tbilisi,_Khachapuri_and_khinkali,_Georgian_traditional_food,_Georgia.jpg",
+      "license": "CC BY 4.0",
+      "width": 1600,
+      "height": 1063,
+      "blurDataURL": "data:image/webp;base64,UklGRmAAAABXRUJQVlA4IFQAAABQAgCdASoQAAsAA4BaJZACdAYpbv7ziuurWAAA/ulzdJNmtnt9MiaaLkihVmFRKCzbo1zCsHCQXP8ak9GPjFdagO92cqR0f8TFhouGQwvjebdgAAA="
+    }
+  ],
+  "khinkali-class": [
+    {
+      "src": "images/food/khinkali-class-1.webp",
+      "credit": "Sandra C from Canada",
+      "source": "https://commons.wikimedia.org/wiki/File:Khinkali,_Restaurant_Aragvi.jpg",
+      "license": "CC BY-SA 2.0",
+      "width": 1600,
+      "height": 1067,
+      "blurDataURL": "data:image/webp;base64,UklGRnAAAABXRUJQVlA4IGQAAADwAQCdASoQAAsAA4BaJYgCdAD0tMAOqOgA/GEK0RJWYm3o1pr2QvJngQOA6q/MqSXcC8YuWFswLgybPID3OR5zTeYxwPGK2ujNUsu7ZKVRwulXMPMZzMesvzAKkbQ9ouwPQAAA"
+    },
+    {
+      "src": "images/food/khinkali-class-2.webp",
+      "credit": "Francesc Fort",
+      "source": "https://commons.wikimedia.org/wiki/File:Khinkali_-_Batumi_Val%C3%A8ncia.jpg",
+      "license": "CC BY-SA 4.0",
+      "width": 1600,
+      "height": 1202,
+      "blurDataURL": "data:image/webp;base64,UklGRnAAAABXRUJQVlA4IGQAAAAQAgCdASoQAAwAA4BaJZQC7AYs3OC8QrjgAP7d4as3bOJ0w/8lg5Y6flztz/L81CA9FqL59o3OUqJXURskCXVj4IKXQdNh/UsR1+GOXiilbp8f/nC3XHuJPSNMtbB2iy9OwAAA"
+    }
+  ],
+  "dry-bridge-market": [
+    {
+      "src": "images/tbilisi/dry-bridge-market-1.webp",
+      "credit": "Alexkom000",
+      "source": "https://commons.wikimedia.org/wiki/File:2025-03-30_Dry_Bridge_Market,_Tbilisi_5.jpg",
+      "license": "CC BY 4.0",
+      "width": 1600,
+      "height": 1067,
+      "blurDataURL": "data:image/webp;base64,UklGRl4AAABXRUJQVlA4IFIAAAAwAgCdASoQAAsAA4BaJZQC7AEDH25HOLXrsAD+qhHxkGzsw6a3ECcZuXnahN+LLjYA5eQLGJn/g7MopzLqB71pmf3+pKbMDs8SEa/I8RJUDAAA"
+    },
+    {
+      "src": "images/tbilisi/dry-bridge-market-2.webp",
+      "credit": "Alexkom000",
+      "source": "https://commons.wikimedia.org/wiki/File:2025-04-19_Dry_Bridge_Market,_Tbilisi_2.jpg",
+      "license": "CC BY 4.0",
+      "width": 1600,
+      "height": 1067,
+      "blurDataURL": "data:image/webp;base64,UklGRmwAAABXRUJQVlA4IGAAAADwAQCdASoQAAsAA4BaJYgCdADal1KODAAA/njdnrlsHujkzMDzpvNLf0NnKAw/z8SB3NfESn23RQj14Rftgu0gtnSS/R2mZnXpjKjxWRngw9jQHYNsvJYU1lYpjvEAAAA="
+    }
+  ],
+  "mtatsminda-park": [
+    {
+      "src": "images/tbilisi/mtatsminda-park-1.webp",
+      "credit": "Jonathan Cardy",
+      "source": "https://commons.wikimedia.org/wiki/File:Mtatsminda_park_January_2013_12.jpg",
+      "license": "CC BY-SA 3.0",
+      "width": 1600,
+      "height": 1067,
+      "blurDataURL": "data:image/webp;base64,UklGRkAAAABXRUJQVlA4IDQAAADQAQCdASoQAAsAA4BaJZwAAvaJip87AAD+06/MC7FKtTf143ptGv5aeNJiLdylNDhnCAAA"
+    },
+    {
+      "src": "images/tbilisi/mtatsminda-park-2.webp",
+      "credit": "Jonathan Cardy",
+      "source": "https://commons.wikimedia.org/wiki/File:Mtatsminda_park_January_2013_23.jpg",
+      "license": "CC BY-SA 3.0",
+      "width": 1600,
+      "height": 1067,
+      "blurDataURL": "data:image/webp;base64,UklGRmYAAABXRUJQVlA4IFoAAADQAQCdASoQAAsAA4BaJZwAD4tLCCV4AADiftGuaixbHP1Qyi2pAwIHLEVhii8VMF7LUoJ8OhAljnVT99Z7+0p1slpgMYziA++1f/toRRQPDaiRSSJheygUKAA="
+    }
+  ],
+  "bassiani": [
+    {
+      "src": "images/night/bassiani-1.webp",
+      "credit": "Jgarkokolia",
+      "source": "https://commons.wikimedia.org/wiki/File:Geo-Esp_11.09.12.jpg",
+      "license": "CC BY-SA 3.0",
+      "width": 1600,
+      "height": 1128,
+      "blurDataURL": "data:image/webp;base64,UklGRk4AAABXRUJQVlA4IEIAAACwAQCdASoQAAsAA4BaJbAAAuWnl1eAAP75vj1m3kGjOJEZlZAqLdkV2AawrY0kNXgLs8QNUJokueBg/4/9eMAAAAA="
+    }
+  ],
+  "left-bank": [
+    {
+      "src": "images/night/left-bank-1.webp",
+      "credit": "Vyacheslav Argenberg",
+      "source": "https://commons.wikimedia.org/wiki/File:Tbilisi_at_night,_Kura,_Georgia.jpg",
+      "license": "CC BY 4.0",
+      "width": 1600,
+      "height": 1063,
+      "blurDataURL": "data:image/webp;base64,UklGRl4AAABXRUJQVlA4IFIAAADQAQCdASoQAAsAA4BaJQBOgCHv0SVh9AD+9H/Y6uRcKgtKOTDviz0UP0wpx1rZ3UlCFd2PYd6oTlHEkF67sc43/AAqJkhyc0TFGdcdozP6AAAA"
+    }
+  ],
+  "fabrika-night": [
+    {
+      "src": "images/night/fabrika-night-1.webp",
+      "credit": "Alf Altendorf",
+      "source": "https://commons.wikimedia.org/wiki/File:Fabrika_Tbilisi,_an_urban_culture_hub_in_the_capital_of_Georgia.jpg",
+      "license": "CC BY-SA 2.0",
+      "width": 1600,
+      "height": 1200,
+      "blurDataURL": "data:image/webp;base64,UklGRmAAAABXRUJQVlA4IFQAAAAwAgCdASoQAAwAA4BaJQBOgCPST/5dfjGgEAD+3enDpFfxHs+44rz/Hka0zsNXMWSQ7AmyarZP6VE2X2eaT7MbRNd4jH+nr8aDnGGmJ7lClud17AA="
+    },
+    {
+      "src": "images/night/fabrika-night-2.webp",
+      "credit": "Vitaly Zdanevich",
+      "source": "https://commons.wikimedia.org/wiki/File:Tbilisi,_Fabrika_2023-07-21_22-14-39.jpg",
+      "license": "CC BY 4.0",
+      "width": 1125,
+      "height": 2000,
+      "blurDataURL": "data:image/webp;base64,UklGRooAAABXRUJQVlA4IH4AAAAwBACdASoQABwAPu1kqk4ppaQiMAgBMB2JQBdgDSvwMEIO/I2L4oJAQAAA/v5KbWR0eFUfFzWLJJXS1wS2LTVEyapuITZjEGD9nIecHL9fzwGK1KDKR6PCAPnW1Xe3RHcuUqWKcVHk2SoD5oICM58jcwzIPfiEwblLkxggAAA="
+    }
+  ],
+  "pub-golf-tbilisi": [
+    {
+      "src": "images/night/pub-golf-tbilisi-1.webp",
+      "credit": "Kober",
+      "source": "https://commons.wikimedia.org/wiki/File:Chardin_Street,_Tbilisi.JPG",
+      "license": "Public domain",
+      "width": 1500,
+      "height": 2000,
+      "blurDataURL": "data:image/webp;base64,UklGRoAAAABXRUJQVlA4IHQAAAAQBACdASoQABUAPu1iqU2ppaOiMAgBMB2JZgCdL46BM3S2KVsA6RGTCAD+cbR9QOIoJe10I18afhEDiktjmRsOzHWIv76tuPLQ1GQnLW25us+aXYZtsUeaFylUek3nqY+q/eE+Z7Urpn6LmF+RnOn74SEAAA=="
+    },
+    {
+      "src": "images/night/pub-golf-tbilisi-2.webp",
+      "credit": "rugbyxm",
+      "source": "https://commons.wikimedia.org/wiki/File:Tbilisi_(21).jpg",
+      "license": "CC BY 2.0",
+      "width": 1600,
+      "height": 1200,
+      "blurDataURL": "data:image/webp;base64,UklGRmYAAABXRUJQVlA4IFoAAADwAQCdASoQAAwAA4BaJZQAD5Gr2OlxWEAA++wXjL5xH7+qtYAUEoYDUQ/rfkxq4mQ7q6d445ji/8mo660v0woWSqDEQC9/bRKCeex4HV4oMzK8NvrjoPzgAAA="
+    }
+  ],
+  "supra-dinner": [
+    {
+      "src": "images/food/supra-dinner-1.webp",
+      "credit": "rugbyxm",
+      "source": "https://commons.wikimedia.org/wiki/File:Georgian_Feast_(7).jpg",
+      "license": "CC BY 2.0",
+      "width": 1600,
+      "height": 1200,
+      "blurDataURL": "data:image/webp;base64,UklGRnAAAABXRUJQVlA4IGQAAABQAgCdASoQAAwAA4BaJYgC7AYubjYsH4rwr4AA/vWenmu2zYKQu/tRxF7yeMHfOyyDlHo3VXB2zcTDhZZ28SSrD8YnffJeSkj1SPCrvrcR6jLztRGouVvFrq5EvCCKiohRdAAA"
+    },
+    {
+      "src": "images/food/supra-dinner-2.webp",
+      "credit": "rugbyxm",
+      "source": "https://commons.wikimedia.org/wiki/File:Georgian_Feast.jpg",
+      "license": "CC BY 2.0",
+      "width": 1600,
+      "height": 1200,
+      "blurDataURL": "data:image/webp;base64,UklGRnYAAABXRUJQVlA4IGoAAACQAgCdASoQAAwAA4BaJQBOj+AQWJi6/iSUpYhAAAD9PHpkyfnD052nHVtX3GcTnBEP6H2xVKqKiXHaSxdcAmW4wfS7nbRW66rhf191JAeZOrWqTPQ6wB6PiCK47c/B8t8PAqR+8IUDaAAA"
+    }
+  ],
+  "funicular-dinner": [
+    {
+      "src": "images/night/funicular-dinner-1.webp",
+      "credit": "Alexey Komarov",
+      "source": "https://commons.wikimedia.org/wiki/File:2023-10-23_Tbilisi_at_night.jpg",
+      "license": "CC BY-SA 4.0",
+      "width": 1600,
+      "height": 1067,
+      "blurDataURL": "data:image/webp;base64,UklGRkQAAABXRUJQVlA4IDgAAADQAQCdASoQAAsAA4BaJZQAAueF20KvQAD+6/Qsrb6WZd3B3iwSbFi5JrxlqbH95x/aswaQFCtEAA=="
+    },
+    {
+      "src": "images/night/funicular-dinner-2.webp",
+      "credit": "mcfarlandmo",
+      "source": "https://commons.wikimedia.org/wiki/File:View_of_Tbilisi._August_2022_02.jpg",
+      "license": "CC BY 2.0",
+      "width": 1600,
+      "height": 1200,
+      "blurDataURL": "data:image/webp;base64,UklGRkwAAABXRUJQVlA4IEAAAADwAQCdASoQAAwAA4BaJQAAXO/O2wBnWAAA/vd6An8CeoH7bHWkkeIW479son6TedIVNeiW1czJb6I58ZdgQAAA"
+    }
+  ],
+  "opera-ballet": [
+    {
+      "src": "images/tbilisi/opera-ballet-1.webp",
+      "credit": "Francisco Anzola",
+      "source": "https://commons.wikimedia.org/wiki/File:National_Opera_House._Tbilisi,_Georgia.jpg",
+      "license": "CC BY 2.0",
+      "width": 1600,
+      "height": 1090,
+      "blurDataURL": "data:image/webp;base64,UklGRmwAAABXRUJQVlA4IGAAAABQAgCdASoQAAsAA4BaJYwCdH8AFe/xv35/yaAA/pw1yMd2yGZp1x4LI7t2W7PJuIgo2H0K9w9iQkU1sg0u69p19vuG7QqfJCYCsk8y/XUcgy/4XnR3BDF1ckcxetACYAA="
+    },
+    {
+      "src": "images/tbilisi/opera-ballet-2.webp",
+      "credit": "Eka Samkharadze",
+      "source": "https://commons.wikimedia.org/wiki/File:Georgian_National_Opera_Theater._Stage.jpg",
+      "license": "CC BY-SA 4.0",
+      "width": 1542,
+      "height": 1714,
+      "blurDataURL": "data:image/webp;base64,UklGRnwAAABXRUJQVlA4IHAAAAAwBACdASoQABIAPu1iqU2ppaOiMAgBMB2JYgCdMoADK+UzPef9T4ae/gAAyx7btKtL/GN/YC4BpXrujpspbkyeQs52ix4aE+Bw4kAPb2ro3bg0mAdE4NPWedV7yYdcqfMlQLXDXEoKRE9QGkC2gAAA"
+    }
+  ],
+  "new-year-market": [
+    {
+      "src": "images/night/new-year-market-1.webp",
+      "credit": "Mygeorgianguide",
+      "source": "https://commons.wikimedia.org/wiki/File:Tbilisi_festive_decoration.jpg",
+      "license": "CC BY-SA 4.0",
+      "width": 1600,
+      "height": 1067,
+      "blurDataURL": "data:image/webp;base64,UklGRmgAAABXRUJQVlA4IFwAAADwAQCdASoQAAsAA4BaJZgCdAENhBElCsAA/vbgtvuERm6XPkva4KOo5D9ke3iaNAAS/iRyykClmP2AqGc2p90t4boOKFxs21SyLfKL6bQtGn87/Dt5G8L9ywAAAA=="
+    },
+    {
+      "src": "images/night/new-year-market-2.webp",
+      "credit": "David Osipov 0000 0005 1802 960X 0009-0005-2713-9242",
+      "source": "https://commons.wikimedia.org/wiki/File:Koba_Abzianidze_Street_with_New_Year_decorations_in_Orkhevi,_Tbilisi_at_dusk.jpg",
+      "license": "CC BY 4.0",
+      "width": 1600,
+      "height": 1198,
+      "blurDataURL": "data:image/webp;base64,UklGRlYAAABXRUJQVlA4IEoAAADwAQCdASoQAAwAA4BaJZQCdAEDH3+T0AAA/uZ6puUc3rqLfumVtsYaqDKeX6Dr1Aeec/OHGB0C2SUIAaofReqB2UJlS2YkGSYAAA=="
+    }
+  ],
+  "wine-cellar-crawl": [
+    {
+      "src": "images/night/wine-cellar-crawl-1.webp",
+      "credit": "MHM55",
+      "source": "https://commons.wikimedia.org/wiki/File:Qvevri-Georgia-UNOG-2016-03.jpg",
+      "license": "CC BY-SA 4.0",
+      "width": 1600,
+      "height": 1067,
+      "blurDataURL": "data:image/webp;base64,UklGRmgAAABXRUJQVlA4IFwAAADwAQCdASoQAAsAA4BaJaACdAD6+efIhWAA/C7foT43lEUp/+3SlB1l0htiRy33whoMgmFWF6jnNQm1KDiKO9S79l3XWfMBBATLySBeTCN7rIoV4d53UvTpkAAAAA=="
+    },
+    {
+      "src": "images/night/wine-cellar-crawl-2.webp",
+      "credit": "Mesashunawines",
+      "source": "https://commons.wikimedia.org/wiki/File:Qvevri_Mesashunawines.jpg",
+      "license": "CC BY-SA 4.0",
+      "width": 1600,
+      "height": 2000,
+      "blurDataURL": "data:image/webp;base64,UklGRqAAAABXRUJQVlA4IJQAAACwBACdASoQABQAPu1iqU2ppaOiMAgBMB2JQBOmUI4ABP/wciwjtY8Zcd2cXLrAAP533I7vwHpTnRWGfVoWhv7yMp1ZuTwMlNi2p74i7Ikb7ea+cQ3R29kwdkqZ/Wh9QsTAetM+Cz5wJ+mZP3l73p8v9CoLI6xT2A0F6z7KhcaEZGQWwh1nqPAo5TXYQ1qiHLTlIAAA"
+    }
+  ],
+  "nye-liberty-square": [
+    {
+      "src": "images/night/nye-liberty-square-1.webp",
+      "credit": "Robot8A",
+      "source": "https://commons.wikimedia.org/wiki/File:New_Year_decorations_at_Liberty_Square,_Tbilisi,_img_1.jpg",
+      "license": "CC BY-SA 4.0",
+      "width": 1600,
+      "height": 1200,
+      "blurDataURL": "data:image/webp;base64,UklGRmYAAABXRUJQVlA4IFoAAAAQAgCdASoQAAwAA4BaJbACdAYuvtNlzpOgAP75E/Ugb/0Lh801NpuXQ49eS06xMqHuo4fC8P5Z1lH0zbndjYvnX4QKkTdL9W13CPlbNOglsKHt9CN9qEGcMAA="
+    },
+    {
+      "src": "images/night/nye-liberty-square-2.webp",
+      "credit": "CivArmy",
+      "source": "https://commons.wikimedia.org/wiki/File:Freedom_Square_at_night,_Tbilisi,_Georgia.jpg",
+      "license": "CC BY 4.0",
+      "width": 1600,
+      "height": 1200,
+      "blurDataURL": "data:image/webp;base64,UklGRmIAAABXRUJQVlA4IFYAAADwAQCdASoQAAwAA4BaJbACdAEPNW/4hQAA/XKM2hN1gti8mvzJrIvVh8Cw8JsdZaJr+zJdYFcFIGzxKnmX7oMCSwb8ftQc3Ge4UHopuLIxshqEbjEAAA=="
+    }
+  ],
+  "nye-mtatsminda-feast": [
+    {
+      "src": "images/night/nye-mtatsminda-feast-1.webp",
+      "credit": "Vyacheslav Argenberg",
+      "source": "https://commons.wikimedia.org/wiki/File:Tbilisi_at_night,_Fireworks_3,_Holiday,_Georgia.jpg",
+      "license": "CC BY 4.0",
+      "width": 1600,
+      "height": 1063,
+      "blurDataURL": "data:image/webp;base64,UklGRlwAAABXRUJQVlA4IFAAAAAQAgCdASoQAAsAA4BaJYgCdAD0sft+WJ0QAP70f18QNnbfL7j0N6a0vN9NhMeFCpS8l8z5Al80iJlEDl2WvK/v78+YnCDevPwuLu9ADTgAAA=="
+    },
+    {
+      "src": "images/night/nye-mtatsminda-feast-2.webp",
+      "credit": "Vyacheslav Argenberg",
+      "source": "https://commons.wikimedia.org/wiki/File:Tbilisi_at_night,_Fireworks_2,_Holiday,_Georgia.jpg",
+      "license": "CC BY 4.0",
+      "width": 1600,
+      "height": 1063,
+      "blurDataURL": "data:image/webp;base64,UklGRloAAABXRUJQVlA4IE4AAAAQAgCdASoQAAsAA4BaJQBOgMXX3zldCcsAAP74TowDgqgqf+y2Ml9XbvYzBVi9MVFwiTtwuhj+XFSHGBPsVrs8YePT4gFsRY3ojmQAAAA="
+    }
+  ],
+  "bowling-east-point": [
+    {
+      "src": "images/tbilisi/bowling-east-point-1.webp",
+      "credit": "יעקב",
+      "source": "https://commons.wikimedia.org/wiki/File:East_point_Tbilisi1902.jpg",
+      "license": "CC0",
+      "width": 1600,
+      "height": 1200,
+      "blurDataURL": "data:image/webp;base64,UklGRloAAABXRUJQVlA4IE4AAADwAQCdASoQAAwAA4BaJYwCdADz+X57q6AA/t8fElVmV7KgbPuE9eSd9UlyozmreUlJG2OEm5/IUrqvQZm6Ul5yqriH5NV7aRbv4o4AAAA="
+    }
+  ],
+  "cable-car-ride": [
+    {
+      "src": "images/tbilisi/cable-car-ride-1.webp",
+      "credit": "Vyacheslav Argenberg",
+      "source": "https://commons.wikimedia.org/wiki/File:Tbilisi,_Aerial_tramway,_Georgia.jpg",
+      "license": "CC BY 4.0",
+      "width": 1600,
+      "height": 1063,
+      "blurDataURL": "data:image/webp;base64,UklGRlYAAABXRUJQVlA4IEoAAACwAQCdASoQAAsAA4BaJQAAWNGaVsAAAPYcyzcwY3gZWDKG+k54rRB26T0q4qo3xTIBHtM7cXhKRYYQb2QL6bpcjbBK2aX/vR4AAA=="
+    },
+    {
+      "src": "images/tbilisi/cable-car-ride-2.webp",
+      "credit": "Prasanna Raju",
+      "source": "https://commons.wikimedia.org/wiki/File:Tbilisi_aerial_tramway_2012.jpg",
+      "license": "CC BY 2.0",
+      "width": 1600,
+      "height": 1200,
+      "blurDataURL": "data:image/webp;base64,UklGRk4AAABXRUJQVlA4IEIAAADQAQCdASoQAAwAA4BaJQBOgCIBRaPLAAD+ZQ7WVnlUvGs1wjCnweKW5go7ecmlVtBZwK4t9L3GxkHCw5pZePm3AAA="
+    }
+  ],
+  "ananuri-stop": [
+    {
+      "src": "images/mtskheta/ananuri-stop-1.webp",
+      "credit": "Bernard Gagnon",
+      "source": "https://commons.wikimedia.org/wiki/File:Ananuri_Fortress_02.jpg",
+      "license": "CC BY 4.0",
+      "width": 1600,
+      "height": 1067,
+      "blurDataURL": "data:image/webp;base64,UklGRlwAAABXRUJQVlA4IFAAAAAQAgCdASoQAAsAA4BaJaACdH8AC+TDRhoAAP6mcgL7AjX3Jhj4vnLo8g5X1uEHy7hM746PHAmkwmpItIBZ5ARqyqtyTyNY2bgZ6xilrZAAAA=="
+    },
+    {
+      "src": "images/mtskheta/ananuri-stop-2.webp",
+      "credit": "Bernard Gagnon",
+      "source": "https://commons.wikimedia.org/wiki/File:Ananuri_Fortress_01.jpg",
+      "license": "CC BY 4.0",
+      "width": 1600,
+      "height": 922,
+      "blurDataURL": "data:image/webp;base64,UklGRl4AAABXRUJQVlA4IFIAAADQAQCdASoQAAkAA4BaJbACdAEM+MikAAD+sjGQrsHQht1ysmLiC/+wdRneQWMp3IcQGQIPNJZ9nECW8RhY1hVFb3pY9ECVPwoazf+JK0BDmwgA"
+    }
+  ],
+  "khachapuri-lunch": [
+    {
+      "src": "images/food/khachapuri-lunch-1.webp",
+      "credit": "Bestalex",
+      "source": "https://commons.wikimedia.org/wiki/File:Adjarian_Khachapuri._Saint_Petersburg,_2024-07-24.jpg",
+      "license": "CC0",
+      "width": 1600,
+      "height": 1200,
+      "blurDataURL": "data:image/webp;base64,UklGRm4AAABXRUJQVlA4IGIAAABQAgCdASoQAAwAA4BaJagCdAYuvqaFvk7ay8AA/qoQ5Q04gOIdTYCUGNkJ7cQoOWh2/8tz6bfHRL+JzoMLEGM1HNclnc3573deceJkgWSckjrwSr3Uo/bHwB4SQxtRR7EAAA=="
+    },
+    {
+      "src": "images/food/khachapuri-lunch-2.webp",
+      "credit": "Eka Samkharadze",
+      "source": "https://commons.wikimedia.org/wiki/File:Adjarian_khachapuri.jpg",
+      "license": "CC BY-SA 4.0",
+      "width": 1600,
+      "height": 1417,
+      "blurDataURL": "data:image/webp;base64,UklGRogAAABXRUJQVlA4IHwAAACwAgCdASoQAA4AA4BaJbACdAdwLe+7Ya6oIS9hOkAA/u+iCguUPVeAiD2rVLyo4rN7zeLnu6b289yVQaAhMAbkNaXjx/Y5H7ZGuTvHp2GO1bPe6YSP4IYvP1K0WwmLk8HB7eBrwU/SM3bUwuNMFXWWXmphpJQ8PacZcwAA"
+    }
+  ],
+  "dezerter-bazaar": [
+    {
+      "src": "images/food/dezerter-bazaar-1.webp",
+      "credit": "Florian Höfer",
+      "source": "https://commons.wikimedia.org/wiki/File:Tbilisi_CentralMarket.jpg",
+      "license": "CC BY-SA 3.0",
+      "width": 1600,
+      "height": 1060,
+      "blurDataURL": "data:image/webp;base64,UklGRnIAAABXRUJQVlA4IGYAAADQAQCdASoQAAsAA4BaJQBOkBshD8afIAD83d9reLjA1+uCkeYcZ6s5SYj0SXrfeMmW3ojhle7CZmC/lQwRLK+pDh0S/EVGRcbrFQR+EepCdCZszctxq7VKJJ6I5z9GVdNudCBoAAA="
+    },
+    {
+      "src": "images/food/dezerter-bazaar-2.webp",
+      "credit": "Thomas Widmann from Glasgow, Scotland",
+      "source": "https://commons.wikimedia.org/wiki/File:The_central_market_in_Tbilisi.jpg",
+      "license": "CC BY-SA 2.0",
+      "width": 1600,
+      "height": 995,
+      "blurDataURL": "data:image/webp;base64,UklGRlQAAABXRUJQVlA4IEgAAADwAQCdASoQAAoAA4BaJZwAAupHg73kyCAA/qtHjRa8gOpKAjrokVE6TJRv2vQT9ASZPNOKuzYuX79eE7DL5rCO1bhAWrN5aAA="
+    }
+  ],
+  "family-old-town-lights": [
+    {
+      "src": "images/night/family-old-town-lights-1.webp",
+      "credit": "Saskia Heijltjes",
+      "source": "https://commons.wikimedia.org/wiki/File:Old_Town_and_Narikala,_Tbilisi.jpg",
+      "license": "CC BY-SA 2.0",
+      "width": 1600,
+      "height": 1200,
+      "blurDataURL": "data:image/webp;base64,UklGRlYAAABXRUJQVlA4IEoAAADQAQCdASoQAAwAA4BaJaAC7AEOjiJD4AD+93Za5sCLlooPsfkINMjqmVanACfzi1aY+WWfYTCGK7vBxynTYn/ywjdnJkzI8AAAAA=="
+    },
+    {
+      "src": "images/night/left-bank-1.webp",
+      "credit": "Vyacheslav Argenberg",
+      "source": "https://commons.wikimedia.org/wiki/File:Tbilisi_at_night,_Kura,_Georgia.jpg",
+      "license": "CC BY 4.0",
+      "width": 1600,
+      "height": 1063,
+      "blurDataURL": "data:image/webp;base64,UklGRl4AAABXRUJQVlA4IFIAAADQAQCdASoQAAsAA4BaJQBOgCHv0SVh9AD+9H/Y6uRcKgtKOTDviz0UP0wpx1rZ3UlCFd2PYd6oTlHEkF67sc43/AAqJkhyc0TFGdcdozP6AAAA"
+    }
+  ],
+  "next-stop-japan": [
+    {
+      "src": "images/archive/next-stop-japan-1.webp",
+      "credit": "Basile Morin",
+      "source": "https://commons.wikimedia.org/wiki/File:Kabukicho_red_gate_and_colorful_neon_street_signs_at_night,_Shinjuku,_Tokyo,_Japan.jpg",
+      "license": "CC BY-SA 4.0",
+      "width": 1600,
+      "height": 1426,
+      "blurDataURL": "data:image/webp;base64,UklGRnoAAABXRUJQVlA4IG4AAAAQAgCdASoQAA4AA4BaJbACdAYwTuya2Cr4AP7CM1e8xPt+AEGRdNS2IqA5xVvA+Rrwe8ELUE7Lz4tPs+zy2LLWq3S7pqtH9KxBhyDM0qjkSRoozPfLZqNFm2V3yOPRUeoKnxv2VuwL2CnET9VgAA=="
+    }
+  ]
+}

@@ -51,7 +51,7 @@ const head = (css) => `<!doctype html><html><head>
   .lock { display: flex; align-items: center; gap: .26em; font-family: 'Fraunces'; font-style: italic; font-weight: 600; letter-spacing: -0.025em; line-height: 1; }
   .lock svg { width: 1.08em; height: 1.08em; }
   .card { position: absolute; border-radius: 26px; overflow: hidden; border: 7px solid #fffdf9; box-shadow: 0 30px 60px -20px rgba(0,0,0,.6); background-size: cover; background-position: center; }
-  .tag { position: absolute; left: 12px; bottom: 12px; background: rgba(15,15,20,.62); color: #fffdf9; font-size: 15px; font-weight: 700; padding: 5px 11px; border-radius: 999px; }
+  .tag { position: absolute; left: 12px; bottom: 12px; max-width: calc(100% - 24px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: rgba(15,15,20,.62); color: #fffdf9; font-size: 15px; font-weight: 700; padding: 5px 11px; border-radius: 999px; }
   ${css}
 </style></head><body>`;
 const lockup = (size, color) => `<div class="lock" style="font-size:${size}px;color:${color}"><svg viewBox="0 0 32 32">${discs("dark")}</svg>Caravan</div>`;

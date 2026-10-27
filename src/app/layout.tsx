@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Fraunces, Instrument_Sans } from "next/font/google";
+import { Fraunces, Instrument_Sans, Playfair_Display } from "next/font/google";
 import { BRAND } from "@/lib/brand";
 import { Providers } from "@/components/providers";
 import "./globals.css";
@@ -19,17 +19,30 @@ const instrument = Instrument_Sans({
   display: "swap",
 });
 
-const siteUrl =
-  process.env.NEXT_PUBLIC_SITE_URL ??
-  (process.env.VERCEL_PROJECT_PRODUCTION_URL
-    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-    : "http://localhost:3000");
+// Display faces only some presets use (see src/lib/theme.ts): not preloaded, so
+// pages that don't use them don't download them.
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  variable: "--font-playfair",
+  style: ["normal", "italic"],
+  display: "swap",
+  preload: false,
+});
+
+// Link previews need an absolute URL. A localhost NEXT_PUBLIC_SITE_URL copied
+// into Vercel by mistake is ignored there in favour of the production domain.
+function siteUrl(): string {
+  const set = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  const vercel = process.env.VERCEL_PROJECT_PRODUCTION_URL;
+  if (set && !(vercel && /\/\/(localhost|127\.0\.0\.1)/.test(set))) return set;
+  return vercel ? `https://${vercel}` : "http://localhost:3000";
+}
 
 const description =
   "A group-trip planner where everyone builds their own version of the trip from curated options — then the organizer sees exactly where the group overlaps.";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
+  metadataBase: new URL(siteUrl()),
   title: {
     default: `${BRAND.name} · ${BRAND.tagline}`,
     template: `%s · ${BRAND.name}`,
@@ -55,7 +68,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${fraunces.variable} ${instrument.variable}`}>
+    <html lang="en" className={`${fraunces.variable} ${instrument.variable} ${playfair.variable}`}>
       <body className="min-h-dvh">
         <Providers>{children}</Providers>
       </body>
