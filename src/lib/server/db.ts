@@ -234,7 +234,11 @@ class SupabaseStore implements Store {
     // Itineraries belong to a trip through their participant.
     const { data, error } = await this.sb.from("itineraries").select("*, participants!inner(trip_id)").eq("participants.trip_id", tripId);
     this.fail(error);
-    return ((data ?? []) as (ItineraryRow & { participants?: unknown })[]).map(({ participants: _, ...row }) => row as ItineraryRow);
+    return ((data ?? []) as (ItineraryRow & { participants?: unknown })[]).map((row) => {
+      const { participants, ...rest } = row;
+      void participants;
+      return rest as ItineraryRow;
+    });
   }
 
   async addLog(entry: NewLogEntry) {
@@ -287,7 +291,8 @@ type FileDb = {
 };
 
 class FileStore implements Store {
-  private file = path.join(process.cwd(), ".data", "dev-db.json");
+  // CARAVAN_LOCAL_STORE_FILE: another file (unit tests use a temp one).
+  private file = process.env.CARAVAN_LOCAL_STORE_FILE || path.join(process.cwd(), ".data", "dev-db.json");
   private queue: Promise<unknown> = Promise.resolve();
 
   private async read(): Promise<FileDb> {

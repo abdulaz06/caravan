@@ -31,7 +31,7 @@ import { daysNightsLabel } from "@/engine/structure";
 import { cn } from "@/lib/cn";
 import { CURRENCIES, type CurrencyCode } from "@/lib/currency";
 import { dayLabel } from "@/lib/dates";
-import { useCatalog } from "../engine";
+import { useCatalog, useTrip } from "../engine";
 import type { RoommateBoard } from "@/lib/roommates";
 import { Avatar } from "../avatar";
 import { Lockup } from "../brand/wordmark";
@@ -79,6 +79,8 @@ type Props = {
   log: ConsoleLog[];
   localStore: boolean;
   roommates: RoommateBoard;
+  /** The public demo: everything visible, nothing changeable (the server refuses demo writes too). */
+  readOnly?: boolean;
 };
 
 const TABS = [
@@ -102,11 +104,12 @@ async function call(url: string, init: RequestInit = {}) {
   return { ok: res.ok, status: res.status, body };
 }
 
-export function Console({ actor, people, rules: initialRules, editsLocked, log, localStore, roommates }: Props) {
+export function Console({ actor, people, rules: initialRules, editsLocked, log, localStore, roommates, readOnly = false }: Props) {
   // Test users ("zz-test-…") are listed under People but never counted.
   const real = useMemo(() => people.filter((p) => !p.test), [people]);
   const router = useRouter();
   const toast = useToast();
+  const trip = useTrip();
   const [tab, setTab] = useState<Tab>("overview");
   const [rules, setRules] = useState(initialRules);
   const [locked, setLocked] = useState(editsLocked);
@@ -134,7 +137,7 @@ export function Console({ actor, people, rules: initialRules, editsLocked, log, 
 
   /** Save a non-structural rules change right away. */
   async function patchRules(patch: RulesPatch, done?: string) {
-    const r = await call("/api/admin/rules", { method: "POST", body: JSON.stringify({ patch }) });
+    const r = await call(trip.api("/admin/rules"), { method: "POST", body: JSON.stringify({ patch }) });
     if (r.ok) {
       setRules(r.body.rules);
       if (done) toast(done);
@@ -144,7 +147,7 @@ export function Console({ actor, people, rules: initialRules, editsLocked, log, 
   }
 
   async function setLock(next: boolean) {
-    const r = await call("/api/admin/lock", { method: "POST", body: JSON.stringify({ locked: next }) });
+    const r = await call(trip.api("/admin/lock"), { method: "POST", body: JSON.stringify({ locked: next }) });
     if (r.ok) {
       setLocked(next);
       toast(next ? "Edits locked for everyone" : "Edits are open again");
@@ -161,22 +164,28 @@ export function Console({ actor, people, rules: initialRules, editsLocked, log, 
           <span className="hidden items-center gap-1.5 rounded-full bg-secondary-800 px-2.5 py-1 text-[11.5px] font-bold text-paper sm:inline-flex">
             <ShieldCheck className="size-3.5 text-highlight-400" /> {actor.role === "owner" ? "Owner" : "Admin"} · {actor.name}
           </span>
-          {!actor.breakGlass && (
-            <Link href="/trip" className="rounded-full px-3 py-1.5 text-[13px] font-semibold text-ink-2 hover:bg-surface-200">
+          {!actor.breakGlass && !readOnly && (
+            <Link href={trip.href("/trip")} className="rounded-full px-3 py-1.5 text-[13px] font-semibold text-ink-2 hover:bg-surface-200">
               My trip
             </Link>
           )}
-          <button
-            onClick={async () => {
-              await fetch("/api/admin/logout", { method: "POST" });
-              router.push(actor.breakGlass ? "/" : "/trip");
-              router.refresh();
-            }}
-            aria-label="Close the console"
-            className="grid size-9 place-items-center rounded-full text-ink-3 hover:bg-surface-200"
-          >
-            <LogOut className="size-[18px]" />
-          </button>
+          {readOnly ? (
+            <Link href={trip.href()} className="rounded-full px-3 py-1.5 text-[13px] font-semibold text-ink-2 hover:bg-surface-200">
+              Back to the trip
+            </Link>
+          ) : (
+            <button
+              onClick={async () => {
+                await fetch(trip.api("/admin/logout"), { method: "POST" });
+                router.push(actor.breakGlass ? trip.href() : trip.href("/trip"));
+                router.refresh();
+              }}
+              aria-label="Close the console"
+              className="grid size-9 place-items-center rounded-full text-ink-3 hover:bg-surface-200"
+            >
+              <LogOut className="size-[18px]" />
+            </button>
+          )}
         </div>
         <div className="mx-auto max-w-3xl">
           <ChipScroller label="Console sections" activeKey={tab} tone="light" className="pb-2">
@@ -202,11 +211,19 @@ export function Console({ actor, people, rules: initialRules, editsLocked, log, 
         <h1 className="font-display text-[34px] font-semibold leading-none tracking-[-0.02em]">
           Organizer <span className="italic text-primary-700">console</span>
         </h1>
-        {localStore && (
+        {localStore && !readOnly && (
           <p className="mt-2 text-[12.5px] text-ink-3">Local development store — data lives in .data/dev-db.json.</p>
         )}
+        {readOnly && (
+          <p role="status" className="mt-3 flex items-start gap-2 rounded-2xl bg-secondary-800 px-3.5 py-3 text-[13.5px] leading-snug text-paper">
+            <Eye className="mt-0.5 size-4 shrink-0 text-highlight-400" />
+            <span>
+              <b>Demo console · read-only.</b> <span className="text-paper/75">Look around everything an organizer sees — the switches are just for show.</span>
+            </span>
+          </p>
+        )}
         <AnimatePresence mode="wait" initial={false}>
-          <motion.div key={tab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="mt-5 space-y-4">
+          <motion.fieldset disabled={readOnly} key={tab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="mt-5 min-w-0 space-y-4">
             {tab === "overview" && <Overview people={real} locked={locked} rules={rules} log={log} onLock={setLock} go={go} />}
             {tab === "people" && <People actor={actor} people={people} />}
             {tab === "roommates" && <RoommatesTab board={roommates} />}
@@ -215,7 +232,7 @@ export function Console({ actor, people, rules: initialRules, editsLocked, log, 
             {tab === "announce" && <AnnounceTab rules={rules} onPatch={patchRules} />}
             {tab === "data" && <DataTab />}
             {tab === "activity" && <ActivityTab log={log} />}
-          </motion.div>
+          </motion.fieldset>
         </AnimatePresence>
       </main>
     </div>
@@ -302,6 +319,7 @@ function Overview({
   const drafting = people.filter((p) => p.status === "draft");
   const fresh = people.filter((p) => p.status === "new");
   const last = [...people].sort((a, b) => (b.updatedAt ?? "").localeCompare(a.updatedAt ?? ""))[0];
+  const trip = useTrip();
   return (
     <>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -338,10 +356,10 @@ function Overview({
           </Button>
         </Row>
         <div className="mt-3 flex flex-wrap gap-2">
-          <Link href="/group" className="rounded-full bg-surface-200 px-3 py-1.5 text-[13px] font-semibold hover:bg-surface-300">
+          <Link href={trip.href("/group")} className="rounded-full bg-surface-200 px-3 py-1.5 text-[13px] font-semibold hover:bg-surface-300">
             Group overview
           </Link>
-          <a href="/api/admin/export?format=json" className="rounded-full bg-surface-200 px-3 py-1.5 text-[13px] font-semibold hover:bg-surface-300">
+          <a href={trip.api("/admin/export?format=json")} className="rounded-full bg-surface-200 px-3 py-1.5 text-[13px] font-semibold hover:bg-surface-300">
             Export JSON
           </a>
           <button onClick={() => go("announce")} className="rounded-full bg-surface-200 px-3 py-1.5 text-[13px] font-semibold hover:bg-surface-300">
@@ -403,9 +421,10 @@ function People({ actor, people }: { actor: Props["actor"]; people: ConsolePerso
   const [delFor, setDelFor] = useState<ConsolePerson | null>(null);
   const [q, setQ] = useState("");
   const list = people.filter((p) => p.name.toLowerCase().includes(q.trim().toLowerCase()));
+  const trip = useTrip();
 
   async function setRole(p: ConsolePerson, role: "admin" | "member") {
-    const r = await call(`/api/admin/participants/${p.id}/role`, { method: "PUT", body: JSON.stringify({ role }) });
+    const r = await call(trip.api(`/admin/participants/${p.id}/role`), { method: "PUT", body: JSON.stringify({ role }) });
     if (r.ok) {
       toast(role === "admin" ? `${p.name} is now an organizer` : `${p.name} is a member again`);
       router.refresh();
@@ -443,12 +462,14 @@ function People({ actor, people }: { actor: Props["actor"]; people: ConsolePerso
               </div>
             </div>
             <div className="mt-3 flex flex-wrap gap-1.5">
-              <Link href={`/admin/view/${p.id}`} className="inline-flex h-9 items-center gap-1.5 rounded-full bg-surface-200 px-3 text-[13px] font-semibold hover:bg-surface-300">
+              <Link href={trip.href(`/admin/view/${p.id}`)} className="inline-flex h-9 items-center gap-1.5 rounded-full bg-surface-200 px-3 text-[13px] font-semibold hover:bg-surface-300">
                 <Eye className="size-4" /> View plan
               </Link>
-              <Link href={`/admin/edit/${p.id}`} className="inline-flex h-9 items-center gap-1.5 rounded-full bg-primary-700 px-3 text-[13px] font-semibold text-paper hover:bg-primary-800">
-                <PencilRuler className="size-4" /> Edit plan
-              </Link>
+              {!trip.demo && (
+                <Link href={trip.href(`/admin/edit/${p.id}`)} className="inline-flex h-9 items-center gap-1.5 rounded-full bg-primary-700 px-3 text-[13px] font-semibold text-paper hover:bg-primary-800">
+                  <PencilRuler className="size-4" /> Edit plan
+                </Link>
+              )}
               {can(actor, p, "reset_pin") && (
                 <button onClick={() => (setPinFor(p), setPin(""))} className="inline-flex h-9 items-center gap-1.5 rounded-full bg-surface-200 px-3 text-[13px] font-semibold hover:bg-surface-300">
                   <KeyRound className="size-4" /> Reset PIN
@@ -485,7 +506,7 @@ function People({ actor, people }: { actor: Props["actor"]; people: ConsolePerso
             disabled={pin.length !== 4}
             onClick={async () => {
               if (!pinFor) return;
-              const r = await call(`/api/admin/participants/${pinFor.id}/pin`, { method: "POST", body: JSON.stringify({ pin }) });
+              const r = await call(trip.api(`/admin/participants/${pinFor.id}/pin`), { method: "POST", body: JSON.stringify({ pin }) });
               if (r.ok) toast(`${pinFor.name}'s PIN is reset`);
               else toast(r.body.error ?? "Couldn't reset it", "error");
               setPinFor(null);
@@ -504,7 +525,7 @@ function People({ actor, people }: { actor: Props["actor"]; people: ConsolePerso
             className="bg-accent-600 text-white hover:bg-accent-700"
             onClick={async () => {
               if (!delFor) return;
-              const r = await call(`/api/admin/participants/${delFor.id}`, { method: "DELETE" });
+              const r = await call(trip.api(`/admin/participants/${delFor.id}`), { method: "DELETE" });
               if (r.ok) toast(`${delFor.name} deleted`);
               else toast(r.body.error ?? "Couldn't delete", "error");
               setDelFor(null);
@@ -584,9 +605,10 @@ function RulesTab({
   const shapeOf = (n: Record<string, number>) => bases.map((b) => `${b.name} ${nightsOf(n, b.id)}`).join(" → ");
   const len = lengthOf(draft.nights);
 
+  const trip = useTrip();
   async function apply(confirm: boolean) {
     setBusy(true);
-    const r = await call("/api/admin/rules", { method: "POST", body: JSON.stringify({ patch: draft, confirm }) });
+    const r = await call(trip.api("/admin/rules"), { method: "POST", body: JSON.stringify({ patch: draft, confirm }) });
     setBusy(false);
     if (r.status === 409) {
       setImpact(r.body.impact);
@@ -865,16 +887,17 @@ function AnnounceTab({ rules, onPatch }: { rules: TripRules; onPatch: (p: RulesP
 // ── Data ──────────────────────────────────────────────────────────────
 
 function DataTab() {
+  const trip = useTrip();
   return (
     <Card title="Exports" icon={FileJson} sub="Everything for AI analysis — budget totals, roles and edit stamps included.">
       <div className="grid gap-2 sm:grid-cols-3">
-        <a href="/api/admin/export?format=json" className="flex h-14 items-center gap-2.5 rounded-2xl bg-primary-700 px-4 text-[14.5px] font-semibold text-paper">
+        <a href={trip.api("/admin/export?format=json")} className="flex h-14 items-center gap-2.5 rounded-2xl bg-primary-700 px-4 text-[14.5px] font-semibold text-paper">
           <FileJson className="size-5" /> JSON
         </a>
-        <a href="/api/admin/export?format=csv" className="flex h-14 items-center gap-2.5 rounded-2xl bg-surface-200 px-4 text-[14.5px] font-semibold">
+        <a href={trip.api("/admin/export?format=csv")} className="flex h-14 items-center gap-2.5 rounded-2xl bg-surface-200 px-4 text-[14.5px] font-semibold">
           <FileSpreadsheet className="size-5 text-secondary-600" /> CSV · per person
         </a>
-        <a href="/api/admin/export?format=csv-long" className="flex h-14 items-center gap-2.5 rounded-2xl bg-surface-200 px-4 text-[14.5px] font-semibold">
+        <a href={trip.api("/admin/export?format=csv-long")} className="flex h-14 items-center gap-2.5 rounded-2xl bg-surface-200 px-4 text-[14.5px] font-semibold">
           <FileSpreadsheet className="size-5 text-secondary-600" /> CSV · every pick
         </a>
       </div>

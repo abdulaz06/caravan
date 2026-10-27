@@ -10,7 +10,7 @@ import { expandToFull, isSubmittable, makePreview, type ItineraryData, type Itin
 import type { PopularPayload } from "@/engine/popular";
 import { allowedLengths, daysNightsLabel, previewAvailable, previewDays, tripDays } from "@/engine/structure";
 import type { CurrencyCode } from "@/lib/currency";
-import { useEngine } from "../engine";
+import { useEngine, useTrip } from "../engine";
 import { FamilyProvider } from "../family";
 import { PopularProvider } from "../popular";
 import { AnnouncementBar, LockCountdown } from "../rules";
@@ -75,6 +75,7 @@ export function TripApp({
   roommateCandidates = [],
 }: Props) {
   const e = useEngine();
+  const trip = useTrip();
   const router = useRouter();
   const toast = useToast();
   const full = tripDays(e);
@@ -95,12 +96,12 @@ export function TripApp({
 
   const save = useAutosave(data, {
     enabled: !locked,
-    url: admin ? `/api/admin/participants/${admin.targetId}/itinerary` : undefined,
+    url: admin ? trip.api(`/admin/participants/${admin.targetId}/itinerary`) : trip.api("/itinerary"),
     onLocked: () => {
       setLocked(true);
       toast("Edits are closed now — your last change wasn't saved.", "error");
     },
-    onSignedOut: () => router.replace(admin ? "/admin" : "/join"),
+    onSignedOut: () => router.replace(trip.href(admin ? "/admin" : "/join")),
   });
   const status = save.status ?? initialStatus;
   const updatedAt = save.updatedAt ?? initialUpdatedAt;
@@ -189,7 +190,7 @@ export function TripApp({
 
   function dismissStamp() {
     setStampNote(null);
-    void fetch("/api/itinerary/ack", { method: "POST" });
+    void fetch(trip.api("/itinerary/ack"), { method: "POST" });
   }
 
   return (

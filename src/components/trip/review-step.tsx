@@ -8,7 +8,7 @@ import { familySwapCount, familyView } from "@/engine/family";
 import { countItems, type ItineraryData, type ItineraryStatus } from "@/engine/itinerary";
 import { daysNightsLabel, tripDays } from "@/engine/structure";
 import { balanceOf, buildTimeline } from "@/engine/timeline";
-import { useCatalog, useEngine } from "../engine";
+import { useCatalog, useEngine, useTrip } from "../engine";
 import { cn } from "@/lib/cn";
 import { SiteFooter } from "../brand/site-footer";
 import { Lockup, Stamp } from "../brand/wordmark";
@@ -81,6 +81,7 @@ export function ReviewStep({
   onFamily,
 }: Props) {
   const e = useEngine();
+  const trip = useTrip();
   const { rules } = e;
   const { preset } = e.catalog;
   // Family-friendly mode only changes what's shown — `saved` is never touched.
@@ -246,7 +247,7 @@ export function ReviewStep({
                 <CheckCircle2 className="size-5 shrink-0" />
                 {saveState === "saving" ? "Saving changes…" : "Submitted · changes auto-save"}
               </div>
-              <ButtonLink href="/group" size="lg" variant="ocean" className="px-5">
+              <ButtonLink href={trip.href("/group")} size="lg" variant="ocean" className="px-5">
                 <Users className="size-5" /> Group
               </ButtonLink>
             </div>
@@ -285,7 +286,7 @@ export function ReviewStep({
               <p className="mt-3 text-[15px] text-ink-2">
                 Your dream trip is in with the crew. Now see where everyone overlaps — and peek at their picks.
               </p>
-              <ButtonLink href="/group" size="lg" block className="mt-6">
+              <ButtonLink href={trip.href("/group")} size="lg" block className="mt-6">
                 See the group <ArrowRight className="size-5" strokeWidth={2.5} />
               </ButtonLink>
               <button onClick={() => setCelebrate(false)} className="mt-3 text-sm font-semibold text-ink-3">

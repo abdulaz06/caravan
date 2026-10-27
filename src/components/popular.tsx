@@ -4,7 +4,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { createContext, useCallback, useContext, useEffect, useId, useState } from "react";
 import { cn } from "@/lib/cn";
 import type { PopularPayload } from "@/engine/popular";
-import { useRules } from "./engine";
+import { useMaybeTrip, useRules } from "./engine";
 import { useFamily } from "./family";
 
 // 🔥 Popular picks on the client: seeded from the page, refreshed every few
@@ -15,12 +15,13 @@ const PopularContext = createContext<PopularPayload | null>(null);
 
 export function PopularProvider({ initial, children }: { initial: PopularPayload | null; children: React.ReactNode }) {
   const [data, setData] = useState(initial);
+  const slug = useMaybeTrip()?.slug;
   useEffect(() => {
-    if (!initial) return;
+    if (!initial || !slug) return;
     let alive = true;
     const refresh = () => {
       if (document.visibilityState !== "visible") return;
-      fetch("/api/popular")
+      fetch(`/api/t/${slug}/popular`)
         .then((r) => (r.ok ? r.json() : null))
         .then((p: PopularPayload | null) => alive && p && setData(p))
         .catch(() => {});
@@ -30,7 +31,7 @@ export function PopularProvider({ initial, children }: { initial: PopularPayload
       alive = false;
       window.clearInterval(t);
     };
-  }, [initial]);
+  }, [initial, slug]);
   return <PopularContext.Provider value={data}>{children}</PopularContext.Provider>;
 }
 

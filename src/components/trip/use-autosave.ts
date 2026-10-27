@@ -34,8 +34,8 @@ export function useAutosave(
     onLocked: () => void;
     onSignedOut: () => void;
     saveOnMount?: boolean;
-    /** Where to save — an organizer editing someone else's plan uses the admin endpoint. */
-    url?: string;
+    /** Where to save: the trip's itinerary endpoint, or the organizer one when editing someone else's plan. */
+    url: string;
   },
 ) {
   const [state, setState] = useState<SaveState>("idle");
@@ -72,7 +72,7 @@ export function useAutosave(
       if (!d) return true;
       pending.current = null;
       setState("saving");
-      const r = await put(optsRef.current.url ?? "/api/itinerary", d, false, keepalive);
+      const r = await put(optsRef.current.url, d, false, keepalive);
       if (!r.ok && r.code === 0 && !keepalive) {
         // Offline / flaky connection: keep the change and try again shortly.
         pending.current ??= d;
@@ -112,7 +112,7 @@ export function useAutosave(
       if (timer.current) clearTimeout(timer.current);
       pending.current = null;
       setState("saving");
-      const r = await put(optsRef.current.url ?? "/api/itinerary", d, true);
+      const r = await put(optsRef.current.url, d, true);
       handle(r);
       return r;
     },

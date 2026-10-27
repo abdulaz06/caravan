@@ -9,7 +9,8 @@ import { cn } from "@/lib/cn";
 import type { CurrencyCode } from "@/lib/currency";
 import { CurrencyPicker } from "../currency";
 import { Avatar } from "../avatar";
-import { Lockup } from "../brand/wordmark";
+import { TripMark } from "../brand/trip-mark";
+import { useTrip } from "../engine";
 import type { SaveState } from "./use-autosave";
 
 export type Step = "dates" | "build" | "prefs" | "review";
@@ -49,6 +50,7 @@ export function TripHeader({
 }: Props) {
   const [menu, setMenu] = useState(false);
   const router = useRouter();
+  const trip = useTrip();
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -60,8 +62,8 @@ export function TripHeader({
 
   async function logout() {
     await beforeLeave();
-    await fetch("/api/auth/logout", { method: "POST" });
-    router.replace("/");
+    await fetch(trip.api("/auth/logout"), { method: "POST" });
+    router.replace(trip.href());
     router.refresh();
   }
 
@@ -69,8 +71,7 @@ export function TripHeader({
     <>
       <header className="sticky top-0 z-40 border-b border-ink/[0.06] bg-surface-100/85 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
         <div className="flex h-14 items-center gap-2.5 px-3.5">
-          <Lockup size="sm" className="shrink-0" />
-          <span className="flex-1" />
+          <TripMark className="flex-1" />
           {preview && (
             <button
               onClick={preview.onExit}
@@ -82,17 +83,19 @@ export function TripHeader({
           )}
           {organizer && (
             <Link
-              href="/admin"
+              href={trip.href("/admin")}
               onClick={() => void beforeLeave()}
-              className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-secondary-800 px-3 text-[12.5px] font-bold text-paper shadow-card transition hover:bg-secondary-700"
+              aria-label="Organizer console"
+              className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-secondary-800 px-2.5 text-[12.5px] font-bold text-paper shadow-card transition hover:bg-secondary-700 min-[430px]:px-3"
             >
-              <ShieldCheck className="size-4 text-highlight-400" /> Organizer
+              <ShieldCheck className="size-4 text-highlight-400" />
+              <span className="hidden min-[430px]:inline">Organizer</span>
             </Link>
           )}
           <CurrencyPicker onPick={onCurrency} />
           {admin ? (
             <Link
-              href="/admin#people"
+              href={trip.href("/admin#people")}
               onClick={() => void beforeLeave()}
               aria-label="Back to the console"
               className="relative inline-flex h-9 items-center gap-1.5 rounded-full bg-ink px-3 text-[12.5px] font-bold text-paper"
@@ -126,7 +129,7 @@ export function TripHeader({
                     </p>
                   </div>
                   <Link
-                    href="/group"
+                    href={trip.href("/group")}
                     onClick={() => void beforeLeave()}
                     className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[15px] font-medium hover:bg-surface-100"
                   >

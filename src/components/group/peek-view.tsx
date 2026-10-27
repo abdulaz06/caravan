@@ -9,7 +9,7 @@ import { balanceOf, buildTimeline } from "@/engine/timeline";
 import { SiteFooter } from "../brand/site-footer";
 import { Lockup } from "../brand/wordmark";
 import { CurrencyPicker } from "../currency";
-import { useEngine } from "../engine";
+import { useEngine, useTrip } from "../engine";
 import { BalanceMeter } from "../trip/balance-meter";
 import { ItineraryTimeline } from "../trip/itinerary-timeline";
 import { TripPoster } from "../trip/trip-poster";
@@ -26,10 +26,12 @@ type Load = { kind: "loading" } | { kind: "ok"; plan: PeekResponse } | { kind: "
 export function PeekView({ id, name }: { id: string; name: string }) {
   const [load, setLoad] = useState<Load>({ kind: "loading" });
   const [quip] = useState(() => QUIPS[Math.floor(Math.random() * QUIPS.length)]);
+  const trip = useTrip();
+  const url = trip.api(`/peek/${id}`);
 
   useEffect(() => {
     let alive = true;
-    fetch(`/api/peek/${id}`)
+    fetch(url)
       .then(async (r) => {
         const body = await r.json().catch(() => ({}));
         if (!alive) return;
@@ -40,7 +42,7 @@ export function PeekView({ id, name }: { id: string; name: string }) {
     return () => {
       alive = false;
     };
-  }, [id]);
+  }, [url]);
 
   const plan = load.kind === "ok" ? load.plan : null;
   const data = plan?.data ?? null;
@@ -52,7 +54,7 @@ export function PeekView({ id, name }: { id: string; name: string }) {
   return (
     <div className="grain min-h-dvh">
       <header className="sticky top-0 z-40 flex h-16 items-center gap-3 border-b border-ink/[0.06] bg-surface-100/85 px-4 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
-        <Link href="/group" className="flex items-center gap-1.5 rounded-full px-2 py-1.5 text-[14px] font-semibold text-ink-2 hover:bg-surface-200">
+        <Link href={trip.href("/group")} className="flex items-center gap-1.5 rounded-full px-2 py-1.5 text-[14px] font-semibold text-ink-2 hover:bg-surface-200">
           <ArrowLeft className="size-4" /> The crew
         </Link>
         <span className="flex-1" />

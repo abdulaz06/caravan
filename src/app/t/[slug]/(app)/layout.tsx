@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { Lockup, Stamp } from "@/components/brand/wordmark";
 import { nightsFor, tripDays } from "@/engine/structure";
 import { tripFromParams } from "@/lib/server/trip";
@@ -37,7 +38,9 @@ export default async function AppLayout({ children, params }: LayoutProps<"/t/[s
           <div className="absolute inset-0 bg-gradient-to-t from-primary-950/90 via-primary-950/20 to-primary-950/40" />
           <div className="sunburst absolute inset-0 opacity-60" />
           <div className="relative flex h-full flex-col justify-between p-12 text-paper">
-            <Lockup size="lg" tone="light" className="self-start" />
+            <Link href="/" className="self-start" aria-label="Caravan home">
+              <Lockup size="lg" tone="light" />
+            </Link>
             <div className="max-w-xl">
               <Stamp className="mb-8 size-28 text-highlight-500" text={`${preset.name.toUpperCase()} · ${d.season.toUpperCase()} · `} />
               <p className="label text-highlight-400">

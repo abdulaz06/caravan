@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useMemo } from "react";
 import type { ItineraryData } from "@/engine/itinerary";
 import { balanceOf, buildTimeline } from "@/engine/timeline";
-import { useEngine } from "../engine";
+import { useEngine, useTrip } from "../engine";
 import { SiteFooter } from "../brand/site-footer";
 import { Lockup } from "../brand/wordmark";
 import { CurrencyPicker } from "../currency";
@@ -31,9 +31,10 @@ export function PersonView({
   data: ItineraryData;
   isMe: boolean;
   role?: "owner" | "admin" | "member";
-  organizer?: { id: string; status: string; stamp: { by: string; at: string; kind: string } | null };
+  organizer?: { id: string; status: string; stamp: { by: string; at: string; kind: string } | null; readOnly?: boolean };
 }) {
   const e = useEngine();
+  const trip = useTrip();
   const timeline = useMemo(() => buildTimeline(e, data), [e, data]);
   const balance = useMemo(() => balanceOf(e, data), [e, data]);
   const interests = e.catalog.preset.preferences.interests;
@@ -42,7 +43,7 @@ export function PersonView({
     <div className="grain min-h-dvh">
       <header className="sticky top-0 z-40 flex h-16 items-center gap-3 border-b border-ink/[0.06] bg-surface-100/85 px-4 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
         <Link
-          href={organizer ? "/admin#people" : "/group"}
+          href={trip.href(organizer ? "/admin#people" : "/group")}
           className="flex items-center gap-1.5 rounded-full px-2 py-1.5 text-[14px] font-semibold text-ink-2 hover:bg-surface-200"
         >
           <ArrowLeft className="size-4" /> {organizer ? "Console" : "The crew"}
@@ -66,9 +67,14 @@ export function PersonView({
               </span>
             )}
             <span className="flex-1" />
-            <Link href={`/admin/edit/${organizer.id}`} className="inline-flex h-9 items-center gap-1.5 rounded-full bg-primary-700 px-3 font-semibold text-paper">
-              <PencilRuler className="size-4" /> Edit plan
-            </Link>
+            {!organizer.readOnly && (
+              <Link
+                href={trip.href(`/admin/edit/${organizer.id}`)}
+                className="inline-flex h-9 items-center gap-1.5 rounded-full bg-primary-700 px-3 font-semibold text-paper"
+              >
+                <PencilRuler className="size-4" /> Edit plan
+              </Link>
+            )}
           </div>
         )}
         <TripPoster name={name} data={data} timeline={timeline} />

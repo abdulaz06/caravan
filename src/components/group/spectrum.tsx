@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/cn";
 import { balanceLabel } from "@/engine/timeline";
 import { Avatar } from "../avatar";
+import { useTrip } from "../engine";
 
 type Person = { id: string; name: string; isMe: boolean; balance: number | null; organizer?: boolean };
 
@@ -33,6 +34,7 @@ function layout(people: Person[], width: number) {
 export function GroupSpectrum({ people, canBrowse, submitted }: { people: Person[]; canBrowse: boolean; submitted: number }) {
   // The line's real width decides how close two avatars can sit before one moves out a lane.
   const strip = useRef<HTMLDivElement>(null);
+  const trip = useTrip();
   const [width, setWidth] = useState(280);
   useEffect(() => {
     const el = strip.current;
@@ -95,7 +97,7 @@ export function GroupSpectrum({ people, canBrowse, submitted }: { people: Person
               transition={{ type: "spring", stiffness: 380, damping: 22, delay: 0.1 + i * 0.05 }}
             >
               <Link
-                href={`/group/${d.id}`}
+                href={trip.href(`/group/${d.id}`)}
                 aria-label={`${d.name}${d.isMe ? " (you)" : ""}${d.organizer ? " · organizer" : ""} — ${balanceLabel(d.balance).title}. Open their trip`}
                 className="absolute block -translate-x-1/2 rounded-full transition hover:scale-110 active:scale-95"
               >

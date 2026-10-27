@@ -12,7 +12,7 @@ import type { GroupStats } from "@/lib/server/group";
 import { Avatar } from "../avatar";
 import { useArt } from "../brand/art";
 import { Firework } from "../brand/illustrations";
-import { useEngine } from "../engine";
+import { useEngine, useTrip } from "../engine";
 import { SiteFooter } from "../brand/site-footer";
 import { Lockup } from "../brand/wordmark";
 import { CurrencyPicker } from "../currency";
@@ -63,6 +63,7 @@ const rise = { initial: { opacity: 0, y: 20 }, whileInView: { opacity: 1, y: 0 }
 export function GroupView({ stats, myStatus, canBrowse, itineraries, members, editsLocked, isOrganizer }: Props) {
   const popular = usePopular();
   const rules = useRules();
+  const trip = useTrip();
   const { catalog } = useEngine();
   const { Decor } = useArt();
   const pct = stats.joined ? stats.submitted / stats.joined : 0;
@@ -71,12 +72,12 @@ export function GroupView({ stats, myStatus, canBrowse, itineraries, members, ed
   return (
     <div className="grain min-h-dvh">
       <header className="sticky top-0 z-40 flex h-16 items-center gap-3 border-b border-ink/[0.06] bg-surface-100/85 px-4 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
-        <Link href="/trip" className="flex items-center gap-1.5 rounded-full px-2 py-1.5 text-[14px] font-semibold text-ink-2 hover:bg-surface-200">
+        <Link href={trip.href("/trip")} className="flex items-center gap-1.5 rounded-full px-2 py-1.5 text-[14px] font-semibold text-ink-2 hover:bg-surface-200">
           <ArrowLeft className="size-4" /> My trip
         </Link>
         <span className="flex-1" />
         {isOrganizer && (
-          <Link href="/admin" className="inline-flex h-9 items-center gap-1.5 rounded-full bg-secondary-800 px-3 text-[12.5px] font-bold text-paper">
+          <Link href={trip.href("/admin")} className="inline-flex h-9 items-center gap-1.5 rounded-full bg-secondary-800 px-3 text-[12.5px] font-bold text-paper">
             <ShieldCheck className="size-4 text-highlight-400" /> Organizer
           </Link>
         )}
@@ -239,7 +240,7 @@ export function GroupView({ stats, myStatus, canBrowse, itineraries, members, ed
               <p className="mt-1.5 text-[14px] text-paper/70">
                 Keeps everyone&apos;s picks independent — no copying the cool kids.{rules.peek ? " (A sneaky peek is allowed though 👀)" : ""}
               </p>
-              <ButtonLink href={myStatus === "new" ? "/trip" : "/trip?step=review"} variant="primary" size="md" className="mt-4">
+              <ButtonLink href={trip.href(myStatus === "new" ? "/trip" : "/trip?step=review")} variant="primary" size="md" className="mt-4">
                 Finish my trip <ArrowRight className="size-4" />
               </ButtonLink>
             </div>
@@ -258,7 +259,7 @@ export function GroupView({ stats, myStatus, canBrowse, itineraries, members, ed
                   <span className="min-w-0 flex-1">
                     <span className="flex items-center gap-1.5 text-[15.5px] font-semibold">
                       {open ? (
-                        <Link href={`/group/${m.id}`} className="truncate hover:underline">
+                        <Link href={trip.href(`/group/${m.id}`)} className="truncate hover:underline">
                           {m.name}
                         </Link>
                       ) : (
@@ -286,7 +287,7 @@ export function GroupView({ stats, myStatus, canBrowse, itineraries, members, ed
                   </span>
                   {rules.peek && !m.isMe && m.status !== "new" && (
                     <Link
-                      href={`/group/peek/${m.id}`}
+                      href={trip.href(`/group/peek/${m.id}`)}
                       aria-label={`Peek at ${m.name}'s plan`}
                       className="inline-flex h-9 shrink-0 items-center gap-1 rounded-full bg-night-900 px-3 text-[13px] font-bold text-paper shadow-card transition hover:-translate-y-0.5 active:scale-95"
                     >

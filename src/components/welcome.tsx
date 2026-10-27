@@ -8,7 +8,7 @@ import { Lockup, Stamp } from "./brand/wordmark";
 import { SiteFooter } from "./brand/site-footer";
 import { WaveEdge } from "./brand/illustrations";
 import { useArt } from "./brand/art";
-import { useCatalog } from "./engine";
+import { useCatalog, useTrip } from "./engine";
 import type { Catalog } from "@/engine/catalog";
 import { AvatarStack } from "./avatar";
 import type { PublicCounts } from "@/lib/server/group";
@@ -53,6 +53,7 @@ const rise = {
 
 export function Welcome({ counts }: { counts: PublicCounts }) {
   const catalog = useCatalog();
+  const trip = useTrip();
   const { preset } = catalog;
   const { Decor, Vehicle } = useArt();
   const hero = catalog.heroPhotos[0];
@@ -99,7 +100,7 @@ export function Welcome({ counts }: { counts: PublicCounts }) {
           transition={{ staggerChildren: 0.09, delayChildren: 0.25 }}
         >
           <motion.p variants={rise} className="label text-highlight-400">
-            The group trip · {preset.name}
+            {trip.name} · {preset.name}
           </motion.p>
           <motion.h1
             variants={rise}
@@ -150,14 +151,14 @@ export function Welcome({ counts }: { counts: PublicCounts }) {
             </motion.p>
           )}
           <motion.div variants={rise} className="mt-6 flex flex-col gap-3 [@media(max-height:740px)]:mt-4 [@media(max-height:740px)]:gap-2">
-            <Link href="/join" className="group">
+            <Link href={trip.href("/join")} className="group">
               <span className="flex h-14 w-full items-center justify-center gap-2 rounded-full bg-accent-500 text-base font-semibold text-white shadow-[0_4px_0_0_var(--color-accent-700)] transition group-active:translate-y-[3px] group-active:shadow-[0_1px_0_0_var(--color-accent-700)]">
                 Join the trip
                 <ArrowRight className="size-5 transition group-hover:translate-x-0.5" strokeWidth={2.5} />
               </span>
             </Link>
             <Link
-              href="/join?returning=1"
+              href={trip.href("/join?returning=1")}
               className="flex h-12 items-center justify-center rounded-full text-[15px] font-semibold text-paper/90 ring-1 ring-white/30 backdrop-blur-md transition hover:bg-white/10"
             >
               I&apos;ve been here before
@@ -233,7 +234,7 @@ export function Welcome({ counts }: { counts: PublicCounts }) {
           <p className="mt-3 max-w-xs text-paper/80">You decide. Everyone&apos;s picks shape the final plan.</p>
           <div className="mt-7 flex items-center gap-4">
             <Link
-              href="/join"
+              href={trip.href("/join")}
               className="inline-flex h-14 items-center gap-2 rounded-full bg-highlight-500 px-7 font-semibold text-ink shadow-[0_4px_0_0_var(--color-highlight-600)] transition active:translate-y-[3px] active:shadow-[0_1px_0_0_var(--color-highlight-600)]"
             >
               Start building <ArrowRight className="size-5" strokeWidth={2.5} />

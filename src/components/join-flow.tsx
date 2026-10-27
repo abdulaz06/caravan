@@ -5,7 +5,7 @@ import { ArrowLeft, ArrowRight, Search } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useMaybeEngine } from "./engine";
+import { useMaybeEngine, useTrip } from "./engine";
 import { cn } from "@/lib/cn";
 import { Avatar } from "./avatar";
 import { Lockup } from "./brand/wordmark";
@@ -19,6 +19,7 @@ export function JoinFlow({ people, startReturning }: { people: PersonLite[]; sta
   const [mode, setMode] = useState<"new" | "returning">(startReturning ? "returning" : "new");
   const [preselect, setPreselect] = useState<string | null>(null);
   const catalog = useMaybeEngine()?.catalog;
+  const trip = useTrip();
   const backdrop = catalog?.heroPhotos[1] ?? catalog?.heroPhotos[0];
 
   return (
@@ -28,7 +29,7 @@ export function JoinFlow({ people, startReturning }: { people: PersonLite[]; sta
         <div className="absolute inset-0 bg-gradient-to-b from-primary-950/50 via-primary-950/10 to-primary-900" />
       </div>
       <header className="relative z-10 flex items-center justify-between px-5 pt-[max(1.25rem,env(safe-area-inset-top))]">
-        <Link href="/" aria-label="Back to start" className="grid size-10 place-items-center rounded-full bg-white/15 text-paper ring-1 ring-white/25 backdrop-blur-md">
+        <Link href={trip.href()} aria-label="Back to start" className="grid size-10 place-items-center rounded-full bg-white/15 text-paper ring-1 ring-white/25 backdrop-blur-md">
           <ArrowLeft className="size-5" />
         </Link>
         <Lockup size="sm" tone="light" />
@@ -80,6 +81,7 @@ export function JoinFlow({ people, startReturning }: { people: PersonLite[]; sta
 
 function NewForm({ onExisting }: { onExisting: (name: string) => void }) {
   const router = useRouter();
+  const trip = useTrip();
   const [name, setName] = useState("");
   const [pin, setPin] = useState("");
   const [busy, setBusy] = useState(false);
@@ -93,14 +95,14 @@ function NewForm({ onExisting }: { onExisting: (name: string) => void }) {
     setBusy(true);
     setErr(null);
     try {
-      const res = await fetch("/api/auth/join", {
+      const res = await fetch(trip.api("/auth/join"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, pin }),
       });
       const body = await res.json();
       if (res.ok) {
-        router.replace("/trip");
+        router.replace(trip.href("/trip"));
         router.refresh();
         return;
       }
@@ -119,7 +121,7 @@ function NewForm({ onExisting }: { onExisting: (name: string) => void }) {
   return (
     <form onSubmit={submit} className="pt-7">
       <h1 className="font-display text-[32px] font-semibold leading-[1.05] tracking-[-0.02em]">
-        Welcome aboard <span className="italic text-accent-600">🌴</span>
+        Welcome <span className="italic text-accent-600">aboard</span>
       </h1>
       <p className="mt-2 text-[15px] text-ink-2">No email, no passwords. Just a name and a PIN.</p>
 
@@ -203,6 +205,7 @@ function NewForm({ onExisting }: { onExisting: (name: string) => void }) {
 
 function ReturningForm({ people, preselect }: { people: PersonLite[]; preselect: string | null }) {
   const router = useRouter();
+  const trip = useTrip();
   const [selected, setSelected] = useState<PersonLite | null>(people.find((p) => p.id === preselect) ?? null);
   const [query, setQuery] = useState("");
   const [pin, setPin] = useState("");
@@ -232,14 +235,14 @@ function ReturningForm({ people, preselect }: { people: PersonLite[]; preselect:
     setBusy(true);
     setMsg(null);
     try {
-      const res = await fetch("/api/auth/login", {
+      const res = await fetch(trip.api("/auth/login"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: selected.id, pin: code }),
       });
       const body = await res.json();
       if (res.ok) {
-        router.replace("/trip");
+        router.replace(trip.href("/trip"));
         router.refresh();
         return;
       }

@@ -7,6 +7,7 @@ import { useState } from "react";
 import { cn } from "@/lib/cn";
 import { Avatar } from "../avatar";
 import { Lockup } from "../brand/wordmark";
+import { useTrip } from "../engine";
 import { Button } from "../ui/button";
 import { PinInput } from "../ui/pin-input";
 
@@ -21,12 +22,13 @@ function Shell({ children }: { children: React.ReactNode }) {
 /** An organizer opening the console re-confirms their PIN (a ~12 hour console session). */
 export function ConfirmPin({ name }: { name: string }) {
   const router = useRouter();
+  const trip = useTrip();
   const [pin, setPin] = useState("");
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   async function submit(value: string) {
     setBusy(true);
-    const res = await fetch("/api/admin/session", {
+    const res = await fetch(trip.api("/admin/session"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ pin: value }),
@@ -76,16 +78,17 @@ export function ConfirmPin({ name }: { name: string }) {
       <Button size="lg" block className="mt-5" disabled={busy || pin.length !== 4} onClick={() => submit(pin)}>
         {busy ? "Checking…" : "Open the console"}
       </Button>
-      <Link href="/trip" className="mt-4 block text-center text-[13.5px] font-semibold text-ink-3 hover:text-ink">
+      <Link href={trip.href("/trip")} className="mt-4 block text-center text-[13.5px] font-semibold text-ink-3 hover:text-ink">
         Back to my trip
       </Link>
     </Shell>
   );
 }
 
-/** The owner's break-glass login (ADMIN_PASSWORD). Organizers normally use their name + PIN. */
+/** The deployment owner's break-glass login (ADMIN_PASSWORD). Organizers normally use their name + PIN. */
 export function AdminLogin() {
   const router = useRouter();
+  const trip = useTrip();
   const [pw, setPw] = useState("");
   const [err, setErr] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -95,7 +98,7 @@ export function AdminLogin() {
         onSubmit={async (e) => {
           e.preventDefault();
           setBusy(true);
-          const res = await fetch("/api/admin/login", {
+          const res = await fetch(trip.api("/admin/login"), {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ password: pw }),
@@ -108,7 +111,7 @@ export function AdminLogin() {
         <Lockup size="md" />
         <h1 className="font-display mt-6 text-[30px] font-semibold leading-tight">Organizers only</h1>
         <p className="mt-1 text-[15px] text-ink-2">
-          Organizers: <Link href="/join?returning=1" className="font-semibold text-primary-700 underline-offset-2 hover:underline">sign in with your name &amp; PIN</Link>, then tap
+          Organizers: <Link href={trip.href("/join?returning=1")} className="font-semibold text-primary-700 underline-offset-2 hover:underline">sign in with your name &amp; PIN</Link>, then tap
           the Organizer button.
         </p>
         <label htmlFor="admin-pw" className="label mt-6 block text-ink-3">
