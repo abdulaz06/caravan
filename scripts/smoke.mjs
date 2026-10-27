@@ -26,12 +26,18 @@ const shot = async (label, full = false) => {
   console.log("📸", file);
 };
 
+// Caravan's front page, then start a trip (you become its owner).
 await page.goto(base);
-await shot("welcome");
-await page.goto(`${base}/join`);
-await page.getByLabel("What should we call you?").fill(name);
-await page.locator("#pin").fill("4826");
-await page.getByRole("button", { name: /Let's go/ }).click();
+await shot("landing");
+await page.goto(`${base}/new`);
+await page.locator("#trip-name").fill(`Smoke trip ${Date.now().toString(36).slice(-4)}`);
+await page.locator("#owner-name").fill(name);
+await page.locator("#owner-pin").fill("4826");
+await page.getByRole("button", { name: /Start the trip/ }).click();
+const invite = (await page.getByTestId("invite-link").textContent()).trim();
+const trip = new URL(invite).pathname; // /t/<slug>
+await shot("trip-ready");
+await page.getByRole("button", { name: /Build my version/ }).click();
 await page.waitForURL("**/trip**");
 await shot("dates-empty");
 // Tap a date in the second visible month.
@@ -44,9 +50,24 @@ await shot("build-empty");
 await page.getByRole("button", { name: /Quick fill/ }).click();
 await page.waitForTimeout(800);
 await shot("build-filled", true);
-await page.goto(`${base}/trip?step=review`);
+await page.goto(`${base}${trip}/trip?step=review`);
 await page.waitForTimeout(1500);
 await shot("review", true);
+
+// A friend opens the invite link and joins.
+const friendCtx = await browser.newContext({ viewport: { width: vw, height: vh }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
+const friend = await friendCtx.newPage();
+friend.on("pageerror", (e) => errors.push(`friend pageerror: ${e.message}`));
+await friend.goto(`${base}${trip}`);
+await friend.waitForTimeout(700);
+await friend.screenshot({ path: path.join(outDir, `${String(++n).padStart(2, "0")}-invite-welcome.png`) });
+await friend.goto(`${base}${trip}/join`);
+await friend.getByLabel("What should we call you?").fill("Friend");
+await friend.locator("#pin").fill("1357");
+await friend.getByRole("button", { name: /Let's go/ }).click();
+await friend.waitForURL("**/trip**");
+await page.goto(`${base}${trip}/group`);
+await shot("group", true);
 console.log(errors.length ? `\n✗ ${errors.length} error(s):\n${errors.join("\n")}` : "\n✓ no page errors");
 await browser.close();
 process.exit(errors.length ? 1 : 0);

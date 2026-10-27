@@ -33,12 +33,12 @@ There is a guard for the most dangerous mistake: if `SUPABASE_URL` (or a legacy 
 
 ```bash
 npm install
-npm run dev
+npm run dev:local
 ```
 
-Open http://localhost:3000.
+Open http://localhost:3100 — Caravan's front page. **Start a trip** (`/new`): pick a destination, name the trip, and choose your name and a 4-digit PIN. You become the trip's **owner** and get its invite link, `http://localhost:3100/t/<slug>`. Open that link in a private window to join as a friend.
 
-Without Supabase settings — or with `CARAVAN_LOCAL_STORE=1`, which wins even when Supabase is configured — the app uses a **local test database**: a file at `.data/dev-db.json`, ignored by git. Tests always run this way. The organizer console is at http://localhost:3000/admin; until you set `ADMIN_PASSWORD`, the local emergency password is `admin`.
+`npm run dev:local` always uses a **local test database**: a file at `.data/dev-db.json`, ignored by git (so does `npm run dev` without Supabase settings, or with `CARAVAN_LOCAL_STORE=1`). Tests always run this way. Each trip's organizer console is at `/t/<slug>/admin`; until you set `ADMIN_PASSWORD`, the local break-glass password is `admin`.
 
 ---
 
@@ -54,7 +54,7 @@ Without Supabase settings — or with `CARAVAN_LOCAL_STORE=1`, which wins even w
 ## 3. Create the tables
 
 1. In the `caravan` project, open **SQL Editor** (the `>_` icon) → **New query**.
-2. Paste **all** of each file in [`supabase/migrations/`](supabase/migrations/), **in date order**, and click **Run** after each one. Each file is safe to run more than once.
+2. Paste **all** of each file in [`supabase/migrations/`](supabase/migrations/), **in date order**, and click **Run** after each one. Each file is safe to run more than once. (Today there is one: `20261027000000_caravan.sql`, which creates `trips`, `participants`, `itineraries`, `activity_log` and `peeks`.)
 3. Check **Table Editor**: every table shows an **RLS enabled** badge. That's intended — nobody can read anything with the public key; only Caravan's server can.
 
 > If Supabase warns that a query has *destructive operations*, that's the `revoke` lines. It's safe — click **Run** again.
@@ -76,6 +76,8 @@ SUPABASE_SERVICE_ROLE_KEY=sb_secret_xxxxxxxxxxxxxxxxxxxxxxxx
 SESSION_SECRET=<a new long random string>
 ADMIN_PASSWORD=<a new password for /admin>
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
+# optional: the slug of the public demo trip shown on the front page
+# DEMO_TRIP_SLUG=demo-sri-lanka
 ```
 
 Generate fresh secrets — never reuse the ones from Lanks:
@@ -110,9 +112,15 @@ Every push to `main` redeploys. After changing an environment variable, redeploy
 
 ---
 
-## Organizer cheat sheet (`/admin`)
+## Trips, invite links and organizers
 
-Organizers (the **owner** and any **admins**) sign in like everyone else, tap **Organizer** and confirm their PIN; the console stays open for 12 hours. `ADMIN_PASSWORD` is the owner's break-glass login. Only the owner can make or remove admins; nobody can demote or delete the owner.
+- Anyone can start a trip at **`/new`**. Creation is rate limited per visitor (3 an hour, 10 a day, by a salted hash of their IP — the IP itself is never stored) and to 300 trips a day overall (`src/lib/server/new-trip.ts`). The limits are off on the local test database.
+- Each trip lives at **`/t/<slug>`** — that's the invite link. The slug is the trip name plus a random tail, so links can't be guessed. People, plans, rules and the activity log all belong to one trip.
+- One phone can be in several trips at once (the session cookie remembers up to 20). The front page lists them under "Pick up where you left off".
+
+## Organizer cheat sheet (`/t/<slug>/admin`)
+
+Organizers (the **owner** and any **admins**) sign in like everyone else, tap **Organizer** (the shield) and confirm their PIN; the console stays open for 12 hours. `ADMIN_PASSWORD` is a break-glass owner login for any trip. Only the owner can make or remove admins; nobody can demote or delete the owner.
 
 - **Overview** — who's joined, submitted, drafting or not started; latest activity.
 - **People** — view any plan (private answers included), edit it on someone's behalf, reset a PIN, delete; (owner) make admin.
