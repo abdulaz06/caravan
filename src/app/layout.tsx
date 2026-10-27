@@ -33,9 +33,10 @@ const playfair = Playfair_Display({
 // into Vercel by mistake is ignored there in favour of the production domain.
 function siteUrl(): string {
   const set = process.env.NEXT_PUBLIC_SITE_URL?.trim();
-  const vercel = process.env.VERCEL_PROJECT_PRODUCTION_URL;
-  if (set && !(vercel && /\/\/(localhost|127\.0\.0\.1)/.test(set))) return set;
-  return vercel ? `https://${vercel}` : "http://localhost:3000";
+  const vercel = process.env.VERCEL_PROJECT_PRODUCTION_URL || process.env.VERCEL_URL;
+  const onVercel = !!(process.env.VERCEL || vercel);
+  if (set && !(onVercel && /\/\/(localhost|127\.0\.0\.1)\b/.test(set))) return set;
+  return vercel ? `https://${vercel}` : (set ?? "http://localhost:3000");
 }
 
 const description =
