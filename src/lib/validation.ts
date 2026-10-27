@@ -9,3 +9,10 @@ export const nameSchema = z
   .regex(/^[\p{L}\p{M}\p{N} .'\-]+$/u, "Letters, numbers, spaces, dots and dashes only");
 
 export const pinSchema = z.string().regex(/^\d{4}$/, "PIN must be 4 digits");
+
+export const tripNameSchema = z
+  .string()
+  .trim()
+  .min(2, "Give the trip a name")
+  .max(60, "Keep the trip name under 60 characters")
+  .regex(/^[^<>{}]+$/u, "No angle or curly brackets in the trip name, please");
