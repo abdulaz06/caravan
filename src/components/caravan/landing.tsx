@@ -77,6 +77,9 @@ export function Landing({
         <nav className="relative z-10 mx-auto flex h-16 max-w-6xl items-center justify-between px-5 pt-[env(safe-area-inset-top)]">
           <Lockup size="sm" tone="light" />
           <span className="flex-1" />
+          <Link href="/case-study" className="hidden rounded-full px-3 py-2 text-[13.5px] font-semibold text-paper/80 hover:text-paper sm:block">
+            Case study
+          </Link>
           <Link href="/past" className="mr-1 rounded-full px-3 py-2 text-[13.5px] font-semibold text-paper/80 hover:text-paper">
             Past trips
           </Link>
@@ -112,7 +115,7 @@ export function Landing({
                   href={demoHref}
                   className="inline-flex h-14 items-center justify-center gap-2 rounded-full px-7 text-base font-semibold text-paper ring-1 ring-white/30 backdrop-blur transition hover:bg-white/10"
                 >
-                  Try the demo trip
+                  Try a demo trip
                 </Link>
               )}
             </div>
@@ -263,6 +266,17 @@ export function Landing({
       <footer className="mx-auto flex max-w-6xl flex-col items-center gap-3 px-5 pb-12 pt-10 text-center">
         <Lockup size="md" />
         <p className="text-[13px] text-ink-2">{BRAND.tagline}. Made by Abdul.</p>
+        <p className="flex gap-4 text-[13px] font-semibold">
+          <Link href="/case-study" className="text-accent-600 hover:underline">
+            Case study
+          </Link>
+          <Link href="/demo" className="text-accent-600 hover:underline">
+            Demo
+          </Link>
+          <Link href="/past" className="text-accent-600 hover:underline">
+            Past trips
+          </Link>
+        </p>
       </footer>
     </div>
   );

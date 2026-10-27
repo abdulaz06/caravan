@@ -1,0 +1,18 @@
+{
+  "_readme": "Numbers for /case-study, from the original single-trip app (Sri Lanka, Dec 2026 – Jan 2027). Anything left null shows as a placeholder in development and is hidden in production.",
+  "trip": "Sri Lanka · Dec 2026 – Jan 2027",
+  "period": "~1 week",
+  "joined": 13,
+  "submitted": 8,
+  "drafting": 5,
+  "topPicks": null,
+  "_topPicksExample": [{ "title": "Whale watching off Mirissa", "picked": 7 }],
+  "dateOverlap": null,
+  "_dateOverlapExample": { "range": "27 Dec – 1 Jan", "people": 9, "of": 13 },
+  "aiAssistance": {
+    "_TODO": "DECIDE: mention that Caravan was built with Claude Code (AI pair programming)? Set show to true to add the line below to the case study's credits; leave false to say nothing.",
+    "show": false,
+    "text": "Built with Claude Code as a pair programmer: I set the product, the design direction and the rules; Claude wrote and tested much of the code under review."
+  },
+  "repo": { "url": "https://github.com/abdulaz06/caravan", "public": false }
+}
