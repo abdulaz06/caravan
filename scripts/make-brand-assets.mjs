@@ -142,6 +142,41 @@ await render(
 );
 fs.writeFileSync(path.join(root, "src/app/opengraph-image.alt.txt"), "Caravan — plan the trip together: everyone builds their own version, you see where it overlaps\n");
 
+// ── The case study's own link preview (LinkedIn, WhatsApp, Instagram) ─
+const phone = (name) => file("public", "case-study", `${name}.webp`);
+await render(
+  `${head(`
+  body { background: #f4f0e8; color: #16181d; }
+  .glow { position: absolute; border-radius: 50%; filter: blur(90px); }
+  .left { position: absolute; left: 64px; top: 52px; bottom: 52px; width: 610px; display: flex; flex-direction: column; }
+  .badge { align-self: flex-start; margin-top: 46px; padding: 9px 18px; border-radius: 999px; background: #c95c3c; color: #fffdf9; font-weight: 700; letter-spacing: .18em; font-size: 17px; text-transform: uppercase; }
+  h1 { font-weight: 600; font-size: 70px; line-height: .98; letter-spacing: -0.035em; margin-top: 22px; }
+  h1 em { color: #a8452b; }
+  .stats { display: flex; gap: 34px; margin-top: auto; }
+  .stats b { display: block; font-family: 'Fraunces'; font-weight: 600; font-size: 50px; line-height: 1; letter-spacing: -0.02em; }
+  .stats span { font-size: 18px; color: #6e6f75; font-weight: 600; }
+  .by { margin-top: 22px; font-size: 18px; color: #44464d; font-weight: 600; }
+  .phone { position: absolute; width: 250px; height: 541px; border-radius: 34px; border: 8px solid #111a2e; background-size: cover; background-position: top center; box-shadow: 0 40px 70px -24px rgba(17,26,46,.55); }
+  `)}
+  <div class="glow" style="right:-140px;top:-120px;width:560px;height:560px;background:rgba(212,162,74,.35)"></div>
+  <div class="glow" style="right:120px;bottom:-260px;width:520px;height:520px;background:rgba(201,92,60,.25)"></div>
+  <div class="left">
+    <div class="lock" style="font-size:38px;color:#16181d"><svg viewBox="0 0 32 32">${discs("light")}</svg>Caravan</div>
+    <div class="badge">Case study</div>
+    <h1 class="serif">Planning a group trip <em><i>without the group chat.</i></em></h1>
+    <div class="stats"><div><b>13</b><span>friends joined</span></div><div><b>8</b><span>full plans</span></div><div><b>1</b><span>week</span></div></div>
+    <div class="by">Product, design &amp; engineering — Abdul</div>
+  </div>
+  <div class="phone" style="left:930px;top:52px;transform:rotate(5deg);background-image:url('${phone("group")}')"></div>
+  <div class="phone" style="left:720px;top:70px;transform:rotate(-4deg);background-image:url('${phone("matchup")}')"></div>
+</body></html>`,
+  path.join(root, "src/app/case-study/opengraph-image.jpg"),
+);
+fs.copyFileSync(path.join(root, "src/app/case-study/opengraph-image.jpg"), path.join(root, "src/app/case-study/twitter-image.jpg"));
+const caseAlt = "Caravan case study — planning a group trip without the group chat: 13 friends joined, 8 full plans in a week\n";
+fs.writeFileSync(path.join(root, "src/app/case-study/opengraph-image.alt.txt"), caseAlt);
+fs.writeFileSync(path.join(root, "src/app/case-study/twitter-image.alt.txt"), caseAlt);
+
 // ── One OG image per destination (used by its trips' invite links) ───
 for (const p of presets) {
   const pal = p.preset.theme.palette;

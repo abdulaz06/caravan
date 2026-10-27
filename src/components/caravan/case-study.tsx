@@ -5,6 +5,7 @@ import { BRAND } from "@/lib/brand";
 import { cn } from "@/lib/cn";
 import { CaravanMark, Lockup } from "../brand/wordmark";
 import { ArchitectureDiagram } from "./architecture";
+import { WalkthroughVideo } from "./walkthrough-video";
 
 export type CaseStudyStats = {
   trip: string;
@@ -12,9 +13,17 @@ export type CaseStudyStats = {
   joined: number;
   submitted: number;
   drafting: number;
-  topPicks: { title: string; picked: number }[] | null;
-  dateOverlap: { range: string; people: number; of: number } | null;
-  aiAssistance: { show: boolean; text: string };
+  topPicks: { title: string; picked: number; slot: "day" | "night" }[];
+  stayIn: { picked: number; detail: string };
+  vibe: string;
+  dateOverlap: {
+    peak: string;
+    peakPeople: number;
+    sweetSpot: string;
+    sweetSpotPeople: number;
+    of: number;
+    days: { date: string; people: number }[];
+  };
   repo: { url: string; public: boolean };
 };
 
@@ -86,7 +95,7 @@ const CHALLENGES = [
 ];
 
 /** The story of the project: problem, idea, results, decisions, architecture, challenges. */
-export function CaseStudy({ stats, dev }: { stats: CaseStudyStats; dev: boolean }) {
+export function CaseStudy({ stats }: { stats: CaseStudyStats }) {
   const pct = Math.round((stats.submitted / stats.joined) * 100);
   return (
     <div className="min-h-dvh bg-surface-100 text-ink">
@@ -141,6 +150,9 @@ export function CaseStudy({ stats, dev }: { stats: CaseStudyStats; dev: boolean 
               </dd>
             </div>
           </dl>
+          <div className="mt-10">
+            <WalkthroughVideo src="/case-study/walkthrough.mp4" poster="/case-study/hero.webp" label="Watch the 1-minute walkthrough" />
+          </div>
         </section>
 
         {/* ── Problem ──────────────────────────────────────────── */}
@@ -190,33 +202,8 @@ export function CaseStudy({ stats, dev }: { stats: CaseStudyStats; dev: boolean 
           </div>
           <p className="mt-4 text-[14px] text-paper/60">Within {stats.period} of the link going into the group chat.</p>
           <div className="mt-6 grid gap-3 md:grid-cols-2">
-            {stats.topPicks ? (
-              <div className="rounded-[22px] bg-white/[0.06] p-5 ring-1 ring-white/10">
-                <h3 className="label text-highlight-400">Most-picked</h3>
-                <ol className="mt-3 space-y-2">
-                  {stats.topPicks.map((p, i) => (
-                    <li key={p.title} className="flex items-baseline gap-3 text-[15px]">
-                      <span className="font-display w-5 text-highlight-400">{i + 1}</span>
-                      <span className="flex-1">{p.title}</span>
-                      <span className="text-paper/60">{p.picked} picked</span>
-                    </li>
-                  ))}
-                </ol>
-              </div>
-            ) : (
-              dev && <Placeholder title="Most-picked options" note="Ask Abdul: top picks from the export (content/case-study-stats.json → topPicks)." />
-            )}
-            {stats.dateOverlap ? (
-              <div className="rounded-[22px] bg-white/[0.06] p-5 ring-1 ring-white/10">
-                <h3 className="label text-highlight-400">Date overlap</h3>
-                <p className="font-display mt-3 text-[34px] font-semibold leading-none">{stats.dateOverlap.range}</p>
-                <p className="mt-2 text-[15px] text-paper/70">
-                  {stats.dateOverlap.people} of {stats.dateOverlap.of} free for the whole window
-                </p>
-              </div>
-            ) : (
-              dev && <Placeholder title="Date overlap" note="Ask Abdul: the sweet-spot window and how many people it suits (→ dateOverlap)." />
-            )}
+            <TopPicks picks={stats.topPicks} stayIn={stats.stayIn} vibe={stats.vibe} />
+            <DateOverlap overlap={stats.dateOverlap} />
           </div>
         </Section>
 
@@ -314,8 +301,6 @@ export function CaseStudy({ stats, dev }: { stats: CaseStudyStats; dev: boolean 
         <footer className="mx-auto flex max-w-5xl flex-col items-center gap-2 px-5 pb-12 pt-6 text-center text-[13px] text-ink-3">
           <Lockup size="sm" />
           <p>Designed and built by Abdul.</p>
-          {/* TODO(Abdul): decide whether to credit AI assistance — content/case-study-stats.json → aiAssistance.show */}
-          {stats.aiAssistance.show && <p className="max-w-md">{stats.aiAssistance.text}</p>}
         </footer>
       </main>
     </div>
@@ -345,12 +330,64 @@ function Stat({ value, label }: { value: number; label: string }) {
   );
 }
 
-function Placeholder({ title, note }: { title: string; note: string }) {
+/** The group's favourites, counted once per person, as ranked bars. */
+function TopPicks({ picks, stayIn, vibe }: Pick<CaseStudyStats, "vibe" | "stayIn"> & { picks: CaseStudyStats["topPicks"] }) {
+  const max = Math.max(...picks.map((p) => p.picked));
   return (
-    <div className="rounded-[22px] border-2 border-dashed border-highlight-400/50 p-5">
-      <h3 className="label text-highlight-400">{title} · placeholder</h3>
-      <p className="mt-2 text-[14px] text-paper/70">{note}</p>
-      <p className="mt-1 text-[12px] text-paper/45">Shown in development only.</p>
+    <div className="rounded-[22px] bg-white/[0.06] p-5 ring-1 ring-white/10">
+      <h3 className="label text-highlight-400">Most picked</h3>
+      <ol className="mt-4 space-y-3">
+        {picks.map((p, i) => (
+          <li key={p.title} className="grid grid-cols-[1.25rem_1fr] gap-x-2">
+            <span className="font-display row-span-2 text-[17px] leading-tight text-highlight-400">{i + 1}</span>
+            <span className="flex items-baseline gap-2 text-[14.5px] leading-snug">
+              <span className="min-w-0 flex-1">{p.title}</span>
+              <span className="shrink-0 tabular-nums text-paper/60">{p.picked}</span>
+            </span>
+            <span className="mt-1.5 block h-1.5 overflow-hidden rounded-full bg-white/10">
+              <span
+                className={cn("block h-full rounded-full", p.slot === "night" ? "bg-pop-500" : "bg-highlight-500")}
+                style={{ width: `${(p.picked / max) * 100}%` }}
+              />
+            </span>
+          </li>
+        ))}
+      </ol>
+      <p className="mt-5 border-t border-white/10 pt-4 text-[13.5px] leading-relaxed text-paper/65">
+        <b className="text-paper">Stay in</b> was picked {stayIn.picked} times ({stayIn.detail}). The group&apos;s vibe:{" "}
+        <b className="text-paper">{vibe}</b>.
+      </p>
+    </div>
+  );
+}
+
+/** When everyone can go: a strip of the busiest fortnight, then the best windows. */
+function DateOverlap({ overlap }: { overlap: CaseStudyStats["dateOverlap"] }) {
+  const tone = (n: number) => {
+    const r = n / overlap.of;
+    return r >= 0.9 ? "bg-pop-500 text-paper" : r >= 0.75 ? "bg-accent-500 text-paper" : r >= 0.45 ? "bg-highlight-500 text-ink" : r > 0.2 ? "bg-highlight-200 text-ink" : "bg-white/10 text-paper/70";
+  };
+  const day = (iso: string) => new Date(`${iso}T00:00:00Z`).getUTCDate();
+  return (
+    <div className="rounded-[22px] bg-white/[0.06] p-5 ring-1 ring-white/10">
+      <h3 className="label text-highlight-400">Date overlap</h3>
+      <p className="font-display mt-3 text-[34px] font-semibold leading-none tracking-[-0.02em]">{overlap.peak}</p>
+      <p className="mt-2 text-[15px] text-paper/75">
+        {overlap.peakPeople} of {overlap.of} can make every one of those days
+      </p>
+      <div className="mt-5 grid grid-cols-7 gap-1" role="img" aria-label={`People free each day, 21 Dec to 3 Jan: ${overlap.days.map((d) => d.people).join(", ")} of ${overlap.of}`}>
+        {overlap.days.map((d) => (
+          <span key={d.date} className={cn("grid aspect-square place-items-center rounded-lg text-center leading-none", tone(d.people))}>
+            <span>
+              <span className="block text-[12px] font-semibold">{day(d.date)}</span>
+              <span className="mt-0.5 block text-[10px] opacity-80">{d.people}</span>
+            </span>
+          </span>
+        ))}
+      </div>
+      <p className="mt-4 text-[13.5px] leading-relaxed text-paper/65">
+        Best full six-day window: <b className="text-paper">{overlap.sweetSpot}</b> ({overlap.sweetSpotPeople} of {overlap.of} free throughout).
+      </p>
     </div>
   );
 }
