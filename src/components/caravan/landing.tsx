@@ -1,5 +1,6 @@
 import {
   ArrowRight,
+  Play,
   ArrowUpRight,
   CalendarHeart,
   Eye,
@@ -19,6 +20,7 @@ import { CaravanMark, Lockup } from "../brand/wordmark";
 import { Photo } from "../ui/photo";
 
 export type MyTrip = { slug: string; name: string; destination: string };
+export type ArchiveTrip = { id: string; title: string; dates: string; summary: string; slides: number; cover: Destination["photo"]; storyCover: Destination["photo"] };
 
 const STEPS = [
   {
@@ -50,7 +52,17 @@ const FEATURES = [
 ];
 
 /** Caravan's own front page: what it is, how it works, and where to start. */
-export function Landing({ destinations, demoHref, myTrips }: { destinations: Destination[]; demoHref: string | null; myTrips: MyTrip[] }) {
+export function Landing({
+  destinations,
+  demoHref,
+  myTrips,
+  archive,
+}: {
+  destinations: Destination[];
+  demoHref: string | null;
+  myTrips: MyTrip[];
+  archive: ArchiveTrip[];
+}) {
   const lead = destinations[0];
   return (
     <div className="min-h-dvh bg-surface-100 text-ink">
@@ -64,6 +76,10 @@ export function Landing({ destinations, demoHref, myTrips }: { destinations: Des
         </div>
         <nav className="relative z-10 mx-auto flex h-16 max-w-6xl items-center justify-between px-5 pt-[env(safe-area-inset-top)]">
           <Lockup size="sm" tone="light" />
+          <span className="flex-1" />
+          <Link href="/past" className="mr-1 rounded-full px-3 py-2 text-[13.5px] font-semibold text-paper/80 hover:text-paper">
+            Past trips
+          </Link>
           <Link
             href="/new"
             className="inline-flex h-9 items-center gap-1.5 rounded-full bg-white/10 px-4 text-[13.5px] font-semibold ring-1 ring-white/20 backdrop-blur transition hover:bg-white/20"
@@ -222,6 +238,9 @@ export function Landing({ destinations, demoHref, myTrips }: { destinations: Des
         </div>
       </section>
 
+      {/* ── From the archive ───────────────────────────────────── */}
+      {archive[0] && <ArchiveSection trip={archive[0]} />}
+
       {/* ── Closing CTA ────────────────────────────────────────── */}
       <section className="mx-auto max-w-6xl px-5 pb-6 pt-16 lg:pt-24">
         <div className="relative overflow-hidden rounded-[32px] bg-primary-900 px-6 py-12 text-center text-paper sm:px-12 sm:py-16">
@@ -329,5 +348,55 @@ function HeroVisual({ d }: { d: Destination }) {
         </p>
       </div>
     </div>
+  );
+}
+
+/** A real trip, told as a story: a phone-shaped story card next to the pitch. */
+function ArchiveSection({ trip }: { trip: ArchiveTrip }) {
+  return (
+    <section className="mx-auto max-w-6xl px-5 pt-16 lg:pt-24" aria-labelledby="archive">
+      <div className="grid items-center gap-8 overflow-hidden rounded-[32px] bg-night-900 p-6 text-paper sm:p-10 md:grid-cols-[1fr_auto]">
+        <div>
+          <p className="label text-highlight-400">From the archive</p>
+          <h2 id="archive" className="font-display mt-3 text-[38px] font-semibold leading-[1.02] tracking-[-0.03em] sm:text-[48px]">
+            {trip.title}
+          </h2>
+          <p className="mt-2 text-[14px] font-semibold text-paper/60">{trip.dates}</p>
+          <p className="mt-4 max-w-md text-[16px] leading-relaxed text-paper/75">{trip.summary}</p>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Link
+              href={`/past/${trip.id}/story`}
+              className="inline-flex h-12 items-center gap-2 rounded-full bg-paper px-6 font-semibold text-night-900 transition active:scale-[0.98]"
+            >
+              <Play className="size-4" fill="currentColor" /> Watch the story
+            </Link>
+            <Link href={`/past/${trip.id}`} className="inline-flex h-12 items-center gap-2 rounded-full px-5 font-semibold text-paper ring-1 ring-white/25 hover:bg-white/10">
+              Full itinerary <ArrowRight className="size-4" />
+            </Link>
+          </div>
+        </div>
+        <Link
+          href={`/past/${trip.id}/story`}
+          aria-label={`Watch the story of ${trip.title}`}
+          className="group relative mx-auto block aspect-[9/16] w-[200px] overflow-hidden rounded-[26px] bg-night-800 shadow-lift ring-4 ring-white/10 sm:w-[230px]"
+        >
+          <Photo photo={trip.storyCover ?? undefined} alt="" sizes="230px" className="transition duration-700 group-hover:scale-105" />
+          <span className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/40" />
+          <span className="absolute inset-x-2.5 top-2.5 flex gap-1">
+            {Array.from({ length: Math.min(trip.slides, 10) }, (_, k) => (
+              <span key={k} className={cn("h-[2px] flex-1 rounded-full", k < 2 ? "bg-white" : "bg-white/35")} />
+            ))}
+          </span>
+          <span className="absolute left-4 top-12 text-white">
+            <span className="block text-[11px] font-bold uppercase tracking-[0.06em] text-white/85">Day 3</span>
+            <span className="block text-[26px] font-extrabold uppercase leading-none tracking-[-0.02em]">Ski day</span>
+            <span className="mt-1 block text-[11px] font-semibold uppercase tracking-[0.04em]">Gudauri</span>
+          </span>
+          <span className="absolute bottom-4 left-1/2 grid size-11 -translate-x-1/2 place-items-center rounded-full bg-white/90 text-night-900 transition group-hover:scale-110">
+            <Play className="size-5 translate-x-px" fill="currentColor" />
+          </span>
+        </Link>
+      </div>
+    </section>
   );
 }

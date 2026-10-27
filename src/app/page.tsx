@@ -1,17 +1,16 @@
 import { Landing, type MyTrip } from "@/components/caravan/landing";
 import { db } from "@/lib/server/db";
-import { DEMO_SLUG } from "@/lib/server/demo";
+import { longRange } from "@/lib/past-dates";
 import { destinations } from "@/lib/server/destinations";
+import { pastTrips } from "@/lib/server/past-trips";
 import { myTripIds } from "@/lib/server/session";
 
 export default async function Home() {
   const list = destinations();
-  let demo: string | null = null;
   let mine: MyTrip[] = [];
   try {
     const store = db();
-    const [demoRow, ids] = await Promise.all([store.getTripBySlug(DEMO_SLUG), myTripIds()]);
-    demo = demoRow ? `/t/${demoRow.slug}` : null;
+    const ids = await myTripIds();
     const rows = await Promise.all(ids.slice(0, 6).map((id) => store.getTrip(id)));
     mine = rows
       .filter((r) => r !== null && r.kind === "live")
@@ -19,5 +18,14 @@ export default async function Home() {
   } catch {
     // The landing page never fails because the database is unreachable.
   }
-  return <Landing destinations={list} demoHref={demo} myTrips={mine} />;
+  const archive = pastTrips().map((t) => ({
+    id: t.id,
+    title: t.title,
+    dates: longRange(t.start, t.end),
+    summary: t.summary,
+    slides: t.slides.length + 2,
+    cover: t.cover,
+    storyCover: t.slides.find((s) => s.title === "Ski day")?.photo ?? t.cover,
+  }));
+  return <Landing destinations={list} demoHref="/demo" myTrips={mine} archive={archive} />;
 }
