@@ -4,7 +4,14 @@
 
 [![CI](https://github.com/abdulaz06/caravan/actions/workflows/ci.yml/badge.svg)](https://github.com/abdulaz06/caravan/actions/workflows/ci.yml)
 
-![Caravan on a phone: the landing page, a this-or-that matchup, a trip poster with its route map, and a past trip told as a story](docs/media/hero.png)
+<p align="center">
+  <a href="https://www.youtube.com/watch?v=K-CRkvDnjPc" title="Watch the Caravan demo">
+    <img src="docs/media/video-thumbnail.jpg" alt="Caravan demo: everyone plans their own trip, Caravan finds the overlap. Click to watch on YouTube" width="900" />
+  </a>
+</p>
+<p align="center">
+  <a href="https://www.youtube.com/watch?v=K-CRkvDnjPc"><strong>▶ Watch the 1-minute demo</strong></a>
+</p>
 
 **Live:** [caravan-prod.vercel.app](https://caravan-prod.vercel.app) · **📖 Case study:** [/case-study](https://caravan-prod.vercel.app/case-study) · **Try a demo trip:** [/demo](https://caravan-prod.vercel.app/demo) · **A past trip, as a story:** [/past/georgia-2025/story](https://caravan-prod.vercel.app/past/georgia-2025/story)
 
@@ -22,11 +29,13 @@ Group chats are where trip plans go to die: nobody commits, the loudest voice wi
 2. **Everyone builds their own version.** Friends open the link (no accounts), drag a date window onto the calendar, and fill each day and evening — starting from a this-or-that matchup between two real, photographed options, with a catalog for more.
 3. **See the overlap.** A date heatmap with the sweet spot, the most-picked options, everyone on one nature ↔ nightlife line, roommate matches, and JSON/CSV exports for planning the final itinerary.
 
-▶ **[Desktop walkthrough — 1 min, 16:9](public/case-study/walkthrough.mp4)** · **[Phone walkthrough — 60 s](docs/media/demo.mp4)**
+▶ **[Watch the 1-minute demo on YouTube](https://www.youtube.com/watch?v=K-CRkvDnjPc)** · **[Phone walkthrough — 60 s](docs/media/demo.mp4)**
 
 <br clear="right" />
 
 ## Features
+
+![Caravan on a phone: the landing page, a this-or-that matchup, a trip poster with its route map, and a past trip told as a story](docs/media/hero.png)
 
 - **Matchups and a catalog** — curated A-vs-B pairs per slot, then “+ Add another”, reordering, drive times between stops, soft time totals and day-of-week availability.
 - **Two speeds** — a five-minute quick fill, or hand-pick every slot and add notes.
