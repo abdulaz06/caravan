@@ -119,7 +119,7 @@ npm run e2e              # Playwright: iPhone 14, iPhone SE and desktop, on a th
 npm run build
 ```
 
-[GitHub Actions](.github/workflows/ci.yml) runs all of them on every push. `node scripts/record-demo.mjs` re-records the phone walkthrough, GIF, hero and case-study screenshots; `node scripts/record-desktop.mjs` the 16:9 desktop walkthrough (both need a local server and ffmpeg).
+[GitHub Actions](.github/workflows/ci.yml) runs all of them on every push. `node scripts/record-demo.mjs` re-records the phone walkthrough, GIF, hero and case-study screenshots; `node scripts/record-desktop.mjs` the 16:9 desktop walkthrough (both need a local server and ffmpeg). `node scripts/record-linkedin.mjs` films the one-minute LinkedIn cut at a true 60 fps and 2560×1440 into `out/linkedin/` (gitignored): headless Chromium on a virtual clock renders every frame at its exact time, so it doesn't depend on the screen it runs on.
 
 ## Project layout
 
