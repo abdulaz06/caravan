@@ -19,7 +19,7 @@ test("case study tells the story", async ({ page }) => {
   await expect(page.getByText("friends joined")).toBeVisible();
   await expect(page.getByRole("img", { name: /Architecture/ })).toBeVisible();
   await expect(page.getByText("NYE beach party on the south coast")).toBeVisible();
-  await expect(page.getByRole("button", { name: /Play: Watch the 1-minute walkthrough/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Play: Watch the 1-minute demo/ })).toBeVisible();
   // Shared links show the case study's own preview, not the site's.
   const og = await page.locator('meta[property="og:image"]').first().getAttribute("content");
   expect(og).toContain("/case-study/opengraph-image");
