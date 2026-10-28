@@ -151,7 +151,7 @@ export function CaseStudy({ stats }: { stats: CaseStudyStats }) {
             </div>
           </dl>
           <div className="mt-10">
-            <WalkthroughVideo src="/case-study/walkthrough.mp4" poster="/case-study/hero.webp" label="Watch the 1-minute walkthrough" />
+            <WalkthroughVideo youtubeId="K-CRkvDnjPc" poster="/case-study/video-poster.webp" label="Watch the 1-minute demo" />
           </div>
         </section>
 
