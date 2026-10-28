@@ -9,7 +9,7 @@ process.env.CARAVAN_LOCAL_STORE = "1";
 process.env.CARAVAN_LOCAL_STORE_FILE = path.join(dir, "db.json");
 
 const { db } = await import("@/lib/server/db");
-const { DEMOS, demoById, resetDemoTrip, resetDemoTrips } = await import("@/lib/server/demo");
+const { DEMOS, demoById, resetDemoTrip, resetDemoTrips, seedDemoCrew } = await import("@/lib/server/demo");
 const lanka = demoById("sri-lanka")!;
 const DEMO_SLUG = lanka.slug;
 const { loadPastTrip, pastTrips } = await import("@/lib/server/past-trips");
@@ -50,6 +50,24 @@ describe("the demo trip", () => {
     expect(people).toHaveLength(12);
     expect(people.some((p) => p.guest)).toBe(false);
     expect(await db().listParticipants(before.id)).toHaveLength(0);
+  });
+
+  it("can join an existing trip, keeping whoever is already there", async () => {
+    const trip = (await db().createTrip({ slug: "lanka-own-trip", name: "Sri Lanka '26", preset_id: "sri-lanka" }))!;
+    const owner = (await db().createParticipant(trip.id, { name: "maya", pinHash: "x", role: "owner" }))!;
+    const { loadPreset } = await import("@/presets/registry");
+    const { createEngine } = await import("@/engine/structure");
+    const { defaultRules } = await import("@/engine/rules");
+    const { preset, catalog } = loadPreset("sri-lanka");
+    const ids = await seedDemoCrew(trip.id, lanka, createEngine(catalog, defaultRules(preset)));
+    expect(ids.get("Maya")).toBe(owner.id);
+    const people = await db().listParticipants(trip.id);
+    expect(people).toHaveLength(12);
+    expect(people.find((p) => p.id === owner.id)?.role).toBe("owner");
+    // The owner's own plan is theirs to make; the other ten with a plan get one.
+    expect(await db().getItinerary(owner.id)).toBeNull();
+    expect(await db().listItineraries(trip.id)).toHaveLength(10);
+    expect(await db().countPeekers(owner.id)).toBe(2);
   });
 });
 

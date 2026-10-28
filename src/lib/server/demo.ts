@@ -153,20 +153,41 @@ export async function resetDemoTrip(demo: Demo): Promise<{ slug: string; people:
   if (!trip) throw new Error(`Couldn't create the ${demo.id} demo`);
 
   const { preset, catalog } = loadPreset(demo.id);
-  const e = createEngine(catalog, defaultRules(preset));
+  const ids = await seedDemoCrew(trip.id, demo, createEngine(catalog, defaultRules(preset)));
+  const owner = { id: ids.get("Maya") ?? null, name: "Maya" };
+  await store.addLog({ trip_id: trip.id, actor_id: owner.id, actor_name: owner.name, action: "Started the trip", target_id: null, target_name: null, details: { preset: demo.id } });
+  await store.addLog({ trip_id: trip.id, actor_id: owner.id, actor_name: owner.name, action: "Made Theo an admin", target_id: ids.get("Theo") ?? null, target_name: "Theo", details: {} });
+  return { slug: trip.slug, people: ids.size };
+}
+
+/**
+ * Adds the twelve fictional travellers to a trip: their plans (on the demo's
+ * start dates), roles and peeks. Anyone already in the trip under one of their
+ * names (say, the owner who started it) is kept as they are. Name → participant id.
+ */
+export async function seedDemoCrew(tripId: string, demo: Demo, e: Engine): Promise<Map<string, string>> {
+  const store = db();
   // Nobody can sign in as a demo traveller: every PIN is a random, unguessable hash.
   const pinHash = await bcrypt.hash(randomBytes(16).toString("hex"), 8);
   const ids = new Map<string, string>();
+  const kept = new Set<string>();
   const day = 86400_000;
   const now = Date.now();
 
+  const existing = await store.listParticipants(tripId);
   for (const p of CREW) {
-    const row = await store.createParticipant(trip.id, { name: p.name, pinHash, role: p.role ?? "member" });
+    const there = existing.find((x) => x.display_name.toLowerCase() === p.name.toLowerCase());
+    if (there) {
+      ids.set(p.name, there.id);
+      kept.add(p.name);
+      continue;
+    }
+    const row = await store.createParticipant(tripId, { name: p.name, pinHash, role: p.role ?? "member" });
     if (row) ids.set(p.name, row.id);
   }
   for (const [i, p] of CREW.entries()) {
     const id = ids.get(p.name);
-    if (!id || p.stage === "new") continue;
+    if (!id || kept.has(p.name) || p.stage === "new") continue;
     const data = planFor(e, p, demo.starts[p.name], demo.prefs[p.name] ?? {}, i + 11);
     data.preferences.roommates = (p.roommates ?? []).map((name) => (ids.has(name) ? { id: ids.get(name), name } : { name }));
     const updated = new Date(now - (CREW.length - i) * 0.4 * day).toISOString();
@@ -179,10 +200,7 @@ export async function resetDemoTrip(demo: Demo): Promise<{ slug: string; people:
       if (a && b) await store.recordPeek(a, b);
     }
   }
-  const owner = { id: ids.get("Maya") ?? null, name: "Maya" };
-  await store.addLog({ trip_id: trip.id, actor_id: owner.id, actor_name: owner.name, action: "Started the trip", target_id: null, target_name: null, details: { preset: demo.id } });
-  await store.addLog({ trip_id: trip.id, actor_id: owner.id, actor_name: owner.name, action: "Made Theo an admin", target_id: ids.get("Theo") ?? null, target_name: "Theo", details: {} });
-  return { slug: trip.slug, people: ids.size };
+  return ids;
 }
 
 /** Rebuilds every demo trip (the nightly cron). */
