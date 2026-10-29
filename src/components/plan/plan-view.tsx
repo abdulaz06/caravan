@@ -18,7 +18,7 @@ import { SiteFooter } from "../brand/site-footer";
 import { Lockup } from "../brand/wordmark";
 import { CurrencyPicker } from "../currency";
 import { useEngine, useRules, useTrip } from "../engine";
-import { FamilyProvider } from "../family";
+import { FamilyProvider, useFamily } from "../family";
 import { AnnouncementBar } from "../rules";
 import { ShareSheet } from "../trip/share-sheet";
 import { ButtonLink } from "../ui/button";
@@ -342,11 +342,12 @@ function Rsvp({
   onAnswer: (key: string, status: "in" | "skip" | null, choice?: string) => void;
 }) {
   const { catalog } = useEngine();
+  const family = useFamily();
   const sum = plan.rsvps[item.key];
   if (item.id === STAY_ID || !sum) return null;
   const split = item.role === "main" ? plan.slots.find((s) => s.key === slot.key)?.split : null;
   const mine = sum.mine;
-  const name = (id: string) => catalog.byId[id]?.title.split(/[:·(]/)[0].trim() ?? id;
+  const name = (id: string) => catalog.byId[family ? catalog.familyIdFor(id) : id]?.title.split(/[:·(]/)[0].trim() ?? id;
   const pill = (on: boolean) =>
     cn("inline-flex h-8 items-center gap-1 rounded-full px-3 text-[12.5px] font-bold transition active:scale-95", on ? "bg-ink text-paper" : "bg-surface-100 text-ink-2 ring-1 ring-surface-200 hover:bg-surface-200");
   const label = (s: Slot) => catalog.preset.structure.slots[s].label.toLowerCase();

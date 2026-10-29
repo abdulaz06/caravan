@@ -450,7 +450,8 @@ export function generatePlan(e: Engine, ballots: Ballot[], input: Partial<PlanSe
       notes.push("A split the organizers accepted no longer fits these dates, so that slot is planned together.");
       continue;
     }
-    placeMain(i, dec.a, { locked: true });
+    // Kept in place (not a lock the organizers set: it says "split", not "locked").
+    placeMain(i, dec.a, { forced: true });
     splitB[i] = dec.b;
     used.set(dec.b, i);
     for (const k of supporters.get(dec.b) ?? []) if (presence[k][slots[i].day]) made[k]++;

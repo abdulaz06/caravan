@@ -18,7 +18,11 @@ test("case study tells the story", async ({ page }) => {
   await expect(page.getByRole("heading", { name: /without the group chat/ })).toBeVisible();
   await expect(page.getByText("friends joined")).toBeVisible();
   await expect(page.getByRole("img", { name: /Architecture/ })).toBeVisible();
-  await expect(page.getByText("NYE beach party on the south coast")).toBeVisible();
+  await expect(page.getByText("NYE beach party on the south coast").first()).toBeVisible();
+  // The group plan: the algorithm, a worked demo example and room for the real results.
+  await expect(page.getByRole("heading", { name: /From twelve plans/ })).toBeVisible();
+  await expect(page.getByRole("img", { name: /How the group plan is made/ })).toBeVisible();
+  await expect(page.getByText(/results to come/)).toBeVisible();
   await expect(page.getByRole("button", { name: /Play: Watch the 1-minute demo/ })).toBeVisible();
   // Shared links show the case study's own preview, not the site's.
   const og = await page.locator('meta[property="og:image"]').first().getAttribute("content");
