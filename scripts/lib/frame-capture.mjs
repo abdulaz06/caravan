@@ -12,6 +12,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { chromium } from "playwright";
+import { codecArgs } from "./recorder.mjs";
 
 const FLAGS = [
   "--enable-begin-frame-control",
@@ -259,7 +260,7 @@ export const linear = (t) => t;
  * faststart). Frames are hard-linked into a numbered sequence first, so a
  * frame repeated in a hold costs nothing. `size` ("1920:1080") downscales.
  */
-export function encodeFrames({ ffmpeg, frames, out, fps = 60, crf = 16, size, work }) {
+export function encodeFrames({ ffmpeg, frames, out, fps = 60, crf = 16, size, work, draft = false }) {
   fs.rmSync(work, { recursive: true, force: true });
   fs.mkdirSync(work, { recursive: true });
   for (const [i, f] of frames.entries()) {
@@ -275,7 +276,7 @@ export function encodeFrames({ ffmpeg, frames, out, fps = 60, crf = 16, size, wo
   execFileSync(ffmpeg, [
     "-y", "-loglevel", "error", "-framerate", String(fps), "-i", path.join(work, "%06d.jpg"),
     "-vf", `${scale},format=yuv420p,setparams=range=tv:colorspace=bt709:color_primaries=bt709:color_trc=bt709`,
-    "-c:v", "libx264", "-profile:v", "high", "-preset", "slow", "-crf", String(crf),
+    ...codecArgs(ffmpeg, { crf, profile: "high", draft }),
     "-r", String(fps), "-fps_mode", "cfr", "-movflags", "+faststart", "-an", out,
   ]);
   fs.rmSync(work, { recursive: true, force: true });

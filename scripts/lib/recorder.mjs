@@ -127,8 +127,21 @@ export async function startRecording(ctx, page, { dir, mode = "capture", width, 
   };
 }
 
+const x264 = new Map();
+/**
+ * The video encoder's arguments: H.264 (libx264) at `crf`. A draft only has to
+ * play, so with an ffmpeg built without libx264 it falls back to the built-in
+ * MPEG-4 encoder; a final render needs libx264 and says so.
+ */
+export function codecArgs(ffmpeg, { crf, preset = "slow", profile, draft = false }) {
+  if (!x264.has(ffmpeg)) x264.set(ffmpeg, /\blibx264\b/.test(execFileSync(ffmpeg, ["-hide_banner", "-encoders"]).toString()));
+  if (x264.get(ffmpeg)) return ["-c:v", "libx264", ...(profile ? ["-profile:v", profile] : []), "-preset", draft ? "veryfast" : preset, "-crf", String(crf)];
+  if (draft) return ["-c:v", "mpeg4", "-q:v", "4"];
+  throw new Error(`${ffmpeg} has no libx264 — final renders need an ffmpeg built with it (DRAFT=1 falls back to MPEG-4)`);
+}
+
 /** Frames (with their real timings) → MP4. `vf` is extra filters, e.g. a scale. */
-export function encodeMp4({ ffmpeg, frames, out, fps = 30, vf = "", crf = 22 }) {
+export function encodeMp4({ ffmpeg, frames, out, fps = 30, vf = "", crf = 22, draft = false }) {
   const list = path.join(path.dirname(frames[0].file), "frames.txt");
   const lines = [];
   for (const [i, f] of frames.entries()) {
@@ -138,7 +151,7 @@ export function encodeMp4({ ffmpeg, frames, out, fps = 30, vf = "", crf = 22 }) 
   lines.push(`file '${frames.at(-1).file.replace(/\\/g, "/")}'`);
   fs.writeFileSync(list, `${lines.join("\n")}\n`);
   const filters = [`fps=${fps}`, vf, "format=yuv420p"].filter(Boolean).join(",");
-  execFileSync(ffmpeg, ["-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", list, "-vf", filters, "-c:v", "libx264", "-crf", String(crf), "-preset", "slow", "-movflags", "+faststart", "-an", out]);
+  execFileSync(ffmpeg, ["-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", list, "-vf", filters, ...codecArgs(ffmpeg, { crf, draft }), "-movflags", "+faststart", "-an", out]);
 }
 
 /** A slice of an MP4 → a sharp, compact GIF (two-pass palette). */

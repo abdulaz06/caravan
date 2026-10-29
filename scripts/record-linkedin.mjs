@@ -122,19 +122,22 @@ await stage.click(app.getByRole("button", { name: /Copy link/ }), { ms: 400 });
 await wait(950);
 await stage.click(app.getByRole("button", { name: /Build my version/ }), { ms: 380 });
 
-// ── Dates: the whole window lands at once ────────────────────────────────
+// ── Dates: tap the first day, then the last ─────────────────────────────
 let slug = "";
 clock.mark("dates");
 await stage.cut(async () => {
   await app.waitForURL(/\/trip/);
   slug = app.url().match(/\/t\/([^/]+)\//)[1];
-  await stage.scrollTo(app.getByRole("button", { name: /^Mon 14 Dec/ }).first(), { top: 150, ms: 0 });
+  // High enough that the last day (1 Jan) clears the sticky dates bar.
+  await stage.scrollTo(app.getByRole("button", { name: /^Mon 14 Dec/ }).first(), { top: 40, ms: 0 });
   await stage.camera({ z: 1.15, x: COL, y: 300 });
   await stage.show("scrim");
 });
 await stage.caption("Everyone picks <em>their own</em> dates.");
 await wait(450);
 await stage.click(app.getByRole("button", { name: /^Sun 27 Dec/ }).first(), { ms: 480 });
+await wait(700);
+await stage.click(app.getByRole("button", { name: /^Fri 1 Jan/ }).first(), { ms: 520 });
 await wait(1500);
 await stage.click(app.getByRole("button", { name: /Build days/ }), { ms: 420 });
 
@@ -360,7 +363,7 @@ fs.writeFileSync(
 
 if (draft) {
   const out = path.join(outDir, "caravan-linkedin-draft.mp4");
-  encodeFrames({ ffmpeg, frames: sequence, out, crf: 20, work: path.join(work, "seq") });
+  encodeFrames({ ffmpeg, frames: sequence, out, crf: 20, work: path.join(work, "seq"), draft });
   console.log(`${path.relative(root, out)}  ${(fs.statSync(out).size / 1e6).toFixed(1)} MB`);
 } else {
   const out = path.join(outDir, "caravan-linkedin.mp4");

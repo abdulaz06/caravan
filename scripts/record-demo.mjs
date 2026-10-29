@@ -7,7 +7,8 @@
 //   docs/media/shots/*.png                     full-size phone screenshots (not committed)
 // Needs a local server on the local store (npm run dev:local, or next start with
 // CARAVAN_LOCAL_STORE=1) and ffmpeg: on PATH, or FFMPEG=<path to ffmpeg>.
-// Usage: node scripts/record-demo.mjs   (env: BASE, FFMPEG)
+// Usage: node scripts/record-demo.mjs   (env: BASE, FFMPEG, DRAFT=1 for a check that the walkthrough
+// still runs: everything lands in out/draft/ and nothing committed is touched)
 // The 16:9 desktop cut is scripts/record-desktop.mjs.
 import fs from "node:fs";
 import path from "node:path";
@@ -19,10 +20,11 @@ const root = path.resolve(path.dirname(new URL(import.meta.url).pathname.replace
 const base = process.env.BASE ?? "http://localhost:3100";
 if (!/localhost|127\.0\.0\.1/.test(base)) throw new Error("record against a local server only");
 const ffmpeg = process.env.FFMPEG ?? "ffmpeg";
-const media = path.join(root, "docs", "media");
+const draft = process.env.DRAFT === "1";
+const media = draft ? path.join(root, "out", "draft", "phone") : path.join(root, "docs", "media");
 const shotsDir = path.join(media, "shots");
-const caseDir = path.join(root, "public", "case-study");
-const tmp = path.join(root, ".data", "video", "phone");
+const caseDir = draft ? path.join(media, "case-study") : path.join(root, "public", "case-study");
+const tmp = path.join(root, ".data", "video", draft ? "phone-draft" : "phone");
 for (const d of [media, shotsDir, caseDir, tmp]) fs.mkdirSync(d, { recursive: true });
 
 const W = 390;
@@ -75,7 +77,10 @@ await shot("invite");
 await app.getByRole("button", { name: /Build my version/ }).click();
 await app.waitForURL(/\/trip/);
 await wait(1400);
+// Free dates: tap the first day, then the last.
 await app.getByRole("button", { name: /^Mon 28 Dec/ }).first().click();
+await wait(1100);
+await app.getByRole("button", { name: /^Sat 2 Jan/ }).first().click();
 await wait(1600);
 await shot("dates", true);
 await app.getByRole("button", { name: /Build days/ }).click();
@@ -152,7 +157,7 @@ console.log(`recorded ${duration.toFixed(1)} s, ${frames.length} frames (${(fram
 // MP4 at full resolution, and a GIF of the core loop for the README
 const mp4 = path.join(media, "demo.mp4");
 const gif = path.join(media, "demo.gif");
-encodeMp4({ ffmpeg, frames, out: mp4, crf: 23 });
+encodeMp4({ ffmpeg, frames, out: mp4, crf: 23, draft });
 const start = Math.max(0, marks.gifStart - 0.3);
 encodeGif({ ffmpeg, from: mp4, out: gif, start, duration: Math.min(12, marks.gifEnd - start + 0.3), width: 420, fps: 10, colors: 128 });
 // README hero: four phones on Caravan's midnight, with soft glows

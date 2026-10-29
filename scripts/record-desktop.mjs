@@ -3,7 +3,8 @@
 // muted), and an end card with the link.
 //   public/case-study/walkthrough.mp4   (played on /case-study; linked from the README)
 // Needs a local server on the local store and ffmpeg (on PATH, or FFMPEG=…).
-// Usage: node scripts/record-desktop.mjs   (env: BASE, FFMPEG)
+// Usage: node scripts/record-desktop.mjs   (env: BASE, FFMPEG, DRAFT=1 for a quick 1600×900 check that
+// lands in out/draft/ and leaves the committed video alone)
 import fs from "node:fs";
 import path from "node:path";
 import { chromium } from "playwright";
@@ -17,7 +18,8 @@ const LIVE = "caravan-prod.vercel.app";
 const W = 1600;
 const H = 900;
 
-const S = 1.2; // 1600×900 layout, scaled into a crisp 1920×1080 frame (see openScaled)
+const draft = process.env.DRAFT === "1";
+const S = draft ? 1 : 1.2; // 1600×900 layout, scaled into a crisp 1920×1080 frame (see openScaled)
 
 const browser = await chromium.launch();
 const ctx = await browser.newContext({ viewport: { width: W * S, height: H * S } });
@@ -122,7 +124,10 @@ await app.getByRole("button", { name: /Build my version/ }).click();
 await app.waitForURL(/\/trip/);
 await caption("Everyone picks their dates…");
 await wait(1200);
+// Free dates: tap the first day, then the last.
 await app.getByRole("button", { name: /^Fri 25 Dec/ }).first().click();
+await wait(1100);
+await app.getByRole("button", { name: /^Wed 30 Dec/ }).first().click();
 await wait(1800);
 await app.getByRole("button", { name: /Build days/ }).click();
 await wait(900);
@@ -195,6 +200,7 @@ await showCard(
 const { frames, duration } = await rec.stop();
 await browser.close();
 console.log(`recorded ${duration.toFixed(1)} s, ${frames.length} frames (${(frames.length / duration).toFixed(1)} fps)`);
-const out = path.join(root, "public", "case-study", "walkthrough.mp4");
-encodeMp4({ ffmpeg, frames, out, fps: 30, crf: 21 });
+const out = draft ? path.join(root, "out", "draft", "walkthrough-draft.mp4") : path.join(root, "public", "case-study", "walkthrough.mp4");
+fs.mkdirSync(path.dirname(out), { recursive: true });
+encodeMp4({ ffmpeg, frames, out, fps: 30, crf: draft ? 28 : 21, draft });
 console.log(`${path.relative(root, out)}  ${(fs.statSync(out).size / 1e6).toFixed(1)} MB`);
