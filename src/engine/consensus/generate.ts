@@ -367,7 +367,8 @@ function runPlan(e: Engine, ballots: Ballot[], input: Partial<PlanSettings>, sta
     if (!itemAllowed(e, id, s.slot, s.plan, !!s.pair)) return false;
     if (a.availableDays && !a.availableDays.includes(s.weekday)) return false;
     if (asExtra) {
-      if (a.variants) return false;
+      // A big day trip is the day: never squeezed in alongside something else.
+      if (a.variants || a.onlyBaseDays || isBigTrip(a)) return false;
       if (a.onlyWith && main[i] !== a.onlyWith) return false;
       if (isSpecialOption(e, id)) return false;
     }

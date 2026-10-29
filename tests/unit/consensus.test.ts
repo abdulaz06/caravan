@@ -55,6 +55,8 @@ function assertValid(e: Engine, p: ConsensusPlan) {
     for (const it of s.items) {
       const a = e.catalog.byId[it.id];
       if (!a) continue;
+      // A big day trip is only ever the day's main item.
+      if (it.role === "extra") expect(a.onlyBaseDays || a.tags.includes("big day trip")).toBeFalsy();
       // Day-of-week availability.
       if (a.availableDays) expect(a.availableDays).toContain(parseISO(s.date).getUTCDay());
       expect(e.rules.hidden).not.toContain(it.id);

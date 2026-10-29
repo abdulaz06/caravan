@@ -172,14 +172,13 @@ Runners-up:
 |  | + extra | Chronicles of Georgia & a lakeside BBQ at the Tbilisi Sea | 3 of 11 picked this · Fits alongside, with time to spare |  |
 | 2 · Mon 28 Dec | Evening | Georgian supra feast with folk songs | 4 of 11 picked this | Natural wine cellars of Sololaki (3) |
 | | | ↳ split suggested: 4 Georgian supra feast with folk songs / 3 Natural wine cellars of Sololaki | 0 picked both | |
-| 3 · Tue 29 Dec | Daytime | Mtskheta & Jvari Monastery | 5 of 11 picked this · ~30 min from Tbilisi | Kazbegi & Gergeti Trinity Church (4) |
+| 3 · Tue 29 Dec | Daytime | Mtskheta & Jvari Monastery | 5 of 11 picked this · ~30 min from Tbilisi | Sighnaghi & Bodbe Monastery, Kakheti (4) |
 | | | ↳ split suggested: 5 Mtskheta & Jvari Monastery / 3 Tandem paragliding over snowy Gudauri | 1 picked both | |
 | 3 · Tue 29 Dec | Evening | Fabrika courtyard night | 6 of 11 picked this | Natural wine cellars of Sololaki (3) |
 | 4 · Wed 30 Dec | Daytime | Old Tbilisi: Narikala by cable car & the bath-house domes | 6 of 11 picked this | Ski or snowboard day in Gudauri (5) |
 | | | ↳ split suggested: 6 Old Tbilisi: Narikala by cable car & the bath-house domes / 3 Khinkali & khachapuri cooking class | 1 picked both | |
 | 4 · Wed 30 Dec | Evening | Free time / stay in | 8 people want some slower evenings | Natural wine cellars of Sololaki (3) |
 | 5 · Thu 31 Dec | Daytime | Private room at the sulfur baths | 5 of 11 picked this | Ski or snowboard day in Gudauri (5) |
-|  | + extra | Sighnaghi & Bodbe Monastery, Kakheti | 4 of 11 picked this · Big day trip · ~2 hrs each way · Fits alongside, with time to spare |  |
 | 5 · Thu 31 Dec | Evening | NYE feast, then fireworks from above | 4 of 11 picked this · New Year's Eve: 4 votes vs 3 for New Year's Eve countdown at Liberty Square | New Year's Eve countdown at Liberty Square (3) |
 | 6 · Fri 1 Jan | Daytime | Dry Bridge flea market & Fabrika | 4 of 11 picked this · More of its fans are here that day than Ski or snowboard day in Gudauri's | Ski or snowboard day in Gudauri (5) |
 | | | ↳ split suggested: 4 Dry Bridge flea market & Fabrika / 4 Ski or snowboard day in Gudauri | 1 picked both | |
@@ -193,18 +192,18 @@ Runners-up:
 | Traveller | Status | Days there | Picks in plan | Satisfaction | Added by the floor |
 |---|---|---|---|---|---|
 | Theo | submitted | 9 | 8 of 16 | 50% |  |
+| Lena | submitted | 9 | 10 of 16 | 63% |  |
 | Elle | draft | 6 | 4 of 6 | 67% |  |
-| Lena | submitted | 9 | 11 of 16 | 69% |  |
 | Kai | submitted | 5 | 5 of 7 | 71% |  |
+| Maya | submitted | 8 | 11 of 15 | 73% |  |
+| Omar | submitted | 7 | 9 of 13 | 75% |  |
 | Ravi | draft | 3 | 3 of 5 | 75% |  |
-| Maya | submitted | 8 | 12 of 15 | 80% |  |
 | Nadia | draft | 6 | 4 of 5 | 80% |  |
+| Priya | submitted | 5 | 8 of 12 | 80% |  |
 | Sofia | submitted | 9 | 13 of 17 | 81% |  |
-| Omar | submitted | 7 | 10 of 13 | 83% |  |
 | Jonah | submitted | 6 | 8 of 9 | 89% |  |
-| Priya | submitted | 5 | 9 of 12 | 90% |  |
 
-Lowest 50% · median 80% · mean 76% · Jain's index 0.980 · 11 of 11 got at least 2. Budget ≈ $493–1262 per person (About $878 each — over the budget 3 of 10 people set).
+Lowest 50% · median 75% · mean 73% · Jain's index 0.981 · 11 of 11 got at least 2. Budget ≈ $471–1205 per person (About $838 each — over the budget 3 of 10 people set).
 
 ### Majority rules
 
@@ -228,14 +227,13 @@ Runners-up:
 |  | + extra | Chronicles of Georgia & a lakeside BBQ at the Tbilisi Sea | 3 of 11 picked this · Fits alongside, with time to spare |  |
 | 2 · Mon 28 Dec | Evening | Georgian supra feast with folk songs | 4 of 11 picked this | Natural wine cellars of Sololaki (3) |
 | | | ↳ split suggested: 4 Georgian supra feast with folk songs / 3 Natural wine cellars of Sololaki | 0 picked both | |
-| 3 · Tue 29 Dec | Daytime | Mtskheta & Jvari Monastery | 5 of 11 picked this · ~30 min from Tbilisi | Kazbegi & Gergeti Trinity Church (4) |
+| 3 · Tue 29 Dec | Daytime | Mtskheta & Jvari Monastery | 5 of 11 picked this · ~30 min from Tbilisi | Sighnaghi & Bodbe Monastery, Kakheti (4) |
 | | | ↳ split suggested: 5 Mtskheta & Jvari Monastery / 3 Tandem paragliding over snowy Gudauri | 1 picked both | |
 | 3 · Tue 29 Dec | Evening | Fabrika courtyard night | 6 of 11 picked this | Natural wine cellars of Sololaki (3) |
 | 4 · Wed 30 Dec | Daytime | Old Tbilisi: Narikala by cable car & the bath-house domes | 6 of 11 picked this | Ski or snowboard day in Gudauri (5) |
 | | | ↳ split suggested: 6 Old Tbilisi: Narikala by cable car & the bath-house domes / 3 Khinkali & khachapuri cooking class | 1 picked both | |
 | 4 · Wed 30 Dec | Evening | Free time / stay in | 8 people want some slower evenings | Natural wine cellars of Sololaki (3) |
 | 5 · Thu 31 Dec | Daytime | Private room at the sulfur baths | 5 of 11 picked this | Ski or snowboard day in Gudauri (5) |
-|  | + extra | Sighnaghi & Bodbe Monastery, Kakheti | 4 of 11 picked this · Big day trip · ~2 hrs each way · Fits alongside, with time to spare |  |
 | 5 · Thu 31 Dec | Evening | NYE feast, then fireworks from above | 4 of 11 picked this · New Year's Eve: 4 votes vs 3 for New Year's Eve countdown at Liberty Square | New Year's Eve countdown at Liberty Square (3) |
 | 6 · Fri 1 Jan | Daytime | Dry Bridge flea market & Fabrika | 4 of 11 picked this · More of its fans are here that day than Ski or snowboard day in Gudauri's | Ski or snowboard day in Gudauri (5) |
 | | | ↳ split suggested: 4 Dry Bridge flea market & Fabrika / 4 Ski or snowboard day in Gudauri | 1 picked both | |
@@ -249,18 +247,18 @@ Runners-up:
 | Traveller | Status | Days there | Picks in plan | Satisfaction | Added by the floor |
 |---|---|---|---|---|---|
 | Theo | submitted | 9 | 8 of 16 | 50% |  |
+| Lena | submitted | 9 | 10 of 16 | 63% |  |
 | Elle | draft | 6 | 4 of 6 | 67% |  |
-| Lena | submitted | 9 | 11 of 16 | 69% |  |
 | Kai | submitted | 5 | 5 of 7 | 71% |  |
+| Maya | submitted | 8 | 11 of 15 | 73% |  |
+| Omar | submitted | 7 | 9 of 13 | 75% |  |
 | Ravi | draft | 3 | 3 of 5 | 75% |  |
-| Maya | submitted | 8 | 12 of 15 | 80% |  |
 | Nadia | draft | 6 | 4 of 5 | 80% |  |
+| Priya | submitted | 5 | 8 of 12 | 80% |  |
 | Sofia | submitted | 9 | 13 of 17 | 81% |  |
-| Omar | submitted | 7 | 10 of 13 | 83% |  |
 | Jonah | submitted | 6 | 8 of 9 | 89% |  |
-| Priya | submitted | 5 | 9 of 12 | 90% |  |
 
-Lowest 50% · median 80% · mean 76% · Jain's index 0.980 · 11 of 11 got at least 0. Budget ≈ $493–1262 per person (About $878 each — over the budget 3 of 10 people set).
+Lowest 50% · median 75% · mean 73% · Jain's index 0.981 · 11 of 11 got at least 0. Budget ≈ $471–1205 per person (About $838 each — over the budget 3 of 10 people set).
 
 ### Custom — slider at fairness
 
