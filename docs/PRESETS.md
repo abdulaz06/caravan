@@ -29,7 +29,7 @@ preset its trip uses — presets are never bundled into the client.
 | `destination` | Name, timezone, the poster headline (`["Sri Lanka,", "your way."]`), tagline (+ `familyTagline`), season, hero photo, farewell line, stamp text, welcome-page showcase and teaser |
 | `currency` | The local currency (shown first in the picker) and the default display currency. All prices are **USD**. |
 | `dates` | The default date window organizers can move within `outer`; `length` — the shortest and longest trip anyone can pick (default 1–14 days); `recommended` — the “Most groups do 5–7 days” hint |
-| `structure` | Bases with nights (`default/min/max`), how free-date trips share nights out (`weight`, `minNights`), each base's own way to the airport (`departureLeg`), transfers between them, arrival/departure legs, the preview length (fixed-length trips), slot labels and "overpacked" limits |
+| `structure` | Bases with nights (`default/min/max`), how free-date trips share nights out (`weight`, `minNights`), each base's own way to the airport (`departureLeg`), transfers between them, arrival/departure legs, the preview length (fixed-length trips), slot labels and "overpacked" limits, and `extraRadiusHours` — how far (one way) the group plan may put an extra from the slot's main item or the base (default 0.75) |
 | `areas` | The *pools* slots draw from (`colombo`, `enroute`, `galle`…), each with a home base and whether single picks can move between days |
 | `regions` | Every place with coordinates and photo keys |
 | `travel` | Known drive times, the distance estimate, fixed legs, scenic routes with stops, the vehicle ("van", "rental car"), self-drive or not |
@@ -95,6 +95,14 @@ only), `rules` (a scorecard), `course` (pub-golf holes), `routeKm` (a stop on
 a transfer route), `variants` + `onlyBaseDays` + `vehicleRoundTripUsd` + `bring`
 (a big day trip with two ways to do it), `onlyWith` (an extra that needs another
 pick in the same slot), `icon` (a custom illustration).
+
+Tags the group plan reads: **`meal`** marks a main meal — a dinner, a
+restaurant, a food crawl, a cooking class you eat at, a long lunch — and the
+group plan never puts two in one slot (a small food extra like a late kottu
+stays untagged and can join one). A family-friendly stand-in that is a meal gets
+the tag too, so family view never shows two dinners either. **`big day trip`**
+(like `variants` or `onlyBaseDays`) makes an activity the day's main item only,
+never an extra.
 
 ### Family-friendly mode
 

@@ -382,6 +382,8 @@ export const presetSchema = z.strictObject({
       day: z.strictObject({ label: z.string(), limitHours: z.number().positive() }),
       night: z.strictObject({ label: z.string(), limitHours: z.number().positive() }),
     }),
+    /** How far (hours, one way) an extra may be from the slot's main item or the base: a group plan never adds a far-off extra. */
+    extraRadiusHours: z.number().positive().max(3).default(0.75),
   }),
   areas: z.array(areaSchema).min(1),
   regions: z.array(regionSchema).min(2),

@@ -695,6 +695,7 @@
       "vibe": -1,
       "intensity": "easy",
       "tags": [
+        "meal",
         "history",
         "art",
         "views",
@@ -1076,6 +1077,7 @@
       "vibe": -1,
       "intensity": "easy",
       "tags": [
+        "meal",
         "history",
         "monastery",
         "views",
@@ -1255,6 +1257,7 @@
       "vibe": 0,
       "intensity": "easy",
       "tags": [
+        "meal",
         "food",
         "street food",
         "market",
@@ -1304,6 +1307,7 @@
       "vibe": 0,
       "intensity": "easy",
       "tags": [
+        "meal",
         "food",
         "cooking",
         "culture"
@@ -1713,6 +1717,7 @@
       "vibe": 0,
       "intensity": "easy",
       "tags": [
+        "meal",
         "food",
         "dinner",
         "culture",
@@ -1761,6 +1766,7 @@
       "vibe": 0,
       "intensity": "easy",
       "tags": [
+        "meal",
         "food",
         "dinner",
         "views"
@@ -2059,6 +2065,7 @@
       ],
       "vibe": 0,
       "tags": [
+        "meal",
         "food",
         "dinner",
         "fireworks",
@@ -2346,6 +2353,7 @@
       "venue": "Anywhere good",
       "emoji": "🧀",
       "tags": [
+        "meal",
         "food"
       ],
       "sources": [
@@ -2483,6 +2491,7 @@
       ],
       "vibe": 0,
       "tags": [
+        "meal",
         "food",
         "street food",
         "games"
