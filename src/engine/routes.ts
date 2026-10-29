@@ -4,7 +4,7 @@
 // map itself (projection, outline, roads, default frame) comes from the preset.
 import type { ItineraryData } from "./itinerary";
 import type { Engine } from "./structure";
-import { buildTimeline, transferLeg, type Timeline } from "./timeline";
+import { buildTimeline, departureLeg, transferLeg, type Timeline } from "./timeline";
 
 /** order: 1, 2, 3… for places visited; 0 for airports and the bases. */
 export type RouteStop = { region: string; order: number; kind: "airport" | "base" | "stop"; labels: string[] };
@@ -35,8 +35,9 @@ export const dayColor = (e: Engine, i: number) => {
 
 /** The places a trip flies in and out of. */
 export function airports(e: Engine): Set<string> {
-  const { arrival, departure } = e.catalog.preset.structure;
-  return new Set([e.catalog.legs[arrival.leg]?.from, e.catalog.legs[departure.leg]?.to].filter((x): x is string => !!x));
+  const { arrival } = e.catalog.preset.structure;
+  const out = [e.catalog.legs[arrival.leg]?.from, ...e.catalog.bases.map((b) => departureLeg(e, { base: b })?.to)];
+  return new Set(out.filter((x): x is string => !!x));
 }
 
 /** Legs between two towns on the same road chain follow it; known roads are drawn as driven. */
@@ -53,7 +54,7 @@ function via(e: Engine, a: string, b: string): Waypoint[] {
 }
 
 export function dayRoutes(e: Engine, data: ItineraryData, timeline: Timeline = buildTimeline(e, data)): DayRoute[] {
-  const { arrival, departure } = e.catalog.preset.structure;
+  const { arrival } = e.catalog.preset.structure;
   const ports = airports(e);
   const baseRegions = new Set(e.catalog.bases.map((b) => b.region));
   return timeline.days.map((t, k) => {
@@ -70,7 +71,7 @@ export function dayRoutes(e: Engine, data: ItineraryData, timeline: Timeline = b
 
     if (t.plan.kind === "departure") {
       push(home);
-      const leg = e.catalog.legs[departure.leg];
+      const leg = departureLeg(e, t.plan);
       if (leg) push(leg.to, "Fly home");
     } else if (t.plan.kind === "transfer" && t.plan.transfer) {
       const from = e.catalog.basesById[t.plan.transfer.from];
@@ -93,6 +94,9 @@ export function dayRoutes(e: Engine, data: ItineraryData, timeline: Timeline = b
       push(home);
       for (const a of [...itemsOf("day"), ...itemsOf("night")]) push(a.region, a.title);
       push(home);
+      // A 1-day trip flies home the same evening.
+      const out = t.plan.departs ? departureLeg(e, t.plan) : undefined;
+      if (out) push(out.to, "Fly home");
     }
 
     const legs: RouteLeg[] = [];

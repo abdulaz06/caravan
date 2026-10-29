@@ -6,7 +6,7 @@ import { dayLabel, parseISO } from "@/lib/dates";
 import { formatHours, type Activity, type Leg, type Route, type Slot, type SpecialDate } from "./catalog";
 import { earlyNightBefore, lateNightItems, tripOn, type DayTrip } from "./day-trip";
 import { dateAt, plansOf, resolve, specialAt, type ItineraryData, type Resolved, type SlotItem } from "./itinerary";
-import { isRouteArea, type DayPlan, type Engine } from "./structure";
+import { departureLegId, isRouteArea, type DayPlan, type Engine } from "./structure";
 
 export type TravelSegment = {
   kind: "fixed" | "excursion" | "hop" | "return";
@@ -61,6 +61,8 @@ export type TimelineDay = {
   special: SpecialDate | null;
   trip: DayTrip | null;
   legsBefore: TravelSegment[];
+  /** A 1-day trip: the flight home at the end of the day. */
+  legsAfter: TravelSegment[];
   day: SlotView;
   night: SlotView;
   warnings: string[];
@@ -111,6 +113,11 @@ export function distanceLabel(e: Engine, a: Activity, area: string): string {
   if (h <= 0.25) return `~15 min from ${home}`;
   if (h >= 2) return `Big day trip · ${formatHours(h)} each way`;
   return `${formatHours(h)} from ${home}`;
+}
+
+/** The way to the airport from where this trip ends. */
+export function departureLeg(e: Engine, plan: Pick<DayPlan, "base">): Leg | undefined {
+  return e.catalog.legs[departureLegId(e, plan.base)];
 }
 
 export function legSegment(leg: Leg, extra?: Pick<TravelSegment, "stops" | "route" | "flight">): TravelSegment {
@@ -194,10 +201,11 @@ export function buildTimeline(e: Engine, data: ItineraryData): Timeline {
       }
     }
     if (plan.kind === "departure") {
-      const leg = e.catalog.legs[structure.departure.leg];
+      const leg = departureLeg(e, plan);
       if (leg) legsBefore.push(legSegment(leg, { flight: true }));
     }
     for (const l of legsBefore) total += l.hours;
+    const legsAfter: TravelSegment[] = [];
     if (plan.kind !== "departure") {
       visit(plan.base.region);
       onRoute(plan.base.region);
@@ -300,8 +308,15 @@ export function buildTimeline(e: Engine, data: ItineraryData): Timeline {
         warnings.push(`Long road day already — ${shortTitle(far)} tonight means another ${formatHours(e.catalog.travelHours(home, far.region))} each way.`);
       }
     }
+    if (plan.departs && plan.kind !== "departure") {
+      const leg = departureLeg(e, plan);
+      if (leg) {
+        legsAfter.push(legSegment(leg, { flight: true }));
+        total += leg.hours;
+      }
+    }
     if (index === n - 2 && !plan.arrival) {
-      const departure = e.catalog.legs[structure.departure.leg];
+      const departure = departureLeg(e, plans[n - 1]);
       if (dayActs.some((a) => a.tags.includes("diving"))) warnings.push("Don't fly within 18–24 hrs of diving — move the dive earlier in the trip.");
       if (nightActs.some((a) => a.vibe >= 2) && departure) tips.push(`Big last night! It's ${departure.label} to the airport tomorrow — plan the flight time around it.`);
     }
@@ -328,6 +343,7 @@ export function buildTimeline(e: Engine, data: ItineraryData): Timeline {
       special,
       trip,
       legsBefore,
+      legsAfter,
       day: views.day,
       night: views.night,
       warnings: [...new Set(warnings)],
@@ -336,7 +352,7 @@ export function buildTimeline(e: Engine, data: ItineraryData): Timeline {
     return out;
   });
 
-  const departure = e.catalog.legs[structure.departure.leg];
+  const departure = n ? departureLeg(e, plans[n - 1]) : undefined;
   if (n && departure) onRoute(departure.to);
   return { days, totalHours: total, regionsVisited: visited, route: n ? route : [], spokes };
 }

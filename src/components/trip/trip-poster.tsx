@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 import { tripLength, type ItineraryData } from "@/engine/itinerary";
 import { dayRoutes } from "@/engine/routes";
 import { nightsFor } from "@/engine/structure";
-import type { Timeline } from "@/engine/timeline";
+import { departureLeg, type Timeline } from "@/engine/timeline";
 import { cn } from "@/lib/cn";
 import { dayLabel } from "@/lib/dates";
 import { useArt } from "../brand/art";
@@ -19,7 +19,7 @@ const FLEX_SHORT: Record<string, string> = { exact: "Fixed", few_days: "± days"
 /** The travel-poster summary card at the top of a review/itinerary view, with the day-by-day route map. */
 export function TripPoster({ name, data, timeline }: { name: string; data: ItineraryData; timeline: Timeline }) {
   const e = useEngine();
-  const { preset, regions, legs } = e.catalog;
+  const { preset, regions } = e.catalog;
   const { Decor } = useArt();
   const len = tripLength(data);
   const split = nightsFor(e, len).filter((s) => s.nights > 0);
@@ -29,7 +29,7 @@ export function TripPoster({ name, data, timeline }: { name: string; data: Itine
   const activeRoute = active === null ? null : routes[active];
   const activeDay = active === null ? null : timeline.days[active];
   const year = data.startDate ? data.startDate.slice(0, 4) : preset.dates.window.start.slice(0, 4);
-  const departure = legs[preset.structure.departure.leg];
+  const departure = timeline.days.length ? departureLeg(e, timeline.days[timeline.days.length - 1].plan) : undefined;
 
   return (
     <section className="relative overflow-hidden rounded-[30px] bg-primary-800 text-paper shadow-lift">

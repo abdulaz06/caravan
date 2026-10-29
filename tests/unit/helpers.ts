@@ -25,9 +25,9 @@ export function engineFor(raw: { preset: unknown; photos: unknown }, rules: Part
 export const sriLanka = (rules: Partial<TripRules> = {}) => engineFor(readPreset("sri-lanka"), rules);
 export const mini = (rules: Partial<TripRules> = {}) => engineFor({ preset: miniPreset, photos: miniPhotos }, rules);
 
-/** A placed, empty plan starting on `start`. */
-export function placed(e: Engine, start: string): ItineraryData {
-  return setStart(e, emptyItinerary(), start);
+/** A placed, empty plan starting on `start` (the trip's default length unless given). */
+export function placed(e: Engine, start: string, length?: number): ItineraryData {
+  return setStart(e, emptyItinerary(), start, length);
 }
 
 /** Deterministic randomness for quick fill. */

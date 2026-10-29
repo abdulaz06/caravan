@@ -13,6 +13,7 @@ import {
   normalize,
   reorderDays,
   restructure,
+  setRange,
   setStart,
   type ItineraryData,
 } from "@/engine/itinerary";
@@ -112,10 +113,10 @@ describe("editing", () => {
   });
 
   it("carries a day trip's extras along when it moves", () => {
-    const e = mini();
+    const e = mini({ fixedLength: true });
     const d = normalize(e, put(e, placed(e, "2026-12-01"), 4, "day", "c-trip", "x-with-trip"));
     // Gamma has one ordinary day here; give it two by changing the rules.
-    const e2 = mini({ nights: { alpha: 1, beta: 2, gamma: 3 } });
+    const e2 = mini({ fixedLength: true, nights: { alpha: 1, beta: 2, gamma: 3 } });
     const d2 = restructure(d, e, e2).data;
     const key = d2.days[4].day[0].key;
     const m = moveItem(e2, d2, "day", 4, key, 5);
@@ -123,9 +124,9 @@ describe("editing", () => {
   });
 });
 
-describe("restructure (organizers change the nights)", () => {
+describe("restructure (organizers change the rules)", () => {
   it("keeps each base's picks on that base's days, in order", () => {
-    const from = sriLanka();
+    const from = sriLanka({ fixedLength: true });
     const to = createEngine(from.catalog, { ...from.rules, nights: { colombo: 2, galle: 3 } });
     const d = placed(from, "2026-12-03");
     d.days[0].day.push(makeItem(from, "colombo-tuk-tuk"));
@@ -138,7 +139,85 @@ describe("restructure (organizers change the nights)", () => {
     expect(ids(r.data, 2, "day")).toEqual(["bentota-water-sports"]); // the road trip moved a day later
     expect(ids(r.data, 3, "day")).toEqual(["galle-fort"]);
     expect(r.lost).toBe(1); // the last Galle day had no home
+    expect(r.cleared).toEqual(["rumassala-hike"]);
     expect(r.changed).toBe(true);
+  });
+
+  it("turning a fixed length off keeps every plan as it is", () => {
+    const from = sriLanka({ fixedLength: true });
+    const to = sriLanka();
+    const d = normalize(from, put(from as never, placed(from, "2026-12-03"), 2, "day", "galle-fort"));
+    const r = restructure(d, from, to);
+    expect(r.changed).toBe(false);
+    expect(r.data.days).toHaveLength(6);
+    expect(ids(r.data, 2, "day")).toEqual(["galle-fort"]);
+  });
+
+  it("turning it on moves free-date plans to the fixed length", () => {
+    const from = sriLanka();
+    const to = sriLanka({ fixedLength: true });
+    const d = normalize(from, put(from as never, placed(from, "2026-12-03", 9), 3, "day", "galle-fort"));
+    const r = restructure(d, from, to);
+    expect(r.data.days).toHaveLength(6);
+    expect(ids(r.data, 2, "day")).toEqual(["galle-fort"]); // the first ordinary Galle day either way
+  });
+
+  it("a shorter longest-trip rule trims longer plans", () => {
+    const from = sriLanka();
+    const to = sriLanka({ length: { min: 1, max: 5 } });
+    const r = restructure(placed(from, "2026-12-03", 9), from, to);
+    expect(r.data.days).toHaveLength(5);
+    expect(r.data.endDate).toBe("2026-12-07");
+  });
+
+  it("is idempotent", () => {
+    const from = sriLanka({ fixedLength: true });
+    const to = sriLanka();
+    const once = restructure(placed(from, "2026-12-03"), from, to).data;
+    const twice = restructure(once, to, to);
+    expect(twice.changed).toBe(false);
+    expect(twice.data).toEqual(once);
+  });
+});
+
+describe("free dates: changing your dates re-flows the days", () => {
+  const e = sriLanka();
+  const plan = () => {
+    const d = placed(e, "2026-12-27", 6); // 27 Dec – 1 Jan: NYE is Day 5, a Galle evening
+    d.days[0].day.push(makeItem(e, "colombo-tuk-tuk"));
+    d.days[2].day.push(makeItem(e, "galle-fort"));
+    d.days[3].day.push(makeItem(e, "rumassala-hike"));
+    d.days[4].night.push(makeItem(e, "nye-galle-fort"));
+    return normalize(e, d);
+  };
+
+  it("sliding the window keeps every pick on its trip day", () => {
+    const r = setRange(e, plan(), "2026-12-26", "2026-12-31");
+    expect(r.data.days).toHaveLength(6);
+    expect(ids(r.data, 2, "day")).toEqual(["galle-fort"]);
+    expect(ids(r.data, 5, "night")).toEqual([]); // the fly-home day: NYE can't follow its date there
+    expect(r.lost).toBe(1);
+  });
+
+  it("a longer trip keeps every pick and its NYE on 31 Dec", () => {
+    const r = setRange(e, plan(), "2026-12-27", "2027-01-04");
+    expect(r.data.days).toHaveLength(9);
+    expect(r.lost).toBe(0);
+    expect(ids(r.data, 0, "day")).toEqual(["colombo-tuk-tuk"]);
+    expect(ids(r.data, 4, "night")).toEqual(["nye-galle-fort"]);
+    expect(r.data.days.flatMap((d) => [...d.day, ...d.night]).map((x) => x.id)).toContain("rumassala-hike");
+  });
+
+  it("a trip too short for Galle clears the Galle picks and says which", () => {
+    const r = setRange(e, plan(), "2026-12-27", "2026-12-29");
+    expect(r.data.days).toHaveLength(3);
+    expect(ids(r.data, 0, "day")).toEqual(["colombo-tuk-tuk"]);
+    expect(r.cleared.sort()).toEqual(["galle-fort", "nye-galle-fort", "rumassala-hike"]);
+  });
+
+  it("clamps to the longest trip", () => {
+    const r = setRange(e, plan(), "2026-12-01", "2027-01-31");
+    expect(r.data.days).toHaveLength(14);
   });
 });
 

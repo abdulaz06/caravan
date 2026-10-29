@@ -21,8 +21,21 @@ describe("trip rules", () => {
   });
 
   it("checks the window fits the trip", () => {
-    const r = { ...defaultRules(preset), window: { start: "2026-12-01", end: "2026-12-04" } };
+    const r = { ...defaultRules(preset), fixedLength: true, window: { start: "2026-12-01", end: "2026-12-04" } };
     expect(rulesProblems(r, preset)).toContain("The date window must fit a 6-day trip.");
+    // Free dates only need room for the shortest trip.
+    expect(rulesProblems({ ...r, fixedLength: false }, preset)).toEqual([]);
+    expect(rulesProblems({ ...r, fixedLength: false, length: { min: 5, max: 9 } }, preset)).toContain("The date window must fit a 5-day trip.");
+  });
+
+  it("dates are free unless a trip turned on a fixed length", () => {
+    // Trips stored before free dates existed have no fixedLength: they become free-date trips.
+    const old = parseRules({ nights: { alpha: 2, beta: 2, gamma: 2 }, requireFullTrip: true }, preset);
+    expect(old.fixedLength).toBe(false);
+    expect(old.length).toEqual({ min: 1, max: 14 });
+    expect(old.nights).toEqual({ alpha: 2, beta: 2, gamma: 2 }); // kept for if they turn it on
+    expect(parseRules({ fixedLength: true }, preset).fixedLength).toBe(true);
+    expect(parseRules({ length: { min: 9, max: 3 } }, preset).length).toEqual({ min: 1, max: 14 });
   });
 
   it("locks by hand or once the auto-lock time passes", () => {

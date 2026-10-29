@@ -8,7 +8,7 @@ import { HIGHLIGHT_ICONS, highlightsTitle, type Highlight, type HighlightKind } 
 import { tripLength, type ItineraryData } from "@/engine/itinerary";
 import { airports, badgeStop, labelAbove, laneFor, onRoadChain, placeBadge, placeLabel, projector, routeBox, routePoints, type DayRoute, type Rect } from "@/engine/routes";
 import { daysNightsLabel, nightsFor, type Engine } from "@/engine/structure";
-import { balanceLabel, type Balance, type Timeline } from "@/engine/timeline";
+import { balanceLabel, departureLeg, type Balance, type Timeline } from "@/engine/timeline";
 import { BRAND, MARK } from "./brand";
 import { dayLabel } from "./dates";
 
@@ -456,7 +456,7 @@ function dayList(ctx: Ctx, f: Fonts, c: Colors, m: ShareModel, x: number, y: num
     const line2 = ry + 101 * k;
     const textX = tx + iconPx + 12 * k;
     if (t.plan.kind === "departure") {
-      const leg = e.catalog.legs[structure.departure.leg];
+      const leg = departureLeg(e, t.plan);
       icon(ctx, "plane", tx, line1 - iconPx + 3 * k, iconPx, c.gold);
       const route = leg ? `${regions[leg.from]?.short} → ${regions[leg.to]?.short.replace(/\s*airport$/i, "")} · ${formatHours(leg.hours).slice(1)} · ` : "";
       ctx.fillText(fit(ctx, `${route}fly home`, tx + tw - textX), textX, line1);

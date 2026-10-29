@@ -211,6 +211,12 @@ export const baseSchema = z.strictObject({
   arrivalNote: z.strictObject({ one: z.string(), many: z.string() }).optional(),
   /** Whole days here can be dragged into a new order. */
   reorderable: z.boolean().default(true),
+  /** Free-date trips: this base's share of the nights (default: its default nights). */
+  weight: z.number().positive().optional(),
+  /** Free-date trips: the fewest nights worth stopping here for — a shorter trip skips this base (default: nights.min). The first base is always kept. */
+  minNights: z.number().int().min(1).optional(),
+  /** The way to the airport when the trip ends here (default: structure.departure.leg). */
+  departureLeg: id.optional(),
 });
 
 export const transferSchema = z.strictObject({
@@ -355,6 +361,10 @@ export const presetSchema = z.strictObject({
     /** Default date window organizers can change within `outer`. */
     window: z.strictObject({ start: isoDate, end: isoDate }),
     outer: z.strictObject({ start: isoDate, end: isoDate }),
+    /** Free-date trips: the shortest and longest trip anyone can pick, in days (organizers can change it). */
+    length: z.strictObject({ min: z.number().int().min(1), max: z.number().int().min(1).max(30) }).default({ min: 1, max: 14 }),
+    /** A gentle "Most groups do 5–7 days" hint (days). */
+    recommended: z.strictObject({ min: z.number().int().min(1), max: z.number().int().min(1).max(30) }).optional(),
   }),
   structure: z.strictObject({
     bases: z.array(baseSchema).min(1),

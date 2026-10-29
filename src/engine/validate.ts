@@ -69,6 +69,8 @@ export function validatePreset(raw: unknown, rawPhotos: unknown): ValidationResu
     if (!areaIds.has(b.area)) err(`Base "${b.id}" draws from unknown area "${b.area}"`);
     if (!hasPhoto(b.photo)) err(`Base "${b.id}" has no photo "${b.photo}"`);
     if (b.nights.min > b.nights.default || b.nights.default > b.nights.max) err(`Base "${b.id}" nights must be min ≤ default ≤ max`);
+    if (b.departureLeg && !legIds.has(b.departureLeg)) err(`Base "${b.id}" uses unknown departure leg "${b.departureLeg}"`);
+    else if (b.departureLeg && p.travel.legs[b.departureLeg].from !== b.region) err(`Base "${b.id}"'s departure leg should leave from "${b.region}"`);
   }
   if (!p.structure.bases[0].arrivalName) err(`The first base ("${p.structure.bases[0].id}") needs an arrivalName`);
   const bases = p.structure.bases;
@@ -87,6 +89,12 @@ export function validatePreset(raw: unknown, rawPhotos: unknown): ValidationResu
   if (window.start < outer.start || window.end > outer.end || window.start > window.end) err("dates.window must sit inside dates.outer");
   const fullTrip = bases.reduce((n, b) => n + b.nights.default, 0) + 1;
   if (daysBetween(window.start, window.end) < fullTrip) err(`dates.window must fit the ${fullTrip}-day default trip`);
+  const { length, recommended } = p.dates;
+  if (length.min > length.max) err("dates.length must be min ≤ max");
+  if (daysBetween(window.start, window.end) < length.max) warnings.push(`dates.window is shorter than the longest trip (${length.max} days)`);
+  if (recommended && (recommended.min > recommended.max || recommended.min < length.min || recommended.max > length.max)) {
+    err("dates.recommended must sit inside dates.length (min ≤ max)");
+  }
   for (const c of [p.currency.local, p.currency.default]) if (!(CURRENCY_CODES as readonly string[]).includes(c)) err(`Currency ${c} isn't supported (see src/lib/currency.ts)`);
   for (const s of p.preferences.stays) {
     for (const b of bases) if (!p.costs.accommodation[s.id]?.[b.id]) err(`costs.accommodation is missing ${s.id} × ${b.id}`);

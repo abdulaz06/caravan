@@ -1,7 +1,12 @@
 // The live Trip rules: organizers change them in the console and they apply
-// without a redeploy. The preset sets the defaults (nights per base, date
-// window); the stored rules override them per trip. Pure — the server parses
-// them per request and the browser gets them from page props.
+// without a redeploy. The preset sets the defaults (date window, trip lengths,
+// nights per base); the stored rules override them per trip. Pure — the
+// server parses them per request and the browser gets them from page props.
+//
+// Dates are free by default: everyone picks their own start and end inside
+// the window, any length from `length.min` to `length.max`. "Fixed trip
+// length" (off by default) makes the trip one length — the nights per base —
+// with an optional shorter preview.
 import { z } from "zod";
 import { CURRENCY_CODES, isCurrency, type CurrencyCode } from "@/lib/currency";
 import { isValidISO } from "@/lib/dates";
@@ -9,14 +14,26 @@ import type { TripPreset } from "./preset-schema";
 
 export type BrowseMode = "after_submit" | "always" | "off";
 
+export type LengthRange = { min: number; max: number };
+
+/** The longest trip anyone can pick, whatever the preset or rules say. */
+export const MAX_TRIP_DAYS = 30;
+
 export type TripRules = {
   /** Edits lock by themselves at this moment (ISO), shown as a countdown. */
   autoLockAt: string | null;
-  /** On: only full-length plans can be submitted. Off: the preview length can be submitted too. */
+  /** Off (the default): free dates, any length in `length`. On: one length, set by the nights per base. */
+  fixedLength: boolean;
+  /** Free dates: the shortest and longest trip, in days. */
+  length: LengthRange;
+  /** Free dates: "Most groups do 5–7 days" (days), or none. */
+  recommended: LengthRange | null;
+  /** Fixed length — on: only full-length plans can be submitted. Off: the preview length can be submitted too. */
   requireFullTrip: boolean;
+  /** Fixed length: the shorter "try it" length on the dates step. */
   previewEnabled: boolean;
   window: { start: string; end: string };
-  /** Nights at each base (preset base id → nights). */
+  /** Fixed length: nights at each base (preset base id → nights). */
   nights: Record<string, number>;
   /** On: each slot only offers its own pool's options. */
   baseFiltering: boolean;
@@ -38,6 +55,9 @@ export type TripRules = {
 export function defaultRules(preset: TripPreset): TripRules {
   return {
     autoLockAt: null,
+    fixedLength: false,
+    length: { ...preset.dates.length },
+    recommended: preset.dates.recommended ? { ...preset.dates.recommended } : null,
     requireFullTrip: true,
     previewEnabled: preset.structure.preview,
     window: { ...preset.dates.window },
@@ -58,6 +78,8 @@ export function defaultRules(preset: TripPreset): TripRules {
 
 const isoDate = z.string().refine(isValidISO, "Invalid date");
 const ids = z.array(z.string().min(1).max(64)).max(300);
+const days = z.number().int().min(1).max(MAX_TRIP_DAYS);
+const lengthRange = z.object({ min: days, max: days }).refine((r) => r.min <= r.max, "The shortest trip must be no longer than the longest");
 
 /** Every field optional — a patch from the console, or a stored blob that may be partial. */
 export function rulesPatchSchema(preset: TripPreset) {
@@ -67,6 +89,9 @@ export function rulesPatchSchema(preset: TripPreset) {
   return z
     .object({
       autoLockAt: z.string().datetime({ offset: true }).nullable(),
+      fixedLength: z.boolean(),
+      length: lengthRange,
+      recommended: lengthRange.nullable(),
       requireFullTrip: z.boolean(),
       previewEnabled: z.boolean(),
       window: z.object({ start: isoDate, end: isoDate }),
@@ -89,7 +114,8 @@ export function rulesPatchSchema(preset: TripPreset) {
 
 export type RulesPatch = Partial<TripRules>;
 
-const tripLengthOf = (r: Pick<TripRules, "nights">) => Object.values(r.nights).reduce((a, b) => a + b, 0) + 1;
+/** The fixed trip length: every base's nights + 1. */
+export const fixedLengthOf = (r: Pick<TripRules, "nights">) => Object.values(r.nights).reduce((a, b) => a + b, 0) + 1;
 
 /** Problems with a full rule set (empty = fine). */
 export function rulesProblems(r: TripRules, preset: TripPreset): string[] {
@@ -98,7 +124,15 @@ export function rulesProblems(r: TripRules, preset: TripPreset): string[] {
   if (r.window.start > r.window.end) out.push("The date window ends before it starts.");
   if (r.window.start < outer.start || r.window.end > outer.end) out.push(`The date window must sit between ${outer.start} and ${outer.end}.`);
   const span = Math.round((Date.parse(r.window.end) - Date.parse(r.window.start)) / 86_400_000) + 1;
-  if (span < tripLengthOf(r)) out.push(`The date window must fit a ${tripLengthOf(r)}-day trip.`);
+  if (r.fixedLength) {
+    if (span < fixedLengthOf(r)) out.push(`The date window must fit a ${fixedLengthOf(r)}-day trip.`);
+  } else {
+    if (r.length.min > r.length.max) out.push("The shortest trip must be no longer than the longest.");
+    if (span < r.length.min) out.push(`The date window must fit a ${r.length.min}-day trip.`);
+    if (r.recommended && (r.recommended.min < r.length.min || r.recommended.max > r.length.max)) {
+      out.push(`The suggested length must sit between ${r.length.min} and ${r.length.max} days.`);
+    }
+  }
   return out;
 }
 
@@ -114,7 +148,9 @@ export function parseRules(raw: unknown, preset: TripPreset): TripRules {
     const ok = shape[k].safeParse(v);
     if (ok.success && ok.data !== undefined) (out as Record<string, unknown>)[k] = ok.data;
   }
-  return rulesProblems(out, preset).length ? { ...out, window: defaults.window, nights: defaults.nights } : out;
+  if (!rulesProblems(out, preset).length) return out;
+  // Something structural doesn't hold together: fall back to the preset's dates and lengths.
+  return { ...out, window: defaults.window, nights: defaults.nights, length: defaults.length, recommended: defaults.recommended };
 }
 
 export function mergeRules(base: TripRules, patch: RulesPatch): TripRules {

@@ -5,7 +5,7 @@ import { addDays, dayLabel } from "@/lib/dates";
 import { formatHours, type Leg } from "./catalog";
 import type { ItineraryData, SlotKind } from "./itinerary";
 import { nightsFor, type Engine } from "./structure";
-import { buildTimeline, transferLeg } from "./timeline";
+import { buildTimeline, departureLeg, transferLeg } from "./timeline";
 
 export type Range = [number, number];
 export type BudgetLine = {
@@ -107,8 +107,8 @@ export function computeBudget(e: Engine, data: ItineraryData): BudgetResult {
         included: !excluded.has(id),
       });
     }
-    if (t.plan.kind === "departure") {
-      const leg = e.catalog.legs[structure.departure.leg];
+    if (t.plan.departs) {
+      const leg = departureLeg(e, t.plan);
       if (leg) lines.push(legLine(leg, "leg:departure"));
     }
     if (lines.length) {

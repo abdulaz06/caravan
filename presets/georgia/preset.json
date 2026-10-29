@@ -48,6 +48,14 @@
     "outer": {
       "start": "2026-11-01",
       "end": "2027-03-31"
+    },
+    "length": {
+      "min": 1,
+      "max": 14
+    },
+    "recommended": {
+      "min": 7,
+      "max": 10
     }
   },
   "structure": {
@@ -71,7 +79,9 @@
           "one": "★ Land, grab the rental cars · {nights} night in Tbilisi",
           "many": "★ Land, grab the rental cars · {nights} nights in Tbilisi"
         },
-        "reorderable": true
+        "reorderable": true,
+        "weight": 1,
+        "minNights": 1
       }
     ],
     "arrival": {

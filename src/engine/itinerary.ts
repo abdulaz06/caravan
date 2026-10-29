@@ -8,7 +8,11 @@ import { STAY_ID, type Activity, type Pair, type Slot, type SpecialDate, type St
 import { isHidden } from "./rules";
 import {
   allowedLengths,
+  clampLength,
   createEngine,
+  defaultLength,
+  isFixed,
+  isPreviewLength,
   isRouteArea,
   planDays,
   previewDays,
@@ -277,15 +281,16 @@ function cleanList(e: Engine, items: SlotItem[], slot: Slot, plan: DayPlan, spec
 }
 
 /**
- * Enforce the rules: a fixed length (the full trip, or the preview if
- * allowed), every item valid for its day's slot, special options only on
- * their date, nothing on the fly-home day.
+ * Enforce the rules: an allowed length (free dates: anything in the rules'
+ * range; fixed: the full trip, or the preview if allowed), every item valid
+ * for its day's slot, special options only on their date, nothing on the
+ * fly-home day.
  */
 export function normalize(e: Engine, input: ItineraryData, length?: number): ItineraryData {
   const data = clone(input) as ItineraryData;
   if (length === undefined) {
     const saved = input.startDate && input.endDate ? diffDays(input.startDate, input.endDate) + 1 : (input.days?.length ?? 0);
-    length = allowedLengths(e).includes(saved) ? saved : tripDays(e);
+    length = allowedLengths(e).includes(saved) ? saved : clampLength(e, saved);
   }
   data.version = DATA_VERSION;
   data.preferences = data.preferences && typeof data.preferences === "object" ? data.preferences : {};
@@ -342,7 +347,7 @@ function liftSpecials(e: Engine, data: ItineraryData): Map<string, SlotItem[]> {
  * Place the window. Picks stay on the same trip day (Day 1…n); a special
  * date's picks follow the date if it's still inside the window.
  */
-export function setStart(e: Engine, input: ItineraryData, start: string, length: number = input.days.length || tripDays(e)): ItineraryData {
+export function setStart(e: Engine, input: ItineraryData, start: string, length: number = input.days.length || defaultLength(e)): ItineraryData {
   const data = clone(input);
   const carried = data.days.length ? liftSpecials(e, data) : new Map<string, SlotItem[]>();
   data.startDate = clampStart(e, start, length);
@@ -355,7 +360,7 @@ export function setStart(e: Engine, input: ItineraryData, start: string, length:
   return normalize(e, data, length);
 }
 
-function edit(e: Engine, input: ItineraryData, fn: (d: ItineraryData) => void, length = input.days.length || tripDays(e)): ItineraryData {
+function edit(e: Engine, input: ItineraryData, fn: (d: ItineraryData) => void, length = input.days.length || defaultLength(e)): ItineraryData {
   const data = clone(input);
   fn(data);
   return normalize(e, data, length);
@@ -509,37 +514,79 @@ export function expandToFull(e: Engine, data: ItineraryData): ItineraryData {
 export const isSubmittable = (e: Engine, data: ItineraryData) =>
   !!data.startDate && allowedLengths(e).includes(tripLength(data)) && data.days.length === tripLength(data);
 
-// ── Rules changes (console) ───────────────────────────────────────────
+// ── Re-flowing a plan onto a new shape (new dates, new rules) ─────────
 
-export type Restructured = { data: ItineraryData; lost: number; changed: boolean };
+export type Restructured = { data: ItineraryData; lost: number; changed: boolean; cleared: string[] };
 
 const bucketOf = (p: DayPlan) => (p.kind === "departure" ? "departure" : `${p.kind}:${p.base.id}`);
 
 /**
- * Move a plan from one set of Trip rules to another (nights per base, date
- * window, allowed lengths): each base's days map to that base's days, transfer
- * days to transfer days, in order; picks with no home (and special picks that
- * no longer land on their date) are cleared and counted.
+ * Move a plan onto a new start and length (and possibly new rules): each
+ * base's days map to that base's days, transfer days to transfer days, in
+ * order; a special date's picks follow the date if it's still in the trip.
+ * Picks with no home are cleared — `cleared` lists their ids.
  */
-export function restructure(input: ItineraryData, from: Engine, to: Engine): Restructured {
+function reflow(input: ItineraryData, from: Engine, to: Engine, start: string, len: number): Restructured {
   const before = normalize(from, input);
   const oldLen = before.days.length;
-  if (!before.startDate) return { data: normalize(to, before), lost: 0, changed: false };
+  const lifted = clone(before);
+  const carried = lifted.days.length ? liftSpecials(from, lifted) : new Map<string, SlotItem[]>();
   const buckets = new Map<string, DayEntry[]>();
   planDays(from, oldLen).forEach((p, i) => {
     const k = bucketOf(p);
-    buckets.set(k, [...(buckets.get(k) ?? []), before.days[i]]);
+    buckets.set(k, [...(buckets.get(k) ?? []), lifted.days[i]]);
   });
-  const wasShort = oldLen === previewDays(from) && previewDays(from) !== tripDays(from);
-  const len = wasShort && allowedLengths(to).includes(previewDays(to)) ? previewDays(to) : tripDays(to);
   const days = planDays(to, len).map((p) => buckets.get(bucketOf(p))?.shift() ?? emptyDay());
-  const next: ItineraryData = { ...clone(before), days };
-  next.startDate = clampStart(to, before.startDate, len);
+  const next: ItineraryData = { ...lifted, days };
+  next.startDate = clampStart(to, start, len);
   next.endDate = addDays(next.startDate, len - 1);
+  for (const { special, index } of specialsIn(to, next)) {
+    const back = carried.get(special.id);
+    if (back?.length) next.days[index][special.slot] = [...back, ...next.days[index][special.slot]];
+  }
   const data = normalize(to, next, len);
-  const lost = Math.max(0, countItems(before) - countItems(data));
+  const kept = itemCounts(data);
+  const cleared: string[] = [];
+  for (const [id, n] of itemCounts(before)) for (let k = kept.get(id) ?? 0; k < n; k++) cleared.push(id);
+  const lost = cleared.length;
   const changed = lost > 0 || data.startDate !== before.startDate || data.days.length !== oldLen;
-  return { data, lost, changed };
+  return { data, lost, changed, cleared };
+}
+
+/**
+ * Free dates: pick a new start and end. The same length just slides the
+ * window (picks stay on their trip day); a new length re-flows the days.
+ */
+export function setRange(e: Engine, input: ItineraryData, start: string, end: string): Restructured {
+  const len = clampLength(e, diffDays(start, end) + 1);
+  if (!input.startDate || !input.days.length) {
+    const data = setStart(e, { ...input, days: [] }, start, len);
+    return { data, lost: 0, changed: true, cleared: [] };
+  }
+  if (len === input.days.length) {
+    const data = setStart(e, input, start, len);
+    const lost = Math.max(0, countItems(input) - countItems(data));
+    return { data, lost, changed: data.startDate !== input.startDate, cleared: [] };
+  }
+  return reflow(input, e, e, start, len);
+}
+
+/** The length a plan moves to when the rules change. */
+function targetLength(from: Engine, to: Engine, oldLen: number): number {
+  if (!isFixed(to)) return clampLength(to, oldLen);
+  if (isFixed(from) && isPreviewLength(from, oldLen) && allowedLengths(to).includes(previewDays(to))) return previewDays(to);
+  return !isFixed(from) && allowedLengths(to).includes(oldLen) ? oldLen : tripDays(to);
+}
+
+/**
+ * Move a plan from one set of Trip rules to another (free/fixed length,
+ * nights per base, date window, allowed lengths); picks with no home (and
+ * special picks that no longer land on their date) are cleared and counted.
+ */
+export function restructure(input: ItineraryData, from: Engine, to: Engine): Restructured {
+  const before = normalize(from, input);
+  if (!before.startDate) return { data: normalize(to, before), lost: 0, changed: false, cleared: [] };
+  return reflow(before, from, to, before.startDate, targetLength(from, to, before.days.length));
 }
 
 export { createEngine };

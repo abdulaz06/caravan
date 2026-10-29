@@ -6,7 +6,7 @@ import { CURRENCY_CODES } from "@/lib/currency";
 import { diffDays, isValidISO } from "@/lib/dates";
 import type { Choice } from "./preset-schema";
 import { MAX_ITEMS, MAX_ROOMMATES, normalize, type ItineraryData } from "./itinerary";
-import { allowedLengths, tripDays, type Engine } from "./structure";
+import { allowedLengths, isFixed, lengthBounds, lengthRangeLabel, tripDays, type Engine } from "./structure";
 
 const isoDate = z.string().refine(isValidISO, "Invalid date");
 const text = (max: number) => z.string().trim().max(max).optional();
@@ -73,9 +73,9 @@ export function itinerarySchema(e: Engine) {
         if (d.startDate < e.rules.window.start || d.endDate > e.rules.window.end) {
           ctx.addIssue({ code: "custom", message: "Dates are outside the trip window" });
         }
-        // The Trip rules decide the length; the preview is only saved if allowed.
+        // The Trip rules decide the length (free dates: a range; fixed: one length, the preview only if allowed).
         if (!allowedLengths(e).includes(len) || d.days.length !== len) {
-          ctx.addIssue({ code: "custom", message: `The trip is ${tripDays(e)} days` });
+          ctx.addIssue({ code: "custom", message: isFixed(e) ? `The trip is ${tripDays(e)} days` : `Trips are ${lengthRangeLabel(lengthBounds(e))}` });
         }
       }
     });

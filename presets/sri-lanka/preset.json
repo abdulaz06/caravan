@@ -49,6 +49,14 @@
     "outer": {
       "start": "2026-11-01",
       "end": "2027-02-28"
+    },
+    "length": {
+      "min": 1,
+      "max": 14
+    },
+    "recommended": {
+      "min": 5,
+      "max": 7
     }
   },
   "structure": {
@@ -72,7 +80,10 @@
           "one": "★ Our only Colombo day · 1 night in the city",
           "many": "★ Colombo · {nights} nights in the city"
         },
-        "reorderable": false
+        "reorderable": false,
+        "weight": 1,
+        "minNights": 1,
+        "departureLeg": "departure-colombo"
       },
       {
         "id": "galle",
@@ -88,7 +99,9 @@
         "covers": "Galle Fort, Unawatuna, Hikkaduwa, Koggala, Ahangama, Weligama, Mirissa, Hiriketiya + the rainforests inland",
         "photo": "region-galle",
         "dayName": "Galle base",
-        "reorderable": true
+        "reorderable": true,
+        "weight": 4,
+        "minNights": 2
       }
     ],
     "arrival": {
@@ -551,6 +564,18 @@
         "vehicleCostUsd": [
           85,
           115
+        ]
+      },
+      "departure-colombo": {
+        "from": "colombo",
+        "to": "airport",
+        "title": "Colombo → CMB airport",
+        "hours": 1,
+        "label": "~1 hr",
+        "detail": "Airport Expressway out of the city. Leave ~3.5 hrs before your flight.",
+        "vehicleCostUsd": [
+          25,
+          40
         ]
       }
     },
