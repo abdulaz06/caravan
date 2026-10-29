@@ -8,6 +8,7 @@
     "dev:local": "node scripts/sync-presets.mjs && node scripts/dev-local.mjs",
     "prebuild": "node scripts/sync-presets.mjs",
     "build": "next build",
+    "postbuild": "tsx --conditions=react-server scripts/warm-demos.ts",
     "start": "next start",
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",

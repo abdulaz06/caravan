@@ -7,7 +7,7 @@ import { DEFAULT_SETTINGS, generatePlan } from "@/engine/consensus";
 import { normalize } from "@/engine/itinerary";
 import { CREW, DEMOS, PEEKS, planFor, rngFrom, type Demo } from "@/lib/demo-crew";
 import { loadPreset } from "@/presets/registry";
-import { db, type RsvpRow } from "./db";
+import { db, type RsvpRow, type TripRow } from "./db";
 
 export { DEMOS, demoById, demoBySlug } from "@/lib/demo-crew";
 
@@ -16,30 +16,54 @@ export const MAX_DEMO_GUESTS = 250;
 
 /**
  * Bump when the demo's seed changes shape (dates, plans, the published plan):
- * a demo built from an older seed is rebuilt on its next visit, not just at the nightly reset.
+ * a demo built from an older seed is rebuilt — in the background, while the
+ * old one keeps serving — after the next production build
+ * (scripts/warm-demos.ts), on its next visit and at the nightly reset.
  */
-export const DEMO_SEED = 6;
+export const DEMO_SEED = 7;
 const seedOf = (rules: unknown) => (rules && typeof rules === "object" ? (rules as { demoSeed?: unknown }).demoSeed : undefined);
+/** Built from this seed or a newer one (while a deploy rolls out, older code leaves a newer demo alone). */
+export const isCurrentDemo = (rules: unknown) => {
+  const seed = seedOf(rules);
+  return typeof seed === "number" && seed >= DEMO_SEED;
+};
+/** A rebuild some server instance started recently (the marker rides in the rules blob, like the seed). */
+const REBUILD_GRACE_MS = 10 * 60_000;
+const rebuildingSince = (rules: unknown) => {
+  const at = rules && typeof rules === "object" ? (rules as { demoRebuildingAt?: unknown }).demoRebuildingAt : undefined;
+  return typeof at === "string" ? Date.parse(at) : Number.NaN;
+};
+const tempSlug = (demo: Demo, kind: "next" | "old") => `${demo.slug}-${kind}-${randomBytes(4).toString("hex")}`;
 
-/** Deletes one demo trip (and its guests) and builds it again from scratch. */
+/**
+ * Builds one demo trip from scratch under a temporary slug, then swaps it in
+ * for the old one (whose guests go with it). Visitors keep seeing the old demo
+ * until the moment the new one takes its place — never a half-built one.
+ */
 export async function resetDemoTrip(demo: Demo): Promise<{ slug: string; people: number }> {
   const store = db();
-  const old = await store.getTripBySlug(demo.slug);
-  if (old) await store.deleteTrip(old.id);
-  // Built without a seed version: a half-built demo is never taken as ready.
-  const trip = await store.createTrip({ slug: demo.slug, name: demo.name, preset_id: demo.id, kind: "demo" });
+  const trip = await store.createTrip({ slug: tempSlug(demo, "next"), name: demo.name, preset_id: demo.id, kind: "demo" });
   if (!trip) throw new Error(`Couldn't create the ${demo.id} demo`);
-
-  const { preset, catalog } = loadPreset(demo.id);
-  const engine = createEngine(catalog, defaultRules(preset));
-  const ids = await seedDemoCrew(trip.id, demo, engine);
-  const owner = { id: ids.get("Maya") ?? null, name: "Maya" };
-  await store.addLog({ trip_id: trip.id, actor_id: owner.id, actor_name: owner.name, action: "Started the trip", target_id: null, target_name: null, details: { preset: demo.id } });
-  await store.addLog({ trip_id: trip.id, actor_id: owner.id, actor_name: owner.name, action: "Made Theo an admin", target_id: ids.get("Theo") ?? null, target_name: "Theo", details: {} });
-  await publishDemoPlan(trip.id, engine, ids, owner);
-  // Ready: the seed version rides along in the rules blob (parseRules ignores it).
-  await store.updateTrip(trip.id, { rules: { demoSeed: DEMO_SEED } });
-  return { slug: trip.slug, people: ids.size };
+  try {
+    const { preset, catalog } = loadPreset(demo.id);
+    const engine = createEngine(catalog, defaultRules(preset));
+    const ids = await seedDemoCrew(trip.id, demo, engine);
+    const owner = { id: ids.get("Maya") ?? null, name: "Maya" };
+    await store.addLog({ trip_id: trip.id, actor_id: owner.id, actor_name: owner.name, action: "Started the trip", target_id: null, target_name: null, details: { preset: demo.id } });
+    await store.addLog({ trip_id: trip.id, actor_id: owner.id, actor_name: owner.name, action: "Made Theo an admin", target_id: ids.get("Theo") ?? null, target_name: "Theo", details: {} });
+    await publishDemoPlan(trip.id, engine, ids, owner);
+    // Ready: the seed version rides along in the rules blob (parseRules ignores it).
+    await store.updateTrip(trip.id, { rules: { demoSeed: DEMO_SEED } });
+    // The swap: the old demo steps aside, the new one takes its slug, then the old one goes.
+    const old = await store.getTripBySlug(demo.slug);
+    if (old) await store.renameTrip(old.id, tempSlug(demo, "old"));
+    if (!(await store.renameTrip(trip.id, demo.slug))) throw new Error(`Another ${demo.id} demo build finished first`);
+    if (old) await store.deleteTrip(old.id);
+    return { slug: demo.slug, people: ids.size };
+  } catch (err) {
+    await store.deleteTrip(trip.id).catch(() => undefined);
+    throw err;
+  }
 }
 
 /**
@@ -125,25 +149,66 @@ export async function seedDemoCrew(tripId: string, demo: Demo, e: Engine): Promi
   return ids;
 }
 
-/** Rebuilds every demo trip (the nightly cron). */
+/** Builds that never finished (a crash mid-build, a lost swap), once they're a few minutes old. */
+async function sweepLeftovers(demo: Demo) {
+  const store = db();
+  const cutoff = Date.now() - REBUILD_GRACE_MS;
+  for (const t of await store.listTripsBySlugPrefix(`${demo.slug}-`)) {
+    if (t.kind === "demo" && /-(next|old)-[0-9a-f]{8}$/.test(t.slug) && Date.parse(t.created_at) < cutoff) await store.deleteTrip(t.id);
+  }
+}
+
+/** Rebuilds every demo trip (the nightly cron), and clears any leftover builds. */
 export async function resetDemoTrips() {
   const out = [];
-  for (const d of DEMOS) out.push(await resetDemoTrip(d));
+  for (const d of DEMOS) {
+    out.push(await resetDemoTrip(d));
+    await sweepLeftovers(d);
+  }
   return out;
 }
 
-/** Demo builds running in this server instance: a second visitor waits for the first build. */
+/** Rebuilds only the demos that are missing or from an older seed (after a production build). */
+export async function warmDemoTrips() {
+  const out: { slug: string; rebuilt: boolean }[] = [];
+  for (const d of DEMOS) {
+    const row = await db().getTripBySlug(d.slug);
+    if (row && isCurrentDemo(row.rules)) out.push({ slug: d.slug, rebuilt: false });
+    else out.push({ slug: (await resetDemoTrip(d)).slug, rebuilt: true });
+  }
+  return out;
+}
+
+/** Demo builds running in this server instance: a second visitor shares the first build. */
 const building = new Map<string, Promise<string>>();
 
-/** A demo trip's slug, building it first if it isn't there yet (or was built from an older seed). */
-export async function ensureDemoTrip(demo: Demo): Promise<string> {
+function buildOnce(demo: Demo): Promise<string> {
   const running = building.get(demo.slug);
   if (running) return running;
-  const row = await db().getTripBySlug(demo.slug);
-  if (row && seedOf(row.rules) === DEMO_SEED) return row.slug;
   const build = resetDemoTrip(demo)
     .then((r) => r.slug)
     .finally(() => building.delete(demo.slug));
   building.set(demo.slug, build);
   return build;
+}
+
+/**
+ * A demo trip's slug, right away. A demo from an older seed keeps serving
+ * while a fresh one is built in the background (`later` runs the build after
+ * the response — Next's `after`); only a demo that doesn't exist at all
+ * (before the first warm-up) is built while the visitor waits.
+ */
+export async function ensureDemoTrip(demo: Demo, later: (task: () => Promise<unknown>) => void = (task) => void task()): Promise<string> {
+  const store = db();
+  let row = await store.getTripBySlug(demo.slug);
+  // The blink of a swap-in: the old demo has stepped aside and the new one is about to take its slug.
+  if (!row) row = await new Promise<TripRow | null>((resolve) => setTimeout(() => resolve(store.getTripBySlug(demo.slug)), 400));
+  if (!row) return buildOnce(demo);
+  const recently = Date.now() - rebuildingSince(row.rules) < REBUILD_GRACE_MS;
+  if (!isCurrentDemo(row.rules) && !building.has(demo.slug) && !recently) {
+    await store.updateTrip(row.id, { rules: { ...(row.rules as object), demoRebuildingAt: new Date().toISOString() } });
+    const build = buildOnce(demo);
+    later(() => build.catch((err) => console.error(`Couldn't rebuild the ${demo.id} demo`, err)));
+  }
+  return row.slug;
 }

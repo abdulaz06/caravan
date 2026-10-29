@@ -111,6 +111,10 @@ export interface Store {
   getTripBySlug(slug: string): Promise<TripRow | null>;
   updateTrip(id: string, patch: Partial<Pick<TripRow, "name" | "edits_locked" | "rules">>): Promise<void>;
   deleteTrip(id: string): Promise<void>;
+  /** Moves a trip to a new slug; false when another trip already has it (the demo's swap-in). */
+  renameTrip(id: string, slug: string): Promise<boolean>;
+  /** Trips whose slug starts with a prefix (the demo's leftover builds). */
+  listTripsBySlugPrefix(prefix: string): Promise<TripRow[]>;
   /** Trips created from a (hashed) address since a moment — for rate limiting. */
   countTripsCreated(creatorHash: string | null, since: string): Promise<number>;
   // People
@@ -187,6 +191,19 @@ class SupabaseStore implements Store {
   async deleteTrip(id: string) {
     const { error } = await this.sb.from("trips").delete().eq("id", id);
     this.fail(error);
+  }
+
+  async renameTrip(id: string, slug: string) {
+    const { error } = await this.sb.from("trips").update({ slug, updated_at: new Date().toISOString() }).eq("id", id);
+    if (error?.code === "23505") return false; // slug taken
+    this.fail(error);
+    return true;
+  }
+
+  async listTripsBySlugPrefix(prefix: string) {
+    const { data, error } = await this.sb.from("trips").select("*").like("slug", `${prefix.replace(/[%_\\]/g, "\\$&")}%`);
+    this.fail(error);
+    return (data as TripRow[]) ?? [];
   }
 
   async countTripsCreated(creatorHash: string | null, since: string) {
@@ -410,12 +427,28 @@ class FileStore implements Store {
     }
   }
 
+  /** Whole-file and atomic (a temp file, then a rename), so a read never sees half a write. */
+  private async write(db: FileDb) {
+    await fs.mkdir(path.dirname(this.file), { recursive: true });
+    const tmp = `${this.file}.${process.pid}.tmp`;
+    await fs.writeFile(tmp, JSON.stringify(db, null, 2));
+    // Windows refuses to replace a file another reader has open for a moment: try again shortly.
+    for (let i = 0; ; i++) {
+      try {
+        await fs.rename(tmp, this.file);
+        return;
+      } catch (err) {
+        if (i >= 40 || !["EPERM", "EBUSY", "EACCES"].includes((err as NodeJS.ErrnoException).code ?? "")) throw err;
+        await new Promise((r) => setTimeout(r, 15));
+      }
+    }
+  }
+
   private mutate<T>(fn: (db: FileDb) => T): Promise<T> {
     const run = this.queue.then(async () => {
       const db = await this.read();
       const result = fn(db);
-      await fs.mkdir(path.dirname(this.file), { recursive: true });
-      await fs.writeFile(this.file, JSON.stringify(db, null, 2));
+      await this.write(db);
       return result;
     });
     this.queue = run.catch(() => undefined);
@@ -453,6 +486,17 @@ class FileStore implements Store {
       const t = db.trips.find((x) => x.id === id);
       if (t) Object.assign(t, patch, { updated_at: new Date().toISOString() });
     });
+  }
+  renameTrip(id: string, slug: string) {
+    return this.mutate((db) => {
+      if (db.trips.some((t) => t.slug === slug && t.id !== id)) return false;
+      const t = db.trips.find((x) => x.id === id);
+      if (t) Object.assign(t, { slug, updated_at: new Date().toISOString() });
+      return true;
+    });
+  }
+  async listTripsBySlugPrefix(prefix: string) {
+    return (await this.read()).trips.filter((t) => t.slug.startsWith(prefix));
   }
   deleteTrip(id: string) {
     return this.mutate((db) => {
