@@ -25,7 +25,8 @@ export function summarize(plan: ConsensusPlan, against?: ConsensusPlan): ModeSum
     label: MODE_COPY[plan.settings.mode].label,
     fairness: plan.fairness,
     picksMade: plan.people.reduce((n, p) => n + p.made.length, 0),
-    leftOut: plan.people.filter((p) => p.picks > 0 && p.daysThere > 0 && p.made.length === 0).length,
+    // Someone whose picks could fit their days, but none made it (not someone who's away).
+    leftOut: plan.people.filter((p) => p.satisfaction !== null && p.made.length === 0).length,
     differs: against ? mains.filter((m) => ref.get(m.key) !== m.id).length : 0,
     mains,
   };

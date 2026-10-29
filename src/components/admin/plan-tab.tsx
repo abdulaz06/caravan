@@ -562,8 +562,8 @@ function Satisfaction({ plan }: { plan: ConsensusPlan }) {
               <span className="h-2 flex-1 overflow-hidden rounded-full bg-surface-200">
                 <span className="block h-full rounded-full bg-secondary-600" style={{ width: pct(p.satisfaction ?? 0) }} />
               </span>
-              <span className="w-16 shrink-0 text-right text-[12px] font-bold tabular-nums text-ink-2">
-                {p.satisfaction === null ? "—" : `${p.made.length}/${p.picks}`}
+              <span className="w-[5.5rem] shrink-0 text-right text-[12px] font-bold tabular-nums text-ink-2">
+                {p.satisfaction === null ? <span className="font-semibold text-ink-3">{p.picks ? "away" : "no picks"}</span> : `${pct(p.satisfaction)} · ${p.made.length}/${p.picks}`}
               </span>
             </button>
             {open === p.id && (

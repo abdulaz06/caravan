@@ -40,8 +40,11 @@ await shot("trip-ready");
 await page.getByRole("button", { name: /Build my version/ }).click();
 await page.waitForURL("**/trip**");
 await shot("dates-empty");
-// Tap a date in the second visible month.
+// Free dates: tap the first day, then the last.
 await page.getByRole("button", { name: /^Mon 28 Dec/ }).first().click();
+await page.waitForTimeout(400);
+await shot("dates-first-day");
+await page.getByRole("button", { name: /^Sat 2 Jan/ }).first().click();
 await page.waitForTimeout(500);
 await shot("dates-placed");
 await page.getByRole("button", { name: /Build days/ }).click();
