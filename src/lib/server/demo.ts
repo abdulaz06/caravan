@@ -18,7 +18,7 @@ export const MAX_DEMO_GUESTS = 250;
  * Bump when the demo's seed changes shape (dates, plans, the published plan):
  * a demo built from an older seed is rebuilt on its next visit, not just at the nightly reset.
  */
-export const DEMO_SEED = 4;
+export const DEMO_SEED = 5;
 const seedOf = (rules: unknown) => (rules && typeof rules === "object" ? (rules as { demoSeed?: unknown }).demoSeed : undefined);
 
 /** Deletes one demo trip (and its guests) and builds it again from scratch. */
