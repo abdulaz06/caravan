@@ -28,8 +28,8 @@ preset its trip uses — presets are never bundled into the client.
 |---|---|
 | `destination` | Name, timezone, the poster headline (`["Sri Lanka,", "your way."]`), tagline (+ `familyTagline`), season, hero photo, farewell line, stamp text, welcome-page showcase and teaser |
 | `currency` | The local currency (shown first in the picker) and the default display currency. All prices are **USD**. |
-| `dates` | The default date window organizers can move within `outer` |
-| `structure` | Bases with nights (`default/min/max`), transfers between them, arrival/departure legs, the preview length, slot labels and "overpacked" limits |
+| `dates` | The default date window organizers can move within `outer`; `length` — the shortest and longest trip anyone can pick (default 1–14 days); `recommended` — the “Most groups do 5–7 days” hint |
+| `structure` | Bases with nights (`default/min/max`), how free-date trips share nights out (`weight`, `minNights`), each base's own way to the airport (`departureLeg`), transfers between them, arrival/departure legs, the preview length (fixed-length trips), slot labels and "overpacked" limits |
 | `areas` | The *pools* slots draw from (`colombo`, `enroute`, `galle`…), each with a home base and whether single picks can move between days |
 | `regions` | Every place with coordinates and photo keys |
 | `travel` | Known drive times, the distance estimate, fixed legs, scenic routes with stops, the vehicle ("van", "rental car"), self-drive or not |
@@ -60,7 +60,14 @@ last day                  check out & fly home — no slots
 
 - **Sri Lanka** — Colombo 1 + Galle 4: *arrival · road trip · Galle · Galle · Galle · fly home*. The road trip's daytime draws from `enroute` (stops along the coast road, placed by `routeKm`); its evening is already in Galle.
 - **One base** — **Georgia**, Tbilisi 8 nights: *arrival · seven Tbilisi days · fly home*, with self-drive rental cars (`travel.selfDrive`, `costs.dailyUsd`) and big day trips out to Gudauri, Kazbegi, Kakheti and the canyons of the west.
-- Organizers can change the nights per base live; saved plans move over (each base's days map to that base's days, in order) after an impact preview.
+- **Free dates (the default).** A trip can be any length in the rules' range. Its `length − 1` nights are shared out by each base's `weight` (default: its default nights): every kept base first gets its `minNights` (default `nights.min`), then each further night goes to the base furthest below its weighted share. When the minimums don't fit, the **last bases drop out** (the first, where you land, always stays) and the dates step says so gently — Sri Lanka at 3 days: *“Too short for Galle; this trip stays in Colombo”*. A 1-day trip lands and flies home the same day (a daytime, no evening). A base's `departureLeg` is used when the trip ends there (Sri Lanka: Colombo → CMB when Galle drops).
+
+  | Sri Lanka (weights 1 : 4, Galle needs 2 nights) | 1 | 2 | 3 | 4 | 6 | 8 | 10 | 14 days |
+  |---|---|---|---|---|---|---|---|---|
+  | Colombo · Galle nights | day trip | 1 · 0 | 2 · 0 | 1 · 2 | 1 · 4 | 1 · 6 | 2 · 7 | 3 · 10 |
+
+- **Fixed trip length** (a Trip rule, off by default): the organizers set the nights per base, the calendar becomes a window to slide, and the optional preview is one night less at the last base.
+- Organizers can change the lengths, the fixed length or the nights per base live; saved plans move over (each base's days map to that base's days, in order; a special date's picks follow their date) after an impact preview, and travellers who change their own dates get the same re-flow with a one-time note and Undo.
 
 ### Activities
 

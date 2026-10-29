@@ -336,7 +336,7 @@ function TripReady({ trip, destination }: { trip: Created; destination: Destinat
       </ButtonLink>
       {destination && (
         <p className="mt-6 text-center text-[12.5px] text-ink-3">
-          {destination.name} · {destination.length} · you can change the dates and nights in the console
+          {destination.name} · {destination.length} · you can change the dates and lengths in the console
         </p>
       )}
     </div>

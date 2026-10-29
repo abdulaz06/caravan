@@ -26,8 +26,9 @@ Group chats are where trip plans go to die: nobody commits, the loudest voice wi
 <img src="docs/media/demo.gif" alt="Picking between two options in a matchup, then quick-filling the rest of the trip" width="320" align="right" />
 
 1. **Start a trip** at `/new`: pick a destination, name the trip, choose a name and a 4-digit PIN. You get one invite link.
-2. **Everyone builds their own version.** Friends open the link (no accounts), drag a date window onto the calendar, and fill each day and evening — starting from a this-or-that matchup between two real, photographed options, with a catalog for more.
-3. **See the overlap.** A date heatmap with the sweet spot, the most-picked options, everyone on one nature ↔ nightlife line, roommate matches, and JSON/CSV exports for planning the final itinerary.
+2. **Everyone builds their own version.** Friends open the link (no accounts), pick their own first and last day on the calendar, and fill each day and evening — starting from a this-or-that matchup between two real, photographed options, with a catalog for more.
+3. **See the overlap.** A date heatmap with the sweet spot, the most-picked options, everyone on one nature ↔ nightlife line and roommate matches.
+4. **Turn it into one trip.** The organizer chooses how the group decides and generates one group plan — deterministic, with a reason for every pick — then publishes it; everyone says if they're in.
 
 ▶ **[Watch the 1-minute demo on YouTube](https://www.youtube.com/watch?v=K-CRkvDnjPc)** · **[Phone walkthrough — 60 s](docs/media/demo.mp4)**
 
@@ -37,14 +38,16 @@ Group chats are where trip plans go to die: nobody commits, the loudest voice wi
 
 ![Caravan on a phone: the landing page, a this-or-that matchup, a trip poster with its route map, and a past trip told as a story](docs/media/hero.png)
 
+- **Free dates** — everyone picks their own start and end (1–14 days by default, “most groups do 5–7”); the day structure adapts to any length, dropping a base gently when a trip is too short for it. A fixed trip length is one switch away.
+- **The group plan** — a [consensus generator](docs/CONSENSUS.md) turns everyone's plans into one trip: *Everyone gets a say*, *Majority rules* or a custom popularity ↔ fairness balance; reason chips on every pick, split suggestions, per-person satisfaction, compare-modes, versions, RSVPs with live headcounts, share images and a print view.
 - **Matchups and a catalog** — curated A-vs-B pairs per slot, then “+ Add another”, reordering, drive times between stops, soft time totals and day-of-week availability.
 - **Two speeds** — a five-minute quick fill, or hand-pick every slot and add notes.
 - **Group view** — date heatmap, 🔥 popular picks (counts, never who), a group spectrum, and a 👀 *peek* at friends' drafts that never shows private answers.
 - **Budget** in 10 currencies with live exchange rates, per person and line by line.
-- **Organizer console** per trip — owner and admin roles checked on the server, live trip rules (lock edits, nights per base, date window, browsing), announcements, content controls, an activity log and exports.
+- **Organizer console** per trip — owner and admin roles checked on the server, the final plan, live trip rules (lock edits, trip lengths or a fixed length, date window, browsing), announcements, content controls, an activity log and exports.
 - **Share images** — 9:16 and square posters with the route map, drawn on a canvas so they work on iPhone Safari.
 - **Family-friendly mode** — one switch swaps every nightlife pick for a wholesome alternative, view-only, guaranteed by a word-list check at validation.
-- **Demo trips** — one per destination with 12 fictional travellers; try one as a guest or open the console read-only. Rebuilt every night.
+- **Demo trips** — one per destination with 12 fictional travellers on their own dates, a published group plan and their RSVPs; try one as a guest, or play with the generator in the read-only console. Rebuilt every night.
 - **Past trips** — real trips, anonymised, as tap-through stories plus the full timeline and route map.
 
 ## Architecture
@@ -53,9 +56,9 @@ Group chats are where trip plans go to die: nobody commits, the loudest voice wi
 flowchart TB
   phone["Phone browser<br/>React 19 · Framer Motion · dnd-kit<br/>engine + preset sent with the page"]
   next["Next.js 16 on Vercel<br/>server components per trip · route handlers /api/t/[slug]<br/>zod · jose cookies · bcrypt PINs · role checks"]
-  engine["Trip engine (pure TypeScript)<br/>day structure · matchups · quick fill<br/>timeline · budget · routes · family mode"]
+  engine["Trip engine (pure TypeScript)<br/>day structure · matchups · quick fill<br/>timeline · budget · routes · family mode<br/>consensus generator"]
   presets[("Presets (JSON + zod)<br/>Sri Lanka · Georgia")]
-  db[("Supabase Postgres<br/>trips · participants · itineraries<br/>activity_log · peeks · RLS, server key only")]
+  db[("Supabase Postgres<br/>trips · participants · itineraries<br/>activity_log · peeks · plan_versions · plan_rsvps<br/>RLS, server key only")]
   cron["Vercel Cron<br/>nightly demo reset"]
   rates["open.er-api.com<br/>exchange rates, cached"]
   phone -- "invite link /t/&lt;slug&gt; · JSON API" --> next

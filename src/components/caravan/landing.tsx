@@ -4,7 +4,7 @@ import {
   Play,
   ArrowUpRight,
   CalendarHeart,
-  Eye,
+  Scale,
   Flame,
   ImageIcon,
   Link2,
@@ -33,20 +33,20 @@ const STEPS = [
   {
     icon: Swords,
     title: "Everyone builds their own version",
-    body: "Friends drag a date window onto the calendar, then fill each day and evening with this-or-that matchups from a curated catalog. Five minutes, or fifty.",
+    body: "Friends pick their own dates on the calendar, then fill each day and evening with this-or-that matchups from a curated catalog. Five minutes, or fifty.",
   },
   {
     icon: CalendarHeart,
-    title: "See where it overlaps",
-    body: "A date heatmap, the most-picked options, everyone on one nature ↔ nightlife line, and clean exports for the final plan.",
+    title: "Turn it into one trip",
+    body: "See where everyone overlaps — then turn all the plans into one fair group plan, decided your way, with a reason for every pick. Everyone says if they're in.",
   },
 ];
 
 const FEATURES = [
   { icon: Swords, title: "A-vs-B matchups", body: "Each slot starts as a choice between two real, photographed options." },
-  { icon: CalendarHeart, title: "Date heatmap", body: "Who's free when, across every draft and submission." },
+  { icon: CalendarHeart, title: "Free dates & a heatmap", body: "Everyone picks their own start and end; the heatmap finds the sweet spot." },
+  { icon: Scale, title: "One fair group plan", body: "Everyone's plans become one trip: majority rules or everyone gets a say, every pick explained." },
   { icon: Flame, title: "Popular picks", body: "Live 🔥 counts on what the group keeps choosing — counts only, never who." },
-  { icon: Eye, title: "Peek", body: "A sneaky look at a friend's draft: picks and dates, never their private answers." },
   { icon: Wallet, title: "Budget in 10 currencies", body: "A per-person estimate that updates as you plan, with live exchange rates." },
   { icon: ImageIcon, title: "Story & square exports", body: "Poster-quality share images with the route map, drawn on a canvas." },
   { icon: ShieldCheck, title: "Organizer console", body: "Owner and admin roles, live trip rules, edit locks, announcements, CSV/JSON exports." },

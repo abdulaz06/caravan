@@ -54,7 +54,7 @@ Open http://localhost:3100 — Caravan's front page. **Start a trip** (`/new`): 
 ## 3. Create the tables
 
 1. In the `caravan` project, open **SQL Editor** (the `>_` icon) → **New query**.
-2. Paste **all** of each file in [`supabase/migrations/`](supabase/migrations/), **in date order**, and click **Run** after each one. Each file is safe to run more than once. (Today there is one: `20261027000000_caravan.sql`, which creates `trips`, `participants`, `itineraries`, `activity_log` and `peeks`.)
+2. Paste **all** of each file in [`supabase/migrations/`](supabase/migrations/), **in date order**, and click **Run** after each one. Each file is safe to run more than once. (Today there are two: `20261027000000_caravan.sql`, which creates `trips`, `participants`, `itineraries`, `activity_log` and `peeks`; then `20261029000000_group_plan.sql`, which adds `plan_versions` and `plan_rsvps` for the group plan.)
 3. Check **Table Editor**: every table shows an **RLS enabled** badge. That's intended — nobody can read anything with the public key; only Caravan's server can.
 
 > If Supabase warns that a query has *destructive operations*, that's the `revoke` lines. It's safe — click **Run** again.
@@ -129,7 +129,8 @@ Organizers (the **owner** and any **admins**) sign in like everyone else, tap **
 
 - **Overview** — who's joined, submitted, drafting or not started; latest activity.
 - **People** — view any plan (private answers included), edit it on someone's behalf, reset a PIN, delete; (owner) make admin.
-- **Trip rules** — lock edits or schedule an auto-lock; nights per base, date window, preview length, browsing, peek, spectrum, popular badges, default currency.
+- **Final plan** — choose how the group decides, generate the group plan, swap/lock picks, accept splits, compare modes, save versions and publish (see [docs/CONSENSUS.md](docs/CONSENSUS.md)).
+- **Trip rules** — lock edits or schedule an auto-lock; free dates (shortest/longest trip, suggested length) or a fixed trip length (nights per base, preview), date window, browsing, peek, spectrum, popular badges, default currency.
 - **Content** — hide, flag or feature an option.
 - **Announcement** — a banner for everyone.
 - **Data** — JSON (best for AI analysis) and CSV exports.

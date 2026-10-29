@@ -1,10 +1,11 @@
-import { ArrowLeft, ArrowRight, CalendarHeart, Eye, KeyRound, Layers, Map, ShieldCheck, Smartphone, Sparkles, Swords, Users } from "lucide-react";
+import { ArrowLeft, ArrowRight, CalendarHeart, Eye, KeyRound, Layers, Map, Scale, ShieldCheck, Smartphone, Sparkles, Swords, Users } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { BRAND } from "@/lib/brand";
 import { cn } from "@/lib/cn";
 import { CaravanMark, Lockup } from "../brand/wordmark";
 import { ArchitectureDiagram } from "./architecture";
+import { ConsensusDiagram } from "./consensus-diagram";
 import { WalkthroughVideo } from "./walkthrough-video";
 
 export type CaseStudyStats = {
@@ -27,8 +28,21 @@ export type CaseStudyStats = {
   repo: { url: string; public: boolean };
 };
 
+/** The group plan on the Sri Lanka demo crew, worked out by the engine when the page is built. */
+export type ConsensusExample = {
+  people: number;
+  dates: { chosen: string; length: number; full: number; of: number; runnersUp: { range: string; full: number }[] };
+  modes: { label: string; min: number; median: number; index: number; leftOut: number; differs: number }[];
+  items: { when: string; title: string; reasons: string[] }[];
+};
+
 const FLOW = [
-  { step: "1", title: "Pick your dates", body: "Drag a fixed-length window onto a calendar. New Year's Eve lights up when it's inside.", shot: "/case-study/dates.webp" },
+  {
+    step: "1",
+    title: "Pick your dates",
+    body: "Tap your first and last day. (Our group had voted on six days, so theirs was a window to drag.) New Year's Eve lights up when it's inside.",
+    shot: "/case-study/dates.webp",
+  },
   { step: "2", title: "This or that?", body: "Each daytime and evening starts as a matchup between two real, photographed options.", shot: "/case-study/matchup.webp" },
   { step: "3", title: "Build your days", body: "Add more from a catalog, reorder, see drive times and a soft time total per slot.", shot: "/case-study/days.webp" },
   { step: "4", title: "See the overlap", body: "The organizer — and, once they submit, everyone — sees dates, favourites and vibes side by side.", shot: "/case-study/group.webp" },
@@ -53,7 +67,7 @@ const DECISIONS = [
   {
     icon: CalendarHeart,
     title: "The organizer's view is the product",
-    body: "Everything people do turns into structure: a date heatmap with the sweet spot, the most-picked options, a nature ↔ nightlife spectrum, roommate matches, and JSON/CSV exports ready for an AI pass at the final plan.",
+    body: "Everything people do turns into structure: a date heatmap with the sweet spot, the most-picked options, a nature ↔ nightlife spectrum, roommate matches — and a generator that turns it all into one group plan.",
   },
   {
     icon: Smartphone,
@@ -94,8 +108,8 @@ const CHALLENGES = [
   },
 ];
 
-/** The story of the project: problem, idea, results, decisions, architecture, challenges. */
-export function CaseStudy({ stats }: { stats: CaseStudyStats }) {
+/** The story of the project: problem, idea, results, decisions, the group plan, architecture, challenges. */
+export function CaseStudy({ stats, consensus }: { stats: CaseStudyStats; consensus: ConsensusExample }) {
   const pct = Math.round((stats.submitted / stats.joined) * 100);
   return (
     <div className="min-h-dvh bg-surface-100 text-ink">
@@ -224,6 +238,27 @@ export function CaseStudy({ stats }: { stats: CaseStudyStats }) {
           </ul>
         </Section>
 
+        {/* ── The group plan ───────────────────────────────────── */}
+        <Section label="The decision" title={<>From twelve plans <em className="text-accent-600">to one trip.</em></>}>
+          <p className="max-w-2xl text-[16px] leading-relaxed text-ink-2">
+            Individual plans show what people want; someone still has to decide. {BRAND.name}&apos;s generator does it in the open: no AI,
+            the same inputs always give the same plan, and every pick says why it&apos;s there. The organizer chooses how the group decides —
+            and can compare the options side by side before choosing.
+          </p>
+          <div className="mt-8 overflow-x-auto rounded-[22px] bg-surface-50 p-4 ring-1 ring-ink/[0.06]">
+            <ConsensusDiagram className="h-auto w-full min-w-[560px]" />
+          </div>
+          <ConsensusDemo example={consensus} />
+          <RealResults />
+          <p className="mt-6 text-[14px] text-ink-3">
+            The algorithm in plain language, with the formulas:{" "}
+            <a href={`${stats.repo.url}/blob/main/docs/CONSENSUS.md`} className="font-semibold text-accent-600 underline-offset-2 hover:underline">
+              docs/CONSENSUS.md
+            </a>
+            .
+          </p>
+        </Section>
+
         {/* ── Architecture ─────────────────────────────────────── */}
         <Section label="Architecture" title={<>One engine, <em className="text-accent-600">any destination.</em></>}>
           <div className="grid items-start gap-8 lg:grid-cols-[1.25fr_1fr]">
@@ -303,6 +338,89 @@ export function CaseStudy({ stats }: { stats: CaseStudyStats }) {
           <p>Designed and built by Abdul.</p>
         </footer>
       </main>
+    </div>
+  );
+}
+
+/** The generator on the demo crew: dates, the three modes side by side, and a few picks with their reasons. */
+function ConsensusDemo({ example }: { example: ConsensusExample }) {
+  const pct = (x: number) => `${Math.round(x * 100)}%`;
+  return (
+    <div className="mt-8 grid gap-4 lg:grid-cols-[1fr_1.15fr]">
+      <div className="rounded-[22px] bg-primary-900 p-5 text-paper shadow-card">
+        <p className="label text-highlight-400">Demo crew · {example.people} travellers</p>
+        <p className="font-display mt-3 text-[30px] font-semibold leading-none">{example.dates.chosen}</p>
+        <p className="mt-2 text-[14.5px] text-paper/75">
+          {example.dates.length} days, the middle length of the submitted plans · {example.dates.full} of {example.dates.of} free for all of it
+        </p>
+        <ul className="mt-3 space-y-1 text-[13.5px] text-paper/65">
+          {example.dates.runnersUp.map((r) => (
+            <li key={r.range}>
+              Runner-up {r.range} · {r.full} free throughout
+            </li>
+          ))}
+        </ul>
+        <div className="mt-5 grid grid-cols-3 gap-2 border-t border-white/10 pt-4">
+          {example.modes.map((m) => (
+            <div key={m.label} className="rounded-2xl bg-white/[0.06] p-3 ring-1 ring-white/10">
+              <p className="text-[12.5px] font-bold leading-tight">{m.label}</p>
+              <p className="font-display mt-2 text-[22px] font-semibold leading-none">{pct(m.min)}</p>
+              <p className="text-[11px] uppercase tracking-wide text-paper/55">lowest</p>
+              <p className="mt-1.5 text-[12px] text-paper/70">
+                median {pct(m.median)} · fairness {m.index.toFixed(2)}
+              </p>
+            </div>
+          ))}
+        </div>
+        <p className="mt-3 text-[13px] leading-relaxed text-paper/65">
+          Here nobody falls below the fair floor, so “Everyone gets a say” and “Majority rules” agree; turning the Custom slider all the way to
+          fairness lifts the least-satisfied travellers at a small cost to the most popular picks.
+        </p>
+      </div>
+      <ul className="space-y-3">
+        {example.items.map((it) => (
+          <li key={it.when} className="rounded-[22px] bg-paper p-4 shadow-card">
+            <p className="label text-ink-3">{it.when}</p>
+            <p className="mt-1 text-[16px] font-semibold">{it.title}</p>
+            <ul className="mt-2 flex flex-wrap gap-1.5">
+              {it.reasons.map((r) => (
+                <li key={r} className="rounded-full bg-surface-200 px-2.5 py-0.5 text-[12.5px] font-semibold text-ink-2">
+                  {r}
+                </li>
+              ))}
+            </ul>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+/** Placeholders for the real trip: filled in after the group travels (Dec 2026 – Jan 2027). */
+function RealResults() {
+  const slots = [
+    { label: "Plans that went in", hint: "submitted · drafts" },
+    { label: "How the group decided", hint: "the decision mode, and why" },
+    { label: "Everyone's picks", hint: "lowest · median · fairness index" },
+    { label: "What we actually did", hint: "RSVPs, splits taken, what changed on the ground" },
+  ];
+  return (
+    <div className="mt-6 rounded-[22px] border-2 border-dashed border-ink/15 p-5">
+      <p className="label flex items-center gap-1.5 text-accent-600">
+        <Scale className="size-3.5" /> The real Sri Lanka trip · results to come
+      </p>
+      <p className="mt-1.5 text-[14.5px] text-ink-2">
+        Placeholder: anonymized numbers from the real 13-person trip will go here after we travel (January 2027).
+      </p>
+      <dl className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {slots.map((s) => (
+          <div key={s.label} className="rounded-2xl bg-surface-200/50 p-4">
+            <dt className="text-[13px] font-semibold text-ink-2">{s.label}</dt>
+            <dd className="font-display mt-1 text-[28px] font-semibold leading-none text-ink-3/50">TBD</dd>
+            <dd className="mt-1 text-[12px] text-ink-3">{s.hint}</dd>
+          </div>
+        ))}
+      </dl>
     </div>
   );
 }
