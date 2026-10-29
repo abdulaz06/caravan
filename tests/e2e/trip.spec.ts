@@ -6,7 +6,7 @@ test("start a trip, plan it, submit, and a friend joins by invite", async ({ pag
   const trip = await startTrip(page, "sri-lanka");
   await expect(page.getByText(/is live/)).toBeVisible();
 
-  await quickPlan(page, trip, /^Mon 28 Dec/);
+  await quickPlan(page, trip, /^Mon 28 Dec/, /^Sat 2 Jan/);
   await page.goto(`${trip}/trip?step=review`);
   await page.getByRole("button", { name: /Submit my trip/ }).first().click();
   await expect(page.getByText(/in with the crew/)).toBeVisible();
@@ -27,13 +27,14 @@ test("start a trip, plan it, submit, and a friend joins by invite", async ({ pag
   done();
 });
 
-test("a Georgia trip is nine days in its own theme", async ({ page }) => {
+test("a Georgia trip in its own theme, on the traveller's own dates", async ({ page }) => {
   const done = watchErrors(page);
   const trip = await startTrip(page, "georgia", "Ana");
-  await quickPlan(page, trip, /^Fri 25 Dec/);
+  await quickPlan(page, trip, /^Fri 25 Dec/, /^Sat 2 Jan/);
   await page.goto(`${trip}/trip?step=review`);
   await expect(page.getByText(/Ana.s/).first()).toBeVisible();
-  await expect(page.getByText(/9 days · 8 nights/).first()).toBeAttached();
+  await expect(page.getByText("Fri 25 Dec → Sat 2 Jan").first()).toBeVisible();
+  await expect(page.getByText("Tbilisi · 8 nights").first()).toBeAttached();
   // The preset's theme is in force: Georgia's primary colour, not Caravan's default.
   const primary = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--color-primary-900").trim());
   expect(primary.toLowerCase()).toBe("#0f2236");

@@ -23,10 +23,18 @@ export async function startTrip(page: Page, preset: "sri-lanka" | "georgia", own
   return new URL(link).pathname;
 }
 
-/** Place the date window and quick-fill every day. */
-export async function quickPlan(page: Page, trip: string, day: RegExp) {
+/** Tap the first and last day on the calendar (free dates). */
+export async function pickRange(page: Page, first: RegExp, last: RegExp) {
+  await page.getByRole("button", { name: first }).first().click();
+  await expect(page.getByText(/Now tap the day you fly home/)).toBeVisible();
+  await page.getByRole("button", { name: last }).first().click();
+}
+
+/** Pick dates (a fixed window: one tap) and quick-fill every day. */
+export async function quickPlan(page: Page, trip: string, day: RegExp, lastDay?: RegExp) {
   await page.goto(`${trip}/trip`);
-  await page.getByRole("button", { name: day }).first().click();
+  if (lastDay) await pickRange(page, day, lastDay);
+  else await page.getByRole("button", { name: day }).first().click();
   await page.getByRole("button", { name: /Build days/ }).click();
   await page.getByRole("button", { name: /Quick fill/ }).click();
   await expect(page.getByText(/Filled!/)).toBeVisible();
