@@ -63,7 +63,7 @@ export const DEFAULT_SETTINGS: PlanSettings = {
   fairness: 0.5,
   draftWeight: 0.5,
   tolerance: 0.15,
-  splitShare: 0.35,
+  splitShare: 0.4,
   variety: 0.5,
   budgetFit: 0,
   start: null,

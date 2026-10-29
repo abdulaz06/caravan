@@ -431,17 +431,17 @@ describe("splits", () => {
   it("suggests one when a slot's top options have strong, separate camps — with headcounts", () => {
     const e = mini();
     const camp = (id: string, pick: string) => ballot(e, id, "2026-12-01", 6, { 2: [[pick], []] });
-    const ballots = ["a", "b", "c", "d", "e"].map((x) => camp(x, "b-day-1")).concat(["f", "g", "h"].map((x) => camp(x, "b-day-2")));
+    const ballots = ["a", "b", "c", "d", "e"].map((x) => camp(x, "b-day-1")).concat(["f", "g", "h", "i"].map((x) => camp(x, "b-day-2")));
     const p = generatePlan(e, ballots, { mode: "majority", start: "2026-12-01", length: 6 });
     const s = p.slots.find((x) => x.split)!;
-    expect(s.split).toMatchObject({ a: { id: "b-day-1", votes: 5 }, b: { id: "b-day-2", votes: 3 }, both: 0, status: "suggested" });
+    expect(s.split).toMatchObject({ a: { id: "b-day-1", votes: 5 }, b: { id: "b-day-2", votes: 4 }, both: 0, status: "suggested" });
     expect(planDays(e, 6)[s.day]).toMatchObject({ kind: "base", arrival: false });
   });
 
   it("an accepted split keeps both options in that slot, and counts for both camps", () => {
     const e = mini();
     const camp = (id: string, pick: string) => ballot(e, id, "2026-12-01", 6, { 2: [[pick], []] });
-    const ballots = ["a", "b", "c", "d", "e"].map((x) => camp(x, "b-day-1")).concat(["f", "g", "h"].map((x) => camp(x, "b-day-2")));
+    const ballots = ["a", "b", "c", "d", "e"].map((x) => camp(x, "b-day-1")).concat(["f", "g", "h", "i"].map((x) => camp(x, "b-day-2")));
     const first = generatePlan(e, ballots, { mode: "majority", start: "2026-12-01", length: 6 });
     const s = first.slots.find((x) => x.split)!;
     const p = generatePlan(e, ballots, { mode: "majority", start: "2026-12-01", length: 6, splits: { [s.key]: { status: "accepted", a: "b-day-1", b: "b-day-2" } } });
@@ -457,7 +457,8 @@ describe("splits", () => {
     // 9 there: 5 want one thing, 4 another.
     const ballots = ["a", "b", "c", "d", "e"].map((x) => camp(x, "b-day-1")).concat(["f", "g", "h", "i"].map((x) => camp(x, "b-day-2")));
     const split = (splitShare: number) => generatePlan(e, ballots, { mode: "majority", start: "2026-12-01", length: 6, splitShare }).slots.find((x) => x.split)?.split ?? null;
-    expect(split(0.35)).toMatchObject({ a: { votes: 5 }, b: { votes: 4 } }); // needs 4 of 9
+    expect(split(0.4)).toMatchObject({ a: { votes: 5 }, b: { votes: 4 } }); // the default: needs 4 of 9
+    expect(generatePlan(e, ballots, { mode: "majority", start: "2026-12-01", length: 6 }).slots.find((x) => x.split)?.split).toMatchObject({ b: { votes: 4 } });
     expect(split(0.5)).toBeNull(); // needs 5 of 9
     // Never fewer than 3, however low the knob.
     const small = ["a", "b", "c"].map((x) => camp(x, "b-day-1")).concat(["f", "g"].map((x) => camp(x, "b-day-2")));
@@ -472,7 +473,7 @@ describe("splits", () => {
       for (const s of p.slots) {
         if (!s.split) continue;
         const there = ballots.filter((b) => !b.data.startDate || (s.date >= b.data.startDate && s.date <= b.data.endDate!)).length;
-        expect(Math.min(s.split.a.votes, s.split.b.votes)).toBeGreaterThanOrEqual(Math.max(3, Math.ceil(0.35 * there)));
+        expect(Math.min(s.split.a.votes, s.split.b.votes)).toBeGreaterThanOrEqual(Math.max(3, Math.ceil(0.4 * there)));
         expect([s.split.a.id, s.split.b.id].sort()).not.toEqual(["dalawella-turtles", "weligama-surf-lesson"]);
       }
     }
