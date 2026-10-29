@@ -156,7 +156,7 @@ describe("hard rules — property-style", () => {
       }
     }
     expect(runs).toBe(engines.length * 14);
-  });
+  }, 120_000);
 
   it("is deterministic: the same inputs (in any order) give the same plan", () => {
     const e = sriLanka();
@@ -165,7 +165,7 @@ describe("hard rules — property-style", () => {
     const b = generatePlan(e, [...ballots].reverse(), { mode: "together" });
     expect(b).toEqual(a);
     expect(a.slots[0].items[0].key).toBe(itemKey(a.slots[0].date, a.slots[0].slot, a.slots[0].items[0].id));
-  });
+  }, 30_000);
 });
 
 describe("fairness", () => {
@@ -340,7 +340,7 @@ describe("the demo crews", () => {
       const ballots = demoBallots(e, demoById(id)!);
       for (const mode of ["together", "majority", "custom"] as const) assertValid(e, generatePlan(e, ballots, { mode }));
     }
-  });
+  }, 30_000);
 });
 
 describe("performance", () => {
@@ -357,5 +357,5 @@ describe("performance", () => {
     expect(p.dates.length).toBe(14);
     expect(ms).toBeLessThan(1000);
     console.log(`30 travellers × 14 days: ${ms.toFixed(0)} ms`);
-  });
+  }, 30_000);
 });

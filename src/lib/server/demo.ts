@@ -26,8 +26,8 @@ export async function resetDemoTrip(demo: Demo): Promise<{ slug: string; people:
   const store = db();
   const old = await store.getTripBySlug(demo.slug);
   if (old) await store.deleteTrip(old.id);
-  // The seed version rides along in the rules blob (parseRules ignores it).
-  const trip = await store.createTrip({ slug: demo.slug, name: demo.name, preset_id: demo.id, kind: "demo", rules: { demoSeed: DEMO_SEED } });
+  // Built without a seed version: a half-built demo is never taken as ready.
+  const trip = await store.createTrip({ slug: demo.slug, name: demo.name, preset_id: demo.id, kind: "demo" });
   if (!trip) throw new Error(`Couldn't create the ${demo.id} demo`);
 
   const { preset, catalog } = loadPreset(demo.id);
@@ -37,6 +37,8 @@ export async function resetDemoTrip(demo: Demo): Promise<{ slug: string; people:
   await store.addLog({ trip_id: trip.id, actor_id: owner.id, actor_name: owner.name, action: "Started the trip", target_id: null, target_name: null, details: { preset: demo.id } });
   await store.addLog({ trip_id: trip.id, actor_id: owner.id, actor_name: owner.name, action: "Made Theo an admin", target_id: ids.get("Theo") ?? null, target_name: "Theo", details: {} });
   await publishDemoPlan(trip.id, engine, ids, owner);
+  // Ready: the seed version rides along in the rules blob (parseRules ignores it).
+  await store.updateTrip(trip.id, { rules: { demoSeed: DEMO_SEED } });
   return { slug: trip.slug, people: ids.size };
 }
 
@@ -130,8 +132,18 @@ export async function resetDemoTrips() {
   return out;
 }
 
-/** A demo trip's slug, building it first if it isn't there yet. */
+/** Demo builds running in this server instance: a second visitor waits for the first build. */
+const building = new Map<string, Promise<string>>();
+
+/** A demo trip's slug, building it first if it isn't there yet (or was built from an older seed). */
 export async function ensureDemoTrip(demo: Demo): Promise<string> {
+  const running = building.get(demo.slug);
+  if (running) return running;
   const row = await db().getTripBySlug(demo.slug);
-  return row && seedOf(row.rules) === DEMO_SEED ? row.slug : (await resetDemoTrip(demo)).slug;
+  if (row && seedOf(row.rules) === DEMO_SEED) return row.slug;
+  const build = resetDemoTrip(demo)
+    .then((r) => r.slug)
+    .finally(() => building.delete(demo.slug));
+  building.set(demo.slug, build);
+  return build;
 }

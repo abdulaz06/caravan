@@ -1,18 +1,8 @@
 import { expect, test, type Page } from "@playwright/test";
-import { pickRange, startTrip, watchErrors } from "./helpers";
+import { openConsole, pickRange, startTrip, watchErrors } from "./helpers";
 import { editTrip } from "./store";
 
 const lengthLabel = (page: Page) => page.getByTestId("trip-length");
-
-async function openConsole(page: Page, trip: string, tab: string) {
-  await page.goto(`${trip}/admin`);
-  const pin = page.locator("#console-pin");
-  if (await pin.isVisible().catch(() => false)) {
-    await pin.fill("4826");
-    await page.getByRole("button", { name: /Open the console/ }).click().catch(() => undefined);
-  }
-  await page.getByRole("button", { name: tab, exact: true }).click();
-}
 
 test("free dates: a day trip, a short trip without Galle, two weeks, and picks that re-flow", async ({ page }) => {
   const done = watchErrors(page);
@@ -61,7 +51,7 @@ test("free dates: a day trip, a short trip without Galle, two weeks, and picks t
 test("the fixed trip length rule turns the calendar into a window, with a preview", async ({ page }) => {
   const done = watchErrors(page);
   const trip = await startTrip(page, "sri-lanka");
-  await openConsole(page, trip, "Trip rules");
+  await openConsole(page, trip, "rules");
   await page.getByRole("switch", { name: "Fixed trip length" }).click();
   await expect(page.getByText(/New: 6 days · 5 nights/)).toBeVisible();
   await page.getByRole("button", { name: /Review & apply/ }).click();
@@ -77,7 +67,7 @@ test("the fixed trip length rule turns the calendar into a window, with a previe
   await expect(page.getByText(/Previewing 5 days · 4 nights/).first()).toBeVisible();
 
   // And back to free dates.
-  await openConsole(page, trip, "Trip rules");
+  await openConsole(page, trip, "rules");
   await page.getByRole("switch", { name: "Fixed trip length" }).click();
   await page.getByRole("button", { name: /Review & apply/ }).click();
   await expect(page.getByText(/Trip rules updated|Applied/)).toBeVisible();

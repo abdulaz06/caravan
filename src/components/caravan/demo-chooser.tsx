@@ -37,6 +37,8 @@ export function DemoChooser({ destinations }: { destinations: Destination[] }) {
             <Link
               key={d.id}
               href={`/demo/${d.id}`}
+              // Visiting builds the demo (first time): a prefetch would start a second build.
+              prefetch={false}
               className="group relative block aspect-[4/5] overflow-hidden rounded-[28px] shadow-card sm:aspect-[3/4]"
               style={{ background: d.colors.deep }}
             >

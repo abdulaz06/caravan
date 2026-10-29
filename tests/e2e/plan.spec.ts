@@ -1,15 +1,10 @@
 import { expect, test, type Page } from "@playwright/test";
-import { quickPlan, startTrip, watchErrors } from "./helpers";
+import { openConsole, quickPlan, startTrip, watchErrors } from "./helpers";
 import { bannedIn } from "../../src/engine/family-words";
 import { seedCrew } from "./store";
 
 async function openPlanTab(page: Page, trip: string) {
-  await page.goto(`${trip}/admin#plan`);
-  const pin = page.locator("#console-pin");
-  if (await pin.isVisible().catch(() => false)) {
-    await pin.fill("4826");
-    await page.getByRole("button", { name: /Open the console/ }).click().catch(() => undefined);
-  }
+  await openConsole(page, trip, "plan");
   await expect(page.getByRole("heading", { name: "The group plan" })).toBeVisible();
 }
 

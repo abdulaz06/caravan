@@ -12,6 +12,20 @@ export function watchErrors(page: Page) {
 
 export const uid = () => Math.random().toString(36).slice(2, 6);
 
+/**
+ * Open the organizer console on a tab (by its hash, e.g. "rules" or "plan"),
+ * confirming the PIN if asked. The 4th digit submits by itself — clicking the
+ * button too races it (the button becomes "Checking…", then goes away).
+ */
+export async function openConsole(page: Page, trip: string, tab: string, pinCode = "4826") {
+  await page.goto(`${trip}/admin#${tab}`);
+  const pin = page.locator("#console-pin");
+  const console_ = page.getByRole("heading", { name: /Organizer console/ });
+  await expect(pin.or(console_)).toBeVisible();
+  if (await pin.isVisible()) await pin.fill(pinCode);
+  await expect(console_).toBeVisible();
+}
+
 /** Start a trip from /new and return its path (/t/<slug>). */
 export async function startTrip(page: Page, preset: "sri-lanka" | "georgia", owner = "Sam") {
   await page.goto(`/new?preset=${preset}`);
