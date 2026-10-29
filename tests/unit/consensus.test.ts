@@ -1,0 +1,361 @@
+import { describe, expect, it } from "vitest";
+import { compareModes, generatePlan, itemKey, medianLength, pickWindows, type Ballot, type ConsensusPlan } from "@/engine/consensus";
+import { STAY_ID, emptyItinerary, isSpecialOption, makeItem, normalize, setStart, type ItineraryData } from "@/engine/itinerary";
+import { quickFill } from "@/engine/quickfill";
+import { planDays, type Engine } from "@/engine/structure";
+import { addDays, parseISO } from "@/lib/dates";
+import { demoBallots, demoById } from "@/lib/demo-crew";
+import { engineFor, mini, readPreset, seeded, sriLanka } from "./helpers";
+
+const georgia = (rules = {}) => engineFor(readPreset("georgia"), rules);
+
+/** A ballot from explicit picks: `slots` maps day index → [daytime ids, evening ids]. */
+function ballot(e: Engine, id: string, start: string, length: number, slots: Record<number, [string[], string[]]>, status: Ballot["status"] = "submitted"): Ballot {
+  const d = setStart(e, emptyItinerary(), start, length);
+  for (const [i, [day, night]] of Object.entries(slots)) {
+    d.days[Number(i)].day = day.map((x) => makeItem(e, x));
+    d.days[Number(i)].night = night.map((x) => makeItem(e, x));
+  }
+  return { id, name: id, status, data: normalize(e, d) };
+}
+
+/** Random but valid plans: a seeded quick fill on random dates and lengths inside the rules. */
+function randomBallots(e: Engine, count: number, seed: number): Ballot[] {
+  const rng = seeded(seed);
+  const win = e.rules.window;
+  const out: Ballot[] = [];
+  for (let k = 0; k < count; k++) {
+    const len = 1 + Math.floor(rng() * 14);
+    const start = addDays(win.start, 15 + Math.floor(rng() * 30));
+    let d = setStart(e, emptyItinerary(), start, len);
+    d = quickFill(e, d, { rng });
+    if (rng() < 0.3) d.days = d.days.map((x, i) => (i % 2 ? { ...x, night: [makeItem(e, STAY_ID)] } : x));
+    out.push({ id: `p${String(k).padStart(2, "0")}`, name: `Traveller ${k}`, status: rng() < 0.75 ? "submitted" : "draft", data: normalize(e, d) });
+  }
+  return out;
+}
+
+const ids = (p: ConsensusPlan) => p.slots.flatMap((s) => s.items.map((i) => i.id));
+
+/** Every rule the trip enforces, checked on a generated plan. */
+function assertValid(e: Engine, p: ConsensusPlan) {
+  const data = p.itinerary;
+  const plans = planDays(e, p.dates.length);
+  expect(data.days).toHaveLength(p.dates.length);
+  expect(data.startDate! >= e.rules.window.start && data.endDate! <= e.rules.window.end).toBe(true);
+  // Nothing the trip's own validation would drop: pools, special dates, big day trips, extras with their trip.
+  expect(normalize(e, data, data.days.length)).toEqual(data);
+  // No duplicates (stay-in can repeat), split alternatives included.
+  const placed = [...ids(p), ...p.slots.flatMap((s) => (s.split?.status === "accepted" ? [s.split.b.id] : []))].filter((x) => x !== STAY_ID);
+  expect(new Set(placed).size).toBe(placed.length);
+  for (const s of p.slots) {
+    const plan = plans[s.day];
+    expect(plan.areas[s.slot]).toBe(s.area);
+    expect(s.items.length).toBeGreaterThan(0);
+    for (const it of s.items) {
+      const a = e.catalog.byId[it.id];
+      if (!a) continue;
+      // Day-of-week availability.
+      if (a.availableDays) expect(a.availableDays).toContain(parseISO(s.date).getUTCDay());
+      expect(e.rules.hidden).not.toContain(it.id);
+    }
+    // A special date's slot holds its special option first.
+    if (s.special) expect(s.items[0].id === STAY_ID || isSpecialOption(e, s.items[0].id)).toBe(true);
+    // Never a split on a moving day or a special date.
+    if (s.split) expect(plan.kind === "base" && !plan.arrival && !plan.departs && !s.special).toBe(true);
+  }
+  // Never a late night right before a very early day trip.
+  data.days.forEach((d, i) => {
+    const trip = d.day.map((x) => e.catalog.byId[x.id]).find((a) => a?.variants);
+    const v = trip?.variants?.find((x) => x.id === d.day.find((y) => y.id === trip.id)?.variant);
+    if (!v?.eveBefore || i === 0) return;
+    const late = data.days[i - 1].night.map((x) => e.catalog.byId[x.id]).filter((a) => a && (a.vibe >= 2 || e.catalog.isNightlife(a)));
+    expect(late).toEqual([]);
+  });
+  // The fly-home day has no slots; a same-day trip has no evening.
+  plans.forEach((pl, i) => {
+    if (!pl.hasSlots) expect(data.days[i].day.length + data.days[i].night.length).toBe(0);
+    if (!pl.areas.night) expect(data.days[i].night).toEqual([]);
+  });
+}
+
+describe("dates", () => {
+  it("the length is the median of submitted plans; the window, who's free for all of it", () => {
+    expect(medianLength([5, 6, 6, 7, 7, 8, 10, 11])).toBe(7);
+    expect(medianLength([])).toBeNull();
+    const people = [
+      { id: "a", start: "2026-12-27", end: "2027-01-03" },
+      { id: "b", start: "2026-12-26", end: "2027-01-01" },
+      { id: "c", start: "2026-12-27", end: "2027-01-02" },
+    ];
+    const { best, runnersUp } = pickWindows(people, { start: "2026-12-01", end: "2027-01-31" }, 6);
+    expect(best).toMatchObject({ start: "2026-12-27", end: "2027-01-01", full: 3 });
+    expect(runnersUp.length).toBeGreaterThan(0);
+    for (const w of runnersUp) expect(Math.abs(Date.parse(w.start) - Date.parse(best!.start))).toBeGreaterThanOrEqual(2 * 86_400_000);
+    expect(runnersUp[0].missing.length).toBeGreaterThan(0);
+  });
+
+  it("uses the fixed length when that rule is on, and a pinned window when given", () => {
+    const e = sriLanka({ fixedLength: true });
+    const p = generatePlan(e, randomBallots(e, 6, 3), { mode: "majority" });
+    expect(p.dates.length).toBe(6);
+    const pinned = generatePlan(sriLanka(), randomBallots(sriLanka(), 6, 3), { mode: "majority", start: "2026-12-20", length: 4 });
+    expect(pinned.dates).toMatchObject({ pinned: true, length: 4, chosen: { start: "2026-12-20", end: "2026-12-23" } });
+  });
+});
+
+describe("votes with equal voice", () => {
+  it("each traveller's picks share one voice: one pick counts more than one of twenty", () => {
+    const e = mini();
+    const few = ballot(e, "few", "2026-12-01", 6, { 2: [["b-day-1"], []] });
+    const many = ballot(e, "many", "2026-12-01", 6, {
+      0: [["a-day-1"], ["a-night-1"]],
+      1: [["road-1"], ["b-night-2"]],
+      2: [["b-day-2"], ["b-night-1"]],
+      3: [["c-day-1"], ["c-night-1"]],
+      4: [["c-trip"], ["c-night-2"]],
+    });
+    const p = generatePlan(e, [few, many], { mode: "majority", start: "2026-12-01", length: 6 });
+    const score = (id: string) => p.slots.flatMap((s) => s.items).find((i) => i.id === id)?.score ?? 0;
+    // "few" has one pick, "many" ten: one voice each, so each of many's picks counts a tenth as much.
+    expect(score("b-day-1")).toBeGreaterThan(0);
+    expect(score("b-day-1")).toBeCloseTo(score("a-day-1") * 10, 5);
+  });
+
+  it("drafts count half by default, and not at all at weight 0", () => {
+    const e = mini();
+    const a = ballot(e, "a", "2026-12-01", 6, { 0: [["a-day-1"], []] }, "draft");
+    const b = ballot(e, "b", "2026-12-01", 6, { 2: [["b-day-2"], []] });
+    const half = generatePlan(e, [a, b], { mode: "majority", start: "2026-12-01", length: 6 });
+    const item = (p: ConsensusPlan, id: string) => p.slots.flatMap((s) => s.items).find((i) => i.id === id);
+    expect(item(half, "a-day-1")!.score * 2).toBeCloseTo(item(half, "b-day-2")!.score, 5);
+    const none = generatePlan(e, [a, b], { mode: "majority", start: "2026-12-01", length: 6, draftWeight: 0 });
+    expect(item(none, "a-day-1")).toBeUndefined();
+  });
+
+  it("stay-in picks become rest slots", () => {
+    const e = mini();
+    const rest = (id: string) => ballot(e, id, "2026-12-01", 6, { 1: [[], [STAY_ID]], 2: [[], [STAY_ID]], 4: [[], [STAY_ID]] });
+    const p = generatePlan(e, [rest("a"), rest("b"), rest("c")], { mode: "majority" });
+    expect(p.slots.filter((s) => s.slot === "night" && s.items[0].id === STAY_ID).length).toBeGreaterThanOrEqual(2);
+  });
+});
+
+describe("hard rules — property-style", () => {
+  it("never breaks a rule, across random groups and every length from 1 to 14", () => {
+    const engines = [sriLanka(), georgia(), mini(), sriLanka({ fixedLength: true }), mini({ baseFiltering: false }), sriLanka({ hidden: ["galle-fort", "pub-golf-galle"] })];
+    let runs = 0;
+    for (const [n, e] of engines.entries()) {
+      for (let len = 1; len <= 14; len++) {
+        const ballots = randomBallots(e, 4 + ((len * 7 + n) % 9), len * 31 + n);
+        const modes = ["together", "majority", "custom"] as const;
+        const mode = modes[(len + n) % 3];
+        const p = generatePlan(e, ballots, { mode, fairness: (len % 5) / 4, variety: (len % 3) / 2, budgetFit: len % 2, length: len, draftWeight: (n % 3) / 2 });
+        assertValid(e, p);
+        runs++;
+      }
+    }
+    expect(runs).toBe(engines.length * 14);
+  });
+
+  it("is deterministic: the same inputs (in any order) give the same plan", () => {
+    const e = sriLanka();
+    const ballots = randomBallots(e, 12, 99);
+    const a = generatePlan(e, ballots, { mode: "together" });
+    const b = generatePlan(e, [...ballots].reverse(), { mode: "together" });
+    expect(b).toEqual(a);
+    expect(a.slots[0].items[0].key).toBe(itemKey(a.slots[0].date, a.slots[0].slot, a.slots[0].items[0].id));
+  });
+});
+
+describe("fairness", () => {
+  // Six friends who all want the same things, and one with niche taste.
+  const e = mini();
+  const crowd = (id: string) =>
+    ballot(e, id, "2026-12-01", 6, {
+      0: [["a-day-1"], ["a-night-1"]],
+      1: [["road-1"], ["b-night-1"]],
+      2: [["b-day-1"], ["b-night-2"]],
+      3: [["c-day-1"], ["c-night-1"]],
+      4: [["c-trip"], ["c-night-2"]],
+    });
+  const niche = ballot(e, "niche", "2026-12-01", 6, { 0: [["a-day-2"], []], 1: [["road-2"], []], 2: [["b-day-2"], []] });
+  const group = [crowd("c1"), crowd("c2"), crowd("c3"), crowd("c4"), crowd("c5"), crowd("c6"), niche];
+  const nicheMade = (p: ConsensusPlan) => p.people.find((x) => x.id === "niche")!.made.length;
+
+  it("Majority rules can leave someone with nothing", () => {
+    const p = generatePlan(e, group, { mode: "majority", start: "2026-12-01", length: 6 });
+    expect(p.settings).toMatchObject({ lambda: 0, floorK: 0 });
+    expect(nicheMade(p)).toBe(0);
+  });
+
+  it("Everyone gets a say guarantees the fair floor, and says so", () => {
+    const p = generatePlan(e, group, { mode: "together", start: "2026-12-01", length: 6 });
+    expect(p.settings.floorK).toBeGreaterThanOrEqual(1);
+    expect(nicheMade(p)).toBeGreaterThanOrEqual(p.settings.floorK);
+    const floorItem = p.slots.flatMap((s) => s.items).find((i) => i.floorFor.includes("niche"));
+    expect(floorItem?.reasons.map((r) => r.text)).toContain("Added so everyone gets some of their picks");
+    expect(p.fairness.min).toBeGreaterThan(0);
+    expect(p.fairness.floorMet).toBe(p.fairness.floorOf);
+  });
+
+  it("the organizers can raise the floor", () => {
+    const p = generatePlan(e, group, { mode: "together", start: "2026-12-01", length: 6, floor: 3 });
+    expect(nicheMade(p)).toBe(3);
+  });
+
+  it("Custom at zero is majority; at full fairness it lifts the least satisfied", () => {
+    const zero = generatePlan(e, group, { mode: "custom", fairness: 0, start: "2026-12-01", length: 6 });
+    const majority = generatePlan(e, group, { mode: "majority", start: "2026-12-01", length: 6 });
+    expect(zero.itinerary).toEqual(majority.itinerary);
+    const full = generatePlan(e, group, { mode: "custom", fairness: 1, start: "2026-12-01", length: 6 });
+    expect(full.fairness.min).toBeGreaterThan(majority.fairness.min);
+    expect(full.fairness.index).toBeGreaterThan(majority.fairness.index);
+  });
+
+  it("reports per-person satisfaction with count-based reasons for what didn't make it", () => {
+    const p = generatePlan(e, group, { mode: "majority", start: "2026-12-01", length: 6 });
+    const n = p.people.find((x) => x.id === "niche")!;
+    expect(n.picks).toBe(3);
+    expect(n.missed.map((m) => m.reason)).toContain("Only you picked it");
+    expect(JSON.stringify(n.missed)).not.toMatch(/c[1-6]\b/);
+  });
+
+  it("compare modes runs every mode on the same inputs", () => {
+    const out = compareModes(e, group, { start: "2026-12-01", length: 6, fairness: 1 });
+    expect(out.map((m) => m.mode)).toEqual(["together", "majority", "custom"]);
+    expect(out[1].leftOut).toBe(1);
+    expect(out[0].leftOut).toBe(0);
+  });
+});
+
+describe("splits", () => {
+  it("suggests one when a slot's top options have strong, separate camps — with headcounts", () => {
+    const e = mini();
+    const camp = (id: string, pick: string) => ballot(e, id, "2026-12-01", 6, { 2: [[pick], []] });
+    const ballots = ["a", "b", "c", "d", "e"].map((x) => camp(x, "b-day-1")).concat(["f", "g", "h"].map((x) => camp(x, "b-day-2")));
+    const p = generatePlan(e, ballots, { mode: "majority", start: "2026-12-01", length: 6 });
+    const s = p.slots.find((x) => x.split)!;
+    expect(s.split).toMatchObject({ a: { id: "b-day-1", votes: 5 }, b: { id: "b-day-2", votes: 3 }, both: 0, status: "suggested" });
+    expect(planDays(e, 6)[s.day]).toMatchObject({ kind: "base", arrival: false });
+  });
+
+  it("an accepted split keeps both options in that slot, and counts for both camps", () => {
+    const e = mini();
+    const camp = (id: string, pick: string) => ballot(e, id, "2026-12-01", 6, { 2: [[pick], []] });
+    const ballots = ["a", "b", "c", "d", "e"].map((x) => camp(x, "b-day-1")).concat(["f", "g", "h"].map((x) => camp(x, "b-day-2")));
+    const first = generatePlan(e, ballots, { mode: "majority", start: "2026-12-01", length: 6 });
+    const s = first.slots.find((x) => x.split)!;
+    const p = generatePlan(e, ballots, { mode: "majority", start: "2026-12-01", length: 6, splits: { [s.key]: { status: "accepted", a: "b-day-1", b: "b-day-2" } } });
+    const again = p.slots.find((x) => x.key === s.key)!;
+    expect(again.split?.status).toBe("accepted");
+    expect(p.people.find((x) => x.id === "f")!.made).toContain("b-day-2");
+    assertValid(e, p);
+  });
+
+  it("never splits a moving day or New Year's Eve", () => {
+    const e = sriLanka();
+    const p = generatePlan(e, demoBallots(e, demoById("sri-lanka")!), { mode: "majority" });
+    for (const s of p.slots) if (s.split) expect(planDays(e, p.dates.length)[s.day]).toMatchObject({ kind: "base", arrival: false, departs: false });
+    expect(p.slots.find((s) => s.special)?.split).toBeNull();
+  });
+});
+
+describe("special dates and weekdays", () => {
+  it("New Year's Eve goes to the most-voted special option, pinned to 31 Dec", () => {
+    const e = mini();
+    // 29 Dec start: 31 Dec is day 3 (index 2), a Beta evening.
+    const vote = (id: string, pick: string) => ballot(e, id, "2026-12-29", 6, { 2: [[], [pick]] });
+    const p = generatePlan(e, [vote("a", "nye-b-2"), vote("b", "nye-b-2"), vote("c", "nye-b-1")], { mode: "majority", start: "2026-12-29", length: 6 });
+    const nye = p.slots.find((s) => s.special === "nye")!;
+    expect(nye.date).toBe("2026-12-31");
+    expect(nye.items[0].id).toBe("nye-b-2");
+    expect(nye.items[0].reasons.find((r) => r.kind === "special")?.text).toMatch(/2 votes vs 1/);
+    const loser = p.people.find((x) => x.id === "c")!.missed.find((m) => m.id === "nye-b-1");
+    expect(loser?.reason).toMatch(/NYE went to .*, 2 votes/);
+  });
+
+  it("day-of-week options only land on their days, and say so", () => {
+    const e = sriLanka();
+    // The Secret Jungle Party runs Fridays only. 1 Jan 2027 is a Friday.
+    const fan = (id: string) => ballot(e, id, "2026-12-27", 7, { 3: [[], ["secret-jungle-party"]] });
+    const p = generatePlan(e, ["a", "b", "c", "d"].map(fan), { mode: "majority", start: "2026-12-27", length: 7 });
+    const slot = p.slots.find((s) => s.items.some((i) => i.id === "secret-jungle-party"))!;
+    expect(parseISO(slot.date).getUTCDay()).toBe(5);
+    expect(slot.items.find((i) => i.id === "secret-jungle-party")!.reasons.find((r) => r.kind === "weekday")?.text).toBe("Fridays only — fits Fri 1 Jan");
+  });
+
+  it("explains a weekday-only pick that can't fit", () => {
+    const e = sriLanka();
+    const fan = ballot(e, "fan", "2026-12-27", 5, { 3: [[], ["secret-jungle-party"]] });
+    // 27–31 Dec has no Friday at all.
+    const p = generatePlan(e, [fan], { mode: "majority", start: "2026-12-27", length: 5 });
+    expect(p.people[0].missed[0].reason).toMatch(/^Fridays only, and the dates have no Friday evening in Galle/);
+  });
+});
+
+describe("locks and regeneration", () => {
+  it("locked items survive regenerating in any mode", () => {
+    const e = sriLanka();
+    const ballots = demoBallots(e, demoById("sri-lanka")!);
+    const first = generatePlan(e, ballots, { mode: "majority" });
+    const slot = first.slots.find((s) => s.slot === "day" && s.day >= 2)!;
+    const alt = slot.alternatives.find((a) => a.id !== STAY_ID && !a.elsewhere)!;
+    const locks = [{ date: slot.date, slot: slot.slot, id: alt.id, role: "main" as const }];
+    for (const mode of ["together", "majority", "custom"] as const) {
+      const p = generatePlan(e, ballots, { mode, locks, start: first.dates.chosen.start });
+      const again = p.slots.find((s) => s.key === slot.key)!;
+      expect(again.items[0]).toMatchObject({ id: alt.id, locked: true });
+      expect(again.items[0].reasons[0].text).toBe("Locked by the organizers");
+      assertValid(e, p);
+    }
+  });
+
+  it("a lock outside new dates is dropped with a note", () => {
+    const e = sriLanka();
+    const ballots = demoBallots(e, demoById("sri-lanka")!);
+    const p = generatePlan(e, ballots, { mode: "majority", start: "2026-12-10", locks: [{ date: "2026-12-30", slot: "day", id: "galle-fort", role: "main" }] });
+    expect(p.notes[0]).toMatch(/outside these dates/);
+  });
+});
+
+describe("short trips", () => {
+  it("a 1-day trip plans a daytime only; a 3-day Sri Lanka trip stays in Colombo", () => {
+    const e = sriLanka();
+    const ballots = randomBallots(e, 8, 5);
+    const one = generatePlan(e, ballots, { mode: "together", length: 1 });
+    expect(one.slots.map((s) => s.slot)).toEqual(["day"]);
+    assertValid(e, one);
+    const three = generatePlan(e, ballots, { mode: "together", length: 3 });
+    expect(new Set(three.slots.map((s) => s.area))).toEqual(new Set(["colombo"]));
+    const galleFan = three.people.find((x) => x.missed.some((m) => /doesn't stay in Galle/.test(m.reason)));
+    expect(galleFan).toBeDefined();
+  });
+});
+
+describe("the demo crews", () => {
+  it("plans each demo in every mode within the rules", () => {
+    for (const id of ["sri-lanka", "georgia"]) {
+      const e = engineFor(readPreset(id));
+      const ballots = demoBallots(e, demoById(id)!);
+      for (const mode of ["together", "majority", "custom"] as const) assertValid(e, generatePlan(e, ballots, { mode }));
+    }
+  });
+});
+
+describe("performance", () => {
+  it("30 travellers × 14 days well under a second", () => {
+    const e = sriLanka();
+    const ballots: Ballot[] = randomBallots(e, 30, 2024).map((b) => {
+      // Everyone on long trips, so the plan is the full 14 days.
+      const d: ItineraryData = quickFill(e, setStart(e, emptyItinerary(), "2026-12-20", 14), { rng: seeded(b.id.length + Number(b.id.slice(1))) });
+      return { ...b, data: normalize(e, d) };
+    });
+    const t = performance.now();
+    const p = generatePlan(e, ballots, { mode: "custom", fairness: 1 });
+    const ms = performance.now() - t;
+    expect(p.dates.length).toBe(14);
+    expect(ms).toBeLessThan(1000);
+    console.log(`30 travellers × 14 days: ${ms.toFixed(0)} ms`);
+  });
+});
