@@ -1,7 +1,7 @@
 /**
  * How the group plan is made, as an inline SVG: everyone's plans → equal
- * voice → dates → the slots the trip's rules allow → fair floor → fill →
- * improve → splits & reasons → the plan everyone RSVPs to. Colours come
+ * voice → dates → the slots the trip's rules allow → the most popular plan →
+ * lift the lowest share → improve → splits & reasons → the plan everyone RSVPs to. Colours come
  * from the page's tokens (same look as the architecture diagram).
  */
 export function ConsensusDiagram({ className }: { className?: string }) {
@@ -33,7 +33,7 @@ export function ConsensusDiagram({ className }: { className?: string }) {
       viewBox="0 0 760 590"
       className={className}
       role="img"
-      aria-label="How the group plan is made: everyone's plans become equal votes; the dates are chosen by who can make the whole window; slots follow the trip's own rules; a fair floor gives everyone some of their picks; the rest is filled by popularity and improved by swaps; splits and reasons are added; the published plan gets RSVPs."
+      aria-label="How the group plan is made: everyone's plans become equal votes; the length balances days against who can make all of them, then the window most can make; slots follow the trip's own rules; the most popular plan comes first, then whoever gets the smallest share of their picks is lifted within a popularity tolerance, then swaps improve it; splits and reasons are added; the published plan gets RSVPs."
     >
       <defs>
         <marker id="cons-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
