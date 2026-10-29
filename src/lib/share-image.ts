@@ -472,7 +472,7 @@ function dayList(ctx: Ctx, f: Fonts, c: Colors, m: ShareModel, x: number, y: num
   }
 }
 
-function vibe(ctx: Ctx, f: Fonts, c: Colors, b: Balance, x: number, y: number, w: number, h: number, scale = 1) {
+function vibe(ctx: Ctx, f: Fonts, c: Colors, b: Balance, x: number, y: number, w: number, h: number, scale = 1, title = "YOUR VIBE") {
   ctx.save();
   roundRect(ctx, x, y, w, h, 32 * scale);
   ctx.fillStyle = "rgba(255,255,255,0.07)";
@@ -484,7 +484,7 @@ function vibe(ctx: Ctx, f: Fonts, c: Colors, b: Balance, x: number, y: number, w
   const pad = 34 * scale;
   ctx.fillStyle = c.gold;
   ctx.font = `700 ${20 * scale}px ${f.body}`;
-  spaced(ctx, "YOUR VIBE", x + pad, y + pad + 16 * scale, 3 * scale);
+  spaced(ctx, title, x + pad, y + pad + 16 * scale, 3 * scale);
   ctx.fillStyle = c.paper;
   ctx.font = `600 ${50 * scale}px ${f.display}`;
   ctx.fillText(fit(ctx, label.title, w - pad * 2), x + pad, y + pad + 68 * scale);
@@ -670,6 +670,9 @@ function header(ctx: Ctx, f: Fonts, c: Colors, m: ShareModel, x: number, y: numb
   return cy + ch;
 }
 
+/** "YOUR VIBE" on someone's own trip, "OUR VIBE" on the group plan. */
+const vibeLabel = (m: ShareModel) => (m.heading ? `${m.heading.toUpperCase()} VIBE` : "YOUR VIBE");
+
 const footerText = (m: ShareModel) => `Planned together on ${BRAND.name} · ${m.engine.catalog.preset.destination.season}`;
 
 // ── Layouts ───────────────────────────────────────────────────────────
@@ -693,7 +696,7 @@ async function drawStory(ctx: Ctx, f: Fonts, c: Colors, m: ShareModel) {
   const vibeY = top + listH + 32;
   const vibeH = m.highlights ? 300 : 252;
   if (m.highlights) highlightsCard(ctx, f, c, m.engine, m.highlights, M, vibeY, W - M * 2, vibeH);
-  else vibe(ctx, f, c, m.balance, M, vibeY, W - M * 2, vibeH);
+  else vibe(ctx, f, c, m.balance, M, vibeY, W - M * 2, vibeH, 1, vibeLabel(m));
 
   // photo strip
   const py = vibeY + vibeH + 28;
@@ -728,7 +731,7 @@ async function drawSquare(ctx: Ctx, f: Fonts, c: Colors, m: ShareModel) {
   drawMap(ctx, f, c, m.engine, m.routes, mapX, M, mapW, mapH);
   const boxY = M + mapH + 24;
   if (m.highlights) highlightsCard(ctx, f, c, m.engine, m.highlights, mapX, boxY, mapW, H - M - boxY, 0.78, 2);
-  else vibe(ctx, f, c, m.balance, mapX, boxY, mapW, H - M - boxY, 0.78);
+  else vibe(ctx, f, c, m.balance, mapX, boxY, mapW, H - M - boxY, 0.78, vibeLabel(m));
 
   ctx.font = `600 17px ${f.body}`;
   ctx.fillStyle = rgba(c.paper, 0.5);

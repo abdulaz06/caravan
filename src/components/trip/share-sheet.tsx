@@ -146,7 +146,7 @@ export function ShareSheet({ onClose, name, data, family = false, heading }: { o
                 </figcaption>
                 <div className="mt-2 grid gap-1.5">
                   {canShareFiles && (
-                    <Button size="md" block disabled={!img} onClick={() => share(f.id)} aria-label={`Share ${f.label} image`}>
+                    <Button size="md" block disabled={!img} onClick={() => share(f.id)} aria-label={`Share ${f.label} image`} className="whitespace-nowrap !px-3">
                       <Share2 className="size-4" /> Share
                     </Button>
                   )}
@@ -155,6 +155,7 @@ export function ShareSheet({ onClose, name, data, family = false, heading }: { o
                     block
                     variant={canShareFiles ? "light" : "primary"}
                     disabled={!img}
+                    className="whitespace-nowrap !px-3"
                     onClick={() => img && download(img.url, filename(f.id))}
                     aria-label={`Save ${f.label} image`}
                   >
