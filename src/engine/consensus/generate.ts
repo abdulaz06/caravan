@@ -120,7 +120,23 @@ const median = (xs: number[]) => {
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 const shortTitle = (a: Activity) => a.title.split(/[:·(]/)[0].trim();
 
+/**
+ * Generate the group plan. Two deterministic starts — the fair floor first,
+ * and filling by popularity first — both improved the same way; the one that
+ * scores better on the objective wins, as long as it keeps the fair floor.
+ * (Placing floor picks first can steer local search into a worse optimum;
+ * when popularity alone already meets the floor, the second start finds it.)
+ */
 export function generatePlan(e: Engine, ballots: Ballot[], input: Partial<PlanSettings> = {}): ConsensusPlan {
+  const first = runPlan(e, ballots, input, { floorFirst: true });
+  if (!first.plan.settings.floorK) return first.plan;
+  const second = runPlan(e, ballots, input, { floorFirst: false, floorTarget: first.floorTarget });
+  return second.ok && second.objective > first.objective + 1e-9 ? second.plan : first.plan;
+}
+
+type Run = { plan: ConsensusPlan; objective: number; floorTarget: number[]; ok: boolean };
+
+function runPlan(e: Engine, ballots: Ballot[], input: Partial<PlanSettings>, start: { floorFirst: boolean; floorTarget?: number[] }): Run {
   const settings: PlanSettings = { ...DEFAULT_SETTINGS, ...input, locks: input.locks ?? [], splits: input.splits ?? {} };
   const mode: DecisionMode = settings.mode ?? "together";
   const { catalog } = e;
@@ -521,7 +537,7 @@ export function generatePlan(e: Engine, ballots: Ballot[], input: Partial<PlanSe
   const floorAuto = autoFloor(n, voices.length);
   const { lambda, floorK } = modeParams(mode, settings.fairness, floorAuto, settings.floor);
   const exhausted = new Set<number>();
-  if (floorK > 0) {
+  if (floorK > 0 && start.floorFirst) {
     // The slots' best support, so a floor pick goes where it costs the group least.
     const bestThere = slots.map((s) => Math.max(0, ...candidates[s.i].map((id) => S(id, s.day))));
     for (let guard = 0; guard < voters.length * floorK + 5; guard++) {
@@ -563,7 +579,8 @@ export function generatePlan(e: Engine, ballots: Ballot[], input: Partial<PlanSe
       floorFor.get(top.id)!.add(voters[k].id);
     }
   }
-  const floorReached = made.map((m) => Math.min(m, floorK));
+  // What the floor achieved for each person (the other start must match it).
+  const floorTarget = made.map((m) => Math.min(m, floorK));
 
   // ── Phase B: fill the rest by score ─────────────────────────────────
   for (;;) {
@@ -580,6 +597,11 @@ export function generatePlan(e: Engine, ballots: Ballot[], input: Partial<PlanSe
     if (!top) break;
     placeMain(top.i, top.id);
   }
+
+  // Filling first: the floor holds only if everyone has what the floor-first start gave them.
+  const ok = !start.floorTarget || made.every((m, k) => m >= start.floorTarget![k]);
+  // Local improvement never pushes anyone back below the floor they've reached.
+  const floorReached = made.map((m) => Math.min(m, floorK));
 
   // ── Phase C: local improvement (popularity + λ·fairness − penalties) ──
   const capOf = voters.map((v, k) => Math.max(1, Math.min(v.allPicks.length, slots.filter((s) => presence[k][s.day]).length)));
@@ -715,7 +737,8 @@ export function generatePlan(e: Engine, ballots: Ballot[], input: Partial<PlanSe
     for (const id of candidates[s.i]) {
       if (id === a || used.has(id) || byId[id]?.variants || !canHold(s.i, id)) continue;
       const by = there(id);
-      if (by.length < Math.max(3, Math.ceil(0.25 * present))) continue;
+      // A strong second camp: a quarter of those there, and at least half the size of the first.
+      if (by.length < Math.max(3, Math.ceil(0.25 * present), Math.ceil(aBy.length / 2))) continue;
       const both = by.filter((k) => aBy.includes(k)).length;
       if (both > 0.34 * Math.min(by.length, aBy.length)) continue;
       if (!best || by.length > best.by.length || (by.length === best.by.length && id < best.id)) best = { id, by };
@@ -733,8 +756,20 @@ export function generatePlan(e: Engine, ballots: Ballot[], input: Partial<PlanSe
     };
   };
 
+  // The objective this start reached (to compare the two starts).
+  const objective =
+    slots.reduce((a, s) => a + popOf(s.i) - localPen(s.i), 0) + restTotal("day") + restTotal("night") + lambda * FAIR_WEIGHT * made.reduce((a, m, k) => a + fairTerm(k, m), 0);
+
   // Splits are found before extras, so a strong second camp's pick isn't squeezed in alongside.
-  const splits = slots.map((s) => splitOf(s));
+  const found = slots.map((s) => splitOf(s));
+  // Each option is suggested as a split once: where its camp is biggest (then the earliest day).
+  const bestFor = new Map<string, number>();
+  found.forEach((x, i) => {
+    if (!x || x.status === "accepted") return;
+    const at = bestFor.get(x.b.id);
+    if (at === undefined || x.b.votes > found[at]!.b.votes) bestFor.set(x.b.id, i);
+  });
+  const splits = found.map((x, i) => (x && (x.status === "accepted" || bestFor.get(x.b.id) === i) ? x : null));
   const reserved = new Set(splits.flatMap((x) => (x && x.status === "suggested" ? [x.b.id] : [])));
 
   // ── Extras: popular add-ons where there's time ──────────────────────
@@ -800,7 +835,10 @@ export function generatePlan(e: Engine, ballots: Ballot[], input: Partial<PlanSe
       const rival = s.pair.a === id ? s.pair.b : s.pair.a;
       out.push({ kind: "special", text: `${s.special!.name}: ${plural(heads(id), "vote")} vs ${heads(rival)} for ${shortTitle(byId[rival])}` });
     }
-    if (floorFor.has(id)) out.push({ kind: "fair", text: "Added so everyone gets some of their picks" });
+    // The floor's chip only where it made a difference: something better supported could have had this slot.
+    if (floorFor.has(id) && candidates[s.i].some((x) => x !== id && S(x, s.day) > S(id, s.day) + 1e-9)) {
+      out.push({ kind: "fair", text: "Added so everyone gets some of their picks" });
+    }
     if (a.availableDays) out.push({ kind: "weekday", text: `${daysLabel(a.availableDays)} — fits ${WEEKDAYS[s.weekday]} ${s.date.slice(8).replace(/^0/, "")} ${monthShort(s.date)}` });
     const variant = role === "main" ? mainVariant[s.i] : undefined;
     if (variant && a.variants) {
@@ -985,7 +1023,7 @@ export function generatePlan(e: Engine, ballots: Ballot[], input: Partial<PlanSe
     note: over ? `About $${Math.round((total[0] + total[1]) / 2)} each — over the budget ${over} of ${tierMax.length} people set` : null,
   };
 
-  return {
+  const plan: ConsensusPlan = {
     engine: 1,
     settings: { ...settings, mode, lambda, floorK },
     dates: { chosen, runnersUp, length, lengthReason, pinned, withDates: withDates.length },
@@ -1002,6 +1040,7 @@ export function generatePlan(e: Engine, ballots: Ballot[], input: Partial<PlanSe
       picks: voters.reduce((s, v) => s + v.allPicks.length, 0),
     },
   };
+  return { plan, objective, floorTarget, ok };
 
   function lengthOf(v: Voter) {
     return Math.round((Date.parse(v.end!) - Date.parse(v.start!)) / 86_400_000) + 1;

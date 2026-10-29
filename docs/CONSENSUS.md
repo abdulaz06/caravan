@@ -8,7 +8,8 @@ organizer can tweak and publish. It is:
   any order) always give the same plan; every tie is broken the same way.
 - **Explainable** — every placed item carries reasons ("9 of 12 picked this",
   "Fridays only — fits Fri 1 Jan", "Added so everyone gets some of their
-  picks") and its runner-up. Every traveller's missed picks get a
+  picks" — shown only where the floor beat a better-supported option) and its
+  runner-up (the best option not placed anywhere in the plan). Every traveller's missed picks get a
   count-based reason ("Only 2 others picked it").
 - **Inside the rules** — it never places anything the trip itself wouldn't
   allow (pools, special dates, weekday-only options, big day trips…).
@@ -167,6 +168,8 @@ than one more for someone with most of theirs. A move is never allowed to
 break a hard rule, move a locked/special item, or push anyone below the
 floor Phase A reached. Up to 80 rounds, deterministic order.
 
+**Two starts.** Placing floor picks first can steer local search into a worse optimum than filling by popularity would have. So the generator runs twice — floor first (A → B → C) and fill first (B → C) — and keeps the fill-first plan only if it gives everyone at least what the floor-first run did *and* scores higher on `F`. Both runs are deterministic, so the choice is too.
+
 **Extras.** Popular add-ons (picked by ≥ 30 % of those there, at least 2)
 join slots with time to spare, up to two per slot; a big day trip's tied
 extras ride along.
@@ -192,9 +195,10 @@ index, picks placed, people left with none and slots that differ.
 A slot gets a **split suggestion** when its main item A and another feasible
 option B both have **strong, mostly separate** supporters among those there:
 
-- `|A| ≥ 3`, `|B| ≥ max(3, ⌈25 % of those there⌉)`
+- `|A| ≥ 3`, `|B| ≥ max(3, ⌈25 % of those there⌉, ⌈|A| / 2⌉)`
 - `|A ∩ B| ≤ ⅓ · min(|A|, |B|)`
-- never on arrival, transfer or fly-home days, or a special date.
+- never on arrival, transfer or fly-home days, or a special date;
+- each option is suggested as B once — on the day its camp is biggest (then the earliest).
 
 It shows headcounts ("5 want diving / 8 want whale watching"). The default
 is together; an organizer **accepts** (both stay in the slot, both camps
@@ -244,8 +248,10 @@ With `V` voters, `D` days, `s ≤ 2D` slots and `c` candidates per slot
   evaluated incrementally: only the slots around it, the voters who picked
   the items involved, and rest totals when a stay-in moves).
 
-In practice: **30 travellers × 14 days ≈ 0.15–0.2 s** (a unit test asserts
-< 1 s); the demo crews (11 × 7–9 days) take 30–50 ms.
+Everything above runs twice (the two starts). In practice: **30 travellers ×
+14 days ≈ 0.3 s** (a unit test asserts < 1 s); the demo crews (11 × 7–9 days)
+take well under 0.1 s. [CONSENSUS-DEMO.md](CONSENSUS-DEMO.md) shows every
+mode on both demo crews (`npx tsx scripts/consensus-report.ts`).
 
 ## Publishing, RSVPs and privacy
 
