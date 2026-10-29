@@ -3,6 +3,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import type { ConsensusPlan, PlanSettings } from "@/engine/consensus/types";
 import type { ItineraryData, ItineraryStatus } from "@/engine/itinerary";
 import { assertSafeInfra } from "@/lib/infra-guard";
 
@@ -81,6 +82,25 @@ export type NewLogEntry = Omit<LogEntry, "id" | "at">;
 
 export type NewParticipant = { name: string; pinHash: string; role?: Role; guest?: boolean };
 
+/** A saved version of the group plan (the generator's output and the knobs that made it). */
+export type PlanVersionRow = {
+  id: string;
+  trip_id: string;
+  version: number;
+  data: ConsensusPlan;
+  settings: PlanSettings;
+  created_by: string | null;
+  created_by_name: string;
+  created_at: string;
+  /** Set when it's the plan travellers see (the latest published version wins). */
+  published_at: string | null;
+};
+export type NewPlanVersion = Pick<PlanVersionRow, "trip_id" | "data" | "settings" | "created_by" | "created_by_name"> & { published_at?: string | null };
+
+/** "I'm in" / "I'll skip" on one item of the published plan (`choice`: which side of a split). */
+export type RsvpStatus = "in" | "skip";
+export type RsvpRow = { trip_id: string; item_key: string; participant_id: string; status: RsvpStatus; choice: string | null; updated_at: string };
+
 export const roleOf = (p: Pick<ParticipantRow, "role"> | null | undefined): Role => p?.role ?? "member";
 export const isOrganizerRole = (r: Role) => r === "owner" || r === "admin";
 
@@ -113,6 +133,17 @@ export interface Store {
   /** Counts a peek; `first` = this person had never peeked at that plan before. */
   recordPeek(peekerId: string, targetId: string): Promise<{ first: boolean }>;
   countPeekers(targetId: string): Promise<number>;
+  // The group plan
+  /** Newest first. */
+  listPlanVersions(tripId: string, limit: number): Promise<PlanVersionRow[]>;
+  /** The plan travellers see: the latest published version. */
+  getPublishedPlan(tripId: string): Promise<PlanVersionRow | null>;
+  /** Saves the next version number for the trip. */
+  savePlanVersion(row: NewPlanVersion): Promise<PlanVersionRow>;
+  publishPlanVersion(tripId: string, id: string, at: string): Promise<PlanVersionRow | null>;
+  listRsvps(tripId: string): Promise<RsvpRow[]>;
+  /** Upserts one person's answer on one item (null status clears it). */
+  setRsvp(row: Omit<RsvpRow, "updated_at" | "status"> & { status: RsvpStatus | null }): Promise<void>;
 }
 
 // ── Supabase ──────────────────────────────────────────────────────────
@@ -276,6 +307,60 @@ class SupabaseStore implements Store {
     this.fail(error);
     return count ?? 0;
   }
+
+  async listPlanVersions(tripId: string, limit: number) {
+    const { data, error } = await this.sb.from("plan_versions").select("*").eq("trip_id", tripId).order("version", { ascending: false }).limit(limit);
+    this.fail(error);
+    return (data ?? []) as PlanVersionRow[];
+  }
+
+  async getPublishedPlan(tripId: string) {
+    const { data, error } = await this.sb
+      .from("plan_versions")
+      .select("*")
+      .eq("trip_id", tripId)
+      .not("published_at", "is", null)
+      .order("published_at", { ascending: false })
+      .limit(1);
+    this.fail(error);
+    return ((data ?? [])[0] as PlanVersionRow) ?? null;
+  }
+
+  async savePlanVersion(row: NewPlanVersion) {
+    // Two organizers saving at once: the unique (trip_id, version) makes one retry with the next number.
+    for (let attempt = 0; attempt < 4; attempt++) {
+      const { data: last, error } = await this.sb.from("plan_versions").select("version").eq("trip_id", row.trip_id).order("version", { ascending: false }).limit(1);
+      this.fail(error);
+      const version = (((last ?? [])[0] as { version: number } | undefined)?.version ?? 0) + 1;
+      const res = await this.sb.from("plan_versions").insert({ ...row, version }).select("*").single();
+      if (res.error?.code === "23505") continue;
+      this.fail(res.error);
+      return res.data as PlanVersionRow;
+    }
+    throw new Error("Database error: couldn't number the plan version");
+  }
+
+  async publishPlanVersion(tripId: string, id: string, at: string) {
+    const { data, error } = await this.sb.from("plan_versions").update({ published_at: at }).eq("trip_id", tripId).eq("id", id).select("*").maybeSingle();
+    this.fail(error);
+    return (data as PlanVersionRow) ?? null;
+  }
+
+  async listRsvps(tripId: string) {
+    const { data, error } = await this.sb.from("plan_rsvps").select("*").eq("trip_id", tripId);
+    this.fail(error);
+    return (data ?? []) as RsvpRow[];
+  }
+
+  async setRsvp(row: Omit<RsvpRow, "updated_at" | "status"> & { status: RsvpStatus | null }) {
+    if (!row.status) {
+      const { error } = await this.sb.from("plan_rsvps").delete().eq("participant_id", row.participant_id).eq("item_key", row.item_key);
+      this.fail(error);
+      return;
+    }
+    const { error } = await this.sb.from("plan_rsvps").upsert({ ...row, updated_at: new Date().toISOString() }, { onConflict: "participant_id,item_key" });
+    this.fail(error);
+  }
 }
 
 // ── Local JSON file (development and tests) ───────────────────────────
@@ -288,6 +373,8 @@ type FileDb = {
   itineraries: ItineraryRow[];
   log: LogEntry[];
   peeks: PeekRow[];
+  planVersions: PlanVersionRow[];
+  rsvps: RsvpRow[];
 };
 
 class FileStore implements Store {
@@ -300,9 +387,17 @@ class FileStore implements Store {
       const db = JSON.parse(await fs.readFile(this.file, "utf8")) as Partial<FileDb>;
       // A file from before trips existed is ignored rather than mixed in.
       if (!Array.isArray(db.trips)) throw new Error("old local db");
-      return { trips: db.trips, participants: db.participants ?? [], itineraries: db.itineraries ?? [], log: db.log ?? [], peeks: db.peeks ?? [] };
+      return {
+        trips: db.trips,
+        participants: db.participants ?? [],
+        itineraries: db.itineraries ?? [],
+        log: db.log ?? [],
+        peeks: db.peeks ?? [],
+        planVersions: db.planVersions ?? [],
+        rsvps: db.rsvps ?? [],
+      };
     } catch {
-      return { trips: [], participants: [], itineraries: [], log: [], peeks: [] };
+      return { trips: [], participants: [], itineraries: [], log: [], peeks: [], planVersions: [], rsvps: [] };
     }
   }
 
@@ -358,6 +453,8 @@ class FileStore implements Store {
       db.itineraries = db.itineraries.filter((i) => !people.has(i.participant_id));
       db.log = db.log.filter((l) => l.trip_id !== id);
       db.peeks = db.peeks.filter((p) => !people.has(p.peeker_id) && !people.has(p.target_id));
+      db.planVersions = db.planVersions.filter((v) => v.trip_id !== id);
+      db.rsvps = db.rsvps.filter((r) => r.trip_id !== id);
     });
   }
   async countTripsCreated(creatorHash: string | null, since: string) {
@@ -405,6 +502,8 @@ class FileStore implements Store {
       db.participants = db.participants.filter((p) => p.id !== id);
       db.itineraries = db.itineraries.filter((i) => i.participant_id !== id);
       db.peeks = db.peeks.filter((p) => p.peeker_id !== id && p.target_id !== id);
+      db.rsvps = db.rsvps.filter((r) => r.participant_id !== id);
+      for (const v of db.planVersions) if (v.created_by === id) v.created_by = null;
     });
   }
 
@@ -455,6 +554,41 @@ class FileStore implements Store {
   }
   async countPeekers(targetId: string) {
     return (await this.read()).peeks.filter((p) => p.target_id === targetId).length;
+  }
+
+  async listPlanVersions(tripId: string, limit: number) {
+    return (await this.read()).planVersions
+      .filter((v) => v.trip_id === tripId)
+      .sort((a, b) => b.version - a.version)
+      .slice(0, limit);
+  }
+  async getPublishedPlan(tripId: string) {
+    const published = (await this.read()).planVersions.filter((v) => v.trip_id === tripId && v.published_at);
+    return published.sort((a, b) => b.published_at!.localeCompare(a.published_at!) || b.version - a.version)[0] ?? null;
+  }
+  savePlanVersion(row: NewPlanVersion) {
+    return this.mutate((db) => {
+      const version = Math.max(0, ...db.planVersions.filter((v) => v.trip_id === row.trip_id).map((v) => v.version)) + 1;
+      const saved: PlanVersionRow = { ...row, id: randomUUID(), version, created_at: new Date().toISOString(), published_at: row.published_at ?? null };
+      db.planVersions.push(saved);
+      return saved;
+    });
+  }
+  publishPlanVersion(tripId: string, id: string, at: string) {
+    return this.mutate((db) => {
+      const v = db.planVersions.find((x) => x.id === id && x.trip_id === tripId);
+      if (v) v.published_at = at;
+      return v ?? null;
+    });
+  }
+  async listRsvps(tripId: string) {
+    return (await this.read()).rsvps.filter((r) => r.trip_id === tripId);
+  }
+  setRsvp(row: Omit<RsvpRow, "updated_at" | "status"> & { status: RsvpStatus | null }) {
+    return this.mutate((db) => {
+      db.rsvps = db.rsvps.filter((r) => !(r.participant_id === row.participant_id && r.item_key === row.item_key));
+      if (row.status) db.rsvps.push({ ...row, status: row.status, updated_at: new Date().toISOString() });
+    });
   }
 }
 

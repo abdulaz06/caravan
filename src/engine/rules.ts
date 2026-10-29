@@ -10,6 +10,8 @@
 import { z } from "zod";
 import { CURRENCY_CODES, isCurrency, type CurrencyCode } from "@/lib/currency";
 import { isValidISO } from "@/lib/dates";
+import { parsePlanSettings, planSettingsSchema } from "./consensus/settings";
+import { DEFAULT_SETTINGS, type PlanSettings } from "./consensus/types";
 import type { TripPreset } from "./preset-schema";
 
 export type BrowseMode = "after_submit" | "always" | "off";
@@ -50,6 +52,8 @@ export type TripRules = {
   hidden: string[];
   recheck: string[];
   featured: string[];
+  /** The organizers' knobs for the group plan (decision mode, locks, splits…). */
+  plan: PlanSettings;
 };
 
 export function defaultRules(preset: TripPreset): TripRules {
@@ -73,6 +77,7 @@ export function defaultRules(preset: TripPreset): TripRules {
     hidden: [],
     recheck: [],
     featured: [],
+    plan: structuredClone(DEFAULT_SETTINGS),
   };
 }
 
@@ -107,6 +112,7 @@ export function rulesPatchSchema(preset: TripPreset) {
       hidden: ids,
       recheck: ids,
       featured: ids,
+      plan: planSettingsSchema,
     })
     .partial()
     .strip();
@@ -145,6 +151,11 @@ export function parseRules(raw: unknown, preset: TripPreset): TripRules {
   for (const k of Object.keys(shape) as (keyof typeof shape)[]) {
     const v = (raw as Record<string, unknown>)[k];
     if (v === undefined) continue;
+    // Plan settings keep every good field, not all-or-nothing.
+    if (k === "plan") {
+      out.plan = parsePlanSettings(v);
+      continue;
+    }
     const ok = shape[k].safeParse(v);
     if (ok.success && ok.data !== undefined) (out as Record<string, unknown>)[k] = ok.data;
   }
