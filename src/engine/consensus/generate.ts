@@ -240,7 +240,6 @@ export function generatePlan(e: Engine, ballots: Ballot[], input: Partial<PlanSe
     }
   });
   const slotAt = new Map(slots.map((s) => [slotKey(s.date, s.slot), s.i]));
-  const dayOf = (s: SlotDef) => s.day;
   const other = (s: SlotDef, day: number, slot: Slot) => slotAt.get(slotKey(addDays(chosen.start, day), slot));
 
   // Who's there: a traveller with dates is there on the days inside them; without dates, every day.
@@ -361,12 +360,6 @@ export function generatePlan(e: Engine, ballots: Ballot[], input: Partial<PlanSe
     return true;
   }
 
-  const hoursOf = (i: number, id: string) => {
-    const a = byId[id];
-    if (!a) return 0;
-    const s = slots[i];
-    return isRouteArea(e, s.area) ? a.hours : a.hours + 2 * hoursFrom(e, a, s.area);
-  };
   const slotHours = (i: number) => {
     const ids = [main[i], ...extras[i].map((x) => x.id)].filter((x): x is string => !!x && x !== STAY_ID);
     if (!ids.length) return 0;
