@@ -6,6 +6,7 @@ import { emptyItinerary, normalize } from "@/engine/itinerary";
 import { initialCurrency } from "@/lib/server/currency-pref";
 import { db } from "@/lib/server/db";
 import { pageContext } from "@/lib/server/page-context";
+import { hasPublishedPlan } from "@/lib/server/plan";
 import { getPopular } from "@/lib/server/popular";
 import { getRates } from "@/lib/server/rates";
 import { roommateCandidates } from "@/lib/server/roommates";
@@ -27,6 +28,7 @@ export default async function TripPage({ params, searchParams }: PageProps<"/t/[
     getPopular(trip),
     roommateCandidates(trip.trip.id, me.id).catch(() => []),
   ]);
+  const planOut = await hasPublishedPlan(trip);
   const data = row ? normalize(ctx.trip.engine, row.data) : emptyItinerary();
   const currency = await initialCurrency(data.preferences.currency, ctx.trip.rules.defaultCurrency);
   const stamp = row?.stamp && !row.stamp.seen ? row.stamp : null;
@@ -44,6 +46,7 @@ export default async function TripPage({ params, searchParams }: PageProps<"/t/[
           peekCount={peekCount}
           popular={popular}
           roommateCandidates={candidates}
+          planOut={planOut}
           stamp={stamp ? { kind: stamp.kind, by: stamp.by, at: stamp.at, lost: stamp.lost, text: stamp.text } : null}
         />
       </CurrencyProvider>

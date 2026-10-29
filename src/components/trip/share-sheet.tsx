@@ -41,10 +41,10 @@ function pickPhotos(model: Omit<ShareModel, "photos">): ShareModel["photos"] {
 }
 
 /** `family`: the plan is already swapped — its highlights replace the vibe meter (no other sign of the mode). */
-export function buildShareModel(engine: Engine, name: string, data: ItineraryData, family = false): ShareModel {
+export function buildShareModel(engine: Engine, name: string, data: ItineraryData, family = false, heading?: string): ShareModel {
   const timeline = buildTimeline(engine, data);
   const base = { engine, name, data, timeline, routes: dayRoutes(engine, data, timeline), balance: balanceOf(engine, data) };
-  return { ...base, photos: pickPhotos(base), ...(family ? { highlights: tripHighlights(engine, data) } : {}) };
+  return { ...base, photos: pickPhotos(base), ...(family ? { highlights: tripHighlights(engine, data) } : {}), ...(heading ? { heading } : {}) };
 }
 
 const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "trip";
@@ -63,10 +63,11 @@ function download(url: string, filename: string) {
  * Share button can hand the file to the Web Share API inside the tap.
  * Mount it only while open (state resets each time).
  */
-export function ShareSheet({ onClose, name, data, family = false }: { onClose: () => void; name: string; data: ItineraryData; family?: boolean }) {
+/** `heading` replaces "<name>'s" on the images (the group plan: "Our"). */
+export function ShareSheet({ onClose, name, data, family = false, heading }: { onClose: () => void; name: string; data: ItineraryData; family?: boolean; heading?: string }) {
   const engine = useEngine();
   const { preset } = engine.catalog;
-  const model = useMemo(() => buildShareModel(engine, name, data, family), [engine, name, data, family]);
+  const model = useMemo(() => buildShareModel(engine, name, data, family, heading), [engine, name, data, family, heading]);
   const [imgs, setImgs] = useState<Partial<Record<ShareFormat, Img>>>({});
   const [failed, setFailed] = useState(false);
   const [canShareFiles, setCanShareFiles] = useState(false);
@@ -102,8 +103,8 @@ export function ShareSheet({ onClose, name, data, family = false }: { onClose: (
     try {
       await navigator.share({
         files: [file],
-        title: `${name}'s ${preset.name}`,
-        text: `My ${preset.name} trip — ${daysNightsLabel(data.days.length || tripDays(engine))}`,
+        title: heading ? `${heading} ${preset.name}` : `${name}'s ${preset.name}`,
+        text: `${heading ? "Our" : "My"} ${preset.name} trip — ${daysNightsLabel(data.days.length || tripDays(engine))}`,
       });
     } catch (e) {
       if ((e as DOMException)?.name !== "AbortError") download(img.url, filename(f));
@@ -111,7 +112,7 @@ export function ShareSheet({ onClose, name, data, family = false }: { onClose: (
   }
 
   return (
-    <Sheet open onClose={onClose} eyebrow="Share my trip" title="Your trip, poster-style">
+    <Sheet open onClose={onClose} eyebrow={heading ? "Share the plan" : "Share my trip"} title={heading ? "The plan, poster-style" : "Your trip, poster-style"}>
       <div className="px-4 pb-10">
         <p className="px-1 text-[14px] text-ink-2">
           Made for Instagram Stories and the group chat. {canShareFiles ? "Tap Share to send it or save it to Photos." : "Save it and post it anywhere."}

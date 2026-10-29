@@ -825,7 +825,8 @@ export function generatePlan(e: Engine, ballots: Ballot[], input: Partial<PlanSe
 
   const planSlots: PlanSlot[] = slots.map((s) => {
     const alternatives = alternativesFor(s);
-    const runner = alternatives.find((x) => x.id !== STAY_ID) ?? null;
+    // The best thing that isn't in the plan at all (something placed on another day isn't a runner-up).
+    const runner = alternatives.find((x) => x.id !== STAY_ID && !x.elsewhere) ?? null;
     const items: PlanItem[] = [];
     const id = main[s.i]!;
     const mk = (itemId: string, role: "main" | "extra", locked: boolean, variant?: string): PlanItem => ({
@@ -842,7 +843,21 @@ export function generatePlan(e: Engine, ballots: Ballot[], input: Partial<PlanSe
       pickedBy: itemId === STAY_ID ? [] : (supporters.get(itemId) ?? []).map((k) => voters[k].name),
       floorFor: [...(floorFor.get(itemId) ?? [])].map((vid) => voters.find((v) => v.id === vid)!.name),
     });
-    items.push(mk(id, "main", lockedMain[s.i], mainVariant[s.i]));
+    const first = mk(id, "main", lockedMain[s.i], mainVariant[s.i]);
+    // When the runner-up had more pickers, say why it still lost.
+    if (runner && id !== STAY_ID && !lockedMain[s.i] && !s.pair && runner.votes > first.votes) {
+      const rival = byId[runner.id];
+      const text =
+        runner.present < runner.votes && runner.present <= first.present
+          ? `More of its fans are here that day than ${shortTitle(rival)}'s`
+          : S(id, s.day) >= S(runner.id, s.day)
+            ? `Beat ${shortTitle(rival)} on equal voice: its fans had picked fewer things, so each pick counted for more`
+            : floorFor.has(id)
+              ? `Chosen over ${shortTitle(rival)} so everyone gets some of their picks`
+              : `Fits the day better than ${shortTitle(rival)} (travel, timing or variety)`;
+      first.reasons.push({ kind: "votes", text });
+    }
+    items.push(first);
     for (const x of extras[s.i]) items.push(mk(x.id, "extra", x.locked));
     return {
       key: slotKey(s.date, s.slot),

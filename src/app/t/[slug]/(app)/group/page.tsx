@@ -10,6 +10,7 @@ import { getPopular } from "@/lib/server/popular";
 import { PopularProvider } from "@/components/popular";
 import { isTestName } from "@/lib/test-users";
 import { pageContext } from "@/lib/server/page-context";
+import { hasPublishedPlan } from "@/lib/server/plan";
 import { getRates } from "@/lib/server/rates";
 import { currentParticipant } from "@/lib/server/session";
 import { tripFromParams, tripPath } from "@/lib/server/trip";
@@ -22,7 +23,7 @@ export default async function GroupPage({ params }: PageProps<"/t/[slug]/group">
   if (!me) redirect(tripPath(trip.trip.slug, "/join"));
   const ctx = await pageContext(trip, me);
   // Test users ("zz-test-…") and demo guests never show up or count here — except to themselves.
-  const [all, rates, popular] = await Promise.all([loadPeople(trip), getRates(), getPopular(trip)]);
+  const [all, rates, popular, planOut] = await Promise.all([loadPeople(trip), getRates(), getPopular(trip), hasPublishedPlan(trip)]);
   const people = all.filter((p) => p.id === me.id || (!isTestName(p.name) && !p.guest));
   const stats = computeStats(ctx.trip.engine, realPeople(people));
   const mine = people.find((p) => p.id === me.id);
@@ -58,6 +59,7 @@ export default async function GroupPage({ params }: PageProps<"/t/[slug]/group">
           members={members}
           editsLocked={ctx.locked}
           isOrganizer={ctx.isOrganizer}
+          planOut={planOut}
         />
         </PopularProvider>
       </CurrencyProvider>

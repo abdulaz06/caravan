@@ -12,6 +12,7 @@ import { allowedLengths, daysNightsLabel, defaultLength, isFixed, previewAvailab
 import type { CurrencyCode } from "@/lib/currency";
 import { useEngine, useTrip } from "../engine";
 import { FamilyProvider } from "../family";
+import { PlanOutBar } from "../plan/plan-out-bar";
 import { PopularProvider } from "../popular";
 import { AnnouncementBar, LockCountdown } from "../rules";
 import { LocalTime } from "../ui/local-time";
@@ -49,6 +50,8 @@ type Props = {
   popular?: PopularPayload | null;
   /** People who can be picked as a roommate (started a plan, not this person). */
   roommateCandidates?: { id: string; name: string }[];
+  /** The organizers have published the group plan. */
+  planOut?: boolean;
 };
 
 function initialStep(data: ItineraryData, status: ItineraryStatus, locked: boolean, requested?: string): Step {
@@ -73,6 +76,7 @@ export function TripApp({
   admin = null,
   popular = null,
   roommateCandidates = [],
+  planOut = false,
 }: Props) {
   const e = useEngine();
   const trip = useTrip();
@@ -239,6 +243,7 @@ export function TripApp({
             <>
               {/* An announcement is free text — family-friendly mode leaves it out. */}
               {!family && <AnnouncementBar />}
+              {planOut && <PlanOutBar />}
               <LockCountdown onLocked={() => setLocked(true)} />
             </>
           )}

@@ -25,6 +25,8 @@ export type ShareModel = {
   photos: { photo: Photo; title: string }[];
   /** Family-friendly mode: the trip's highlights take the vibe meter's place (and nothing says so). */
   highlights?: Highlight[];
+  /** The line above the destination: "Sam's" by default; the group plan says "Our". */
+  heading?: string;
 };
 
 /** The preset's palette, as the colours the canvas needs. */
@@ -634,7 +636,7 @@ function header(ctx: Ctx, f: Fonts, c: Colors, m: ShareModel, x: number, y: numb
   ctx.font = `700 ${24 * scale}px ${f.body}`;
   spaced(ctx, `${preset.name.toUpperCase()} · ${year}`, x, y, 4 * scale);
 
-  const nameLine = `${m.name}'s`;
+  const nameLine = m.heading ?? `${m.name}'s`;
   const px = sizeToFit(ctx, nameLine, (p) => `600 ${p}px ${f.display}`, 110 * scale, w, 56 * scale);
   ctx.fillStyle = c.paper;
   ctx.fillText(nameLine, x - 4 * scale, y + px * 1.02);

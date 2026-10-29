@@ -3,9 +3,11 @@ import { randomBytes } from "node:crypto";
 import bcrypt from "bcryptjs";
 import { defaultRules } from "@/engine/rules";
 import { createEngine, type Engine } from "@/engine/structure";
-import { CREW, DEMOS, PEEKS, planFor, type Demo } from "@/lib/demo-crew";
+import { DEFAULT_SETTINGS, generatePlan } from "@/engine/consensus";
+import { normalize } from "@/engine/itinerary";
+import { CREW, DEMOS, PEEKS, planFor, rngFrom, type Demo } from "@/lib/demo-crew";
 import { loadPreset } from "@/presets/registry";
-import { db } from "./db";
+import { db, type RsvpRow } from "./db";
 
 export { DEMOS, demoById, demoBySlug } from "@/lib/demo-crew";
 
@@ -16,7 +18,7 @@ export const MAX_DEMO_GUESTS = 250;
  * Bump when the demo's seed changes shape (dates, plans, the published plan):
  * a demo built from an older seed is rebuilt on its next visit, not just at the nightly reset.
  */
-export const DEMO_SEED = 2;
+export const DEMO_SEED = 4;
 const seedOf = (rules: unknown) => (rules && typeof rules === "object" ? (rules as { demoSeed?: unknown }).demoSeed : undefined);
 
 /** Deletes one demo trip (and its guests) and builds it again from scratch. */
@@ -29,11 +31,53 @@ export async function resetDemoTrip(demo: Demo): Promise<{ slug: string; people:
   if (!trip) throw new Error(`Couldn't create the ${demo.id} demo`);
 
   const { preset, catalog } = loadPreset(demo.id);
-  const ids = await seedDemoCrew(trip.id, demo, createEngine(catalog, defaultRules(preset)));
+  const engine = createEngine(catalog, defaultRules(preset));
+  const ids = await seedDemoCrew(trip.id, demo, engine);
   const owner = { id: ids.get("Maya") ?? null, name: "Maya" };
   await store.addLog({ trip_id: trip.id, actor_id: owner.id, actor_name: owner.name, action: "Started the trip", target_id: null, target_name: null, details: { preset: demo.id } });
   await store.addLog({ trip_id: trip.id, actor_id: owner.id, actor_name: owner.name, action: "Made Theo an admin", target_id: ids.get("Theo") ?? null, target_name: "Theo", details: {} });
+  await publishDemoPlan(trip.id, engine, ids, owner);
   return { slug: trip.slug, people: ids.size };
+}
+
+/**
+ * The organizers have already published a group plan ("Everyone gets a say"),
+ * and most of the crew have answered "I'm in" or "I'll skip" — so visitors see
+ * the traveller side too. Their own picks are nearly always a yes.
+ */
+export async function publishDemoPlan(tripId: string, e: Engine, ids: Map<string, string>, owner: { id: string | null; name: string }) {
+  const store = db();
+  const [people, rows] = await Promise.all([store.listParticipants(tripId), store.listItineraries(tripId)]);
+  const byId = new Map(rows.map((r) => [r.participant_id, r]));
+  const ballots = people.flatMap((p) => {
+    const row = byId.get(p.id);
+    return row && !p.guest ? [{ id: p.id, name: p.display_name, status: row.status, data: normalize(e, row.data) }] : [];
+  });
+  const settings = { ...DEFAULT_SETTINGS, mode: "together" as const };
+  const plan = generatePlan(e, ballots, settings);
+  const at = new Date(Date.now() - 6 * 3600_000).toISOString();
+  await store.savePlanVersion({ trip_id: tripId, data: plan, settings, created_by: owner.id, created_by_name: owner.name, published_at: at });
+  await store.addLog({ trip_id: tripId, actor_id: owner.id, actor_name: owner.name, action: "publish_plan", target_id: null, target_name: null, details: { version: 1, mode: "together" } });
+
+  const rng = rngFrom(4242);
+  const answers: Omit<RsvpRow, "updated_at">[] = [];
+  for (const [k, p] of CREW.entries()) {
+    const id = ids.get(p.name);
+    const me = plan.people.find((x) => x.id === id);
+    if (!id || (k % 6 === 5 && p.stage !== "submitted")) continue; // a couple haven't looked yet
+    const dates = ballots.find((b) => b.id === id)?.data;
+    for (const slot of plan.slots) {
+      // Only for the days they're there.
+      if (dates?.startDate && (slot.date < dates.startDate || slot.date > dates.endDate!)) continue;
+      for (const item of slot.items) {
+        if (item.id === "stay" || rng() < 0.15) continue;
+        const mine = me?.made.includes(item.id);
+        const status = mine || rng() < 0.7 ? "in" : "skip";
+        answers.push({ trip_id: tripId, item_key: item.key, participant_id: id, status, choice: null });
+      }
+    }
+  }
+  await store.addRsvps(answers);
 }
 
 /**

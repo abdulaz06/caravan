@@ -33,7 +33,10 @@ import { CURRENCIES, type CurrencyCode } from "@/lib/currency";
 import { dayLabel } from "@/lib/dates";
 import { useCatalog, useTrip } from "../engine";
 import type { RoommateBoard } from "@/lib/roommates";
+import type { PlanSettings } from "@/engine/consensus";
+import type { PlanState } from "@/lib/server/plan";
 import { Avatar } from "../avatar";
+import { PlanTab } from "./plan-tab";
 import { Lockup } from "../brand/wordmark";
 import { Button } from "../ui/button";
 import { ChipScroller } from "../ui/chip-scroller";
@@ -81,10 +84,13 @@ type Props = {
   roommates: RoommateBoard;
   /** The public demo: everything visible, nothing changeable (the server refuses demo writes too). */
   readOnly?: boolean;
+  /** The group plan: the organizers' knobs and saved versions. */
+  plan: { settings: PlanSettings; state: PlanState | null };
 };
 
 const TABS = [
   { id: "overview", label: "Overview" },
+  { id: "plan", label: "Final plan" },
   { id: "people", label: "People" },
   { id: "roommates", label: "Roommates" },
   { id: "rules", label: "Trip rules" },
@@ -104,7 +110,7 @@ async function call(url: string, init: RequestInit = {}) {
   return { ok: res.ok, status: res.status, body };
 }
 
-export function Console({ actor, people, rules: initialRules, editsLocked, log, localStore, roommates, readOnly = false }: Props) {
+export function Console({ actor, people, rules: initialRules, editsLocked, log, localStore, roommates, readOnly = false, plan }: Props) {
   // Test users ("zz-test-…") are listed under People but never counted.
   const real = useMemo(() => people.filter((p) => !p.test), [people]);
   const router = useRouter();
@@ -226,8 +232,10 @@ export function Console({ actor, people, rules: initialRules, editsLocked, log, 
           </p>
         )}
         <AnimatePresence mode="wait" initial={false}>
-          <motion.fieldset disabled={readOnly} key={tab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="mt-5 min-w-0 space-y-4">
+          {/* The demo's plan tab works (as a preview); every other control is just for show. */}
+          <motion.fieldset disabled={readOnly && tab !== "plan"} key={tab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="mt-5 min-w-0 space-y-4">
             {tab === "overview" && <Overview people={real} locked={locked} rules={rules} log={log} onLock={setLock} go={go} />}
+            {tab === "plan" && <PlanTab settings={plan.settings} state={plan.state} demo={readOnly} />}
             {tab === "people" && <People actor={actor} people={people} />}
             {tab === "roommates" && <RoommatesTab board={roommates} />}
             {tab === "rules" && <RulesTab rules={rules} locked={locked} onLock={setLock} onPatch={patchRules} onRules={setRules} />}
@@ -1000,6 +1008,7 @@ const RULE_LABELS: Record<string, string> = {
   hidden: "hidden options",
   recheck: "re-check flags",
   featured: "featured options",
+  plan: "plan knobs",
 };
 
 export function describe(e: ConsoleLog): string {

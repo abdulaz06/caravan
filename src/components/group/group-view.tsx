@@ -23,6 +23,7 @@ import { BalanceMeter } from "../trip/balance-meter";
 import { RouteMap } from "../trip/route-map";
 import { StayThumb } from "../trip/day-card";
 import { AnnouncementBar, LockCountdown, useRules } from "../rules";
+import { PlanOutBar } from "../plan/plan-out-bar";
 import { GroupSpectrum, MiniMeter } from "./spectrum";
 
 type ItinCard = {
@@ -47,6 +48,8 @@ type Props = {
   members: Member[];
   editsLocked: boolean;
   isOrganizer?: boolean;
+  /** The organizers have published the group plan. */
+  planOut?: boolean;
 };
 
 /** A small "Organizer" badge next to admins' and the owner's names. */
@@ -60,7 +63,7 @@ export function OrganizerBadge({ className }: { className?: string }) {
 
 const rise = { initial: { opacity: 0, y: 20 }, whileInView: { opacity: 1, y: 0 }, viewport: { once: true, margin: "-30px" } };
 
-export function GroupView({ stats, myStatus, canBrowse, itineraries, members, editsLocked, isOrganizer }: Props) {
+export function GroupView({ stats, myStatus, canBrowse, itineraries, members, editsLocked, isOrganizer, planOut = false }: Props) {
   const popular = usePopular();
   const rules = useRules();
   const trip = useTrip();
@@ -85,6 +88,7 @@ export function GroupView({ stats, myStatus, canBrowse, itineraries, members, ed
         <Lockup size="sm" />
       </header>
       <AnnouncementBar />
+      {planOut && <PlanOutBar />}
       <LockCountdown />
 
       {editsLocked && (

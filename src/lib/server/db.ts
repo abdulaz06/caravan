@@ -144,6 +144,8 @@ export interface Store {
   listRsvps(tripId: string): Promise<RsvpRow[]>;
   /** Upserts one person's answer on one item (null status clears it). */
   setRsvp(row: Omit<RsvpRow, "updated_at" | "status"> & { status: RsvpStatus | null }): Promise<void>;
+  /** Many answers at once (the demo seed). */
+  addRsvps(rows: Omit<RsvpRow, "updated_at">[]): Promise<void>;
 }
 
 // ── Supabase ──────────────────────────────────────────────────────────
@@ -359,6 +361,13 @@ class SupabaseStore implements Store {
       return;
     }
     const { error } = await this.sb.from("plan_rsvps").upsert({ ...row, updated_at: new Date().toISOString() }, { onConflict: "participant_id,item_key" });
+    this.fail(error);
+  }
+
+  async addRsvps(rows: Omit<RsvpRow, "updated_at">[]) {
+    if (!rows.length) return;
+    const at = new Date().toISOString();
+    const { error } = await this.sb.from("plan_rsvps").upsert(rows.map((r) => ({ ...r, updated_at: at })), { onConflict: "participant_id,item_key" });
     this.fail(error);
   }
 }
@@ -588,6 +597,13 @@ class FileStore implements Store {
     return this.mutate((db) => {
       db.rsvps = db.rsvps.filter((r) => !(r.participant_id === row.participant_id && r.item_key === row.item_key));
       if (row.status) db.rsvps.push({ ...row, status: row.status, updated_at: new Date().toISOString() });
+    });
+  }
+  addRsvps(rows: Omit<RsvpRow, "updated_at">[]) {
+    return this.mutate((db) => {
+      const at = new Date().toISOString();
+      const keys = new Set(rows.map((r) => `${r.participant_id}|${r.item_key}`));
+      db.rsvps = [...db.rsvps.filter((r) => !keys.has(`${r.participant_id}|${r.item_key}`)), ...rows.map((r) => ({ ...r, updated_at: at }))];
     });
   }
 }

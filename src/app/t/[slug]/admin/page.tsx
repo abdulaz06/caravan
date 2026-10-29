@@ -5,6 +5,7 @@ import { roommateBoard } from "@/lib/roommates";
 import { db, isOrganizerRole, isUsingLocalStore, roleOf } from "@/lib/server/db";
 import { loadPeople, realPeople } from "@/lib/server/group";
 import { DEMO_ACTOR } from "@/lib/server/organizer";
+import { organizerPlanState } from "@/lib/server/plan";
 import { consoleActor, currentParticipant } from "@/lib/server/session";
 import { tripFromParams } from "@/lib/server/trip";
 import { isTestName } from "@/lib/test-users";
@@ -25,10 +26,13 @@ export default async function AdminPage({ params }: PageProps<"/t/[slug]/admin">
   // Demo guests come and go with the nightly reset; they aren't part of the trip.
   const people = everyone.filter((p) => !p.guest);
   const peekers = await Promise.all(people.map((p) => db().countPeekers(p.id).catch(() => 0)));
+  // The group plan: never let it break the console (e.g. before its tables exist).
+  const planState = await organizerPlanState(trip).catch(() => null);
   return (
     <Console
       actor={{ name: actor.name, role: actor.role === "owner" ? "owner" : "admin", breakGlass: actor.breakGlass, id: actor.id }}
       readOnly={demo}
+      plan={{ settings: trip.rules.plan, state: planState }}
       rules={trip.rules}
       editsLocked={trip.editsLocked}
       localStore={isUsingLocalStore()}

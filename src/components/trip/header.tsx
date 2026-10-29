@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, Check, CloudOff, Loader2, Lock, LogOut, ShieldCheck, Users } from "lucide-react";
+import { ArrowLeft, Check, CloudOff, Loader2, Lock, LogOut, ShieldCheck, Sparkles, Users } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -134,6 +134,13 @@ export function TripHeader({
                     className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[15px] font-medium hover:bg-surface-100"
                   >
                     <Users className="size-[18px] text-primary-600" /> Group overview
+                  </Link>
+                  <Link
+                    href={trip.href("/plan")}
+                    onClick={() => void beforeLeave()}
+                    className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[15px] font-medium hover:bg-surface-100"
+                  >
+                    <Sparkles className="size-[18px] text-primary-600" /> The plan
                   </Link>
                   <button
                     onClick={logout}
