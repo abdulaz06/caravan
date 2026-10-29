@@ -50,18 +50,18 @@ export function ConsensusDiagram({ className }: { className?: string }) {
       {arrow("M244 68 L282 68")}
       {box(286, 10, 220, 116, "1 · Equal voice", ["Each person's picks share", "one vote (drafts count less)", "Stay-ins = demand for rest"])}
       {arrow("M508 68 L546 68")}
-      {box(550, 10, 200, 116, "2 · Dates", ["Typical length (median)", "Most free for the whole", "window, then person-days"])}
+      {box(550, 10, 200, 116, "2 · Dates", ["Length: most people there", "for all of it × days", "Window: most free, person-days"])}
       {arrow("M650 128 L650 166")}
-      {box(390, 170, 360, 100, "3 · Slots, inside the trip's rules", ["Pools & on-the-way stops · weekday-only options", "NYE by vote, pinned to 31 Dec · big day trips", "No duplicates · no late night before an early start"], "dark")}
+      {box(390, 170, 360, 100, "3 · Slots, inside the trip's rules", ["Pools, on-the-way stops, weekdays, NYE by vote", "One main meal a slot · extras close by", "No duplicates · no late night before an early start"], "dark")}
       {arrow("M388 220 L330 220")}
-      {box(10, 170, 316, 100, "A · Fair floor", ["Everyone gets K of their picks:", "the least satisfied (and least", "flexible) person first"], "accent")}
+      {box(10, 170, 316, 100, "A · Most popular first", ["Fill by score, improve, add popular", "extras: the yardstick (this is", "Majority rules)"])}
       {arrow("M168 272 L168 310")}
-      {box(10, 314, 316, 100, "B · Fill by score", ["Each slot gets its best-supported", "option or rest, minus soft costs", "(travel, packed slots, variety, budget)"])}
+      {box(10, 314, 316, 100, "B · Lift the lowest share", ["The least-satisfied person, then the", "next — giving up at most 15% of the", "popularity (an organizer knob)"], "accent")}
       {arrow("M328 364 L386 364")}
-      {box(390, 314, 360, 100, "C · Improve", ["Deterministic swaps and moves while", "popularity + λ·fairness − penalties improves", "(the floor and every rule still hold)"])}
+      {box(390, 314, 360, 100, "C · Improve", ["Deterministic swaps and moves while", "popularity + λ·fairness − penalties improves", "(never lowering the lowest share)"])}
       {arrow("M570 416 L570 454")}
       {box(390, 458, 360, 120, "The plan", ["Reason chips on every item · runners-up", "Split suggestions (\"5 dive / 8 whales\")", "Satisfaction: min, median, Jain's index", "Published → RSVPs with live headcounts"], "dark")}
-      {box(10, 458, 316, 120, "The organizer decides how", ["Everyone gets a say · floor, then popular", "Majority rules · most picked wins", "Custom · a popularity ↔ fairness slider", "Locks, swaps, splits survive regenerating"])}
+      {box(10, 458, 316, 120, "The organizer decides how", ["Everyone gets a say · lift, then popular", "Majority rules · most picked wins", "Custom · slide between the two", "Locks, swaps, splits survive regenerating"])}
       {arrow("M328 518 L386 518")}
     </svg>
   );

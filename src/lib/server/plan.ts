@@ -22,7 +22,15 @@ export function generateFor(trip: TripContext, ballots: Ballot[], settings: Part
 }
 
 /** "Planned with: Everyone gets a say. Each person was guaranteed some of their picks before the rest went to the most popular." */
-export const decidedLine = (plan: ConsensusPlan) => `Planned with: ${MODE_COPY[plan.settings.mode].label}. ${MODE_COPY[plan.settings.mode].line}`;
+/** "Planned with: Everyone gets a say. …" — and, when fairness had a say, the lowest share anyone got (a count, never who). */
+export const decidedLine = (plan: ConsensusPlan) => {
+  const mode = plan.settings.mode;
+  const line = `Planned with: ${MODE_COPY[mode].label}. ${MODE_COPY[mode].line}`;
+  // Plans saved before shares existed have no per-person "feasible": keep the plain line.
+  const shares = plan.people.some((p) => typeof p.feasible === "number");
+  if (mode === "majority" || !shares || !(plan.fairness.min > 0)) return line;
+  return `${line} Everyone got at least ${Math.round(plan.fairness.min * 100)}% of the picks that fit their dates.`;
+};
 
 export type RsvpSummary = {
   in: number;
@@ -48,7 +56,8 @@ export type PublicPlan = {
     split: { a: { id: string; votes: number }; b: { id: string; votes: number }; both: number; status: "accepted" } | null;
   })[];
   budget: ConsensusPlan["budget"];
-  fairness: { floor: number; floorMet: number; floorOf: number };
+  /** Everyone's share of the picks that fit their dates: the lowest and the median (counts only). */
+  fairness: { min: number; median: number };
   /** This traveller's own result ("Your picks made it"); null for someone without a plan. */
   you: PersonResult | null;
   rsvps: Record<string, RsvpSummary>;
@@ -130,7 +139,7 @@ export function publicPlan(row: PlanVersionRow, previous: PlanVersionRow | null,
       };
     }),
     budget: plan.budget,
-    fairness: { floor: plan.fairness.floor, floorMet: plan.fairness.floorMet, floorOf: plan.fairness.floorOf },
+    fairness: { min: plan.fairness.min, median: plan.fairness.median },
     you: me ? strip(me) : null,
     rsvps,
     changes: previous ? { from: previous.version, changed: changedSince(plan, previous.data) } : null,

@@ -281,6 +281,8 @@ function YourPicks({ plan, family }: { plan: PublicPlan; family: boolean }) {
   for (const s of plan.slots) for (const it of s.items) dayOf.set(it.id, dayLabel(s.date));
   if (!you.picks) return null;
   const all = you.made.length === you.picks;
+  // The picks that could fit the days you're there (plans saved before this existed don't say).
+  const fit = typeof you.feasible === "number" && you.feasible < you.picks ? you.feasible : null;
   return (
     <section className="rounded-[26px] bg-paper p-4 shadow-card" aria-label="Your picks">
       <div className="flex items-start gap-3">
@@ -293,6 +295,11 @@ function YourPicks({ plan, family }: { plan: PublicPlan; family: boolean }) {
             {you.made.length} of {you.picks}
             <span className="text-[16px] font-sans font-semibold text-ink-3"> {all ? "— every one!" : "of your picks are in"}</span>
           </p>
+          {fit !== null && fit > 0 && (
+            <p className="text-[12.5px] font-semibold text-ink-2">
+              {Math.round((Math.min(you.made.length, fit) / fit) * 100)}% of the {fit} that fit your dates
+            </p>
+          )}
           {you.daysThere < plan.dates.length && (
             <p className="text-[12.5px] text-ink-3">
               You&apos;re there {you.daysThere} of {plan.dates.length} days, so picks on the other days can&apos;t count for you.

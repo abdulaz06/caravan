@@ -38,9 +38,24 @@ describe("the group plan on the server", () => {
     expect(text).not.toMatch(/pickedBy|floorFor|aBy|bBy|"names"/);
     expect(view.you?.picks).toBeGreaterThan(0);
     expect(view.you?.name).toBe("");
-    expect(view.decided).toMatch(/^Planned with: Everyone gets a say\. Each person was guaranteed some of their picks/);
+    expect(view.decided).toMatch(/^Planned with: Everyone gets a say\. Whoever would have got the smallest share of their picks was lifted first.* Everyone got at least \d+% of the picks that fit their dates\.$/);
+    expect(view.fairness).toEqual({ min: expect.any(Number), median: expect.any(Number) });
+    expect(view.you?.feasible).toBeGreaterThan(0);
     const key = Object.keys(view.rsvps)[0];
     expect(view.rsvps[key].in + view.rsvps[key].skip).toBeGreaterThan(0);
+  });
+
+  it("a plan published before shares existed still shows (the plain line, no share)", async () => {
+    const row = (await db().getTripBySlug("demo-sri-lanka"))!;
+    const plan = (await db().getPublishedPlan(row.id))!;
+    // The shape plan versions had before: a count-based floor, no per-person "feasible".
+    const old = structuredClone(plan.data) as unknown as Record<string, unknown> & { people: Record<string, unknown>[]; fairness: Record<string, unknown> };
+    for (const p of old.people) delete p.feasible;
+    old.fairness = { min: 0.3, median: 0.5, mean: 0.5, index: 0.9, floor: 2, floorMet: 10, floorOf: 10 };
+    const { decidedLine } = await import("@/lib/server/plan");
+    expect(decidedLine(old as never)).toBe(
+      "Planned with: Everyone gets a say. Whoever would have got the smallest share of their picks was lifted first, then the rest went to the most popular.",
+    );
   });
 
   it("organizers see names on RSVPs; demo guests and test users never count", async () => {

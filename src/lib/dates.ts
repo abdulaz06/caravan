@@ -55,6 +55,7 @@ export function monthName(year: number, monthIndex: number): string {
 
 /** "26 Dec – 30 Dec" or "26–30 Dec" */
 export function rangeLabel(start: string, end: string): string {
+  if (start === end) return shortDate(start);
   const a = parseISO(start);
   const b = parseISO(end);
   if (a.getUTCMonth() === b.getUTCMonth()) {

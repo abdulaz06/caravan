@@ -33,6 +33,9 @@ export type ConsensusExample = {
   people: number;
   dates: { chosen: string; length: number; full: number; of: number; runnersUp: { range: string; full: number }[] };
   modes: { label: string; min: number; median: number; index: number; leftOut: number; differs: number }[];
+  /** How far "Everyone gets a say" lifted the lowest share over Majority rules (or why it couldn't). */
+  lift: { from: number; to: number; kept: number } | null;
+  note: string | null;
   items: { when: string; title: string; reasons: string[] }[];
 };
 
@@ -351,7 +354,7 @@ function ConsensusDemo({ example }: { example: ConsensusExample }) {
         <p className="label text-highlight-400">Demo crew · {example.people} travellers</p>
         <p className="font-display mt-3 text-[30px] font-semibold leading-none">{example.dates.chosen}</p>
         <p className="mt-2 text-[14.5px] text-paper/75">
-          {example.dates.length} days, the middle length of the submitted plans · {example.dates.full} of {example.dates.of} free for all of it
+          {example.dates.length} days, the best balance of days and full attendance · {example.dates.full} of {example.dates.of} free for all of it
         </p>
         <ul className="mt-3 space-y-1 text-[13.5px] text-paper/65">
           {example.dates.runnersUp.map((r) => (
@@ -373,8 +376,9 @@ function ConsensusDemo({ example }: { example: ConsensusExample }) {
           ))}
         </div>
         <p className="mt-3 text-[13px] leading-relaxed text-paper/65">
-          Here nobody falls below the fair floor, so “Everyone gets a say” and “Majority rules” agree; turning the Custom slider all the way to
-          fairness lifts the least-satisfied travellers at a small cost to the most popular picks.
+          {example.lift
+            ? `“Everyone gets a say” lifts whoever gets the smallest share of their picks from ${pct(example.lift.from)} to ${pct(example.lift.to)}, keeping ${pct(Math.min(1, example.lift.kept))} of the most popular plan's score; Custom sits in between.`
+            : `Here every mode makes the same plan. ${example.note ?? ""}`}
         </p>
       </div>
       <ul className="space-y-3">

@@ -3,7 +3,7 @@
 // and sent to the browser. See docs/CONSENSUS.md.
 import type { Slot } from "../catalog";
 import type { ItineraryData } from "../itinerary";
-import type { WindowScore } from "./dates";
+import type { LengthOption, WindowScore } from "./dates";
 
 /** How the group decides. There's no default: an organizer picks one the first time they generate. */
 export type DecisionMode = "together" | "majority" | "custom";
@@ -12,8 +12,8 @@ export const MODE_COPY: Record<DecisionMode, { label: string; short: string; lin
   together: {
     label: "Everyone gets a say",
     short: "Fair first",
-    line: "Each person was guaranteed some of their picks before the rest went to the most popular.",
-    how: "Everyone is guaranteed a few of their own picks first. Then the rest of the trip goes to whatever's most popular.",
+    line: "Whoever would have got the smallest share of their picks was lifted first, then the rest went to the most popular.",
+    how: "Lifts whoever would get the smallest share of their picks — then the next lowest — giving up a little of the plan's popularity to do it. Then the rest goes to whatever's most popular.",
   },
   majority: {
     label: "Majority rules",
@@ -24,8 +24,8 @@ export const MODE_COPY: Record<DecisionMode, { label: string; short: string; lin
   custom: {
     label: "Custom",
     short: "Your balance",
-    line: "The organizers balanced the most popular picks against making sure everyone gets some of theirs.",
-    how: "Slide between pure popularity and fairness. In the middle, it's close to “Everyone gets a say”.",
+    line: "The organizers balanced the most popular picks against lifting whoever got the smallest share of theirs.",
+    how: "Slide between Majority rules and Everyone gets a say: the further towards fairness, the more popularity the plan may give up to lift whoever gets the least.",
   },
 };
 
@@ -39,12 +39,14 @@ export type SplitDecision = { status: "accepted" | "rejected"; a: string; b: str
 export type PlanSettings = {
   /** null until an organizer chooses. */
   mode: DecisionMode | null;
-  /** Custom only: 0 = pure popularity … 1 = fairness first. */
+  /** Custom only: 0 = Majority rules … 1 = Everyone gets a say (scales the tolerance and the fairness pull). */
   fairness: number;
   /** How much a draft plan counts (a submitted plan counts 1). */
   draftWeight: number;
-  /** Picks each person is guaranteed (the fair floor); null = adapt to the trip. */
-  floor: number | null;
+  /** "Everyone gets a say": the share of the plan's popularity it may give up to lift the lowest shares (0–0.5). */
+  tolerance: number;
+  /** A split needs each camp to be at least this share of the travellers there that day (and at least 3). */
+  splitShare: number;
   /** 0 = don't mind repeats … 1 = mix it up. */
   variety: number;
   /** 0 = ignore cost … 1 = lean towards what fits the group's budgets. */
@@ -60,7 +62,8 @@ export const DEFAULT_SETTINGS: PlanSettings = {
   mode: null,
   fairness: 0.5,
   draftWeight: 0.5,
-  floor: null,
+  tolerance: 0.15,
+  splitShare: 0.35,
   variety: 0.5,
   budgetFit: 0,
   start: null,
@@ -137,31 +140,43 @@ export type PersonResult = {
   missed: MissedPick[];
   /** made ÷ what could fit (null: no picks). */
   satisfaction: number | null;
-  /** Picks the fair floor placed for them. */
+  /** Their picks that could fit the days they're there in the chosen window (the share's denominator). */
+  feasible: number;
+  /** Picks the fairness step added to lift them. */
   floorAdded: number;
 };
 
 export type FairnessStats = {
+  /** Everyone's share of their feasible picks: the lowest, the median, the mean. */
   min: number;
   median: number;
   mean: number;
   /** Jain's index: 1 = everyone equally satisfied, 1/n = one person gets everything. */
   index: number;
-  floor: number;
-  /** People who got at least `floor` of their picks (of those who could). */
-  floorMet: number;
-  floorOf: number;
+  /** The share of popularity this mode could give up (0 for Majority rules). */
+  tolerance: number;
+  /** The same numbers for the most popular plan (what Majority rules makes). */
+  majority: { min: number; median: number; index: number };
+  /** This plan's score ÷ the most popular plan's (1 = nothing given up). */
+  scoreKept: number;
+  /** People whose share is higher than in the most popular plan. */
+  lifted: number;
+  /** Why the lowest share couldn't go higher, in plain words (null when it could, or for Majority rules). */
+  note: string | null;
 };
 
 export type ConsensusPlan = {
   engine: 1;
   /** The settings as used (mode resolved; λ and the floor worked out). */
-  settings: PlanSettings & { mode: DecisionMode; lambda: number; floorK: number };
+  /** The settings as used: the mode resolved, its strength (0 Majority … 1 Everyone gets a say), λ and the tolerance. */
+  settings: PlanSettings & { mode: DecisionMode; strength: number; lambda: number; effectiveTolerance: number };
   dates: {
     chosen: WindowScore;
     runnersUp: WindowScore[];
     length: number;
     lengthReason: string;
+    /** Each allowed length's best window and who can do all of it (empty with a fixed trip length). */
+    lengths: (LengthOption & { recommended: boolean })[];
     pinned: boolean;
     /** Travellers with dates (the denominator for "x of y free"). */
     withDates: number;

@@ -3,5 +3,5 @@
 // loads the ballots and stores versions. See docs/CONSENSUS.md.
 export * from "./types";
 export * from "./dates";
-export { autoFloor, generatePlan, itemKey, modeParams, slotKey } from "./generate";
+export { generatePlan, isBigTrip, isMeal, itemKey, modeParams, slotKey } from "./generate";
 export { compareModes, type ModeSummary } from "./compare";

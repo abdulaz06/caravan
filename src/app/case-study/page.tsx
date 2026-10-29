@@ -28,9 +28,9 @@ function consensusExample(): ConsensusExample {
   const e = createEngine(catalog, defaultRules(preset));
   const ballots = demoBallots(e, demoById("sri-lanka")!);
   const plan = generatePlan(e, ballots, { mode: "together" });
-  const modes = compareModes(e, ballots, { fairness: 1 });
+  const modes = compareModes(e, ballots, { fairness: 0.5 });
   const fullPlans = new Map(modes.map((m) => [m.mode, m]));
-  // A few picks whose reasons tell the story: a weekday-only option, NYE, a fair-floor pick, a big vote.
+  // A few picks whose reasons tell the story: a weekday-only option, NYE, a pick that lifted someone, a big vote.
   const want = ["special", "weekday", "fair", "votes"] as const;
   const items: ConsensusExample["items"] = [];
   for (const kind of want) {
@@ -56,8 +56,10 @@ function consensusExample(): ConsensusExample {
     },
     modes: (["together", "majority", "custom"] as const).map((m) => {
       const s = fullPlans.get(m)!;
-      return { label: m === "custom" ? "Custom · fairest" : MODE_COPY[m].label, min: s.fairness.min, median: s.fairness.median, index: s.fairness.index, leftOut: s.leftOut, differs: s.differs };
+      return { label: m === "custom" ? "Custom · halfway" : MODE_COPY[m].label, min: s.fairness.min, median: s.fairness.median, index: s.fairness.index, leftOut: s.leftOut, differs: s.differs };
     }),
+    lift: plan.fairness.min > plan.fairness.majority.min ? { from: plan.fairness.majority.min, to: plan.fairness.min, kept: plan.fairness.scoreKept } : null,
+    note: plan.fairness.note,
     items,
   };
 }

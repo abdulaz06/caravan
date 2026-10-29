@@ -11,7 +11,7 @@ export type ModeSummary = {
   picksMade: number;
   /** People with none of their picks in the plan (who had any that could fit). */
   leftOut: number;
-  /** Slots whose main item differs from the first mode's plan. */
+  /** Slots whose items (main or extras) differ from the first mode's plan. */
   differs: number;
   /** Each slot's main item, in order (for a mini side-by-side). */
   mains: { key: string; id: string }[];
@@ -19,7 +19,8 @@ export type ModeSummary = {
 
 export function summarize(plan: ConsensusPlan, against?: ConsensusPlan): ModeSummary {
   const mains = plan.slots.map((s) => ({ key: s.key, id: s.items[0].id }));
-  const ref = new Map(against?.slots.map((s) => [s.key, s.items[0].id]) ?? []);
+  const ids = (s: ConsensusPlan["slots"][number]) => s.items.map((x) => x.id).join("+");
+  const ref = new Map(against?.slots.map((s) => [s.key, ids(s)]) ?? []);
   return {
     mode: plan.settings.mode,
     label: MODE_COPY[plan.settings.mode].label,
@@ -27,7 +28,7 @@ export function summarize(plan: ConsensusPlan, against?: ConsensusPlan): ModeSum
     picksMade: plan.people.reduce((n, p) => n + p.made.length, 0),
     // Someone whose picks could fit their days, but none made it (not someone who's away).
     leftOut: plan.people.filter((p) => p.satisfaction !== null && p.made.length === 0).length,
-    differs: against ? mains.filter((m) => ref.get(m.key) !== m.id).length : 0,
+    differs: against ? plan.slots.filter((s) => ref.get(s.key) !== ids(s)).length : 0,
     mains,
   };
 }

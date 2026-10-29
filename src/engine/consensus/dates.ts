@@ -88,3 +88,31 @@ export function pickWindows(
   }
   return { best: chosen[0] ?? null, runnersUp: chosen.slice(1) };
 }
+
+/** One trip length's best window: who's free for all of it, and the person-days it covers. */
+export type LengthOption = { length: number; start: string; end: string; full: number; personDays: number };
+
+/** The best window for each length (lengths that don't fit inside the bounds are left out). */
+export function lengthOptions(people: Availability[], bounds: { start: string; end: string }, lengths: number[]): LengthOption[] {
+  const span = diffDays(bounds.start, bounds.end) + 1;
+  return lengths
+    .filter((n) => n >= 1 && n <= span)
+    .map((n) => {
+      const w = scoreWindows(people, bounds, n)[0];
+      return { length: n, start: w.start, end: w.end, full: w.full, personDays: w.personDays };
+    });
+}
+
+/**
+ * The length that best balances trip length against full attendance:
+ * the most "people free for every day × days", among lengths of at least
+ * `minLength` (the trip's suggested minimum). Ties: more people free for
+ * all of it, then more person-days, then the shorter trip.
+ */
+export function recommendLength(options: LengthOption[], minLength: number): LengthOption | null {
+  const eligible = options.filter((o) => o.length >= minLength && o.full > 0);
+  if (!eligible.length) return null;
+  return [...eligible].sort(
+    (a, b) => b.full * b.length - a.full * a.length || b.full - a.full || b.personDays - a.personDays || a.length - b.length,
+  )[0];
+}
