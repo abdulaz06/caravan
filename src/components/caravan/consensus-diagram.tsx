@@ -50,7 +50,7 @@ export function ConsensusDiagram({ className }: { className?: string }) {
       {arrow("M244 68 L282 68")}
       {box(286, 10, 220, 116, "1 · Equal voice", ["Each person's picks share", "one vote (drafts count less)", "Stay-ins = demand for rest"])}
       {arrow("M508 68 L546 68")}
-      {box(550, 10, 200, 116, "2 · Dates", ["Length: most people there", "for all of it × days", "Window: most free, person-days"])}
+      {box(550, 10, 200, 116, "2 · Dates", ["Length: most people there", "for all of it × days", "Window: most free for it"])}
       {arrow("M650 128 L650 166")}
       {box(390, 170, 360, 100, "3 · Slots, inside the trip's rules", ["Pools, on-the-way stops, weekdays, NYE by vote", "One main meal a slot · extras close by", "No duplicates · no late night before an early start"], "dark")}
       {arrow("M388 220 L330 220")}

@@ -22,7 +22,7 @@ A traveller's **share** is the picks of theirs in the plan ÷ their picks that c
 | 10 days | 1 of 11 | 10 | 71 | 26 Dec – 4 Jan |
 | 11 days | 1 of 11 | 11 | 72 | 24 Dec – 3 Jan |
 
-**Dates:** 28 Dec – 1 Jan · 5 days — the best balance of days and full attendance: 6 of 11 can do all 5 days · 6 of 11 free for all of it, 44 person-days.
+**Dates:** 28 Dec – 1 Jan · 5 days — the best balance of days and full attendance · 6 of 11 free for all of it, 44 person-days.
 
 Missing days: Elle 5, Kai 2, Nadia 1, Omar 1, Ravi 2.
 
@@ -171,7 +171,7 @@ Budget ≈ $384–946 per person.
 | 11 days | 1 of 11 | 11 | 81 | 26 Dec – 5 Jan |
 | 12 days | 1 of 11 | 12 | 82 | 27 Dec – 7 Jan |
 
-**Dates:** 27 Dec – 3 Jan · 8 days — the best balance of days and full attendance: 4 of 11 can do all 8 days · 4 of 11 free for all of it, 68 person-days.
+**Dates:** 27 Dec – 3 Jan · 8 days — the best balance of days and full attendance · 4 of 11 free for all of it, 68 person-days.
 
 Missing days: Elle 2, Jonah 2, Kai 3, Nadia 2, Omar 2, Priya 3, Ravi 6.
 
@@ -329,13 +329,13 @@ Thirteen fictional travellers (11 submitted, 2 drafts), each a seeded quick fill
 
 **Dates:** 29 Dec – 3 Jan · 6 days — the trip's fixed length · 5 of 13 free for all of it, 62 person-days.
 
-Missing days: Traveller 1 3, Traveller 2 1, Traveller 3 3, Traveller 4 1, Traveller 6 2, Traveller 7 2, Traveller 11 1, Traveller 12 3.
+Missing days: Traveller 1 3, Traveller 11 1, Traveller 12 3, Traveller 2 1, Traveller 3 3, Traveller 4 1, Traveller 6 2, Traveller 7 2.
 
 Runners-up at this length:
 
-- 26–31 Dec — 3 free throughout, 55 person-days; misses: Traveller 2 2, Traveller 4 2, Traveller 5 3, Traveller 6 1, Traveller 7 1, Traveller 8 3, Traveller 9 3, Traveller 10 3, Traveller 11 2, Traveller 13 3
-- 31 Dec – 5 Jan — 0 free throughout, 36 person-days; misses: Traveller 1 5, Traveller 2 3, Traveller 3 5, Traveller 4 3, Traveller 5 2, Traveller 6 4, Traveller 7 4, Traveller 8 2, Traveller 9 2, Traveller 10 2, Traveller 11 3, Traveller 12 5, Traveller 13 2
-- 24–29 Dec — 0 free throughout, 29 person-days; misses: Traveller 1 2, Traveller 2 4, Traveller 3 2, Traveller 4 4, Traveller 5 5, Traveller 6 3, Traveller 7 3, Traveller 8 5, Traveller 9 5, Traveller 10 5, Traveller 11 4, Traveller 12 2, Traveller 13 5
+- 26–31 Dec — 3 free throughout, 55 person-days; misses: Traveller 10 3, Traveller 11 2, Traveller 13 3, Traveller 2 2, Traveller 4 2, Traveller 5 3, Traveller 6 1, Traveller 7 1, Traveller 8 3, Traveller 9 3
+- 31 Dec – 5 Jan — 0 free throughout, 36 person-days; misses: Traveller 1 5, Traveller 10 2, Traveller 11 3, Traveller 12 5, Traveller 13 2, Traveller 2 3, Traveller 3 5, Traveller 4 3, Traveller 5 2, Traveller 6 4, Traveller 7 4, Traveller 8 2, Traveller 9 2
+- 24–29 Dec — 0 free throughout, 29 person-days; misses: Traveller 1 2, Traveller 10 5, Traveller 11 4, Traveller 12 2, Traveller 13 5, Traveller 2 4, Traveller 3 2, Traveller 4 4, Traveller 5 5, Traveller 6 3, Traveller 7 3, Traveller 8 5, Traveller 9 5
 
 **What the fairness step uses here:** there's no K any more — every mode works on shares, and the knob is how much popularity it may give up:
 

@@ -145,7 +145,9 @@ export function generatePlan(e: Engine, ballots: Ballot[], input: Partial<PlanSe
   const notes: string[] = [];
 
   // ── Voters ──────────────────────────────────────────────────────────
-  const sorted = [...ballots].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+  // In name order (unique in a trip), then id: ties never hang on a random id, so a rebuilt trip plans the same.
+  const voterKey = (b: Ballot) => `${b.name.toLowerCase()}\u0000${b.id}`;
+  const sorted = [...ballots].sort((a, b) => (voterKey(a) < voterKey(b) ? -1 : voterKey(a) > voterKey(b) ? 1 : 0));
   const voters: Voter[] = [];
   for (const b of sorted) {
     const d = b.data;
@@ -213,7 +215,7 @@ export function generatePlan(e: Engine, ballots: Ballot[], input: Partial<PlanSe
     lengthReason = "Chosen by the organizers";
   } else if (best) {
     length = best.length;
-    lengthReason = `The best balance of days and full attendance: ${best.full} of ${withDates.length} can do all ${best.length} days`;
+    lengthReason = "The best balance of days and full attendance";
   } else {
     length = defaultLength(e);
     lengthReason = avail.length ? "The suggested length (nobody is free for a whole trip yet)" : "The suggested length (nobody has dates yet)";
@@ -835,12 +837,13 @@ export function generatePlan(e: Engine, ballots: Ballot[], input: Partial<PlanSe
     /** Why the person with the lowest share couldn't be lifted (for the compare view). */
     let blocked: "none" | "budget" | "others" | null = null;
     for (let round = 0; round < LIFT_ROUNDS; round++) {
-      const order = voters
-        .map((v, k) => ({ v, k }))
-        .filter(({ k }) => counted[k] && !stuck.has(k))
-        .sort((x, y) => shareOf(x.k)! - shareOf(y.k)! || (x.v.id < y.v.id ? -1 : 1));
-      if (!order.length) break;
-      const t = order[0].k;
+      // Lowest share first; ties in voter order (by name).
+      const lowest = voters
+        .map((_, k) => k)
+        .filter((k) => counted[k] && !stuck.has(k))
+        .sort((x, y) => shareOf(x)! - shareOf(y)! || x - y);
+      if (!lowest.length) break;
+      const t = lowest[0];
       const target = shareOf(t)!;
       // Accept only moves that lift t and leave nobody below min(their share, t's new share): the leximin order rises.
       const fairEnough = (beforeMade: number[]) => {

@@ -158,7 +158,7 @@ describe("dates", () => {
     const ballots = crew.map((c) => ({ ...ballot(e, c.id, c.start, 1, {}), data: normalize(e, setStart(e, emptyItinerary(), c.start, Math.round((Date.parse(c.end) - Date.parse(c.start)) / 86_400_000) + 1)) }));
     const p = generatePlan(e, ballots, { mode: "majority" });
     expect(p.dates).toMatchObject({ length: 5, chosen: { start: "2026-12-27", full: 4 } });
-    expect(p.dates.lengthReason).toBe("The best balance of days and full attendance: 4 of 5 can do all 5 days");
+    expect(p.dates.lengthReason).toBe("The best balance of days and full attendance");
     expect(p.dates.lengths.filter((o) => o.recommended).map((o) => o.length)).toEqual([5]);
     expect(p.dates.lengths.map((o) => o.length)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]);
     const chosen = generatePlan(e, ballots, { mode: "majority", length: 7 });
@@ -248,6 +248,18 @@ describe("hard rules — property-style", () => {
     const b = generatePlan(e, [...ballots].reverse(), { mode: "together" });
     expect(b).toEqual(a);
     expect(a.slots[0].items[0].key).toBe(itemKey(a.slots[0].date, a.slots[0].slot, a.slots[0].items[0].id));
+  }, 30_000);
+
+  it("a rebuilt trip plans the same: new participant ids don't change a thing", () => {
+    const e = sriLanka();
+    const ballots = demoBallots(e, demoById("sri-lanka")!);
+    const rebuilt = ballots.map((b, i) => ({ ...b, id: `${(7919 * (i + 3)).toString(16)}-${b.id.length}` }));
+    for (const mode of ["together", "majority"] as const) {
+      const a = generatePlan(e, ballots, { mode });
+      const b = generatePlan(e, rebuilt, { mode });
+      expect(b.itinerary).toEqual(a.itinerary);
+      expect(b.people.map((p) => [p.name, p.made])).toEqual(a.people.map((p) => [p.name, p.made]));
+    }
   }, 30_000);
 });
 

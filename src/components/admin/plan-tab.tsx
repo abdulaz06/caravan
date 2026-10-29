@@ -586,29 +586,28 @@ function LengthTable({ plan, onLength }: { plan: ConsensusPlan; onLength: (lengt
         {shown.map((o) => {
           const on = o.length === length;
           return (
-            <li key={o.length} className={cn("flex items-center gap-2.5 rounded-xl px-2.5 py-1.5", on ? "bg-white/[0.14]" : "bg-white/[0.05]")}>
-              <span className="w-14 shrink-0 text-[14px] font-bold tabular-nums">{o.length === 1 ? "1 day" : `${o.length} days`}</span>
-              <span className="min-w-0 flex-1">
-                <span className="flex items-center gap-2">
-                  <span className="h-1.5 w-16 shrink-0 overflow-hidden rounded-full bg-white/10">
-                    <span className="block h-full rounded-full bg-highlight-400" style={{ width: pct(withDates ? o.full / withDates : 0) }} />
+            <li key={o.length} className={cn("relative overflow-hidden rounded-xl bg-white/[0.04]", on && "ring-1 ring-highlight-400/70")}>
+              {/* How many can do it all, as a fill behind the row: it shrinks as the trip grows. */}
+              <span aria-hidden className="absolute inset-y-0 left-0 bg-highlight-400/[0.13]" style={{ width: pct(withDates ? o.full / withDates : 0) }} />
+              <span className="relative flex items-center gap-2.5 px-3 py-2">
+                <span className="w-[3.25rem] shrink-0 text-[14px] font-bold tabular-nums">{o.length === 1 ? "1 day" : `${o.length} days`}</span>
+                <span className="min-w-0 flex-1">
+                  <span className="block whitespace-nowrap text-[13px] font-semibold leading-tight">
+                    <span className="text-highlight-400">{o.full}</span> of {withDates} can do it all
                   </span>
-                  <span className="text-[12.5px] font-semibold">
-                    {o.full} of {withDates} can do it all
+                  <span className="block truncate text-[11.5px] text-paper/60">
+                    {rangeLabel(o.start, o.end)}
+                    {o.recommended && " · best balance"}
                   </span>
                 </span>
-                <span className="block truncate text-[11.5px] text-paper/60">
-                  {rangeLabel(o.start, o.end)}
-                  {o.recommended && " · best balance"}
-                </span>
+                {on ? (
+                  <span className="shrink-0 text-[11.5px] font-bold text-highlight-400">Chosen</span>
+                ) : (
+                  <button onClick={() => onLength(o.length)} className="h-7 shrink-0 rounded-full bg-white/10 px-3 text-[12px] font-bold hover:bg-white/20" aria-label={`Use ${o.length} days`}>
+                    Use
+                  </button>
+                )}
               </span>
-              {on ? (
-                <span className="shrink-0 text-[11.5px] font-bold text-highlight-400">Chosen</span>
-              ) : (
-                <button onClick={() => onLength(o.length)} className="h-7 shrink-0 rounded-full bg-white/10 px-2.5 text-[12px] font-bold hover:bg-white/20" aria-label={`Use ${o.length} days`}>
-                  Use
-                </button>
-              )}
             </li>
           );
         })}
@@ -746,7 +745,7 @@ function CompareModes({ modes, current, onPick, onClose }: { modes: ModeSummary[
             <span className="mt-1.5 block text-[11.5px] leading-snug text-ink-2">
               Fairness {m.fairness.index.toFixed(2)} · {m.picksMade} picks in
               {m.leftOut > 0 && <span className="block font-bold text-accent-700">{m.leftOut} with none of theirs</span>}
-              {m.mode !== "majority" && m.fairness.scoreKept < 0.995 && <span className="block text-ink-3">{pct(m.fairness.scoreKept)} of the popularity</span>}
+              {m.mode !== "majority" && m.fairness.scoreKept < 0.995 && <span className="block text-ink-3">Keeps {pct(m.fairness.scoreKept)} of the popularity</span>}
               {m.differs > 0 && <span className="block text-ink-3">{m.differs} slots differ</span>}
             </span>
           </button>
