@@ -7,6 +7,7 @@ import { formatHours } from "@/engine/catalog";
 import { variantOf } from "@/engine/day-trip";
 import type { DayEntry, SlotKind } from "@/engine/itinerary";
 import { isHidden } from "@/engine/rules";
+import { nightsFor } from "@/engine/structure";
 import { distanceLabel, type ItemView, type SlotView as SlotViewT, type TimelineDay } from "@/engine/timeline";
 import { cn } from "@/lib/cn";
 import { parseISO } from "@/lib/dates";
@@ -54,6 +55,8 @@ export type DragBits = {
 };
 
 type CardProps = {
+  /** Days in the whole trip (for each base's nights). */
+  length: number;
   entry: DayEntry;
   index: number;
   t: TimelineDay;
@@ -78,7 +81,7 @@ export function dayTagClass(t: TimelineDay): string {
 /** "Ella day trip" from "Ella day trip · Little Adam's Peak". */
 export const tripShortName = (title: string) => title.split(" · ")[0];
 
-export function DayCard({ entry, index, t, locked, drag, onFirst, onAdd, onItem, onNote, onStayIn }: CardProps) {
+export function DayCard({ entry, index, length, t, locked, drag, onFirst, onAdd, onItem, onNote, onStayIn }: CardProps) {
   const e = useEngine();
   const { Icon } = useArt();
   const special = t.special;
@@ -86,7 +89,7 @@ export function DayCard({ entry, index, t, locked, drag, onFirst, onAdd, onItem,
   if (t.plan.kind === "departure") return <SendOffCard index={index} t={t} />;
 
   const base = t.plan.base;
-  const nights = e.rules.nights[base.id] ?? base.nights.default;
+  const nights = nightsFor(e, length).find((s) => s.base.id === base.id)?.nights ?? 0;
   const onRoute = t.day.onRoute;
   return (
     <div
@@ -139,6 +142,7 @@ export function DayCard({ entry, index, t, locked, drag, onFirst, onAdd, onItem,
         onItem={(k) => onItem("day", k)}
         className="mt-2"
       />
+      {t.night.area && (
       <SlotBlock
         kind="night"
         view={t.night}
@@ -152,6 +156,10 @@ export function DayCard({ entry, index, t, locked, drag, onFirst, onAdd, onItem,
         onStayIn={onStayIn}
         className="mt-3"
       />
+      )}
+      {t.legsAfter.map((l) => (
+        <RoadTrip key={l.title} seg={l} className="mt-3" />
+      ))}
       {entry.note && (
         <button onClick={onNote} disabled={locked} className="mt-2.5 block w-full rounded-xl bg-surface-100 px-3 py-2 text-left text-[13px] italic text-ink-2">
           “{entry.note}”

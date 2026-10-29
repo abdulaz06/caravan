@@ -3,7 +3,8 @@ import { randomBytes } from "node:crypto";
 import bcrypt from "bcryptjs";
 import { emptyItinerary, makeItem, normalize, setStart, type ItineraryData, type Preferences } from "@/engine/itinerary";
 import { defaultRules } from "@/engine/rules";
-import { createEngine, tripDays, type Engine } from "@/engine/structure";
+import { clampLength, createEngine, isFixed, tripDays, type Engine } from "@/engine/structure";
+import { diffDays } from "@/lib/dates";
 import { quickFill } from "@/engine/quickfill";
 import { loadPreset } from "@/presets/registry";
 import { db, type Role } from "./db";
@@ -19,8 +20,8 @@ type Demo = {
   id: string;
   slug: string;
   name: string;
-  /** Each traveller's first day. */
-  starts: Record<string, string>;
+  /** Each traveller's own dates (first and last day): varied lengths, overlapping around New Year. */
+  dates: Record<string, [string, string]>;
   /** Each traveller's answers on the preferences step (ids from the preset). */
   prefs: Record<string, Preferences>;
 };
@@ -60,9 +61,10 @@ export const DEMOS: Demo[] = [
     id: "sri-lanka",
     slug: "demo-sri-lanka",
     name: "Sri Lanka crew '26",
-    starts: {
-      Maya: "2026-12-27", Theo: "2026-12-27", Priya: "2026-12-27", Jonah: "2026-12-28", Lena: "2026-12-27", Omar: "2026-12-26",
-      Sofia: "2026-12-28", Kai: "2026-12-29", Nadia: "2026-12-27", Ravi: "2026-12-26", Elle: "2027-01-02", Tomás: "2026-12-27",
+    dates: {
+      Maya: ["2026-12-27", "2027-01-03"], Theo: ["2026-12-26", "2027-01-01"], Priya: ["2026-12-27", "2027-01-02"], Jonah: ["2026-12-28", "2027-01-02"],
+      Lena: ["2026-12-26", "2027-01-04"], Omar: ["2026-12-29", "2027-01-02"], Sofia: ["2026-12-24", "2027-01-03"], Kai: ["2026-12-30", "2027-01-04"],
+      Nadia: ["2026-12-27", "2026-12-31"], Ravi: ["2026-12-20", "2026-12-30"], Elle: ["2027-01-02", "2027-01-08"], Tomás: ["2026-12-27", "2027-01-02"],
     },
     prefs: {
       Maya: { budget: "700_1000", stay: "villa", sharedRooms: "depends", interests: ["food", "beaches", "photography"], earlyMornings: "some", transport: "van", mustDo: "Whale watching — non-negotiable.", hardNo: "Anything before 5am." },
@@ -83,9 +85,10 @@ export const DEMOS: Demo[] = [
     id: "georgia",
     slug: "demo-georgia",
     name: "Georgia crew '26",
-    starts: {
-      Maya: "2026-12-25", Theo: "2026-12-25", Priya: "2026-12-26", Jonah: "2026-12-27", Lena: "2026-12-25", Omar: "2026-12-24",
-      Sofia: "2026-12-26", Kai: "2026-12-28", Nadia: "2026-12-25", Ravi: "2026-12-24", Elle: "2027-01-02", Tomás: "2026-12-25",
+    dates: {
+      Maya: ["2026-12-26", "2027-01-03"], Theo: ["2026-12-27", "2027-01-04"], Priya: ["2026-12-23", "2026-12-31"], Jonah: ["2026-12-28", "2027-01-02"],
+      Lena: ["2026-12-26", "2027-01-05"], Omar: ["2026-12-29", "2027-01-06"], Sofia: ["2026-12-27", "2027-01-07"], Kai: ["2026-12-30", "2027-01-03"],
+      Nadia: ["2026-12-26", "2027-01-01"], Ravi: ["2027-01-02", "2027-01-10"], Elle: ["2026-12-28", "2027-01-02"], Tomás: ["2026-12-26", "2027-01-03"],
     },
     prefs: {
       Maya: { budget: "800_1200", stay: "villa", sharedRooms: "depends", interests: ["food", "culture", "photography"], earlyMornings: "some", transport: "self-drive", mustDo: "Gergeti in the snow.", hardNo: "More than one 5-hour drive." },
@@ -119,10 +122,12 @@ function rngFrom(seed: number) {
   };
 }
 
-/** A balanced quick fill, then each matchup flipped to the side that suits the traveller. */
-function planFor(e: Engine, p: Person, start: string, prefs: Preferences, seed: number): ItineraryData {
+/** A balanced quick fill on the traveller's own dates, then each matchup flipped to the side that suits them. */
+function planFor(e: Engine, p: Person, [start, end]: [string, string], prefs: Preferences, seed: number): ItineraryData {
   const rng = rngFrom(seed);
-  let data = setStart(e, { ...emptyItinerary(), flexibility: ["exact", "few_days", "very"][seed % 3] }, start, tripDays(e));
+  // A trip with a fixed length gets that length from their first day.
+  const len = isFixed(e) ? tripDays(e) : clampLength(e, diffDays(start, end) + 1);
+  let data = setStart(e, { ...emptyItinerary(), flexibility: ["exact", "few_days", "very"][seed % 3] }, start, len);
   data = quickFill(e, data, { rng });
   const vibe = (id: string) => e.catalog.byId[id]?.vibe ?? 0;
   data.days = data.days.map((d) => {
@@ -144,12 +149,20 @@ function planFor(e: Engine, p: Person, start: string, prefs: Preferences, seed: 
   });
 }
 
+/**
+ * Bump when the demo's seed changes shape (dates, plans, the published plan):
+ * a demo built from an older seed is rebuilt on its next visit, not just at the nightly reset.
+ */
+export const DEMO_SEED = 2;
+const seedOf = (rules: unknown) => (rules && typeof rules === "object" ? (rules as { demoSeed?: unknown }).demoSeed : undefined);
+
 /** Deletes one demo trip (and its guests) and builds it again from scratch. */
 export async function resetDemoTrip(demo: Demo): Promise<{ slug: string; people: number }> {
   const store = db();
   const old = await store.getTripBySlug(demo.slug);
   if (old) await store.deleteTrip(old.id);
-  const trip = await store.createTrip({ slug: demo.slug, name: demo.name, preset_id: demo.id, kind: "demo" });
+  // The seed version rides along in the rules blob (parseRules ignores it).
+  const trip = await store.createTrip({ slug: demo.slug, name: demo.name, preset_id: demo.id, kind: "demo", rules: { demoSeed: DEMO_SEED } });
   if (!trip) throw new Error(`Couldn't create the ${demo.id} demo`);
 
   const { preset, catalog } = loadPreset(demo.id);
@@ -188,7 +201,7 @@ export async function seedDemoCrew(tripId: string, demo: Demo, e: Engine): Promi
   for (const [i, p] of CREW.entries()) {
     const id = ids.get(p.name);
     if (!id || kept.has(p.name) || p.stage === "new") continue;
-    const data = planFor(e, p, demo.starts[p.name], demo.prefs[p.name] ?? {}, i + 11);
+    const data = planFor(e, p, demo.dates[p.name], demo.prefs[p.name] ?? {}, i + 11);
     data.preferences.roommates = (p.roommates ?? []).map((name) => (ids.has(name) ? { id: ids.get(name), name } : { name }));
     const updated = new Date(now - (CREW.length - i) * 0.4 * day).toISOString();
     await store.saveItinerary({ participant_id: id, data, status: p.stage, submitted_at: p.stage === "submitted" ? updated : null, updated_at: updated });
@@ -213,5 +226,5 @@ export async function resetDemoTrips() {
 /** A demo trip's slug, building it first if it isn't there yet. */
 export async function ensureDemoTrip(demo: Demo): Promise<string> {
   const row = await db().getTripBySlug(demo.slug);
-  return row ? row.slug : (await resetDemoTrip(demo)).slug;
+  return row && seedOf(row.rules) === DEMO_SEED ? row.slug : (await resetDemoTrip(demo)).slug;
 }

@@ -1,13 +1,13 @@
 import { restructure } from "@/engine/itinerary";
 import { mergeRules, rulesPatchSchema, rulesProblems, type TripRules } from "@/engine/rules";
-import { createEngine, daysNightsLabel, nightsLine, tripDays } from "@/engine/structure";
+import { createEngine, daysNightsLabel, isFixed, lengthBounds, lengthRangeLabel, nightsLine, tripDays } from "@/engine/structure";
 import { db } from "@/lib/server/db";
 import { error, json, readJson } from "@/lib/server/http";
 import { asOrganizer, logAction } from "@/lib/server/organizer";
 import { withTrip } from "@/lib/server/route";
 
 /** Rule changes that can invalidate saved plans (and so need a preview + confirmation). */
-const STRUCTURAL: (keyof TripRules)[] = ["nights", "window", "requireFullTrip"];
+const STRUCTURAL: (keyof TripRules)[] = ["fixedLength", "length", "nights", "window", "requireFullTrip"];
 
 export type Impact = { plans: number; needRepicks: number; lostPicks: number; people: { name: string; lost: number }[] };
 
@@ -52,7 +52,9 @@ export async function POST(req: Request, ctx: RouteContext<"/api/t/[slug]/admin/
 
       await db().updateTrip(trip.trip.id, { rules: next });
       const now = new Date().toISOString();
-      const summary = `${daysNightsLabel(tripDays(to))} · ${nightsLine(to, tripDays(to))}`;
+      const summary = isFixed(to)
+        ? `${daysNightsLabel(tripDays(to))} · ${nightsLine(to, tripDays(to))}`
+        : `free dates, ${lengthRangeLabel(lengthBounds(to))}`;
       for (const m of moved) {
         await db().saveItinerary({
           participant_id: m.row.participant_id,

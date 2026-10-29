@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { ArrowLeft, ArrowRight, Leaf, Lock, Martini, Moon, ShieldCheck, Sparkles, Sun } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import { daysNightsLabel, tripDays } from "@/engine/structure";
+import { daysNightsLabel, isFixed, tripDays } from "@/engine/structure";
 import { balanceLabel } from "@/engine/timeline";
 import { cn } from "@/lib/cn";
 import { dayLabel, monthName, parseISO, rangeLabel } from "@/lib/dates";
@@ -358,9 +358,9 @@ function Heatmap({ stats }: { stats: GroupStats }) {
             <span className="font-display text-[17px] font-semibold">Sweet spot: {rangeLabel(stats.sweetSpot.start, stats.sweetSpot.end)}</span>
             <br />
             <span className="text-paper/75">
-              {stats.sweetSpot.min === stats.withDates
+              {stats.sweetSpot.full === stats.withDates
                 ? `Everyone with dates is free all ${stats.sweetSpot.days} days.`
-                : `${stats.sweetSpot.min} of ${stats.withDates} free on every one of those ${stats.sweetSpot.days} days.`}
+                : `${stats.sweetSpot.full} of ${stats.withDates} free for all ${stats.sweetSpot.days} days${isFixed(e) ? "" : " (the typical trip length)"}.`}
             </span>
           </p>
         </div>
@@ -427,7 +427,11 @@ function Heatmap({ stats }: { stats: GroupStats }) {
       {flexEntries.length > 0 && (
         <p className="mt-3 text-[12.5px] text-ink-3">
           {flexEntries.map((f) => `${stats.flexibility[f.id]} ${f.label.toLowerCase()}`).join(" · ")}
-          {stats.avgLength ? ` · everyone's window is ${daysNightsLabel(tripDays(e))}` : ""}
+          {stats.lengths
+            ? isFixed(e)
+              ? ` · everyone's window is ${daysNightsLabel(tripDays(e))}`
+              : ` · plans run ${stats.lengths.min === stats.lengths.max ? stats.lengths.min : `${stats.lengths.min}–${stats.lengths.max}`} days, typically ${stats.lengths.typical}`
+            : ""}
         </p>
       )}
     </motion.section>

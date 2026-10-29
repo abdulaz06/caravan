@@ -33,7 +33,7 @@ export function ItineraryTimeline({ data, timeline, hideNotes = false }: { data:
           const note = hideNotes ? undefined : data.days[t.index]?.note;
           // A ribbon where each base's stretch of the trip begins.
           const base = t.plan.base;
-          const section = t.plan.kind !== "departure" && !seen.has(base.id) ? `${base.name} · ${nightsWord(split.get(base.id) ?? 0)}` : null;
+          const section = t.plan.kind !== "departure" && !seen.has(base.id) ? `${base.name} · ${t.plan.departs ? "day trip" : nightsWord(split.get(base.id) ?? 0)}` : null;
           seen.add(base.id);
           const nameColor =
             t.plan.kind === "departure" ? "text-accent-600" : t.plan.kind === "transfer" ? "text-highlight-600" : t.plan.arrival ? "text-primary-600" : "text-secondary-700";
@@ -71,7 +71,10 @@ export function ItineraryTimeline({ data, timeline, hideNotes = false }: { data:
                 {t.plan.kind !== "departure" ? (
                   <>
                     <SlotRows kind="day" view={t.day} date={t.date} onOpen={(a) => setDetail({ a, area: t.day.area })} />
-                    <SlotRows kind="night" view={t.night} date={t.date} onOpen={(a) => setDetail({ a, area: t.night.area })} />
+                    {t.night.area && <SlotRows kind="night" view={t.night} date={t.date} onOpen={(a) => setDetail({ a, area: t.night.area })} />}
+                    {t.legsAfter.map((l) => (
+                      <RoadTrip key={l.title} seg={l} />
+                    ))}
                   </>
                 ) : (
                   <p className="rounded-2xl bg-primary-100/60 px-3 py-2.5 text-[13px] text-primary-900">

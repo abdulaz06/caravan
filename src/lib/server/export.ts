@@ -3,7 +3,7 @@ import { addDays } from "@/lib/dates";
 import { roommateBoard, type RoommateBoard } from "@/lib/roommates";
 import { computeBudget } from "@/engine/budget";
 import { STAY_ID, plansOf, tripLength, type SlotItem } from "@/engine/itinerary";
-import { daysNightsLabel, nightsFor, nightsLine, tripDays, type Engine } from "@/engine/structure";
+import { daysNightsLabel, defaultLength, isFixed, lengthBounds, lengthRangeLabel, nightsFor, nightsLine, type Engine } from "@/engine/structure";
 import { balanceOf, buildTimeline, type SlotView } from "@/engine/timeline";
 import type { Person } from "./group";
 import type { TripContext } from "./trip";
@@ -103,13 +103,16 @@ function mutualFor(board: RoommateBoard, id: string): string[] {
 export function exportJson(trip: TripContext, people: Person[]) {
   const e = trip.engine;
   const board = boardOf(people);
-  const len = tripDays(e);
+  const len = defaultLength(e);
+  const shape = isFixed(e)
+    ? `Trip is ${daysNightsLabel(len)} (${nightsLine(e, len)}).`
+    : `Free dates: ${lengthRangeLabel(lengthBounds(e))} within ${e.rules.window.start} – ${e.rules.window.end}; each plan's nights per base follow its own length.`;
   return {
     exportedAt: new Date().toISOString(),
     preset: { id: trip.preset.id, name: trip.preset.name, version: trip.preset.version },
     editsLocked: trip.locked,
     rules: trip.rules,
-    notes: `Trip is ${daysNightsLabel(len)} (${nightsLine(e, len)}). All money is per person in USD (the app's base currency). Budget totals exclude flights. Roommate picks are just for fun, not binding.`,
+    notes: `${shape} All money is per person in USD (the app's base currency). Budget totals exclude flights. Roommate picks are just for fun, not binding.`,
     roommates: board,
     participants: people.map((p) => ({
       id: p.id,

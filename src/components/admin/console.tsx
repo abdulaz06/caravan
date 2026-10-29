@@ -26,8 +26,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import type { Activity } from "@/engine/catalog";
-import type { RulesPatch, TripRules } from "@/engine/rules";
-import { daysNightsLabel } from "@/engine/structure";
+import { MAX_TRIP_DAYS, type RulesPatch, type TripRules } from "@/engine/rules";
+import { daysNightsLabel, lengthRangeLabel } from "@/engine/structure";
 import { cn } from "@/lib/cn";
 import { CURRENCIES, type CurrencyCode } from "@/lib/currency";
 import { dayLabel } from "@/lib/dates";
@@ -588,7 +588,14 @@ function RulesTab({
   const toast = useToast();
   const { bases } = useCatalog();
   // Structural rules are edited here, previewed, then applied together.
-  const fromRules = (r: TripRules) => ({ nights: { ...r.nights }, window: r.window, requireFullTrip: r.requireFullTrip });
+  const fromRules = (r: TripRules) => ({
+    fixedLength: r.fixedLength,
+    length: r.length,
+    recommended: r.recommended,
+    nights: { ...r.nights },
+    window: r.window,
+    requireFullTrip: r.requireFullTrip,
+  });
   const [draft, setDraft] = useState(() => fromRules(rules));
   const [auto, setAuto] = useState(toLocalInput(rules.autoLockAt));
   const [impact, setImpact] = useState<Impact | null>(null);
@@ -600,6 +607,9 @@ function RulesTab({
   }
   const nightsOf = (n: Record<string, number>, id: string) => n[id] ?? bases.find((b) => b.id === id)!.nights.default;
   const dirty =
+    draft.fixedLength !== rules.fixedLength ||
+    JSON.stringify(draft.length) !== JSON.stringify(rules.length) ||
+    JSON.stringify(draft.recommended) !== JSON.stringify(rules.recommended) ||
     bases.some((b) => nightsOf(draft.nights, b.id) !== nightsOf(rules.nights, b.id)) ||
     draft.window.start !== rules.window.start ||
     draft.window.end !== rules.window.end ||
@@ -607,6 +617,19 @@ function RulesTab({
   const lengthOf = (n: Record<string, number>) => bases.reduce((s, b) => s + nightsOf(n, b.id), 0) + 1;
   const shapeOf = (n: Record<string, number>) => bases.map((b) => `${b.name} ${nightsOf(n, b.id)}`).join(" → ");
   const len = lengthOf(draft.nights);
+  const describe = (r: Pick<TripRules, "fixedLength" | "length" | "recommended" | "nights">) =>
+    r.fixedLength
+      ? `${daysNightsLabel(lengthOf(r.nights))} · ${shapeOf(r.nights)}`
+      : `Free dates · ${lengthRangeLabel(r.length)}${r.recommended ? ` · most do ${lengthRangeLabel(r.recommended)}` : ""}`;
+  const setLength = (k: "min" | "max", v: number) => {
+    const length = { ...draft.length, [k]: v };
+    // Keep the suggestion inside the range.
+    const rec = draft.recommended && {
+      min: Math.max(length.min, Math.min(draft.recommended.min, length.max)),
+      max: Math.min(length.max, Math.max(draft.recommended.max, length.min)),
+    };
+    setDraft({ ...draft, length, recommended: rec });
+  };
 
   const trip = useTrip();
   async function apply(confirm: boolean) {
@@ -664,8 +687,51 @@ function RulesTab({
         </div>
       </Card>
 
-      <Card title="Trip structure" icon={CalendarClock} sub={`Now: ${daysNightsLabel(lengthOf(rules.nights))} · ${shapeOf(rules.nights)}`}>
-        {bases.map((b, i) => (
+      <Card title="Dates & trip length" icon={CalendarClock} sub={`Now: ${describe(rules)}`}>
+        <Row
+          title="Fixed trip length"
+          hint={draft.fixedLength ? "On: one length for everyone, set by the nights below — the calendar is a window to slide." : "Off: everyone picks their own start and end, any length in the range below."}
+        >
+          <Switch on={draft.fixedLength} onChange={(v) => setDraft({ ...draft, fixedLength: v })} label="Fixed trip length" />
+        </Row>
+        {!draft.fixedLength && (
+          <>
+            <Row title="Shortest trip" hint="Days, counting the day you land and the day you fly home.">
+              <Stepper label="Shortest trip in days" value={draft.length.min} min={1} max={draft.length.max} onChange={(v) => setLength("min", v)} />
+            </Row>
+            <Row title="Longest trip">
+              <Stepper label="Longest trip in days" value={draft.length.max} min={draft.length.min} max={MAX_TRIP_DAYS} onChange={(v) => setLength("max", v)} />
+            </Row>
+            <Row title="Suggested length" hint={draft.recommended ? `“Most groups do ${lengthRangeLabel(draft.recommended)}” on the dates step.` : "No hint on the dates step."}>
+              <Switch
+                on={!!draft.recommended}
+                onChange={(v) => setDraft({ ...draft, recommended: v ? (rules.recommended ?? { min: draft.length.min, max: draft.length.max }) : null })}
+                label="Suggested length"
+              />
+            </Row>
+            {draft.recommended && (
+              <div className="flex flex-wrap items-center justify-end gap-x-3 gap-y-2 pb-3">
+                <span className="text-[12.5px] font-semibold text-ink-3">From</span>
+                <Stepper
+                  label="Suggested shortest"
+                  value={draft.recommended.min}
+                  min={draft.length.min}
+                  max={draft.recommended.max}
+                  onChange={(v) => setDraft({ ...draft, recommended: { ...draft.recommended!, min: v } })}
+                />
+                <span className="text-[12.5px] font-semibold text-ink-3">to</span>
+                <Stepper
+                  label="Suggested longest"
+                  value={draft.recommended.max}
+                  min={draft.recommended.min}
+                  max={draft.length.max}
+                  onChange={(v) => setDraft({ ...draft, recommended: { ...draft.recommended!, max: v } })}
+                />
+              </div>
+            )}
+          </>
+        )}
+        {draft.fixedLength && bases.map((b, i) => (
           <Row key={b.id} title={`${b.name} nights`} hint={i === 0 ? `Day 1 lands in ${b.name}.` : "Including the travel day's night."}>
             <Stepper
               label={`${b.name} nights`}
@@ -676,9 +742,16 @@ function RulesTab({
             />
           </Row>
         ))}
-        <Row title="Require the full trip to submit" hint={`Off: ${daysNightsLabel(len - 1)} plans can be submitted too.`}>
-          <Switch on={draft.requireFullTrip} onChange={(v) => setDraft({ ...draft, requireFullTrip: v })} label="Require full trip" />
-        </Row>
+        {draft.fixedLength && (
+          <>
+            <Row title="Require the full trip to submit" hint={`Off: ${daysNightsLabel(len - 1)} plans can be submitted too.`}>
+              <Switch on={draft.requireFullTrip} onChange={(v) => setDraft({ ...draft, requireFullTrip: v })} label="Require full trip" />
+            </Row>
+            <Row title={`${len - 1}-day preview`} hint="A shorter “try it” length on the dates step.">
+              <Switch on={rules.previewEnabled} onChange={(v) => onPatch({ previewEnabled: v }, v ? "Preview on" : "Preview off")} label="Preview available" />
+            </Row>
+          </>
+        )}
         <div className="border-t border-ink/5 pt-3">
           <p className="text-[14.5px] font-semibold">Date window</p>
           <div className="mt-2 grid grid-cols-2 gap-2">
@@ -694,11 +767,11 @@ function RulesTab({
         </div>
         {dirty && (
           <p className="mt-4 rounded-2xl bg-highlight-100 px-3 py-2 text-[13px] font-semibold text-ink ring-1 ring-highlight-200">
-            New: {daysNightsLabel(len)} · {shapeOf(draft.nights)}
+            New: {describe(draft)}
           </p>
         )}
         <div className="mt-3 flex items-center gap-2">
-          <Button size="md" disabled={!dirty || busy} onClick={() => apply(false)} aria-label={`Review & apply · ${daysNightsLabel(len)}`}>
+          <Button size="md" disabled={!dirty || busy} onClick={() => apply(false)} aria-label={`Review & apply · ${describe(draft)}`}>
             Review & apply
           </Button>
           {dirty && (
@@ -710,9 +783,6 @@ function RulesTab({
       </Card>
 
       <Card title="Who sees what" icon={Eye}>
-        <Row title={`${lengthOf(rules.nights) - 1}-day preview`} hint="The shorter “try it” length on the dates step.">
-          <Switch on={rules.previewEnabled} onChange={(v) => onPatch({ previewEnabled: v }, v ? "Preview on" : "Preview off")} label="Preview available" />
-        </Row>
         <Row title="Base-area filtering" hint="Each slot only offers its own area's options.">
           <Switch on={rules.baseFiltering} onChange={(v) => onPatch({ baseFiltering: v }, v ? "Area filtering on" : "Area filtering off")} label="Base-area filtering" />
         </Row>
@@ -912,6 +982,9 @@ function DataTab() {
 
 const RULE_LABELS: Record<string, string> = {
   autoLockAt: "auto-lock",
+  fixedLength: "fixed trip length",
+  length: "trip lengths",
+  recommended: "suggested length",
   requireFullTrip: "full-length rule",
   previewEnabled: "preview",
   window: "date window",

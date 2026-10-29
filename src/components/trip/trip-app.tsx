@@ -1,14 +1,14 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { FlaskConical, PencilRuler, X } from "lucide-react";
+import { CalendarClock, FlaskConical, PencilRuler, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { computeBudget } from "@/engine/budget";
 import { familyView } from "@/engine/family";
-import { expandToFull, isSubmittable, makePreview, type ItineraryData, type ItineraryStatus } from "@/engine/itinerary";
+import { expandToFull, isSubmittable, makePreview, setRange, type ItineraryData, type ItineraryStatus } from "@/engine/itinerary";
 import type { PopularPayload } from "@/engine/popular";
-import { allowedLengths, daysNightsLabel, previewAvailable, previewDays, tripDays } from "@/engine/structure";
+import { allowedLengths, daysNightsLabel, defaultLength, isFixed, previewAvailable, previewDays, tripDays } from "@/engine/structure";
 import type { CurrencyCode } from "@/lib/currency";
 import { useEngine, useTrip } from "../engine";
 import { FamilyProvider } from "../family";
@@ -93,6 +93,8 @@ export function TripApp({
   const [direction, setDirection] = useState(1);
   const [budgetOpen, setBudgetOpen] = useState(false);
   const [stampNote, setStampNote] = useState(admin ? null : stamp);
+  // New dates that cleared picks: said once, with an undo.
+  const [reflowNote, setReflowNote] = useState<{ cleared: string[]; before: ItineraryData } | null>(null);
 
   const save = useAutosave(data, {
     enabled: !locked,
@@ -134,7 +136,7 @@ export function TripApp({
   const previewing = preview !== null;
   /** A shorter plan that was submitted while the rules allowed it. */
   const savedShort = !!data.startDate && data.days.length === short && short !== full;
-  const length = view.days.length || (previewing ? short : full);
+  const length = view.days.length || (previewing ? short : isFixed(e) ? full : defaultLength(e));
   const lastBase = e.catalog.bases[e.catalog.bases.length - 1];
   const update = useCallback(
     (fn: (d: ItineraryData) => ItineraryData) => {
@@ -159,6 +161,19 @@ export function TripApp({
       }
     },
     [e, data, full, lastBase.name, locked, previewing, savedShort, short, toast],
+  );
+
+  // Free dates: a new start and end re-flows the days, keeping every pick that still fits.
+  const onRange = useCallback(
+    (start: string, end: string) => {
+      if (locked) return;
+      const before = data;
+      const r = setRange(e, before, start, end);
+      setData(r.data);
+      // A run of changes is one note: everything cleared since it appeared, and Undo goes back to before the first.
+      setReflowNote((prev) => (r.lost || prev ? { cleared: [...(prev?.cleared ?? []), ...r.cleared], before: prev?.before ?? before } : null));
+    },
+    [e, data, locked],
   );
 
   // Currency is a display preference: it always sticks, even while previewing.
@@ -252,6 +267,33 @@ export function TripApp({
               </motion.div>
             )}
           </AnimatePresence>
+          <AnimatePresence>
+            {reflowNote && (
+              <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                <div role="status" aria-label="Your dates changed" className="mx-3 mt-3 flex items-start gap-3 rounded-2xl bg-paper p-3.5 text-[13.5px] leading-snug text-ink-2 shadow-card ring-1 ring-ink/5">
+                  <CalendarClock className="mt-0.5 size-[18px] shrink-0 text-primary-600" />
+                  <p className="flex-1">
+                    <b className="text-ink">New dates, same plan</b> — except {reflowNote.cleared.length === 1 ? "one pick that doesn't" : `${reflowNote.cleared.length} picks that don't`} fit any more:{" "}
+                    {reflowNote.cleared.map((id) => e.catalog.byId[id]?.title ?? "Stay in").join(", ")}.
+                  </p>
+                  <div className="-mr-1 -mt-1 flex shrink-0 items-center gap-1">
+                    <button
+                      onClick={() => {
+                        setData(reflowNote.before);
+                        setReflowNote(null);
+                      }}
+                      className="rounded-full bg-surface-200 px-3 py-1.5 text-[12.5px] font-bold text-ink hover:bg-surface-300"
+                    >
+                      Undo
+                    </button>
+                    <button onClick={() => setReflowNote(null)} aria-label="Dismiss" className="grid size-8 place-items-center rounded-full hover:bg-surface-100">
+                      <X className="size-4" />
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
           {previewing && (
             <div className="relative z-20 mx-3 mt-3 flex items-center gap-3 rounded-2xl bg-highlight-400 p-3 text-[13.5px] leading-snug text-ink shadow-card">
               <FlaskConical className="size-5 shrink-0" />
@@ -280,7 +322,9 @@ export function TripApp({
               exit={{ opacity: 0, x: -36 * direction }}
               transition={{ type: "spring", stiffness: 420, damping: 38 }}
             >
-              {step === "dates" && <DatesStep data={view} update={update} locked={locked} length={length} onLength={setLength} onNext={() => setStep("build")} />}
+              {step === "dates" && (
+                <DatesStep data={view} update={update} onRange={onRange} locked={locked} length={length} onLength={setLength} onNext={() => setStep("build")} />
+              )}
               {step === "build" && (
                 <BuildStep
                   data={view}

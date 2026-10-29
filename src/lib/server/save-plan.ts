@@ -2,7 +2,7 @@ import "server-only";
 import { parseItinerary } from "@/engine/input";
 import { MAX_ROOMMATES, isSubmittable, normalize, type ItineraryData, type RoommatePick } from "@/engine/itinerary";
 import { isHidden } from "@/engine/rules";
-import { daysNightsLabel, tripDays, type Engine } from "@/engine/structure";
+import { daysNightsLabel, isFixed, lengthBounds, lengthRangeLabel, tripDays, type Engine } from "@/engine/structure";
 import { db, type ParticipantRow } from "./db";
 import { error, json } from "./http";
 import { logAction } from "./organizer";
@@ -62,7 +62,9 @@ export async function savePlan(trip: TripContext, p: ParticipantRow, body: Recor
 
   const submit = !actor && body?.submit === true;
   if (submit && !data.startDate) return error("Pick your dates before submitting.", 400);
-  if (submit && !isSubmittable(e, data)) return error(`This trip is ${daysNightsLabel(tripDays(e))}. Switch back to submit.`, 400);
+  if (submit && !isSubmittable(e, data)) {
+    return error(isFixed(e) ? `This trip is ${daysNightsLabel(tripDays(e))}. Switch back to submit.` : `Trips are ${lengthRangeLabel(lengthBounds(e))}.`, 400);
+  }
 
   const now = new Date().toISOString();
   const status = submit || existing?.status === "submitted" ? "submitted" : "draft";

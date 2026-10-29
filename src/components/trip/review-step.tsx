@@ -232,7 +232,7 @@ export function ReviewStep({
             <div className="space-y-2">
               <div className="flex items-center gap-2 rounded-2xl bg-highlight-100 px-3 py-2 text-[13px] font-semibold leading-snug text-ink shadow-card ring-1 ring-highlight-200">
                 <FlaskConical className="size-4 shrink-0 text-accent-600" />
-                <span className="flex-1">This trip is {tripDays(e)} days. Switch back to submit.</span>
+                <span className="flex-1">The trip is {tripDays(e)} days. Switch back to submit.</span>
                 <button onClick={onExitPreview} className="shrink-0 rounded-full bg-ink px-3 py-1.5 text-[12px] font-bold text-paper">
                   Back to {tripDays(e)} days
                 </button>

@@ -2,6 +2,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
+import { diffDays } from "@/lib/dates";
 
 // A throwaway local store for this file: never the dev database.
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), "caravan-demo-"));
@@ -26,7 +27,10 @@ describe("the demo trip", () => {
     const plans = await db().listItineraries(trip.id);
     expect(plans.filter((p) => p.status === "submitted")).toHaveLength(8);
     expect(plans.filter((p) => p.status === "draft")).toHaveLength(3);
-    for (const p of plans) expect(p.data.days.length).toBe(6);
+    // Everyone on their own dates: varied lengths, all inside the rules.
+    const lengths = plans.map((p) => p.data.days.length);
+    expect(new Set(lengths).size).toBeGreaterThan(3);
+    for (const p of plans) expect(p.data.days.length).toBe(diffDays(p.data.startDate!, p.data.endDate!) + 1);
   });
 
   it("has mutual roommate picks and peeks", async () => {
@@ -79,7 +83,9 @@ describe("every destination's demo", () => {
     expect(georgia.preset_id).toBe("georgia");
     const plans = await db().listItineraries(georgia.id);
     expect(plans).toHaveLength(11);
-    for (const p of plans) expect(p.data.days.length).toBe(9);
+    const maya = (await db().listParticipants(georgia.id)).find((p) => p.display_name === "Maya")!;
+    expect(plans.find((p) => p.participant_id === maya.id)!.data).toMatchObject({ startDate: "2026-12-26", endDate: "2027-01-03" });
+    expect(plans.find((p) => p.participant_id === maya.id)!.data.days).toHaveLength(9);
     // Georgia's answers use Georgia's own choices.
     const prefs = plans.map((p) => p.data.preferences);
     expect(prefs.some((p) => p.interests?.includes("skiing"))).toBe(true);

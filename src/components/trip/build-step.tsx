@@ -14,7 +14,7 @@ import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { motion } from "framer-motion";
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowRightLeft, ArrowUp, Eye, GripVertical, Repeat2, Sparkles, Sunrise, Trash2, Wand2 } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowRightLeft, ArrowUp, Eye, GripVertical, Info, Repeat2, Sparkles, Sunrise, Trash2, Wand2 } from "lucide-react";
 import { Fragment, useMemo, useState } from "react";
 import type { Activity, Base } from "@/engine/catalog";
 import type { BudgetResult } from "@/engine/budget";
@@ -46,7 +46,7 @@ import {
   type SlotKind,
 } from "@/engine/itinerary";
 import { quickFill } from "@/engine/quickfill";
-import { daysNightsLabel, nightsFor, nightsLine } from "@/engine/structure";
+import { daysNightsLabel, nightsFor, nightsLine, structureNote } from "@/engine/structure";
 import { balanceOf, buildTimeline, type TimelineDay } from "@/engine/timeline";
 import { cn } from "@/lib/cn";
 import { dayLabel } from "@/lib/dates";
@@ -109,7 +109,8 @@ export function BuildStep({ data, update, locked, budget, onOpenBudget, onBack, 
 
   /** One section per base: its days in order (the fly-home day goes with the last). */
   const sections = useMemo(() => {
-    const split = nightsFor(e, n).filter((s) => s.nights > 0);
+    // A 1-day trip has no nights: its one day sits with the first base.
+    const split = n === 1 ? [{ base: plans[0].base, nights: 0 }] : nightsFor(e, n).filter((s) => s.nights > 0);
     return split.map(({ base, nights }, k) => {
       const days = plans.filter((p) => p.base.id === base.id && p.kind !== "departure").map((p) => p.index);
       const last = k === split.length - 1;
@@ -180,6 +181,7 @@ export function BuildStep({ data, update, locked, budget, onOpenBudget, onBack, 
   const cardProps = (i: number) => ({
     entry: data.days[i],
     index: i,
+    length: n,
     t: timeline.days[i],
     locked,
     onFirst: (slot: SlotKind) => !locked && setMatchup({ index: i, slot }),
@@ -240,6 +242,12 @@ export function BuildStep({ data, update, locked, budget, onOpenBudget, onBack, 
           {daysNightsLabel(n)}: {nightsLine(e, n)}. Pick a {slotLabel("day").toLowerCase()} and an {slotLabel("night").toLowerCase()} — and add as
           much to each as you like.
         </p>
+        {structureNote(e, n) && (
+          <p className="mt-3 flex items-start gap-2 rounded-2xl bg-highlight-100 px-3 py-2 text-[13px] leading-snug text-ink-2 ring-1 ring-highlight-200">
+            <Info className="mt-0.5 size-4 shrink-0 text-highlight-600" />
+            {structureNote(e, n)} — longer dates bring it back.
+          </p>
+        )}
         <StaysBanner stays={sections.map((s) => ({ base: s.base, nights: s.nights }))} className="mt-4" />
         {!locked && (
           <div className="mt-4 flex gap-2.5">

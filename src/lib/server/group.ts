@@ -2,7 +2,8 @@ import "server-only";
 import { dateRange } from "@/lib/dates";
 import { isTestName } from "@/lib/test-users";
 import { STAY_ID, countItems, normalize, tripLength, type ItineraryData } from "@/engine/itinerary";
-import { nightsFor, tripDays, type Engine } from "@/engine/structure";
+import { medianLength, pickWindows } from "@/engine/consensus/dates";
+import { defaultLength, isFixed, lengthBounds, nightsFor, tripDays, type Engine } from "@/engine/structure";
 import { balanceOf } from "@/engine/timeline";
 import { db, roleOf, type ItineraryRow, type ParticipantRow, type Role, type Stamp } from "./db";
 import type { TripContext } from "./trip";
@@ -55,7 +56,10 @@ export type GroupStats = {
   withDates: number;
   dateCounts: Record<string, number>;
   maxDateCount: number;
-  sweetSpot: { start: string; end: string; min: number; days: number } | null;
+  /** The best window at the typical length: `full` people free for all of it (see engine/consensus/dates). */
+  sweetSpot: { start: string; end: string; full: number; days: number } | null;
+  /** Plan lengths: shortest, longest and the typical (median) one. */
+  lengths: { min: number; max: number; typical: number } | null;
   topOptions: { optionId: string; count: number; slot: "day" | "night" }[];
   stayCount: { day: number; night: number };
   balance: number | null;
@@ -103,22 +107,12 @@ export function computeStats(e: Engine, people: Person[]): GroupStats {
     if (b !== null) balances.push(b);
   }
 
-  // Sweet spot: the full-length window where the most people can make every
-  // single day; ties go to the busier window.
-  let sweetSpot: GroupStats["sweetSpot"] = null;
-  let bestSum = -1;
-  const len = tripDays(e);
-  for (let i = 0; i + len <= dates.length; i++) {
-    const window = dates.slice(i, i + len);
-    const counts = window.map((d) => dateCounts[d]);
-    const min = Math.min(...counts);
-    const sum = counts.reduce((a, b) => a + b, 0);
-    const better = !sweetSpot || min > sweetSpot.min || (min === sweetSpot.min && sum > bestSum);
-    if (min > 0 && better) {
-      sweetSpot = { start: window[0], end: window[len - 1], min, days: len };
-      bestSum = sum;
-    }
-  }
+  // Sweet spot: the window at the typical length (fixed: the trip's length)
+  // where the most people are free for every day; ties go to the busier window.
+  const typical = isFixed(e) ? tripDays(e) : medianLength(lengths);
+  const ranges = people.flatMap((p) => (p.data?.startDate && p.data.endDate ? [{ id: p.id, start: p.data.startDate, end: p.data.endDate }] : []));
+  const best = typical ? pickWindows(ranges, e.rules.window, typical, 0).best : null;
+  const sweetSpot = best && best.full > 0 ? { start: best.start, end: best.end, full: best.full, days: best.length } : null;
 
   return {
     joined: people.length,
@@ -139,6 +133,7 @@ export function computeStats(e: Engine, people: Person[]): GroupStats {
       .map(([region, count]) => ({ region, count })),
     flexibility,
     avgLength: lengths.length ? lengths.reduce((a, b) => a + b, 0) / lengths.length : null,
+    lengths: lengths.length ? { min: Math.min(...lengths), max: Math.max(...lengths), typical: medianLength(lengths)! } : null,
     people: people.map((p) => ({ id: p.id, name: p.name, status: p.status })),
   };
 }
@@ -149,15 +144,29 @@ export type PublicCounts = {
   submitted: number;
   initials: string[];
   locked: boolean;
-  trip: { days: number; bases: { name: string; nights: number }[]; start: string; end: string };
+  /** The trip's shape: free dates (a length range, shown at the usual length) or one fixed length. */
+  trip: {
+    fixed: boolean;
+    days: number;
+    min: number;
+    max: number;
+    recommended: { min: number; max: number } | null;
+    bases: { name: string; nights: number }[];
+    start: string;
+    end: string;
+  };
   announcement: string | null;
 };
 
 export async function publicCounts(trip: TripContext): Promise<PublicCounts> {
   const e = trip.engine;
+  const days = defaultLength(e);
   const shape = {
-    days: tripDays(e),
-    bases: nightsFor(e, tripDays(e)).map((s) => ({ name: s.base.name, nights: s.nights })),
+    fixed: isFixed(e),
+    days,
+    ...lengthBounds(e),
+    recommended: isFixed(e) ? null : e.rules.recommended,
+    bases: nightsFor(e, days).map((s) => ({ name: s.base.name, nights: s.nights })),
     start: e.rules.window.start,
     end: e.rules.window.end,
   };

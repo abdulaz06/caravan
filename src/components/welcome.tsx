@@ -29,16 +29,24 @@ function steps(t: PublicCounts["trip"], special: string | null) {
   const nights = (n: number) => `${WORDS[n] ?? n} ${n === 1 ? "night" : "nights"}`;
   const where = t.bases.filter((b) => b.nights > 0).map((b) => `${nights(b.nights)} in ${b.name}`);
   const shape = where.length > 1 ? `${where.slice(0, -1).join(", ")}, then ${where.at(-1)}` : (where[0] ?? "");
+  const range = t.min === t.max ? `${t.min} days` : `${t.min}–${t.max} days`;
+  const usually = t.recommended ? ` Most groups do ${t.recommended.min}–${t.recommended.max}.` : "";
   return [
-    {
-      icon: CalendarHeart,
-      title: `Place your ${t.days} days`,
-      body: `The trip is ${t.days} days · ${t.days - 1} nights. Slide the window anywhere from ${shortDay(t.start)} to ${shortDay(t.end)}${special ? ` — over ${special}, maybe?` : "."}`,
-    },
+    t.fixed
+      ? {
+          icon: CalendarHeart,
+          title: `Place your ${t.days} days`,
+          body: `The trip is ${t.days} days · ${t.days - 1} nights. Slide the window anywhere from ${shortDay(t.start)} to ${shortDay(t.end)}${special ? ` — over ${special}, maybe?` : "."}`,
+        }
+      : {
+          icon: CalendarHeart,
+          title: "Pick your dates",
+          body: `Any start, any end: ${range} between ${shortDay(t.start)} and ${shortDay(t.end)}.${usually}${special ? ` Over ${special}, maybe?` : ""}`,
+        },
     {
       icon: Swords,
       title: "Build your days",
-      body: `${shape.replace(/^./, (c) => c.toUpperCase())}. Pick A vs B for each daytime and evening, add extras, or tap Quick fill.`,
+      body: `${t.fixed ? "" : `${t.days} days is `}${t.fixed ? shape.replace(/^./, (c) => c.toUpperCase()) : shape}. Pick A vs B for each daytime and evening, add extras, or tap Quick fill.`,
     },
     {
       icon: PartyPopper,

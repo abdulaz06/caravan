@@ -1,7 +1,7 @@
 import "server-only";
 import type { Catalog, Photo } from "@/engine/catalog";
 import { defaultRules } from "@/engine/rules";
-import { createEngine, daysNightsLabel, nightsLine, tripDays } from "@/engine/structure";
+import { createEngine, defaultLength, lengthBounds, lengthRangeLabel, nightsLine } from "@/engine/structure";
 import { PRESET_IDS, loadPreset } from "@/presets/registry";
 
 /** A preset as Caravan's own pages show it: a card in its own colours. */
@@ -12,7 +12,9 @@ export type Destination = {
   season: string;
   tagline: string;
   headline: [string, string];
+  /** "5–7 days": the suggested length (any length in the rules can be picked). */
   length: string;
+  /** The bases at the usual length: "6 days: Colombo · 1 night → Galle · 4 nights". */
   shape: string;
   /** Suggested trip name, e.g. "Sri Lanka '26". */
   suggestedName: string;
@@ -27,7 +29,7 @@ export function destinations(): Destination[] {
   return PRESET_IDS.map((id) => {
     const { preset, catalog } = loadPreset(id);
     const e = createEngine(catalog, defaultRules(preset));
-    const days = tripDays(e);
+    const days = defaultLength(e);
     const p = preset.theme.palette;
     const d = preset.destination;
     return {
@@ -37,8 +39,8 @@ export function destinations(): Destination[] {
       season: d.season,
       tagline: d.tagline,
       headline: d.headline,
-      length: daysNightsLabel(days),
-      shape: nightsLine(e, days),
+      length: lengthRangeLabel(e.rules.recommended ?? lengthBounds(e)),
+      shape: `${days} days: ${nightsLine(e, days)}`,
       suggestedName: `${preset.name} '${preset.dates.window.start.slice(2, 4)}`,
       options: catalog.options.length,
       photo: catalog.heroPhotos[0] ?? null,

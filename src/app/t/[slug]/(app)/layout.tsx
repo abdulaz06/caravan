@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Lockup, Stamp } from "@/components/brand/wordmark";
-import { nightsFor, tripDays } from "@/engine/structure";
+import { defaultLength, isFixed, lengthBounds, lengthRangeLabel, nightsFor } from "@/engine/structure";
 import { tripFromParams } from "@/lib/server/trip";
 
 const WORDS = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"];
@@ -14,7 +14,7 @@ export default async function AppLayout({ children, params }: LayoutProps<"/t/[s
   const trip = await tripFromParams(params);
   const { preset, catalog, engine } = trip;
   const hero = catalog.heroPhotos[1] ?? catalog.heroPhotos[0];
-  const days = tripDays(engine);
+  const days = defaultLength(engine);
   const split = nightsFor(engine, days).filter((s) => s.nights > 0);
   const nightWord = (n: number, first: boolean) => (n === 1 && first ? "a night" : `${WORDS[n] ?? n}${first ? (n === 1 ? " night" : " nights") : ""}`);
   const shape = split.map((s, i) => `${nightWord(s.nights, i === 0)} in ${s.base.name}`).join(", then ");
@@ -52,7 +52,7 @@ export default async function AppLayout({ children, params }: LayoutProps<"/t/[s
                 <span className="italic text-highlight-400">{d.headline[1]}</span>
               </h2>
               <p className="mt-5 max-w-md text-lg text-paper/80">
-                {days} days · {days - 1} nights: {shape}.{" "}
+                {isFixed(engine) ? `${days} days · ${days - 1} nights: ${shape}.` : `Your dates, ${lengthRangeLabel(engine.rules.recommended ?? lengthBounds(engine))}: ${shape}.`}{" "}
                 {d.familyTagline ? (
                   <>
                     <span className="family-hide">{d.tagline}.</span>
