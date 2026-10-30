@@ -4,7 +4,7 @@
 // group's shape (13 travellers, a fixed 6 days, two bases). Pure engine
 // code — no database, the same output every run.
 //   npx tsx --conditions=react-server scripts/consensus-report.ts > docs/CONSENSUS-DEMO.md
-import { compareModes, generatePlan, MODE_COPY, type Ballot, type ConsensusPlan, type DecisionMode } from "@/engine/consensus";
+import { compareModes, generatePlan, MODE_COPY, protectEffect, type Ballot, type ConsensusPlan, type DecisionMode } from "@/engine/consensus";
 import { emptyItinerary, normalize, setStart, STAY_ID } from "@/engine/itinerary";
 import { quickFill } from "@/engine/quickfill";
 import { defaultRules } from "@/engine/rules";
@@ -21,7 +21,7 @@ function datesSection(plan: ConsensusPlan, names: Map<string, string>): string {
   const out: string[] = [];
   const d = plan.dates;
   if (d.lengths.length) {
-    out.push("**Length vs attendance** (each length's best window; ★ = the most “people there for all of it × days”, never below the suggested minimum):", "");
+    out.push("**Length vs attendance** (each length's best window; ★ = the most “people there for all of it × days”; ties go to more people there for all of it, then the suggested range, then the longer trip):", "");
     out.push("| Length | Can do it all | × days | Person-days | Best window |", "|---|---|---|---|---|");
     for (const o of d.lengths) if (o.full > 0 || o.recommended) out.push(`| ${o.length === 1 ? "1 day" : `${o.length} days`}${o.recommended ? " ★" : ""} | ${o.full} of ${d.withDates} | ${o.full * o.length} | ${o.personDays} | ${rangeLabel(o.start, o.end)} |`);
     out.push("");
@@ -42,7 +42,10 @@ function modeSection(e: Engine, plan: ConsensusPlan, title: string): string {
   const name = (id: string) => (id === STAY_ID ? "Free time / stay in" : (catalog.byId[id]?.title ?? id));
   const s = plan.settings;
   out.push(`### ${title}`, "");
-  out.push(`**Mode:** ${MODE_COPY[s.mode].label} — strength ${s.strength}, λ = ${s.lambda}, may give up ${pct1(s.effectiveTolerance)} of the most popular plan's score.`, "");
+  out.push(
+    `**Mode:** ${MODE_COPY[s.mode].label} — strength ${s.strength}, λ = ${s.lambda}, may give up ${pct1(s.effectiveTolerance)} of the most popular plan's score${s.mode === "majority" ? "" : `, Protect everyone else ${plan.fairness.protect ? "on" : "off"}`}.`,
+    "",
+  );
   out.push("| Day | Slot | Item | Reasons | Runner-up |", "|---|---|---|---|---|");
   for (const sl of plan.slots) {
     sl.items.forEach((it, i) => {
@@ -54,9 +57,17 @@ function modeSection(e: Engine, plan: ConsensusPlan, title: string): string {
     });
     if (sl.split) out.push(`| | | ↳ split ${sl.split.status}: ${sl.split.a.votes} ${cell(name(sl.split.a.id))} / ${sl.split.b.votes} ${cell(name(sl.split.b.id))} | ${sl.split.both} picked both | |`);
   }
-  out.push("", "| Traveller | Status | Days there | Picks | Could fit | In the plan | Share | Added to lift them |", "|---|---|---|---|---|---|---|---|");
+  out.push(
+    "",
+    "| Traveller | Status | Days there | Picks | Free slots asked for | Could fit | In the plan | Share | vs Majority rules | Added to lift them |",
+    "|---|---|---|---|---|---|---|---|---|---|",
+  );
+  const delta = (n: number | undefined) => (s.mode === "majority" || !n ? "" : n > 0 ? `+${n}` : `−${-n}`);
   for (const p of [...plan.people].sort((a, b) => (a.satisfaction ?? -1) - (b.satisfaction ?? -1) || a.name.localeCompare(b.name))) {
-    out.push(`| ${p.name} | ${p.status} | ${p.daysThere} | ${p.picks} | ${p.feasible} | ${p.made.length} | ${pct(p.satisfaction)} | ${p.floorAdded || ""} |`);
+    const rest = p.rest ?? { feasible: 0, made: 0 };
+    out.push(
+      `| ${p.name} | ${p.status} | ${p.daysThere} | ${p.picks} | ${rest.feasible ? `${rest.made} of ${rest.feasible} free` : ""} | ${p.feasible} | ${p.made.length + rest.made} | ${pct(p.satisfaction)} | ${delta(p.vsMajority)} | ${p.floorAdded || ""} |`,
+    );
   }
   const f = plan.fairness;
   out.push(
@@ -64,8 +75,9 @@ function modeSection(e: Engine, plan: ConsensusPlan, title: string): string {
     `**Lowest ${pct(f.min)} · median ${pct(f.median)} · Jain's index ${f.index.toFixed(3)}** (mean ${pct(f.mean)}).` +
       (s.mode === "majority"
         ? ""
-        : ` Versus Majority rules: lowest ${pct(f.majority.min)} → ${pct(f.min)}, median ${pct(f.majority.median)} → ${pct(f.median)}, Jain's ${f.majority.index.toFixed(3)} → ${f.index.toFixed(3)}; ${f.lifted} people lifted; score ${pct(f.scoreKept)} of the most popular plan's.`) +
-      (f.note ? ` *${f.note}*` : ""),
+        : ` Versus Majority rules: lowest ${pct(f.majority.min)} → ${pct(f.min)}, median ${pct(f.majority.median)} → ${pct(f.median)}, Jain's ${f.majority.index.toFixed(3)} → ${f.index.toFixed(3)}; ${f.lifted} people lifted, ${f.losers ?? 0} lost a pick (at most ${f.maxLoss ?? 0}); score ${pct(f.scoreKept)} of the most popular plan's.`) +
+      (f.note ? ` *${f.note}*` : "") +
+      (f.aboveNote ? ` *${f.aboveNote}*` : ""),
     "",
     `Budget ≈ $${plan.budget.perPerson[0]}–${plan.budget.perPerson[1]} per person${plan.budget.note ? ` (${plan.budget.note})` : ""}.`,
     "",
@@ -76,13 +88,18 @@ function modeSection(e: Engine, plan: ConsensusPlan, title: string): string {
 
 function compareTable(e: Engine, ballots: Ballot[], fairness: number): string {
   const rows = compareModes(e, ballots, { fairness });
-  const out = ["| Mode | Lowest | Median | Jain's | Picks in the plan | With none of theirs | Score vs most popular | Slots unlike Everyone gets a say |", "|---|---|---|---|---|---|---|---|"];
-  for (const m of rows) {
-    const label = m.mode === "custom" ? `Custom (slider ${fairness})` : m.label;
-    out.push(`| ${label} | ${pct(m.fairness.min)} | ${pct(m.fairness.median)} | ${m.fairness.index.toFixed(3)} | ${m.picksMade} | ${m.leftOut} | ${pct(m.fairness.scoreKept)} | ${m.differs} |`);
-  }
+  const flipped = protectEffect(e, ballots, { fairness, protect: true });
+  const out = [
+    "| Mode | Lowest | Median | Jain's | Picks in the plan | With none of theirs | Score vs most popular | Most anyone lost | Slots unlike Everyone gets a say |",
+    "|---|---|---|---|---|---|---|---|---|",
+  ];
+  const row = (label: string, m: (typeof rows)[number]) =>
+    `| ${label} | ${pct(m.fairness.min)} | ${pct(m.fairness.median)} | ${m.fairness.index.toFixed(3)} | ${m.picksMade} | ${m.leftOut} | ${pct(m.fairness.scoreKept)} | ${m.fairness.maxLoss ?? 0} | ${m.differs} |`;
+  for (const m of rows) out.push(row(m.mode === "custom" ? `Custom (slider ${fairness})` : m.label, m));
+  out.push(row("Everyone gets a say, Protect everyone else off", flipped).replace(/\| [^|]* \|$/, "| — |"));
   const t = rows[0];
   if (rows.every((m) => m.differs === 0)) out.push("", `Every mode makes the same plan here. ${t.fairness.note ?? ""}`);
+  else if (rows[2].sameWhy) out.push("", `Custom matches ${rows[2].sameAs === "together" ? "Everyone gets a say" : "Majority rules"} here. ${rows[2].sameWhy}`);
   return out.join("\n") + "\n";
 }
 
@@ -104,9 +121,9 @@ function fixedCrew(e: Engine, count: number): Ballot[] {
 const lines = [
   "# The group plan on the demo crews",
   "",
-  "Generated by `npx tsx --conditions=react-server scripts/consensus-report.ts` — the consensus generator (docs/CONSENSUS.md) on each demo trip's fictional crew, in every decision mode, with the default knobs (Everyone gets a say may give up 15% of the most popular plan's score; Custom at the slider's halfway gives up 7.5%). Pure engine code: the same output every run.",
+  "Generated by `npx tsx --conditions=react-server scripts/consensus-report.ts` — the consensus generator (docs/CONSENSUS.md) on each demo trip's fictional crew, in every decision mode, with the default knobs: Everyone gets a say may give up 15% of the most popular plan's score, Protect everyone else is on (nobody ends more than one pick down on Majority rules), and Custom at the slider's halfway makes the first half of Everyone gets a say's lifts. Pure engine code: the same output every run.",
   "",
-  "A traveller's **share** is the picks of theirs in the plan ÷ their picks that could fit the days they're there in the chosen window.",
+  "A traveller's **share** is what of theirs is in the plan ÷ what could fit the days they're there in the chosen window: their activity picks, plus the free slots they asked for (their stay-ins, scaled to their days here). **vs Majority rules** is picks (and free slots) gained or lost compared with the most popular plan.",
   "",
 ];
 for (const id of ["sri-lanka", "georgia"]) {
@@ -137,17 +154,23 @@ for (const id of ["sri-lanka", "georgia"]) {
   );
   const plan = generatePlan(e, ballots, { mode: "together" });
   lines.push(datesSection(plan, new Map(plan.people.map((p) => [p.id, p.name]))));
-  lines.push("**What the fairness step uses here:** there's no K any more — every mode works on shares, and the knob is how much popularity it may give up:", "");
-  lines.push("| Mode | Strength | λ | May give up | Lowest | Median | Jain's | Score vs most popular | People lifted |", "|---|---|---|---|---|---|---|---|---|");
-  for (const [mode, fairness, label] of [
-    ["together", 0.5, "Everyone gets a say"],
-    ["majority", 0.5, "Majority rules"],
-    ["custom", 0.5, "Custom (slider halfway)"],
-    ["custom", 1, "Custom (slider at fairness)"],
+  lines.push("**What the fairness step uses here:** there's no K — every mode works on shares. Everyone gets a say may give up up to 15% of the most popular plan's score (and actually gives up what its lifts cost); Custom makes its slider's share of those lifts; Protect everyone else keeps everyone within one pick of Majority rules:", "");
+  lines.push(
+    "| Mode | Strength | λ | May give up | Lowest | Median | Jain's | Score vs most popular | People lifted | Most anyone lost |",
+    "|---|---|---|---|---|---|---|---|---|---|",
+  );
+  for (const [mode, fairness, protect, label] of [
+    ["together", 0.5, true, "Everyone gets a say"],
+    ["together", 0.5, false, "Everyone gets a say, Protect off"],
+    ["majority", 0.5, true, "Majority rules"],
+    ["custom", 0.5, true, "Custom (slider halfway)"],
+    ["custom", 1, true, "Custom (slider at fairness)"],
   ] as const) {
-    const p = generatePlan(e, ballots, { mode, fairness });
+    const p = generatePlan(e, ballots, { mode, fairness, protect });
     const f = p.fairness;
-    lines.push(`| ${label} | ${p.settings.strength} | ${p.settings.lambda} | ${pct1(p.settings.effectiveTolerance)} | ${pct(f.min)} | ${pct(f.median)} | ${f.index.toFixed(3)} | ${pct(f.scoreKept)} | ${f.lifted} |`);
+    lines.push(
+      `| ${label} | ${p.settings.strength} | ${p.settings.lambda} | ${pct1(p.settings.effectiveTolerance)} | ${pct(f.min)} | ${pct(f.median)} | ${f.index.toFixed(3)} | ${pct(f.scoreKept)} | ${f.lifted} | ${f.maxLoss ?? 0} |`,
+    );
   }
   lines.push("");
   lines.push(modeSection(e, plan, "Everyone gets a say"));
