@@ -65,7 +65,7 @@ describe("the demo never makes a visitor wait", () => {
     expect((await db().getTripBySlug(demo.slug))!.id).toBe(row.id);
   });
 
-  it("the post-build warm-up rebuilds only what's missing or stale", async () => {
+  it("the after-deploy warm-up rebuilds only what's missing or stale", async () => {
     const row = (await db().getTripBySlug(demo.slug))!;
     await db().updateTrip(row.id, { rules: { demoSeed: DEMO_SEED } });
     const out = await warmDemoTrips();
@@ -74,5 +74,28 @@ describe("the demo never makes a visitor wait", () => {
       { slug: "demo-georgia", rebuilt: true },
     ]);
     expect((await db().getTripBySlug(demo.slug))!.id).toBe(row.id);
+  }, 30_000);
+
+  it("the warm-up endpoint is protected, and waits for the live deployment to be the expected commit", async () => {
+    const { POST } = await import("@/app/api/cron/warm-demos/route");
+    const call = (headers: Record<string, string>) => POST(new Request("http://localhost/api/cron/warm-demos", { method: "POST", headers }));
+    process.env.CRON_SECRET = "test-secret";
+    process.env.VERCEL_GIT_COMMIT_SHA = "abc123";
+    try {
+      expect((await call({})).status).toBe(401);
+      expect((await call({ authorization: "Bearer nope" })).status).toBe(401);
+      // An older deployment still serving: nothing is warmed yet.
+      const early = await call({ authorization: "Bearer test-secret", "x-expect-commit": "def456" });
+      expect(await early.json()).toMatchObject({ live: false, commit: "abc123" });
+      const row = (await db().getTripBySlug(demo.slug))!;
+      await db().updateTrip(row.id, { rules: { demoSeed: DEMO_SEED - 1 } });
+      const res = await call({ authorization: "Bearer test-secret", "x-expect-commit": "abc123" });
+      expect(res.status).toBe(200);
+      expect(await res.json()).toMatchObject({ live: true, seed: DEMO_SEED, demos: [{ slug: "demo-sri-lanka", rebuilt: true }, { slug: "demo-georgia", rebuilt: false }] });
+      expect((await db().getTripBySlug(demo.slug))!.id).not.toBe(row.id);
+    } finally {
+      delete process.env.CRON_SECRET;
+      delete process.env.VERCEL_GIT_COMMIT_SHA;
+    }
   }, 30_000);
 });

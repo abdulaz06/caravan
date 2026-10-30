@@ -17,10 +17,11 @@ export const MAX_DEMO_GUESTS = 250;
 /**
  * Bump when the demo's seed changes shape (dates, plans, the published plan):
  * a demo built from an older seed is rebuilt — in the background, while the
- * old one keeps serving — after the next production build
- * (scripts/warm-demos.ts), on its next visit and at the nightly reset.
+ * old one keeps serving — once the next production deployment is live (the
+ * "Warm the demos" GitHub Action → /api/cron/warm-demos), on its next visit
+ * and at the nightly reset.
  */
-export const DEMO_SEED = 7;
+export const DEMO_SEED = 8;
 const seedOf = (rules: unknown) => (rules && typeof rules === "object" ? (rules as { demoSeed?: unknown }).demoSeed : undefined);
 /** Built from this seed or a newer one (while a deploy rolls out, older code leaves a newer demo alone). */
 export const isCurrentDemo = (rules: unknown) => {
@@ -168,7 +169,7 @@ export async function resetDemoTrips() {
   return out;
 }
 
-/** Rebuilds only the demos that are missing or from an older seed (after a production build). */
+/** Rebuilds only the demos that are missing or from an older seed (after a production deployment goes live). */
 export async function warmDemoTrips() {
   const out: { slug: string; rebuilt: boolean }[] = [];
   for (const d of DEMOS) {

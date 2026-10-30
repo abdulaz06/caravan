@@ -1,0 +1,38 @@
+name: Warm the demos
+
+# After each production deployment is live, rebuild any demo trip that's out of
+# date (a new DEMO_SEED), so no visitor ever meets a stale or half-built demo.
+# Vercel reports each deployment as a "Vercel" commit status; this runs when a
+# commit on main turns green and calls the protected warm-up endpoint
+# (src/app/api/cron/warm-demos/route.ts). Needs the same CRON_SECRET as the
+# Vercel project, as a GitHub Actions secret (see SETUP.md). Without it, it
+# skips — the demos still rebuild in the background on their next visit.
+on:
+  status:
+
+permissions: {}
+
+jobs:
+  warm:
+    if: github.event.context == 'Vercel' && github.event.state == 'success' && contains(github.event.branches.*.name, 'main')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Rebuild stale demos on the live deployment
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          SITE: ${{ vars.CARAVAN_URL || 'https://caravan-prod.vercel.app' }}
+          SHA: ${{ github.event.sha }}
+        run: |
+          if [ -z "$CRON_SECRET" ]; then
+            echo "::notice::CRON_SECRET isn't a GitHub Actions secret yet, so the demos weren't warmed (they rebuild on their next visit instead)."
+            exit 0
+          fi
+          # The production alias can lag the green status by a moment: ask until this commit is the one serving.
+          for attempt in $(seq 1 20); do
+            out=$(curl -sS --max-time 90 -X POST "$SITE/api/cron/warm-demos" -H "Authorization: Bearer $CRON_SECRET" -H "X-Expect-Commit: $SHA" || true)
+            echo "$out"
+            if echo "$out" | grep -q '"live":true'; then exit 0; fi
+            sleep 15
+          done
+          echo "::warning::$SITE never served commit $SHA; the demos will rebuild on their next visit."

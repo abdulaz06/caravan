@@ -101,19 +101,28 @@ Restart `npm run dev`; the app now uses the `caravan` database. `.env.local` is 
    | `SUPABASE_SERVICE_ROLE_KEY` | the `caravan` `sb_secret_…` key |
    | `SESSION_SECRET` | another **new** random string (not your local one) |
    | `ADMIN_PASSWORD` | your Caravan admin password |
-   | `CRON_SECRET` | a **new** random string — lets Vercel Cron reset the demo trip nightly |
+   | `CRON_SECRET` | a **new** random string — lets Vercel Cron reset the demo trips nightly, and the warm-up below rebuild them after a deploy |
 
    `NEXT_PUBLIC_SITE_URL` is optional — Vercel's production domain is used automatically.
 5. **Deploy**. You'll get a link like `https://caravan-xxxx.vercel.app`.
 6. **Match the region:** project → **Settings → Functions → Function Region** → the one next to your Supabase region → **Save** → **Deployments → ⋯ → Redeploy**.
+7. **Warm the demos after each deploy:** on GitHub, the repo → **Settings → Secrets and variables → Actions → New repository secret** → name `CRON_SECRET`, value **the same string** as the Vercel variable → **Add secret**. If your production domain isn't `caravan-prod.vercel.app`, also add a repository **variable** `CARAVAN_URL` (e.g. `https://your-domain`).
 
 Every push to `main` redeploys. After changing an environment variable, redeploy for it to apply.
+
+### What happens after a deploy
+
+1. Vercel builds and deploys `main`, and reports it on the commit as a green **Vercel** status.
+2. That status starts the **Warm the demos** GitHub Action (`.github/workflows/warm-demos.yml`). It calls `POST <site>/api/cron/warm-demos` with `Authorization: Bearer <CRON_SECRET>` and `X-Expect-Commit: <sha>`, and keeps asking every 15 s until the live site is serving that commit (the production alias can lag the status by a moment).
+3. The endpoint rebuilds every demo that's missing or from an older `DEMO_SEED`, each into a temporary trip that is then swapped in under the same slug — visitors keep seeing the old demo until the new one is complete, and never wait.
+
+Without the GitHub secret the action skips with a notice; the demos still rebuild in the background on their next visit (the visitor gets the existing demo straight away). To warm by hand: run the action again from the **Actions** tab (**Re-run jobs**), `curl -X POST -H "Authorization: Bearer <CRON_SECRET>" https://<your-domain>/api/cron/warm-demos`, or locally against the configured database `WARM_DEMOS=1 npx tsx --conditions=react-server scripts/warm-demos.ts`.
 
 ---
 
 ## The demo trip and past trips
 
-- **`/demo`** lets visitors pick a demo: one trip per destination (`/t/demo-sri-lanka`, `/t/demo-georgia`), each with the same 12 fictional travellers (drafts, submitted plans, roommate picks, peeks). Visitors never wait for one: after every **production** build, `npm run build`'s `postbuild` step (`scripts/warm-demos.ts`, only when `VERCEL_ENV=production`) rebuilds any demo that is missing or from an older `DEMO_SEED`, against the production database; a demo that's still stale on a visit keeps serving while a fresh copy is built after the response and swapped in under the same slug. Only a demo that doesn't exist at all is built while the visitor waits. To warm by hand against the configured database: `WARM_DEMOS=1 npx tsx --conditions=react-server scripts/warm-demos.ts`. Visitors **try it as a guest** (a throwaway traveller with no PIN) or **view as organizer (demo)** — the console, read-only (every write is refused server-side; exports work).
+- **`/demo`** lets visitors pick a demo: one trip per destination (`/t/demo-sri-lanka`, `/t/demo-georgia`), each with the same 12 fictional travellers (drafts, submitted plans, roommate picks, peeks). Visitors never wait for one: once each production deployment is live, the **Warm the demos** action rebuilds any demo that is missing or from an older `DEMO_SEED` (see *What happens after a deploy* above); a demo that's still stale on a visit keeps serving while a fresh copy is built after the response and swapped in under the same slug. Only a demo that doesn't exist at all is built while the visitor waits. Visitors **try it as a guest** (a throwaway traveller with no PIN) or **view as organizer (demo)** — the console, read-only (every write is refused server-side; exports work).
 - **Nightly reset:** `vercel.json` schedules `GET /api/cron/reset-demo` at 03:00 UTC (the same build-then-swap, so the demo never disappears). Vercel sends `Authorization: Bearer <CRON_SECRET>`; set `CRON_SECRET` in the project's environment variables or the endpoint refuses. To reset by hand: project → **Settings → Cron Jobs → Run**, or `curl -H "Authorization: Bearer <CRON_SECRET>" https://<your-domain>/api/cron/reset-demo`.
 - **Past trips** (`/past`) are JSON files in `content/past-trips/`: a preset id, real dates, the picks per day, and the story slides. They render with the same poster, route map and timeline as a live plan.
 

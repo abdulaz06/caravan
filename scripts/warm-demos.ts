@@ -1,16 +1,15 @@
-// After a production build on Vercel (npm's postbuild): rebuilds any demo trip
-// that is missing or from an older seed, so no visitor ever waits for one.
-// Elsewhere (local builds, CI, previews) it does nothing unless WARM_DEMOS=1.
-// It never fails the build: a demo that couldn't be warmed is rebuilt in the
-// background on its next visit instead.
-//   npx tsx --conditions=react-server scripts/warm-demos.ts
+// Rebuilds any demo trip that is missing or from an older seed, against the
+// database this shell is configured for — by hand. In production, the "Warm
+// the demos" GitHub Action calls /api/cron/warm-demos once each deployment is
+// live instead. Runs only with WARM_DEMOS=1, so it's never run by accident.
+//   WARM_DEMOS=1 npx tsx --conditions=react-server scripts/warm-demos.ts
 import { warmDemoTrips } from "@/lib/server/demo";
 
 const LIMIT_MS = 120_000;
 
 async function main() {
-  if (process.env.VERCEL_ENV !== "production" && process.env.WARM_DEMOS !== "1") {
-    console.log("warm-demos: not a production build, nothing to do");
+  if (process.env.WARM_DEMOS !== "1") {
+    console.log("warm-demos: set WARM_DEMOS=1 to rebuild stale demos against the configured database");
     return;
   }
   const out = await Promise.race([
