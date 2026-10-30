@@ -64,6 +64,7 @@ export function PlanTab({ settings: initialSettings, state: initialState, demo }
   const [choosing, setChoosing] = useState(!initialSettings.mode);
   const [knobs, setKnobs] = useState(false);
   const [modes, setModes] = useState<ModeSummary[] | null>(null);
+  const [flipped, setFlipped] = useState<ModeSummary | null>(null);
   const [swap, setSwap] = useState<PlanSlot | null>(null);
   const [diffOpen, setDiffOpen] = useState(false);
 
@@ -91,7 +92,10 @@ export function PlanTab({ settings: initialSettings, state: initialState, demo }
     setBusy("compare");
     const r = await post(trip.api("/admin/plan"), { action: "compare", settings });
     setBusy(null);
-    if (r.ok) setModes(r.body.modes);
+    if (r.ok) {
+      setModes(r.body.modes);
+      setFlipped(r.body.flipped ?? null);
+    }
     else toast(r.body.error ?? "Couldn't compare", "error");
   }
 
@@ -210,7 +214,20 @@ export function PlanTab({ settings: initialSettings, state: initialState, demo }
         </p>
       )}
 
-      {modes && <CompareModes modes={modes} current={settings.mode} onPick={(m) => generate({ ...settings, mode: m })} onClose={() => setModes(null)} />}
+      {modes && (
+        <CompareModes
+          modes={modes}
+          flipped={flipped}
+          protect={settings.protect}
+          current={settings.mode}
+          onPick={(m) => generate({ ...settings, mode: m })}
+          onProtect={(on) => {
+            setModes(null);
+            void generate({ ...settings, protect: on });
+          }}
+          onClose={() => setModes(null)}
+        />
+      )}
 
       {plan && timeline && (
         <div className={cn("space-y-4 transition-opacity", busy === "generate" && "opacity-60")}>
@@ -429,8 +446,7 @@ function Knobs({ settings, onApply }: { settings: PlanSettings; onApply: (s: Pla
   const rangeSlider = (k: "tolerance" | "splitShare", min: number, max: number, label: string) => (
     <input type="range" min={min} max={max} step={0.05} value={s[k]} onChange={(ev) => setS({ ...s, [k]: Number(ev.target.value) })} aria-label={label} className="w-32 accent-primary-700" />
   );
-  // Custom gives up a share of the tolerance in step with the slider.
-  const giveUp = s.mode === "custom" ? s.tolerance * s.fairness : s.tolerance;
+
   const stepper = (value: number | null, min: number, max: number, set: (v: number | null) => void, label: string, autoLabel: string) => (
     <div className="flex items-center gap-1" role="group" aria-label={label}>
       <button aria-label={`Less ${label}`} onClick={() => set(value === null ? max : value <= min ? null : value - 1)} className="grid size-8 place-items-center rounded-full bg-surface-200 font-bold">
@@ -449,9 +465,24 @@ function Knobs({ settings, onApply }: { settings: PlanSettings; onApply: (s: Pla
       {row(
         "Popularity it may give up",
         s.mode === "majority"
-          ? "Majority rules never gives any up. Used by Everyone gets a say and Custom."
-          : `Up to ${pct(giveUp)} of the plan's popularity, to lift whoever gets the smallest share of their picks${s.mode === "custom" ? " (at this slider)" : ""}.`,
+          ? "Majority rules never gives any up. Used by Everyone gets a say (and Custom makes part of its lifts)."
+          : `Up to ${pct(s.tolerance)} of the most popular plan's score, to lift whoever gets the smallest share of their picks${s.mode === "custom" ? ". Custom makes the first part of those lifts, in step with its slider" : ""}.`,
         rangeSlider("tolerance", 0, 0.5, "Popularity it may give up"),
+      )}
+      {row(
+        "Protect everyone else",
+        s.protect
+          ? "On: while lifting the lowest shares, nobody ends up more than one pick down on Majority rules."
+          : "Off: lifting the lowest shares may cost someone else more than one pick.",
+        <button
+          role="switch"
+          aria-checked={s.protect}
+          aria-label="Protect everyone else"
+          onClick={() => setS({ ...s, protect: !s.protect })}
+          className={cn("relative h-7 w-12 shrink-0 rounded-full transition", s.protect ? "bg-primary-700" : "bg-surface-300")}
+        >
+          <span className={cn("absolute top-1 size-5 rounded-full bg-paper shadow transition-all", s.protect ? "left-6" : "left-1")} />
+        </button>,
       )}
       {row(
         "Suggest splitting up",
@@ -617,7 +648,7 @@ function LengthTable({ plan, onLength }: { plan: ConsensusPlan; onLength: (lengt
           All {all.length} lengths
         </button>
       )}
-      <p className="mt-1.5 text-[11.5px] leading-snug text-paper/55">Best balance: the most “people there for all of it × days”, never shorter than the suggested minimum.</p>
+      <p className="mt-1.5 text-[11.5px] leading-snug text-paper/55">Best balance: the most “people there for all of it × days”. Ties go to more people there for all of it, then the suggested range, then the longer trip.</p>
     </div>
   );
 }
@@ -657,8 +688,8 @@ function Satisfaction({ plan }: { plan: ConsensusPlan }) {
         ))}
       </div>
       <p className="mt-2 text-[12px] leading-snug text-ink-3">
-        Share of each person&apos;s picks that made the plan, of the ones that could fit the days they&apos;re there. Fairness is Jain&apos;s index: 1.00 means
-        everyone did equally well.
+        Share of each person&apos;s picks that made the plan, of the ones that could fit the days they&apos;re there — free slots they asked for count as picks
+        too. Fairness is Jain&apos;s index: 1.00 means everyone did equally well.
       </p>
       {plan.settings.mode !== "majority" && (
         <p className="mt-2 rounded-xl bg-secondary-100/70 px-3 py-2 text-[12.5px] leading-snug text-ink-2">
@@ -666,10 +697,15 @@ function Satisfaction({ plan }: { plan: ConsensusPlan }) {
             <>
               Versus Majority rules, the lowest share went from <b>{pct(fairness.majority.min)}</b> to <b>{pct(fairness.min)}</b>
               {fairness.lifted > 0 && ` (${fairness.lifted} lifted)`}, keeping {pct(Math.min(1, fairness.scoreKept))} of its popularity.
+              {typeof fairness.maxLoss === "number" &&
+                (fairness.maxLoss === 0
+                  ? " Nobody lost a pick."
+                  : ` ${fairness.losers} gave up ${fairness.maxLoss === 1 ? "one pick each" : `up to ${fairness.maxLoss} picks`}${fairness.protect ? " — Protect everyone else keeps it to one" : ""}.`)}
             </>
           ) : (
             (fairness.note ?? "The most popular plan is already the fairest here.")
           )}
+          {fairness.aboveNote && <span className="mt-1 block text-ink-3">{fairness.aboveNote}</span>}
         </p>
       )}
       <ul className="mt-3 space-y-1.5" aria-label="Satisfaction per person">
@@ -682,15 +718,40 @@ function Satisfaction({ plan }: { plan: ConsensusPlan }) {
                 <span className="block h-full rounded-full bg-secondary-600" style={{ width: pct(p.satisfaction ?? 0) }} />
               </span>
               <span className="w-[5.5rem] shrink-0 text-right text-[12px] font-bold tabular-nums text-ink-2">
-                {p.satisfaction === null ? <span className="font-semibold text-ink-3">{p.picks ? "away" : "no picks"}</span> : `${pct(p.satisfaction)} · ${p.made.length}/${p.feasible}`}
+                {p.satisfaction === null ? (
+                  <span className="font-semibold text-ink-3">{p.picks ? "away" : "no picks"}</span>
+                ) : (
+                  `${pct(p.satisfaction)} · ${p.made.length + (p.rest?.made ?? 0)}/${p.feasible}`
+                )}
               </span>
+              {plan.settings.mode !== "majority" && (
+                <span
+                  className={cn(
+                    "w-8 shrink-0 text-right text-[11.5px] font-bold tabular-nums",
+                    (p.vsMajority ?? 0) > 0 ? "text-secondary-700" : (p.vsMajority ?? 0) < 0 ? "text-accent-700" : "text-ink-3/50",
+                  )}
+                  title="Picks versus Majority rules"
+                >
+                  {p.vsMajority ? `${p.vsMajority > 0 ? "+" : "−"}${Math.abs(p.vsMajority)}` : "·"}
+                </span>
+              )}
             </button>
             {open === p.id && (
               <div className="mb-2 ml-10 mt-1 space-y-1 text-[12.5px] leading-snug">
                 {p.daysThere < plan.dates.length && <p className="text-ink-3">There {p.daysThere} of {plan.dates.length} days.</p>}
-                {p.feasible < p.picks && (
+                {p.feasible - (p.rest?.feasible ?? 0) < p.picks && (
                   <p className="text-ink-3">
-                    {p.feasible} of their {p.picks} picks could fit the days they&apos;re there.
+                    {p.feasible - (p.rest?.feasible ?? 0)} of their {p.picks} picks could fit the days they&apos;re there.
+                  </p>
+                )}
+                {!!p.rest?.feasible && (
+                  <p className="text-ink-3">
+                    Free time: {p.rest.made} of the {p.rest.feasible} free {p.rest.feasible === 1 ? "slot" : "slots"} they asked for.
+                  </p>
+                )}
+                {plan.settings.mode !== "majority" && !!p.vsMajority && (
+                  <p className={p.vsMajority > 0 ? "font-semibold text-secondary-700" : "font-semibold text-accent-700"}>
+                    {p.vsMajority > 0 ? `${p.vsMajority} more` : `${-p.vsMajority} fewer`} than with Majority rules.
                   </p>
                 )}
                 {p.floorAdded > 0 && <p className="font-semibold text-secondary-700">{p.floorAdded} added to lift them.</p>}
@@ -708,9 +769,29 @@ function Satisfaction({ plan }: { plan: ConsensusPlan }) {
   );
 }
 
-function CompareModes({ modes, current, onPick, onClose }: { modes: ModeSummary[]; current: DecisionMode | null; onPick: (m: DecisionMode) => void; onClose: () => void }) {
+function CompareModes({
+  modes,
+  flipped,
+  protect,
+  current,
+  onPick,
+  onProtect,
+  onClose,
+}: {
+  modes: ModeSummary[];
+  flipped: ModeSummary | null;
+  protect: boolean;
+  current: DecisionMode | null;
+  onPick: (m: DecisionMode) => void;
+  onProtect: (on: boolean) => void;
+  onClose: () => void;
+}) {
   const same = modes.every((m) => m.differs === 0);
   const together = modes.find((m) => m.mode === "together");
+  const custom = modes.find((m) => m.mode === "custom");
+  // What "Protect everyone else" holds back (or would): Everyone gets a say with the switch the other way.
+  const changes = !!flipped && !!together && (Math.abs(flipped.fairness.min - together.fairness.min) > 1e-9 || (flipped.fairness.maxLoss ?? 0) !== (together.fairness.maxLoss ?? 0));
+  const loss = (m: ModeSummary) => m.fairness.maxLoss ?? 0;
   return (
     <section className="rounded-[24px] bg-paper p-4 shadow-card">
       <div className="flex items-center gap-2">
@@ -729,28 +810,59 @@ function CompareModes({ modes, current, onPick, onClose }: { modes: ModeSummary[
           <b>Every mode makes the same plan here.</b> {together?.fairness.note ?? "The most popular plan is already the fairest."}
         </p>
       )}
+      {!same && custom?.sameWhy && (
+        <p className="mt-2 rounded-xl bg-surface-100 px-3 py-2 text-[12.5px] leading-snug text-ink-2">
+          <b>Custom matches {custom.sameAs === "together" ? "Everyone gets a say" : "Majority rules"} here.</b> {custom.sameWhy}
+        </p>
+      )}
       <div className="mt-3 grid grid-cols-3 gap-2">
         {modes.map((m) => (
           <button
             key={m.mode}
             onClick={() => onPick(m.mode)}
             aria-pressed={current === m.mode}
-            className={cn("rounded-2xl border-2 p-2.5 text-left transition", current === m.mode ? "border-primary-600 bg-primary-100/60" : "border-transparent bg-surface-100 hover:bg-surface-200")}
+            className={cn(
+              "flex flex-col items-stretch justify-start rounded-2xl border-2 p-2.5 text-left transition",
+              current === m.mode ? "border-primary-600 bg-primary-100/60" : "border-transparent bg-surface-100 hover:bg-surface-200",
+            )}
           >
-            <span className="block text-[12.5px] font-bold leading-tight">{m.label}</span>
-            <span className="mt-2 block text-[11px] font-semibold uppercase tracking-wide text-ink-3">Lowest</span>
+            <span className="block min-h-[2lh] text-[12.5px] font-bold leading-tight">{m.label}</span>
+            <span className="mt-1.5 block text-[11px] font-semibold uppercase tracking-wide text-ink-3">Lowest</span>
             <span className="font-display block text-[20px] font-semibold leading-none">{pct(m.fairness.min)}</span>
             <span className="mt-1.5 block text-[11px] font-semibold uppercase tracking-wide text-ink-3">Median</span>
             <span className="font-display block text-[20px] font-semibold leading-none">{pct(m.fairness.median)}</span>
-            <span className="mt-1.5 block text-[11.5px] leading-snug text-ink-2">
-              Fairness {m.fairness.index.toFixed(2)} · {m.picksMade} picks in
+            <span className="mt-2 block space-y-1 border-t border-ink/5 pt-2 text-[11.5px] leading-tight text-ink-2">
+              <span className="block">Fairness {m.fairness.index.toFixed(2)}</span>
+              <span className="block">{m.picksMade} picks in</span>
               {m.leftOut > 0 && <span className="block font-bold text-accent-700">{m.leftOut} with none of theirs</span>}
-              {m.mode !== "majority" && m.fairness.scoreKept < 0.995 && <span className="block text-ink-3">Keeps {pct(m.fairness.scoreKept)} of the popularity</span>}
-              {m.differs > 0 && <span className="block text-ink-3">{m.differs} slots differ</span>}
+              {m.mode !== "majority" && <span className="block text-ink-3">Keeps {pct(m.fairness.scoreKept)} of the popularity</span>}
+              {m.mode !== "majority" && (
+                <span className="block text-ink-3">{loss(m) ? `Someone loses ${loss(m) === 1 ? "1 pick" : `${loss(m)} picks`}` : "Nobody loses a pick"}</span>
+              )}
+              {m.differs > 0 && <span className="block text-ink-3">{m.differs === 1 ? "1 slot differs" : `${m.differs} slots differ`}</span>}
             </span>
           </button>
         ))}
       </div>
+      {flipped && together && (
+        <div className="mt-3 flex items-start gap-2.5 rounded-xl bg-surface-100 px-3 py-2.5">
+          <span className="min-w-0 flex-1 text-[12.5px] leading-snug text-ink-2">
+            <b>Protect everyone else is {protect ? "on" : "off"}.</b>{" "}
+            {!changes
+              ? protect
+                ? "It didn't hold anything back here: the lifts never cost anyone more than one pick."
+                : "Turning it on wouldn't change anything here."
+              : protect
+                ? `Without it, Everyone gets a say would lift the lowest share to ${pct(flipped.fairness.min)} (from ${pct(together.fairness.min)}), but someone would lose ${loss(flipped)} picks.`
+                : `With it on, nobody would lose more than one pick, and the lowest share would be ${pct(flipped.fairness.min)} (now ${pct(together.fairness.min)}).`}
+          </span>
+          {changes && (
+            <button onClick={() => onProtect(!protect)} className="h-8 shrink-0 rounded-full bg-paper px-3 text-[12.5px] font-bold ring-1 ring-surface-300 hover:bg-surface-200">
+              Turn {protect ? "off" : "on"}
+            </button>
+          )}
+        </div>
+      )}
     </section>
   );
 }

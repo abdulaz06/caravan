@@ -54,9 +54,9 @@ export function ConsensusDiagram({ className }: { className?: string }) {
       {arrow("M650 128 L650 166")}
       {box(390, 170, 360, 100, "3 · Slots, inside the trip's rules", ["Pools, on-the-way stops, weekdays, NYE by vote", "One main meal a slot · extras close by", "No duplicates · no late night before an early start"], "dark")}
       {arrow("M388 220 L330 220")}
-      {box(10, 170, 316, 100, "A · Most popular first", ["Fill by score, improve, add popular", "extras: the yardstick (this is", "Majority rules)"])}
+      {box(10, 170, 316, 100, "A · Most popular first", ["Fill by score, add every extra that", "fits, improve and explore: the", "yardstick (this is Majority rules)"])}
       {arrow("M168 272 L168 310")}
-      {box(10, 314, 316, 100, "B · Lift the lowest share", ["The least-satisfied person, then the", "next — giving up at most 15% of the", "popularity (an organizer knob)"], "accent")}
+      {box(10, 314, 316, 100, "B · Lift the lowest share", ["The least-satisfied person, then the", "next — within 15% of the popularity,", "nobody more than a pick down"], "accent")}
       {arrow("M328 364 L386 364")}
       {box(390, 314, 360, 100, "C · Improve", ["Deterministic swaps and moves while", "popularity + λ·fairness − penalties improves", "(never lowering the lowest share)"])}
       {arrow("M570 416 L570 454")}

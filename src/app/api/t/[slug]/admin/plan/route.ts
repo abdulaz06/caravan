@@ -1,4 +1,4 @@
-import { compareModes, type ConsensusPlan, type PlanSettings } from "@/engine/consensus";
+import { compareModes, protectEffect, type ConsensusPlan, type PlanSettings } from "@/engine/consensus";
 import { parsePlanSettings } from "@/engine/consensus/settings";
 import { db } from "@/lib/server/db";
 import { error, json, readJson } from "@/lib/server/http";
@@ -13,7 +13,7 @@ export async function GET(_req: Request, ctx: RouteContext<"/api/t/[slug]/admin/
 /**
  * The organizer's plan actions:
  * - generate: a plan from the knobs (a preview: nothing is saved but the knobs themselves)
- * - compare: every decision mode on the same inputs
+ * - compare: every decision mode on the same inputs (and Everyone gets a say with "Protect everyone else" flipped)
  * - save: generate on the server and store it as the next version (optionally publishing it)
  * - publish: make a saved version the plan travellers see
  * The demo's console can generate and compare (nothing is stored); saving and publishing are refused there.
@@ -40,7 +40,7 @@ export async function POST(req: Request, ctx: RouteContext<"/api/t/[slug]/admin/
 
         if (!settings.mode) return error("Choose how the group decides first", 400, { code: "mode" });
         const ballots = await ballotsOf(trip);
-        if (action === "compare") return json({ modes: compareModes(trip.engine, ballots, settings) });
+        if (action === "compare") return json({ modes: compareModes(trip.engine, ballots, settings), flipped: protectEffect(trip.engine, ballots, settings) });
 
         const plan: ConsensusPlan = generateFor(trip, ballots, settings);
         // Remember the knobs (not on the demo, where they stay in the visitor's browser).

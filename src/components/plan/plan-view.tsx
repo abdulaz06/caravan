@@ -282,7 +282,9 @@ function YourPicks({ plan, family }: { plan: PublicPlan; family: boolean }) {
   if (!you.picks) return null;
   const all = you.made.length === you.picks;
   // The picks that could fit the days you're there (plans saved before this existed don't say).
-  const fit = typeof you.feasible === "number" && you.feasible < you.picks ? you.feasible : null;
+  // What could fit the days you're here (picks plus the free slots you asked for); plans saved before this existed don't say.
+  const rest = you.rest ?? null;
+  const fit = typeof you.feasible === "number" && (you.feasible < you.picks || !!rest?.feasible) ? you.feasible : null;
   return (
     <section className="rounded-[26px] bg-paper p-4 shadow-card" aria-label="Your picks">
       <div className="flex items-start gap-3">
@@ -297,7 +299,13 @@ function YourPicks({ plan, family }: { plan: PublicPlan; family: boolean }) {
           </p>
           {fit !== null && fit > 0 && (
             <p className="text-[12.5px] font-semibold text-ink-2">
-              {Math.round((Math.min(you.made.length, fit) / fit) * 100)}% of the {fit} that fit your dates
+              {Math.round(((you.satisfaction ?? Math.min(you.made.length, fit) / fit) as number) * 100)}% of the {fit} that fit your dates
+              {!!rest?.feasible && `, counting ${rest.feasible} free ${rest.feasible === 1 ? "slot" : "slots"}`}
+            </p>
+          )}
+          {!!rest?.feasible && (
+            <p className="text-[12.5px] text-ink-3">
+              Kept free for you: {rest.made} of the {rest.feasible} slower {rest.feasible === 1 ? "day or evening" : "days and evenings"} you asked for.
             </p>
           )}
           {you.daysThere < plan.dates.length && (

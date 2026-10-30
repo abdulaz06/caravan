@@ -27,6 +27,29 @@ test("on the demo, Everyone gets a say lifts the lowest share and differs from M
   // The labels are uppercase on screen (innerText follows the CSS).
   const lowest = async (name: RegExp) => Number((await page.getByRole("button", { name }).innerText()).match(/Lowest\s*(\d+)%/i)![1]);
   expect(await lowest(/^Everyone gets a say\s*Lowest/)).toBeGreaterThan(await lowest(/^Majority rules\s*Lowest/));
+  // Custom (halfway) sits between the two, and says what Protect everyone else held back.
+  const custom = await lowest(/^Custom\s*Lowest/);
+  expect(custom).toBeGreaterThan(await lowest(/^Majority rules\s*Lowest/));
+  expect(custom).toBeLessThan(await lowest(/^Everyone gets a say\s*Lowest/));
+  await expect(page.getByText(/^Custom matches/)).toHaveCount(0);
+  await expect(page.getByText(/Protect everyone else is on\./)).toBeVisible();
+  // Each person's change against Majority rules.
+  await expect(page.getByTitle("Picks versus Majority rules").filter({ hasText: /^[+−]\d$/ }).first()).toBeVisible();
+  done();
+});
+
+test("Protect everyone else is an organizer switch, on by default", async ({ page }) => {
+  const done = watchErrors(page);
+  await generateOnDemo(page, "sri-lanka", /^Everyone gets a say/);
+  await page.getByRole("button", { name: /Knobs/ }).click();
+  const protect = page.getByRole("switch", { name: "Protect everyone else" });
+  await expect(protect).toHaveAttribute("aria-checked", "true");
+  await expect(page.getByText(/nobody ends up more than one pick down on Majority rules/)).toBeVisible();
+  await protect.click();
+  await expect(page.getByText(/may cost someone else more than one pick/)).toBeVisible();
+  await page.getByRole("button", { name: /Regenerate with these/ }).click();
+  await page.getByRole("button", { name: /Compare modes/ }).click();
+  await expect(page.getByText(/Protect everyone else is off\./)).toBeVisible();
   done();
 });
 
