@@ -75,7 +75,7 @@ function modeSection(e: Engine, plan: ConsensusPlan, title: string): string {
     `**Lowest ${pct(f.min)} · median ${pct(f.median)} · Jain's index ${f.index.toFixed(3)}** (mean ${pct(f.mean)}).` +
       (s.mode === "majority"
         ? ""
-        : ` Versus Majority rules: lowest ${pct(f.majority.min)} → ${pct(f.min)}, median ${pct(f.majority.median)} → ${pct(f.median)}, Jain's ${f.majority.index.toFixed(3)} → ${f.index.toFixed(3)}; ${f.lifted} people lifted, ${f.losers ?? 0} lost a pick (at most ${f.maxLoss ?? 0}); score ${pct(f.scoreKept)} of the most popular plan's.`) +
+        : ` Versus Majority rules: lowest ${pct(f.majority.min)} → ${pct(f.min)}, median ${pct(f.majority.median)} → ${pct(f.median)}, Jain's ${f.majority.index.toFixed(3)} → ${f.index.toFixed(3)}; ${f.lifted} ${f.lifted === 1 ? "person" : "people"} lifted, ${f.losers ?? 0} lost a pick (at most ${f.maxLoss ?? 0}); score ${pct(f.scoreKept)} of the most popular plan's.`) +
       (f.note ? ` *${f.note}*` : "") +
       (f.aboveNote ? ` *${f.aboveNote}*` : ""),
     "",

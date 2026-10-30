@@ -395,7 +395,7 @@ Runners-up at this length:
 | Traveller 7 | submitted | 4 | 9 | 1 of 1 free | 10 | 9 | 90% |  |  |
 | Traveller 9 | submitted | 6 | 10 |  | 10 | 9 | 90% |  |  |
 
-**Lowest 50% · median 80% · Jain's index 0.968** (mean 78%). Versus Majority rules: lowest 50% → 50%, median 90% → 80%, Jain's 0.965 → 0.968; 1 people lifted, 1 lost a pick (at most 1); score 100% of the most popular plan's. *Whoever gets the smallest share has no other picks or free slots that fit the days they're there, so nothing can lift them.*
+**Lowest 50% · median 80% · Jain's index 0.968** (mean 78%). Versus Majority rules: lowest 50% → 50%, median 90% → 80%, Jain's 0.965 → 0.968; 1 person lifted, 1 lost a pick (at most 1); score 100% of the most popular plan's. *Whoever gets the smallest share has no other picks or free slots that fit the days they're there, so nothing can lift them.*
 
 Budget ≈ $477–1113 per person.
 
