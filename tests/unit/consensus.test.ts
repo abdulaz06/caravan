@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { compareModes, generatePlan, isBigTrip, isMeal, itemKey, lengthOptions, medianLength, modeParams, pickWindows, recommendLength, type Ballot, type ConsensusPlan } from "@/engine/consensus";
+import { compareModes, generatePlan, isBigTrip, isMeal, itemKey, lengthOptions, medianLength, modeParams, pickWindows, protectEffect, recommendLength, type Ballot, type ConsensusPlan } from "@/engine/consensus";
 import { STAY_ID, emptyItinerary, isSpecialOption, makeItem, normalize, setStart, type ItineraryData } from "@/engine/itinerary";
 import { quickFill } from "@/engine/quickfill";
 import { isRouteArea, planDays, tripDays, type Engine } from "@/engine/structure";
-import { homeRegion } from "@/engine/timeline";
+import { buildTimeline, homeRegion } from "@/engine/timeline";
 import { addDays, parseISO } from "@/lib/dates";
 import { demoBallots, demoById } from "@/lib/demo-crew";
 import { engineFor, mini, readPreset, seeded, sriLanka } from "./helpers";
@@ -50,6 +50,11 @@ function assertValid(e: Engine, p: ConsensusPlan, ballots?: Ballot[]) {
     const a = catalog.byId[id];
     return !!a && (isMeal(a) || (!!a.familySwap && !!catalog.byId[a.familySwap] && isMeal(catalog.byId[a.familySwap])));
   };
+  const timeline = buildTimeline(e, data);
+  // No plan scores above the most popular one — or it says why.
+  if (p.fairness.scoreKept > 1 + 1e-9) expect(p.fairness.aboveNote).toBeTruthy();
+  // "Protect everyone else": nobody ends more than one pick down on Majority rules.
+  if (p.fairness.protect) for (const person of p.people) expect(person.vsMajority ?? 0).toBeGreaterThanOrEqual(-1);
   const thereOn = (date: string) => (ballots ?? []).filter((b) => !b.data.startDate || !b.data.endDate || (date >= b.data.startDate && date <= b.data.endDate)).length;
   expect(data.days).toHaveLength(p.dates.length);
   expect(data.startDate! >= e.rules.window.start && data.endDate! <= e.rules.window.end).toBe(true);
@@ -91,6 +96,8 @@ function assertValid(e: Engine, p: ConsensusPlan, ballots?: Ballot[]) {
       const away = !!main && (isBigTrip(main) || !near(plan.base.region, main.region));
       expect((!!main && near(main.region, a.region)) || (!away && near(plan.base.region, a.region))).toBe(true);
     }
+    // A slot that carries extras fits its time — the trip's own timeline agrees (road legs and hops included).
+    if (s.items.some((it) => it.role === "extra" && !catalog.byId[it.id]?.onlyWith)) expect(timeline.days[s.day][s.slot].overpacked, `${s.key} ${s.items.map((x) => x.id).join("+")} ${timeline.days[s.day][s.slot].plannedHours}`).toBe(false);
     // Two of the same kind in one slot only when at least half of those there picked one of them.
     if (ballots) {
       const need = Math.ceil(0.5 * thereOn(s.date));
@@ -146,20 +153,32 @@ describe("dates", () => {
     expect(opts.find((o) => o.length === 5)).toMatchObject({ full: 4, start: "2026-12-27" });
     expect(opts.find((o) => o.length === 6)).toMatchObject({ full: 3, start: "2026-12-27", end: "2027-01-01" });
     expect(opts.find((o) => o.length === 7)).toMatchObject({ full: 2 });
-    // 4 × 5 = 20 = 5 × 4: the tie goes to more people there for all of it.
-    expect(recommendLength(opts, 1)!.length).toBe(4);
-    // Never shorter than the suggested minimum.
-    expect(recommendLength(opts, 5)!.length).toBe(5);
-    expect(recommendLength(opts.map((o) => ({ ...o, full: 0 })), 1)).toBeNull();
+    // 4 × 5 = 20 = 5 × 4: the tie goes to more people there for all of it — even when the suggested range says 5–7.
+    expect(recommendLength(opts)!.length).toBe(4);
+    expect(recommendLength(opts, { min: 5, max: 7 })!.length).toBe(4);
+    expect(recommendLength(opts.map((o) => ({ ...o, full: 0 })))).toBeNull();
+  });
+
+  it("ties: more people there for all of it, then the suggested range, then the longer trip", () => {
+    const o = (length: number, full: number) => ({ length, full, start: "2026-12-27", end: "2026-12-27", personDays: full * length });
+    // Georgia's case: 6 × 6 = 36 beats 8 × 4 = 32, whatever the suggested range (a hint, never a limit).
+    expect(recommendLength([o(6, 6), o(7, 4), o(8, 4)], { min: 7, max: 10 })!.length).toBe(6);
+    // Equal people × days: more people first.
+    expect(recommendLength([o(4, 6), o(6, 4), o(8, 3)])!.length).toBe(4);
+    // The range and then the longer trip only ever split options with the same people × days and the same people —
+    // which, in a real table, is the same length; the order still holds for hand-made options.
+    expect(recommendLength([o(4, 6), { ...o(4, 6), length: 7, start: "2026-12-28" }], { min: 7, max: 10 })!.length).toBe(7);
+    expect(recommendLength([o(4, 6), { ...o(4, 6), length: 5 }])!.length).toBe(5);
   });
 
   it("the plan uses the recommended length, unless the organizers pick one or the length is fixed", () => {
     const e = sriLanka(); // suggested 5–7 days
     const ballots = crew.map((c) => ({ ...ballot(e, c.id, c.start, 1, {}), data: normalize(e, setStart(e, emptyItinerary(), c.start, Math.round((Date.parse(c.end) - Date.parse(c.start)) / 86_400_000) + 1)) }));
     const p = generatePlan(e, ballots, { mode: "majority" });
-    expect(p.dates).toMatchObject({ length: 5, chosen: { start: "2026-12-27", full: 4 } });
+    // 4 days (all 5 there) ties 5 days (4 there) on people × days; more people wins, below the suggested 5–7.
+    expect(p.dates).toMatchObject({ length: 4, chosen: { start: "2026-12-28", full: 5 } });
     expect(p.dates.lengthReason).toBe("The best balance of days and full attendance");
-    expect(p.dates.lengths.filter((o) => o.recommended).map((o) => o.length)).toEqual([5]);
+    expect(p.dates.lengths.filter((o) => o.recommended).map((o) => o.length)).toEqual([4]);
     expect(p.dates.lengths.map((o) => o.length)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]);
     const chosen = generatePlan(e, ballots, { mode: "majority", length: 7 });
     expect(chosen.dates).toMatchObject({ length: 7, lengthReason: "Chosen by the organizers", chosen: { full: 2 } });
@@ -274,7 +293,8 @@ describe("fairness by share", () => {
       3: [["c-day-1"], ["c-night-1"]],
       4: [["c-trip"], ["c-night-2"]],
     });
-  const niche = ballot(e, "niche", "2026-12-01", 6, { 0: [["a-day-2"], []], 1: [["road-2"], []], 2: [["b-day-2"], []] });
+  // The niche picks are long: none can sit alongside the crowd's, so lifting them always replaces something.
+  const niche = ballot(e, "niche", "2026-12-01", 6, { 0: [["a-day-long"], []], 2: [["b-day-long"], []] });
   const group = [crowd("c1"), crowd("c2"), crowd("c3"), crowd("c4"), crowd("c5"), crowd("c6"), niche];
   const at = { start: "2026-12-01", length: 6 };
   const nicheMade = (p: ConsensusPlan) => p.people.find((x) => x.id === "niche")!.made.length;
@@ -302,7 +322,7 @@ describe("fairness by share", () => {
     expect(p.fairness.scoreKept).toBeGreaterThanOrEqual(1 - 0.15 - 1e-9);
     const lifted = p.slots.flatMap((s) => s.items).find((i) => i.floorFor.includes("niche"));
     expect(lifted?.reasons.map((r) => r.text)).toContain("Added to lift someone who'd otherwise get little of what they picked");
-    expect(p.people.find((x) => x.id === "niche")!).toMatchObject({ feasible: 3, floorAdded: nicheMade(p) });
+    expect(p.people.find((x) => x.id === "niche")!).toMatchObject({ feasible: 2, floorAdded: nicheMade(p) });
   });
 
   it("gives up no more than the tolerance, and more tolerance lifts at least as far", () => {
@@ -338,7 +358,7 @@ describe("fairness by share", () => {
   it("reports per-person satisfaction as a share of feasible picks, with count-based reasons", () => {
     const p = generatePlan(e, group, { mode: "majority", ...at });
     const n = p.people.find((x) => x.id === "niche")!;
-    expect(n).toMatchObject({ picks: 3, feasible: 3, satisfaction: 0 });
+    expect(n).toMatchObject({ picks: 2, feasible: 2, satisfaction: 0 });
     expect(n.missed.map((m) => m.reason)).toContain("Only you picked it");
     expect(JSON.stringify(n.missed)).not.toMatch(/c[1-6]\b/);
   });
@@ -351,15 +371,71 @@ describe("fairness by share", () => {
     expect(out[1].differs).toBeGreaterThan(0);
   });
 
-  it("on both demo crews, Everyone gets a say visibly differs from Majority rules and lifts the lowest share", () => {
+  it("on the demo crews: a real trade-off, never above the most popular plan, and Custom in between (or why not)", () => {
     for (const id of ["sri-lanka", "georgia"]) {
       const de = engineFor(readPreset(id));
-      const [together, majority] = compareModes(de, demoBallots(de, demoById(id)!), { fairness: 0.5 });
-      expect(majority.differs).toBeGreaterThan(0);
-      expect(together.fairness.min).toBeGreaterThan(majority.fairness.min);
-      expect(together.fairness.scoreKept).toBeGreaterThanOrEqual(1 - 0.15 - 1e-9);
+      const [together, majority, custom] = compareModes(de, demoBallots(de, demoById(id)!), { fairness: 0.5 });
       expect(together.fairness.majority.min).toBeCloseTo(majority.fairness.min, 9);
+      for (const m of [together, majority, custom]) expect(m.fairness.scoreKept).toBeLessThanOrEqual(1 + 1e-9);
+      if (together.fairness.min > majority.fairness.min + 1e-9) {
+        // Lifting costs something now: the most popular plan already has every extra that fits.
+        expect(majority.differs).toBeGreaterThan(0);
+        expect(together.fairness.scoreKept).toBeLessThan(1);
+        expect(together.fairness.scoreKept).toBeGreaterThanOrEqual(1 - 0.15 - 1e-9);
+      } else {
+        // Nothing to lift: every mode makes the same plan, and says why.
+        expect(majority.differs).toBe(0);
+        expect(together.fairness.note).toBeTruthy();
+      }
+      if (custom.sameAs) expect(custom.sameWhy).toBeTruthy();
     }
+    // Sri Lanka: Custom at halfway sits between the two.
+    const de = sriLanka();
+    const [together, majority, custom] = compareModes(de, demoBallots(de, demoById("sri-lanka")!), { fairness: 0.5 });
+    expect(custom.sameAs ?? null).toBeNull();
+    expect(custom.fairness.min).toBeGreaterThan(majority.fairness.min);
+    expect(custom.fairness.min).toBeLessThan(together.fairness.min);
+    expect(custom.fairness.scoreKept).toBeGreaterThan(together.fairness.scoreKept);
+    expect(custom.fairness.scoreKept).toBeLessThan(1);
+  }, 60_000);
+
+  it("no plan exceeds the most popular one: random groups, every mode", () => {
+    let above = 0;
+    let runs = 0;
+    for (const [n, e] of [sriLanka(), georgia()].entries()) {
+      for (let seed = 1; seed <= 12; seed++) {
+        const ballots = randomBallots(e, 8 + (seed % 7), seed * 13 + n);
+        for (const mode of ["together", "custom"] as const) {
+          const p = generatePlan(e, ballots, { mode });
+          runs++;
+          if (p.fairness.scoreKept > 1 + 1e-9) {
+            above++;
+            // When it happens, the plan says why.
+            expect(p.fairness.aboveNote).toMatch(/opened up an arrangement/);
+          } else expect(p.fairness.aboveNote ?? null).toBeNull();
+        }
+      }
+    }
+    // The popularity search explores from lifted plans, so this is rare.
+    expect(above / runs).toBeLessThan(0.1);
+  }, 120_000);
+
+  it("Protect everyone else: on by default, nobody more than one pick down — and switching it off lets lifts go further", () => {
+    const e = sriLanka();
+    // A 9-person group (found by search) where the best lift costs someone two picks.
+    const ballots = randomBallots(e, 9, 13);
+    const on = generatePlan(e, ballots, { mode: "together" });
+    const off = generatePlan(e, ballots, { mode: "together", protect: false });
+    expect(on.fairness).toMatchObject({ protect: true });
+    expect(Math.min(...on.people.map((p) => p.vsMajority ?? 0))).toBeGreaterThanOrEqual(-1);
+    expect(on.fairness.maxLoss).toBeLessThanOrEqual(1);
+    expect(off.fairness.protect).toBe(false);
+    expect(off.fairness.maxLoss).toBeGreaterThanOrEqual(2);
+    expect(off.fairness.min).toBeGreaterThan(on.fairness.min);
+    // The compare view's "what it holds back": Everyone gets a say with the switch flipped.
+    expect(protectEffect(e, ballots, { protect: true }).fairness.min).toBeCloseTo(off.fairness.min, 9);
+    // Majority rules never needs it.
+    expect(generatePlan(e, ballots, { mode: "majority" }).fairness).toMatchObject({ protect: false, maxLoss: 0 });
   }, 30_000);
 });
 
@@ -436,6 +512,73 @@ describe("realism", () => {
       expect(items.find((i) => i.id === "uplistsikhe")?.role ?? "main").toBe("main");
       assertValid(e, p);
     }
+  });
+
+  it("the drive counts in the day: a road day keeps only the stops that fit with the coast road", () => {
+    const e = sriLanka();
+    const road = planDays(e, 6).findIndex((d) => d.kind === "transfer");
+    const stops = ["bentota-water-sports", "madu-river-safari", "bentota-beach-lunch", "kosgoda-turtles"];
+    // The traveller's own timeline: three long stops plus the ~3¾ hr coast road is a packed day.
+    const mine = ballot(e, "me", "2026-12-27", 6, { [road]: [stops.slice(0, 3), []] });
+    const day = buildTimeline(e, mine.data).days[road].day;
+    expect(day.legHours).toBe(3.75);
+    expect(day.plannedHours).toBeCloseTo(3.75 + 2.5 + 2 + 2.5, 5);
+    expect(day.overpacked).toBe(true);
+    // The group plan keeps only what fits the daytime with the drive, and says how long the day is.
+    const fans = ["a", "b", "c", "d", "e", "f"].map((id) => ballot(e, id, "2026-12-27", 6, { [road]: [stops, []] }));
+    for (const mode of ["together", "majority"] as const) {
+      const p = generatePlan(e, fans, { mode, start: "2026-12-27", length: 6 });
+      const slot = p.slots.find((s) => s.day === road && s.slot === "day")!;
+      const hours = slot.items.reduce((h, it) => h + (e.catalog.byId[it.id]?.hours ?? 0), 0);
+      expect(hours + 3.75).toBeLessThanOrEqual(10);
+      expect(slot.items.length).toBeLessThan(stops.length);
+      expect(slot.items[0].reasons.find((r) => r.kind === "time")?.text).toMatch(/^With the drive \(.+\), the stops make a .+ day$/);
+      assertValid(e, p, fans);
+    }
+  });
+});
+
+describe("free time counts", () => {
+  // Six friends who want every evening free, and one who wants two evenings out in Beta.
+  const e = mini();
+  const resting = (id: string) =>
+    ballot(e, id, "2026-12-01", 6, {
+      0: [["a-day-1"], [STAY_ID]],
+      1: [["road-1"], [STAY_ID]],
+      2: [["b-day-1"], [STAY_ID]],
+      3: [["c-day-1"], [STAY_ID]],
+      4: [["c-trip"], [STAY_ID]],
+    });
+  const outgoing = ballot(e, "out", "2026-12-01", 6, { 1: [[], ["b-night-1"]], 2: [[], ["b-night-2"]] });
+  const group = [resting("r1"), resting("r2"), resting("r3"), resting("r4"), resting("r5"), resting("r6"), outgoing];
+  const at = { start: "2026-12-01", length: 6 };
+
+  it("free slots people asked for count as picks in their share, and the chips say why a slot is free", () => {
+    const p = generatePlan(e, group, { mode: "majority", ...at });
+    const r1 = p.people.find((x) => x.id === "r1")!;
+    expect(r1.rest).toEqual({ feasible: 5, made: 5 });
+    expect(r1.feasible).toBe(r1.rest!.feasible + (r1.picks - r1.missed.filter((m) => /doesn't|away/.test(m.reason)).length));
+    expect(r1.satisfaction).toBeCloseTo((r1.made.length + 5) / r1.feasible, 9);
+    const evening = p.slots.find((s) => s.slot === "night" && s.items[0].id === STAY_ID)!;
+    expect(evening.items[0].reasons.map((r) => r.text)).toContain("Kept free: 6 want a slower evening");
+    expect(p.people.find((x) => x.id === "out")!.made).toEqual([]);
+  });
+
+  it("a lift can't take rest for free: giving away a free evening lowers the share of everyone who asked for it", () => {
+    const majority = generatePlan(e, group, { mode: "majority", ...at });
+    const together = generatePlan(e, group, { mode: "together", ...at });
+    const out = together.people.find((x) => x.id === "out")!;
+    expect(out.made.length).toBeGreaterThan(0);
+    for (const k of ["r1", "r2", "r3", "r4", "r5", "r6"]) {
+      const before = majority.people.find((x) => x.id === k)!;
+      const after = together.people.find((x) => x.id === k)!;
+      expect(after.rest!.made).toBe(before.rest!.made - out.made.length);
+      expect(after.satisfaction!).toBeLessThan(before.satisfaction!);
+      expect(after.vsMajority).toBe(-out.made.length);
+    }
+    // Protect everyone else keeps it to one evening each, so only one of the two goes.
+    expect(out.made).toHaveLength(1);
+    expect(together.fairness.scoreKept).toBeLessThan(1);
   });
 });
 

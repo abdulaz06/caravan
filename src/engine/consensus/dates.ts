@@ -56,17 +56,38 @@ export function scoreWindow(people: Availability[], start: string, length: numbe
   return { start, end, length, full, personDays, missingMany, missing };
 }
 
+type Ranked = Omit<WindowScore, "missing">;
+
 /** Best first: whole-window travellers, person-days, fewest missing more than a day, then the earliest. */
-export function compareWindows(a: WindowScore, b: WindowScore): number {
+export function compareWindows(a: Ranked, b: Ranked): number {
   return b.full - a.full || b.personDays - a.personDays || a.missingMany - b.missingMany || (a.start < b.start ? -1 : a.start > b.start ? 1 : 0);
+}
+
+/** Every window of `length` days ranked on the numbers alone (day counts, no per-person detail): cheap for every length. */
+function rankWindows(people: Availability[], bounds: { start: string; end: string }, length: number): Ranked[] {
+  const days = diffDays(bounds.start, bounds.end) + 1 - (length - 1);
+  if (days <= 0) return [];
+  const span = people.map((p) => [diffDays(bounds.start, p.start), diffDays(bounds.start, p.end)]);
+  const out: Ranked[] = [];
+  for (let w = 0; w < days; w++) {
+    let full = 0;
+    let personDays = 0;
+    let missingMany = 0;
+    for (const [a, b] of span) {
+      const there = Math.max(0, Math.min(b, w + length - 1) - Math.max(a, w) + 1);
+      personDays += there;
+      if (there === length) full++;
+      else if (length - there > 1) missingMany++;
+    }
+    const start = addDays(bounds.start, w);
+    out.push({ start, end: addDays(start, length - 1), length, full, personDays, missingMany });
+  }
+  return out.sort(compareWindows);
 }
 
 /** Every window of `length` days inside the bounds, best first. */
 export function scoreWindows(people: Availability[], bounds: { start: string; end: string }, length: number): WindowScore[] {
-  const last = addDays(bounds.end, -(length - 1));
-  const out: WindowScore[] = [];
-  for (let s = bounds.start; s <= last; s = addDays(s, 1)) out.push(scoreWindow(people, s, length));
-  return out.sort(compareWindows);
+  return rankWindows(people, bounds, length).map((w) => scoreWindow(people, w.start, length));
 }
 
 /**
@@ -80,13 +101,14 @@ export function pickWindows(
   length: number,
   runners = 3,
 ): { best: WindowScore | null; runnersUp: WindowScore[] } {
-  const ranked = scoreWindows(people, bounds, length);
-  const chosen: WindowScore[] = [];
-  for (const w of ranked) {
+  const chosen: Ranked[] = [];
+  for (const w of rankWindows(people, bounds, length)) {
     if (chosen.length > runners) break;
     if (chosen.every((c) => Math.abs(diffDays(c.start, w.start)) >= 2)) chosen.push(w);
   }
-  return { best: chosen[0] ?? null, runnersUp: chosen.slice(1) };
+  // Who'd miss which days, for the windows shown.
+  const full = chosen.map((w) => scoreWindow(people, w.start, length));
+  return { best: full[0] ?? null, runnersUp: full.slice(1) };
 }
 
 /** One trip length's best window: who's free for all of it, and the person-days it covers. */
@@ -98,21 +120,21 @@ export function lengthOptions(people: Availability[], bounds: { start: string; e
   return lengths
     .filter((n) => n >= 1 && n <= span)
     .map((n) => {
-      const w = scoreWindows(people, bounds, n)[0];
+      const w = rankWindows(people, bounds, n)[0];
       return { length: n, start: w.start, end: w.end, full: w.full, personDays: w.personDays };
     });
 }
 
 /**
- * The length that best balances trip length against full attendance:
- * the most "people free for every day × days", among lengths of at least
- * `minLength` (the trip's suggested minimum). Ties: more people free for
- * all of it, then more person-days, then the shorter trip.
+ * The length that best balances trip length against full attendance: the
+ * most "people free for every day × days" among the allowed lengths (the
+ * options — only the trip's own min/max rules are hard limits). Ties go to
+ * more people free for all of it, then a length inside the preset's
+ * suggested range (a soft hint), then the longer trip.
  */
-export function recommendLength(options: LengthOption[], minLength: number): LengthOption | null {
-  const eligible = options.filter((o) => o.length >= minLength && o.full > 0);
+export function recommendLength(options: LengthOption[], suggested?: { min: number; max: number } | null): LengthOption | null {
+  const eligible = options.filter((o) => o.full > 0);
   if (!eligible.length) return null;
-  return [...eligible].sort(
-    (a, b) => b.full * b.length - a.full * a.length || b.full - a.full || b.personDays - a.personDays || a.length - b.length,
-  )[0];
+  const inRange = (o: LengthOption) => (suggested && o.length >= suggested.min && o.length <= suggested.max ? 1 : 0);
+  return [...eligible].sort((a, b) => b.full * b.length - a.full * a.length || b.full - a.full || inRange(b) - inRange(a) || b.length - a.length)[0];
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { Award, CalendarCheck2, Coins, Lock, Mountain, Plane, Repeat2, Scale, Sparkles, Sun, Moon, Users, Wallet } from "lucide-react";
+import { Award, CalendarCheck2, Clock3, Coins, Lock, Mountain, Plane, Repeat2, Scale, Sparkles, Sun, Moon, Users, Wallet } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { Activity, Slot } from "@/engine/catalog";
 import type { PlanItem, PlanSlot, Reason, ReasonKind } from "@/engine/consensus/types";
@@ -36,6 +36,7 @@ const REASON_ICONS: Record<ReasonKind, typeof Users> = {
   budget: Wallet,
   free: Sun,
   extra: Award,
+  time: Clock3,
 };
 
 /** "9 of 12 picked this", "Fridays only — fits Fri 1 Jan", … as small chips. */

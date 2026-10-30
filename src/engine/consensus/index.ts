@@ -4,4 +4,4 @@
 export * from "./types";
 export * from "./dates";
 export { generatePlan, isBigTrip, isMeal, itemKey, modeParams, slotKey } from "./generate";
-export { compareModes, type ModeSummary } from "./compare";
+export { compareModes, protectEffect, type ModeSummary } from "./compare";

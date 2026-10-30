@@ -38,8 +38,10 @@ export type SlotView = {
   /** Items here sit on a transfer route ("On the way"). */
   onRoute: boolean;
   items: ItemView[];
-  /** Item time + travel inside the slot. */
+  /** Item time + travel inside the slot (the daytime also carries that day's road leg: landing, or the road to the next base). */
   plannedHours: number;
+  /** The road leg counted in a daytime's hours (0 for other slots). */
+  legHours?: number;
   overpacked: boolean;
   /** Getting back to base after the slot, if it's far. */
   after: TravelSegment | null;
@@ -219,7 +221,9 @@ export function buildTimeline(e: Engine, data: ItineraryData): Timeline {
       const area = plan.areas[slot];
       const routeSlot = isRouteArea(e, area);
       const items: ItemView[] = [];
-      let planned = 0;
+      // The drive is part of the day: the daytime's soft total starts with the landing or the road leg.
+      const legHours = slot === "day" && d[slot].length ? legsBefore.reduce((h, l) => h + l.hours, 0) : 0;
+      let planned = legHours;
       for (const item of d[slot]) {
         const r = resolve(e, item, slot, area);
         if (!r) continue;
@@ -265,7 +269,7 @@ export function buildTimeline(e: Engine, data: ItineraryData): Timeline {
       if (overpacked) {
         warnings.push(`${slot === "day" ? "Daytime" : "The evening"} looks packed (~${Math.round(planned)} hrs with travel) — maybe save something for another day.`);
       }
-      views[slot] = { slot, area, onRoute: routeSlot, items, plannedHours: planned, overpacked, after: null, fullDay };
+      views[slot] = { slot, area, onRoute: routeSlot, items, plannedHours: planned, legHours, overpacked, after: null, fullDay };
       // The long drive back from a day trip belongs to the daytime — the evening starts back at base.
       if (slot === "day" && trip && here !== home) {
         const back = segment(e, "return", here, home, trip.activity.icon);

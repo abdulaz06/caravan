@@ -15,6 +15,7 @@ export const planSettingsSchema = z
     draftWeight: unit,
     tolerance: z.number().min(0).max(0.5),
     splitShare: z.number().min(0.15).max(0.75),
+    protect: z.boolean(),
     variety: unit,
     budgetFit: unit,
     start: isoDate.nullable(),

@@ -9,18 +9,19 @@
 //   3. Slots — the chosen dates' day structure; every slot only takes what the
 //      trip's own rules allow there (pools, weekdays, special dates, day trips,
 //      one main meal per slot, extras close by).
-//   4. The most popular plan: fill by score, improve, add popular extras.
+//   4. The most popular plan: fill by score, add every extra that fits, improve.
 //      That's "Majority rules" — and the yardstick for the other modes.
 //   5. Fairness (Everyone gets a say / Custom): lift the lowest share of
-//      feasible picks, then the next lowest (leximin), while the plan keeps at
-//      least (1 − tolerance) of its score; then improve without ever lowering
-//      the minimum share.
+//      feasible picks and free slots, then the next lowest (leximin), while the
+//      plan keeps at least (1 − tolerance) of its score and (by default) nobody
+//      ends more than one pick down on Majority rules; then improve without
+//      ever lowering the minimum share.
 //   6. Splits, reasons, per-person satisfaction.
 //
 // docs/CONSENSUS.md explains it in plain language with the formulas.
 import { addDays, dayLabel, parseISO } from "@/lib/dates";
 import { computeBudget } from "../budget";
-import { STAY_ID, type Activity, type Pair, type Slot, type SpecialDate } from "../catalog";
+import { formatHours, STAY_ID, type Activity, type Pair, type Slot, type SpecialDate } from "../catalog";
 import { variantOf } from "../day-trip";
 import { DATA_VERSION, itemAllowed, isSpecialOption, normalize, type ItineraryData, type SlotItem } from "../itinerary";
 import { isHidden } from "../rules";
@@ -56,6 +57,8 @@ const FAIR_LAMBDA = 0.5;
 const MAX_EXTRAS = 2;
 const IMPROVE_ROUNDS = 80;
 const LIFT_ROUNDS = 400;
+/** Times the popularity search explores from a lifted plan (stopping early when that finds nothing better). */
+const EXPLORE_PASSES = 2;
 
 const SLOTS: Slot[] = ["day", "night"];
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -139,7 +142,16 @@ const pctText = (x: number) => `${Math.round(x * 100)}%`;
 export function generatePlan(e: Engine, ballots: Ballot[], input: Partial<PlanSettings> = {}): ConsensusPlan {
   const settings: PlanSettings = { ...DEFAULT_SETTINGS, ...input, locks: input.locks ?? [], splits: input.splits ?? {} };
   const mode: DecisionMode = settings.mode ?? "together";
-  const { strength, lambda, tolerance } = modeParams(mode, settings.fairness, settings.tolerance);
+  const params = modeParams(mode, settings.fairness, settings.tolerance);
+  const { strength, lambda } = params;
+  let { tolerance } = params;
+  // Custom sits between the two: at slider t it makes the first t of Everyone gets a say's lifts (rounded) — its
+  // tolerance is exactly what those lifts gave up.
+  if (mode === "custom" && strength > 0 && strength < 1) {
+    const steps = generatePlan(e, ballots, { ...input, mode: "together" }).fairness.steps ?? [];
+    const k = Math.round(strength * steps.length);
+    tolerance = k ? steps[k - 1] + 1e-9 : 0;
+  }
   const { catalog } = e;
   const byId = catalog.byId;
   const notes: string[] = [];
@@ -203,8 +215,8 @@ export function generatePlan(e: Engine, ballots: Ballot[], input: Partial<PlanSe
   const fixed = isFixed(e);
   // With a fixed trip length there's nothing to weigh: only the window is chosen.
   const options = fixed || !avail.length ? [] : lengthOptions(avail, bounds, [...allowedLengths(e)].sort((a, b) => a - b));
-  const minLength = e.rules.recommended?.min ?? (options[0]?.length ?? 1);
-  const best = recommendLength(options, minLength);
+  // Only the trip's own min/max are hard limits; the preset's suggested range only breaks ties.
+  const best = recommendLength(options, e.rules.recommended);
   let length: number;
   let lengthReason: string;
   if (fixed) {
@@ -292,11 +304,16 @@ export function generatePlan(e: Engine, ballots: Ballot[], input: Partial<PlanSe
   const heads = (id: string) => supporters.get(id)?.length ?? 0;
   const headsThere = (id: string, day: number) => (supporters.get(id) ?? []).filter((k) => presence[k][day]).length;
 
-  // Stay-in: each traveller wants about their own share of rest slots, scaled to this plan.
-  const slotsOfType: Record<Slot, number> = { day: slots.filter((s) => s.slot === "day").length, night: slots.filter((s) => s.slot === "night").length };
-  const want: Record<Slot, number>[] = voters.map((v) => {
-    const w = (t: Slot) => (v.stays[t] ? Math.max(1, Math.round((v.stays[t] / Math.max(1, v.slotsHad[t])) * slotsOfType[t])) : 0);
+  // Stay-in: each traveller wants about their own share of rest slots, scaled to the slots they're here for.
+  const want: Record<Slot, number>[] = voters.map((v, k) => {
+    const here = (t: Slot) => slots.filter((s) => s.slot === t && presence[k][s.day]).length;
+    const w = (t: Slot) => (v.stays[t] && here(t) ? Math.min(here(t), Math.max(1, Math.round((v.stays[t] / Math.max(1, v.slotsHad[t])) * here(t)))) : 0);
     return { day: w("day"), night: w("night") };
+  });
+  // Free slots count in a share like picks: as many as they asked for, of the slots on their days that could be free.
+  const restFeasible: Record<Slot, number>[] = voters.map((_, k) => {
+    const could = (t: Slot) => slots.filter((s) => s.slot === t && presence[k][s.day] && !s.pair).length;
+    return { day: Math.min(want[k].day, could("day")), night: Math.min(want[k].night, could("night")) };
   });
   /** The k-th rest slot of a type (k from 1) on a day is worth the voice of those there who wanted at least k. */
   const restValue = (t: Slot, k: number, day: number) => {
@@ -331,8 +348,13 @@ export function generatePlan(e: Engine, ballots: Ballot[], input: Partial<PlanSe
   const splitB: (string | null)[] = Array(n).fill(null);
   const used = new Map<string, number>();
   const made: number[] = voters.map(() => 0);
-  /** Item id → the travellers the fairness step placed it for. */
+  /** Free slots of each kind on the days each traveller is here. */
+  const freeThere: Record<Slot, number>[] = voters.map(() => ({ day: 0, night: 0 }));
+  /** Item id → the travellers the fairness step placed it for (and slot → those a free slot was kept for). */
   const floorFor = new Map<string, Set<string>>();
+  const restFor = new Map<number, Set<string>>();
+  /** Split options held back for a suggested split (so they aren't squeezed in alongside). */
+  let reserved = new Set<string>();
   const radius = catalog.preset.structure.extraRadiusHours;
   const landing = catalog.legs[catalog.preset.structure.arrival.leg]?.from ?? null;
 
@@ -423,26 +445,48 @@ export function generatePlan(e: Engine, ballots: Ballot[], input: Partial<PlanSe
     return true;
   }
 
-  /** A slot's hours; on landing and road days the drive comes out of the daytime. */
-  const limitOf = (i: number) => {
+  const limitOf = (i: number) => catalog.preset.structure.slots[slots[i].slot].limitHours;
+  /** The road in a daytime: landing and the drive in from the airport, or a road day's leg (the scenic one when there are stops on it). */
+  const legHours = (i: number, withStops: boolean) => {
     const s = slots[i];
-    const limit = catalog.preset.structure.slots[s.slot].limitHours;
-    if (s.slot !== "day") return limit;
-    const leg = s.plan.arrival ? catalog.legs[catalog.preset.structure.arrival.leg] : s.plan.transfer ? catalog.legs[s.plan.transfer.leg] : undefined;
-    return limit - (leg?.hours ?? 0);
+    if (s.slot !== "day") return 0;
+    if (s.plan.arrival) return catalog.legs[catalog.preset.structure.arrival.leg]?.hours ?? 0;
+    const t = s.plan.transfer;
+    if (!t) return 0;
+    const leg = withStops && t.route && t.scenicLeg ? catalog.legs[t.scenicLeg] : catalog.legs[t.leg];
+    return leg?.hours ?? 0;
   };
+  /**
+   * Where a slot starts, as the trip's timeline walks it: the daytime from base; the evening from wherever the
+   * daytime ended (back at base after a day trip, a free daytime or a road day).
+   */
+  const startOf = (i: number) => {
+    const s = slots[i];
+    const home = homeRegion(e, s.area);
+    if (s.slot !== "night") return home;
+    const j = other(s, s.day, "day");
+    if (j === undefined || isRouteArea(e, slots[j].area) || !main[j] || main[j] === STAY_ID || byId[main[j]!]?.variants) return home;
+    const last = [main[j], ...extras[j].map((x) => x.id)].filter((x): x is string => !!x && x !== STAY_ID).at(-1)!;
+    return byId[last].region;
+  };
+  /** A slot's soft time total: its items, the drive out to each in turn and back, and that day's road leg. */
   const slotHours = (i: number) => {
     const ids = [main[i], ...extras[i].map((x) => x.id)].filter((x): x is string => !!x && x !== STAY_ID);
     if (!ids.length) return 0;
     const s = slots[i];
-    // Out from the base, to each item in turn, and back (on a road day the drive is the day's travel).
-    let travel = 0;
+    let travel = legHours(i, true);
     if (!isRouteArea(e, s.area)) {
-      const stops = [homeRegion(e, s.area), ...ids.map((id) => byId[id].region), homeRegion(e, s.area)];
+      const stops = [startOf(i), ...ids.map((id) => byId[id].region), homeRegion(e, s.area)];
       for (let k = 1; k < stops.length; k++) travel += catalog.travelHours(stops[k - 1], stops[k]);
     }
     return ids.reduce((h, id) => h + byId[id].hours, 0) + travel;
   };
+  /** Every slot that day carrying extras still fits its time (a change to the daytime moves where the evening starts). */
+  const dayFits = (day: number) =>
+    SLOTS.every((t) => {
+      const j = slotAt.get(slotKey(addDays(chosen.start, day), t));
+      return j === undefined || !extras[j].length || slotHours(j) <= limitOf(j);
+    });
   /** Would this extra fit the slot's time? (A big day trip's tied extras always ride along.) */
   const extraFitsTime = (i: number, id: string) => {
     const m = main[i];
@@ -450,7 +494,7 @@ export function generatePlan(e: Engine, ballots: Ballot[], input: Partial<PlanSe
     if (byId[id].onlyWith) return true;
     if (byId[m]?.variants) return false;
     extras[i].push({ id, locked: false });
-    const ok = slotHours(i) <= limitOf(i);
+    const ok = slotHours(i) <= limitOf(i) && dayFits(slots[i].day);
     extras[i].pop();
     return ok;
   };
@@ -506,6 +550,11 @@ export function generatePlan(e: Engine, ballots: Ballot[], input: Partial<PlanSe
   const credit = (i: number, id: string, by: number) => {
     for (const k of supporters.get(id) ?? []) if (presence[k][slots[i].day]) made[k] += by;
   };
+  const freeSlot = (i: number, by: number) => {
+    voters.forEach((_, k) => {
+      if (presence[k][slots[i].day]) freeThere[k][slots[i].slot] += by;
+    });
+  };
   const placeMain = (i: number, id: string, opts: { locked?: boolean; forced?: boolean; variant?: string } = {}) => {
     main[i] = id;
     mainVariant[i] = id === STAY_ID ? undefined : (opts.variant ?? variantFor(i, id));
@@ -514,7 +563,7 @@ export function generatePlan(e: Engine, ballots: Ballot[], input: Partial<PlanSe
     if (id !== STAY_ID) {
       used.set(id, i);
       credit(i, id, 1);
-    }
+    } else freeSlot(i, 1);
   };
   const clearMain = (i: number) => {
     const id = main[i];
@@ -522,7 +571,7 @@ export function generatePlan(e: Engine, ballots: Ballot[], input: Partial<PlanSe
     if (id !== STAY_ID) {
       used.delete(id);
       credit(i, id, -1);
-    }
+    } else freeSlot(i, -1);
     main[i] = null;
     mainVariant[i] = undefined;
   };
@@ -638,27 +687,79 @@ export function generatePlan(e: Engine, ballots: Ballot[], input: Partial<PlanSe
     return idx.reduce((a, i) => a + popOf(i), 0) + types.reduce((a, t) => a + restTotal(t), 0) - penAround(idx.map((i) => slots[i].day));
   };
 
-  // Each traveller's feasible picks: ones that could fit a slot on a day they're there.
-  const feasible = voters.map((v, k) => v.picks.filter((id) => slots.some((s) => presence[k][s.day] && (fitsStatic(s.i, id, false) || fitsStatic(s.i, id, true)))).length);
-  const shareOf = (k: number, m = made[k]) => (feasible[k] ? Math.min(1, m / feasible[k]) : null);
+  // Each traveller's feasible picks: ones that could fit a slot on a day they're there — plus the free slots they asked for.
+  const feasibleActs = voters.map((v, k) => v.picks.filter((id) => slots.some((s) => presence[k][s.day] && (fitsStatic(s.i, id, false) || fitsStatic(s.i, id, true)))).length);
+  const feasible = voters.map((_, k) => feasibleActs[k] + restFeasible[k].day + restFeasible[k].night);
+  const restGot = (k: number) => Math.min(restFeasible[k].day, freeThere[k].day) + Math.min(restFeasible[k].night, freeThere[k].night);
+  /** Picks of theirs in the plan on days they're here, and free slots they asked for that are free. */
+  const got = (k: number) => made[k] + restGot(k);
+  const gotAll = () => voters.map((_, k) => got(k));
+  const shareOf = (k: number, g = got(k)) => (feasible[k] ? Math.min(1, g / feasible[k]) : null);
   const counted = voters.map((v, k) => v.unit > 0 && feasible[k] > 0);
   const minShare = () => Math.min(1, ...voters.flatMap((_, k) => (counted[k] ? [shareOf(k)!] : [])));
-  const fairTerm = (k: number, m: number) => (feasible[k] ? voters[k].weight * Math.log(0.1 + Math.min(1, m / feasible[k])) : 0);
+  const fairTerm = (k: number, g: number) => (feasible[k] ? voters[k].weight * Math.log(0.1 + Math.min(1, g / feasible[k])) : 0);
+  // Extras each slot could ever hold (the static rules), for the improvement moves.
+  const extraCandidates: string[][] = slots.map((s) => [...supporters.keys()].filter((id) => fitsStatic(s.i, id, true)).sort());
+  /** Could `id` take over slot i's main item, alongside the extras already there? (The slot is left as it was.) */
+  const mainFits = (i: number, id: string) => {
+    const cur = main[i]!;
+    const cv = mainVariant[i];
+    if (id === STAY_ID && extras[i].length) return false;
+    if (id !== STAY_ID && byId[id]?.variants && extras[i].some((x) => !byId[x.id].onlyWith)) return false;
+    clearMain(i);
+    let ok = canHold(i, id);
+    if (ok) {
+      placeMain(i, id);
+      ok = (!extras[i].length || slotHours(i) <= limitOf(i)) && dayFits(slots[i].day);
+      clearMain(i);
+    }
+    placeMain(i, cur, { variant: cv });
+    return ok;
+  };
+  /** Could extra `x` in slot i be swapped for `y`? (The slot is left as it was.) */
+  const extraSwapFits = (i: number, x: string, y: string) => {
+    const at = extras[i].findIndex((z) => z.id === x);
+    const keep = extras[i][at];
+    extras[i].splice(at, 1);
+    let ok = canHold(i, y, true) && (!!byId[y].onlyWith || !byId[main[i]!]?.variants);
+    if (ok) {
+      extras[i].splice(at, 0, { id: y, locked: false });
+      ok = slotHours(i) <= limitOf(i) && dayFits(slots[i].day);
+      extras[i].splice(at, 1);
+    }
+    extras[i].splice(at, 0, keep);
+    return ok;
+  };
+  const swapExtra = (i: number, x: string, y: string) => {
+    const at = extras[i].findIndex((z) => z.id === x);
+    extras[i][at] = { id: y, locked: false };
+    used.delete(x);
+    credit(i, x, -1);
+    used.set(y, i);
+    credit(i, y, 1);
+  };
 
   /**
    * Local improvement: replace or swap main items while the score (plus λ ×
    * the fairness pull) rises, never breaking a hard rule, moving a locked or
    * special item, or crossing `guard` (the minimum share and the score floor).
+   * `withExtras`: the popularity search's second pass, once extras are in —
+   * swap an extra for a better-supported one, or move a main item to sit
+   * alongside somewhere else and give its slot to the best thing left.
    */
-  function improve(lam: number, guard: () => boolean) {
+  function improve(lam: number, guard: () => boolean, withExtras = false) {
     const movable = slots.filter((s) => !forced[s.i]).map((s) => s.i);
     const tryMove = (apply: () => void, undo: () => void, idx: number[], rested: boolean) => {
-      const before = { local: localScore(idx, rested), made: [...made] };
+      const before = { local: localScore(idx, rested), got: lam ? gotAll() : [] };
       apply();
       let delta = -Infinity;
-      if (guard()) {
+      if (guard() && idx.every((i) => dayFits(slots[i].day))) {
         let fair = 0;
-        if (lam) made.forEach((m, k) => (m !== before.made[k] ? (fair += fairTerm(k, m) - fairTerm(k, before.made[k])) : 0));
+        if (lam)
+          voters.forEach((_, k) => {
+            const g = got(k);
+            if (g !== before.got[k]) fair += fairTerm(k, g) - fairTerm(k, before.got[k]);
+          });
         delta = localScore(idx, rested) - before.local + lam * FAIR_WEIGHT * fair;
       }
       undo();
@@ -669,17 +770,13 @@ export function generatePlan(e: Engine, ballots: Ballot[], input: Partial<PlanSe
       const consider = (delta: number, run: () => void) => {
         if (delta > 1e-6 && (!best || delta > best.delta + 1e-9)) best = { delta, run };
       };
-      // Replace a slot's main with something else (or rest) — not one whose extras were chosen around it.
+      // Replace a slot's main with something else (or rest), as long as its extras still fit alongside.
       for (const i of movable) {
-        if (extras[i].length) continue;
         const cur = main[i]!;
         const curVariant = mainVariant[i];
         for (const id of [...candidates[i], STAY_ID]) {
           if (id === cur || (id !== STAY_ID && used.has(id))) continue;
-          clearMain(i);
-          const ok = canHold(i, id);
-          placeMain(i, cur, { variant: curVariant });
-          if (!ok) continue;
+          if (!mainFits(i, id)) continue;
           const swapIn = () => {
             clearMain(i);
             placeMain(i, id);
@@ -722,6 +819,49 @@ export function generatePlan(e: Engine, ballots: Ballot[], input: Partial<PlanSe
           consider(tryMove(swap, back, [i, j], a === STAY_ID || b === STAY_ID), swap);
         }
       }
+      // A fairness lift can find these arrangements, so the yardstick must too.
+      if (withExtras)
+        for (const i of movable) {
+          const m = main[i]!;
+          const mv = mainVariant[i];
+          if (m === STAY_ID || extras[i].length || isBigTrip(byId[m])) continue;
+          clearMain(i);
+          const into = slots.filter((s) => s.i !== i && extraFitsTime(s.i, m) && canHold(s.i, m, true)).map((s) => s.i);
+          const next = into.length ? candidates[i].filter((c) => c !== m && !used.has(c) && canHold(i, c)).sort((x, y) => S(y, slots[i].day) - S(x, slots[i].day))[0] : undefined;
+          placeMain(i, m, { variant: mv });
+          if (!next) continue;
+          for (const j of into) {
+            const run = () => {
+              clearMain(i);
+              addExtra(j, m);
+              placeMain(i, next);
+            };
+            const back = () => {
+              clearMain(i);
+              removeExtra(j, m);
+              placeMain(i, m, { variant: mv });
+            };
+            consider(tryMove(run, back, [i, j], false), run);
+          }
+        }
+      if (withExtras)
+        for (const s of slots) {
+          const i = s.i;
+          const m = main[i];
+          if (!m || m === STAY_ID || splitB[i]) continue;
+          for (const x of [...extras[i]]) {
+            if (x.locked) continue;
+            for (const y of extraCandidates[i]) {
+              // An extra adds only its own support, so a swap can only help for one with more.
+              if (y === x.id || used.has(y) || reserved.has(y) || S(y, s.day) <= S(x.id, s.day) + 1e-9 || !extraSwapFits(i, x.id, y)) continue;
+              const run = () => swapExtra(i, x.id, y);
+              consider(
+                tryMove(run, () => swapExtra(i, y, x.id), [i], false),
+                run,
+              );
+            }
+          }
+        }
       if (!best) break;
       (best as { run: () => void }).run();
     }
@@ -797,7 +937,7 @@ export function generatePlan(e: Engine, ballots: Ballot[], input: Partial<PlanSe
     });
     return found.map((x, i) => (x && (x.status === "accepted" || bestFor.get(x.b.id) === i) ? x : null));
   };
-  const reserved = new Set(findSplits().flatMap((x) => (x && x.status === "suggested" ? [x.b.id] : [])));
+  reserved = new Set(findSplits().flatMap((x) => (x && x.status === "suggested" ? [x.b.id] : [])));
 
   for (const lock of lateLocks) {
     const i = slotAt.get(slotKey(lock.date, lock.slot))!;
@@ -807,35 +947,57 @@ export function generatePlan(e: Engine, ballots: Ballot[], input: Partial<PlanSe
     }
     addExtra(i, lock.id, true);
   }
-  // Popular add-ons where there's time: picked by at least 30% of those there (and 2 people).
-  for (;;) {
-    let top: { i: number; id: string; val: number } | null = null;
-    for (const s of slots) {
-      for (const id of supporters.keys()) {
-        if (used.has(id) || reserved.has(id)) continue;
-        if (headsThere(id, s.day) < Math.max(2, Math.ceil(0.3 * thereCount[s.day]))) continue;
-        if (!extraFitsTime(s.i, id) || !canHold(s.i, id, true)) continue;
-        const val = S(id, s.day);
-        if (!top || val > top.val + 1e-9 || (Math.abs(val - top.val) <= 1e-9 && (s.i < top.i || (s.i === top.i && id < top.id)))) top = { i: s.i, id, val };
+  // Every extra that adds to the plan, most-picked first, wherever it fits the slot's time and rules — then improve
+  // again with extras in play, and fill any room that opened: the most popular feasible plan.
+  const fillExtras = () => {
+    for (;;) {
+      let top: { i: number; id: string; val: number } | null = null;
+      for (const s of slots) {
+        for (const id of extraCandidates[s.i]) {
+          if (used.has(id) || reserved.has(id)) continue;
+          const val = S(id, s.day);
+          if (val <= 0 || (top && val < top.val - 1e-9) || !extraFitsTime(s.i, id) || !canHold(s.i, id, true)) continue;
+          if (!top || val > top.val + 1e-9 || (Math.abs(val - top.val) <= 1e-9 && (s.i < top.i || (s.i === top.i && id < top.id)))) top = { i: s.i, id, val };
+        }
       }
+      if (!top) break;
+      addExtra(top.i, top.id);
     }
-    if (!top) break;
-    addExtra(top.i, top.id);
-  }
+  };
+  fillExtras();
+  improve(0, () => true, true);
+  fillExtras();
 
-  // The yardstick: the most popular plan's score and shares (what Majority rules is).
-  const popularScore = score();
-  const popularShares = voters.flatMap((_, k) => (counted[k] ? [shareOf(k)!] : []));
-  const popularMade = [...made];
+  /** The plan's moving parts, to keep the best arrangement found while exploring. */
+  const snapshot = () => ({
+    main: [...main],
+    mainVariant: [...mainVariant],
+    extras: extras.map((x) => x.map((y) => ({ ...y }))),
+    made: [...made],
+    free: freeThere.map((f) => ({ ...f })),
+    used: new Map(used),
+  });
+  const restore = (snap: ReturnType<typeof snapshot>) => {
+    snap.main.forEach((v, i) => (main[i] = v));
+    snap.mainVariant.forEach((v, i) => (mainVariant[i] = v));
+    snap.extras.forEach((x, i) => (extras[i] = x.map((y) => ({ ...y }))));
+    snap.made.forEach((v, k) => (made[k] = v));
+    snap.free.forEach((f, k) => (freeThere[k] = { ...f }));
+    used.clear();
+    for (const [k, v] of snap.used) used.set(k, v);
+  };
 
-  // ── 5. Fairness: lift the lowest shares, within the tolerance ───────
-  const scoreFloor = popularScore - tolerance * Math.abs(popularScore);
-  let note: string | null = null;
-  if (strength > 0) {
-    let current = popularScore;
+  /**
+   * Lift the lowest share, then the next lowest (leximin): for whoever is lowest, the cheapest move that lifts them,
+   * leaves nobody below min(their share, the lifted share), keeps the score at or above `floor` and passes `guard`.
+   * `from` is the score the steps are measured against; `record` notes who each placement was for.
+   */
+  function lift(from: number, floor: number, guard: () => boolean, record: boolean) {
+    let current = score();
     const stuck = new Set<number>();
+    const steps: number[] = [];
     /** Why the person with the lowest share couldn't be lifted (for the compare view). */
-    let blocked: "none" | "budget" | "others" | null = null;
+    let blocked: "none" | "budget" | "protect" | "others" | null = null;
     for (let round = 0; round < LIFT_ROUNDS; round++) {
       // Lowest share first; ties in voter order (by name).
       const lowest = voters
@@ -845,27 +1007,34 @@ export function generatePlan(e: Engine, ballots: Ballot[], input: Partial<PlanSe
       if (!lowest.length) break;
       const t = lowest[0];
       const target = shareOf(t)!;
-      // Accept only moves that lift t and leave nobody below min(their share, t's new share): the leximin order rises.
-      const fairEnough = (beforeMade: number[]) => {
-        if (made[t] <= beforeMade[t]) return false;
+      // Accept only moves that lift t and leave nobody below min(their share, t's new share) — the leximin order
+      // rises — and, with "Protect everyone else", nobody more than one pick down on the most popular plan.
+      const fairEnough = (beforeGot: number[]): "ok" | "no" | "others" | "protect" => {
+        if (got(t) <= beforeGot[t]) return "no";
         const lifted = shareOf(t)!;
-        return voters.every((_, k) => k === t || !counted[k] || shareOf(k)! >= Math.min(shareOf(k, beforeMade[k])!, lifted) - 1e-9);
+        if (!voters.every((_, k) => k === t || !counted[k] || shareOf(k)! >= Math.min(shareOf(k, beforeGot[k])!, lifted) - 1e-9)) return "others";
+        return guard() ? "ok" : "protect";
       };
-      let pick: { loss: number; run: () => void; id: string } | null = null;
+      let pick: { loss: number; run: () => void; id: string; slot: number } | null = null;
       let sawBudget = false;
+      let sawProtect = false;
       let sawOthers = false;
       let sawAny = false;
       const consider = (idx: number[], rested: boolean, apply: () => void, undo: () => void, id: string) => {
         sawAny = true;
-        const beforeMade = [...made];
+        const beforeGot = gotAll();
         const before = localScore(idx, rested);
         apply();
-        const fair = fairEnough(beforeMade);
+        const fits = idx.every((i) => dayFits(slots[i].day));
+        const fair = fairEnough(beforeGot);
         const after = localScore(idx, rested);
         undo();
-        if (!fair) sawOthers = true;
-        else if (current + (after - before) < scoreFloor - 1e-9) sawBudget = true;
-        else if (!pick || before - after < pick.loss - 1e-9) pick = { loss: before - after, run: apply, id };
+        if (!fits) return;
+        if (fair === "others") sawOthers = true;
+        else if (fair === "protect") sawProtect = true;
+        else if (fair === "no") return;
+        else if (current + (after - before) < floor - 1e-9) sawBudget = true;
+        else if (!pick || before - after < pick.loss - 1e-9) pick = { loss: before - after, run: apply, id, slot: idx[0] };
       };
       for (const id of voters[t].picks) {
         if (used.has(id)) {
@@ -907,16 +1076,18 @@ export function generatePlan(e: Engine, ballots: Ballot[], input: Partial<PlanSe
         for (const s of slots) {
           const i = s.i;
           if (!presence[t][s.day]) continue;
-          // Added alongside, where there's time and it's close by (costs no popularity).
-          if (extraFitsTime(i, id) && canHold(i, id, true)) consider([i], false, () => addExtra(i, id), () => removeExtra(i, id), id);
+          // Added alongside, where there's time and it's close by; or swapped for an extra already there.
+          if (!reserved.has(id) && extraFitsTime(i, id) && canHold(i, id, true)) consider([i], false, () => addExtra(i, id), () => removeExtra(i, id), id);
+          if (main[i] && main[i] !== STAY_ID && !splitB[i])
+            for (const x of [...extras[i]]) {
+              if (x.locked || reserved.has(id) || !extraSwapFits(i, x.id, id)) continue;
+              consider([i], false, () => swapExtra(i, x.id, id), () => swapExtra(i, id, x.id), id);
+            }
           // Or instead of the slot's main item.
           if (forced[i] || !main[i]) continue;
           const cur = main[i]!;
           const cv = mainVariant[i];
-          clearMain(i);
-          const ok = canHold(i, id);
-          placeMain(i, cur, { variant: cv });
-          if (!ok) continue;
+          if (!mainFits(i, id)) continue;
           consider(
             [i],
             cur === STAY_ID,
@@ -932,28 +1103,97 @@ export function generatePlan(e: Engine, ballots: Ballot[], input: Partial<PlanSe
           );
         }
       }
+      // Or a free slot they asked for, where the plan has something they didn't pick.
+      for (const t2 of SLOTS) {
+        if (Math.min(restFeasible[t].day, freeThere[t].day) + Math.min(restFeasible[t].night, freeThere[t].night) >= restFeasible[t].day + restFeasible[t].night) break;
+        if (freeThere[t][t2] >= restFeasible[t][t2]) continue;
+        for (const s of slots) {
+          const i = s.i;
+          if (s.slot !== t2 || !presence[t][s.day] || forced[i] || s.pair || !main[i] || main[i] === STAY_ID || extras[i].length) continue;
+          const cur = main[i]!;
+          const cv = mainVariant[i];
+          consider(
+            [i],
+            true,
+            () => {
+              clearMain(i);
+              placeMain(i, STAY_ID);
+            },
+            () => {
+              clearMain(i);
+              placeMain(i, cur, { variant: cv });
+            },
+            STAY_ID,
+          );
+        }
+      }
       if (pick) {
-        const chosenMove = pick as { run: () => void; id: string };
+        const chosenMove = pick as { run: () => void; id: string; slot: number };
         chosenMove.run();
         current = score();
-        if (!floorFor.has(chosenMove.id)) floorFor.set(chosenMove.id, new Set());
-        floorFor.get(chosenMove.id)!.add(voters[t].id);
+        steps.push(from ? Math.max(0, (from - current) / Math.abs(from)) : 0);
+        if (!record) {
+          stuck.clear();
+          continue;
+        }
+        const into = chosenMove.id === STAY_ID ? restFor : floorFor;
+        const key = (chosenMove.id === STAY_ID ? chosenMove.slot : chosenMove.id) as never;
+        if (!into.has(key)) into.set(key, new Set());
+        into.get(key)!.add(voters[t].id);
         stuck.clear();
         continue;
       }
       // The lowest share can't go higher: remember why (for the person at the very bottom).
-      if (blocked === null && target <= minShare() + 1e-9) blocked = !sawAny ? "none" : sawBudget ? "budget" : sawOthers ? "others" : "none";
+      if (blocked === null && target <= minShare() + 1e-9) blocked = !sawAny ? "none" : sawBudget ? "budget" : sawProtect ? "protect" : sawOthers ? "others" : "none";
       stuck.add(t);
     }
+    return { blocked, steps };
+  }
+
+  // The popularity search explores too: a lift can cross a dip in popularity to an arrangement the search can't
+  // reach on its own. So it lifts with no limits, re-optimises for popularity alone, and keeps whichever arrangement
+  // scores higher — "Majority rules" stays the most popular plan found, and no fairness mode should beat it.
+  let kept = snapshot();
+  let bestScore = score();
+  for (let pass = 0; pass < EXPLORE_PASSES; pass++) {
+    lift(bestScore, -Infinity, () => true, false);
+    improve(0, () => true, true);
+    fillExtras();
+    const found = score();
+    if (found <= bestScore + 1e-6) break;
+    kept = snapshot();
+    bestScore = found;
+  }
+  restore(kept);
+
+  // The yardstick: the most popular plan's score and shares (what Majority rules is).
+  const popularScore = score();
+  const popularShares = voters.flatMap((_, k) => (counted[k] ? [shareOf(k)!] : []));
+  const popularGot = gotAll();
+  const protect = strength > 0 && settings.protect;
+  /** "Protect everyone else": nobody ends more than one pick down on the most popular plan. */
+  const protectedOk = () => !protect || voters.every((_, k) => !counted[k] || got(k) >= popularGot[k] - 1);
+
+  // ── 5. Fairness: lift the lowest shares, within the tolerance ───────
+  const scoreFloor = popularScore - tolerance * Math.abs(popularScore);
+  let note: string | null = null;
+  /** After each lift: the share of the most popular plan's score given up so far. */
+  let steps: number[] = [];
+  if (strength > 0) {
+    const lifted = lift(popularScore, scoreFloor, protectedOk, true);
+    steps = lifted.steps;
+    const blocked = lifted.blocked;
     const floorShare = minShare();
-    improve(lambda, () => minShare() >= floorShare - 1e-9 && score() >= scoreFloor - 1e-9);
+    improve(lambda, () => minShare() >= floorShare - 1e-9 && score() >= scoreFloor - 1e-9 && protectedOk());
     if (minShare() <= Math.min(1, ...popularShares) + 1e-9) {
       note =
         blocked === "budget"
           ? `Lifting whoever gets the smallest share would cost more than the ${pctText(tolerance)} of popularity this mode may give up — allow more in Knobs to go further.`
-          : blocked === "others"
-            ? "Lifting whoever gets the smallest share would push someone else even lower, so the most popular plan is already the fairest."
-            : "Whoever gets the smallest share has no other picks that fit the days they're there, so nothing can lift them.";
+          : blocked === "protect"
+            ? "Lifting whoever gets the smallest share would cost someone else more than one pick — turn off “Protect everyone else” in Knobs to go further."
+            : blocked === "others"
+              ? "Lifting whoever gets the smallest share would push someone else even lower, so the most popular plan is already the fairest."
+              : "Whoever gets the smallest share has no other picks or free slots that fit the days they're there, so nothing can lift them.";
     }
   }
 
@@ -970,7 +1210,8 @@ export function generatePlan(e: Engine, ballots: Ballot[], input: Partial<PlanSe
       const today = other(s, s.day, "day");
       if (s.slot === "night" && today !== undefined && main[today] && byId[main[today]!]?.variants) out.push({ kind: "rest", text: "Rest after the big day trip" });
       else if (s.slot === "night" && earlyTripAfter(s.i)) out.push({ kind: "rest", text: "An early night before tomorrow's early start" });
-      if (wanted) out.push({ kind: "rest", text: `${plural(wanted, "person wants", "people want")} some slower ${s.slot === "day" ? "days" : "evenings"}` });
+      if (wanted) out.push({ kind: "rest", text: `Kept free: ${wanted} ${wanted === 1 ? "wants" : "want"} a slower ${s.slot === "day" ? "day" : "evening"}` });
+      if (restFor.has(s.i)) out.push({ kind: "fair", text: "Kept free to lift someone who'd otherwise get little of what they asked for" });
       if (!wanted && !out.length) {
         out.push({
           kind: "free",
@@ -996,6 +1237,7 @@ export function generatePlan(e: Engine, ballots: Ballot[], input: Partial<PlanSe
       if (v) out.push({ kind: "variant", text: `${v.title}: ${chose} of ${h} who picked it` });
     }
     if (!isRouteArea(e, s.area) && hoursFrom(e, a, s.area) >= 0.5) out.push({ kind: "travel", text: distanceLabel(e, a, s.area) });
+    if (role === "main" && s.plan.transfer && s.slot === "day") out.push({ kind: "time", text: `With the drive (${formatHours(legHours(s.i, true))}), the stops make a ${formatHours(slotHours(s.i))} day` });
     if (role === "extra") out.push({ kind: "extra", text: a.onlyWith ? "Rides along with the day trip" : "Fits alongside, close by and with time to spare" });
     return out;
   };
@@ -1086,8 +1328,10 @@ export function generatePlan(e: Engine, ballots: Ballot[], input: Partial<PlanSe
       feasible: feasible[k],
       made: mine,
       missed,
-      satisfaction: feasible[k] ? Math.min(1, mine.length / feasible[k]) : null,
-      floorAdded: [...floorFor.entries()].filter(([id, set]) => set.has(v.id) && placedOn.has(id)).length,
+      satisfaction: feasible[k] ? Math.min(1, (mine.length + restGot(k)) / feasible[k]) : null,
+      floorAdded: [...floorFor.entries()].filter(([id, set]) => set.has(v.id) && placedOn.has(id)).length + [...restFor.values()].filter((set) => set.has(v.id)).length,
+      rest: { feasible: restFeasible[k].day + restFeasible[k].night, made: restGot(k) },
+      vsMajority: got(k) - popularGot[k],
     };
   });
 
@@ -1146,8 +1390,16 @@ export function generatePlan(e: Engine, ballots: Ballot[], input: Partial<PlanSe
     tolerance,
     majority: { min: popularShares.length ? Math.min(...popularShares) : 0, median: median(popularShares), index: jain(popularShares) },
     scoreKept: popularScore ? finalScore / popularScore : 1,
-    lifted: voters.filter((_, k) => counted[k] && made[k] > popularMade[k]).length,
+    lifted: voters.filter((_, k) => counted[k] && got(k) > popularGot[k]).length,
     note,
+    protect,
+    maxLoss: Math.max(0, ...voters.flatMap((_, k) => (counted[k] ? [popularGot[k] - got(k)] : []))),
+    losers: voters.filter((_, k) => counted[k] && got(k) < popularGot[k]).length,
+    steps,
+    aboveNote:
+      finalScore > popularScore + 1e-6 && popularScore > 0
+        ? "Lifting someone opened up an arrangement the popularity search hadn't found, so this plan scores a little above the most popular one."
+        : null,
   };
 
   // ── Budget ──────────────────────────────────────────────────────────

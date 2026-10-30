@@ -61,6 +61,9 @@ const activities = [
   act("nye-b-2", "night", ["b"], "cove"),
   act("nye-c-1", "night", ["c"], "gamma"),
   act("nye-c-2", "night", ["c"], "gamma"),
+  // Long options only a niche traveller picks in the tests: too long to sit alongside anything else in their slot.
+  act("a-day-long", "day", ["a"], "alpha", { hours: 9, duration: "~9 hrs" }),
+  act("b-day-long", "day", ["b"], "beta", { hours: 9, duration: "~9 hrs" }),
   // Quick extras
   act("x-anywhere", ["day", "night"], ["a", "b", "c"], "beta"),
   act("x-with-trip", ["day"], ["c"], "peak", { onlyWith: "c-trip" }),

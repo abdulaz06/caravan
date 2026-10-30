@@ -25,7 +25,7 @@ export const MODE_COPY: Record<DecisionMode, { label: string; short: string; lin
     label: "Custom",
     short: "Your balance",
     line: "The organizers balanced the most popular picks against lifting whoever got the smallest share of theirs.",
-    how: "Slide between Majority rules and Everyone gets a say: the further towards fairness, the more popularity the plan may give up to lift whoever gets the least.",
+    how: "Slide between Majority rules and Everyone gets a say: halfway makes half of the lifts Everyone gets a say would, so it gives up less popularity and lifts a little less.",
   },
 };
 
@@ -47,6 +47,8 @@ export type PlanSettings = {
   tolerance: number;
   /** A split needs each camp to be at least this share of the travellers there that day (and at least 3). */
   splitShare: number;
+  /** "Protect everyone else": while lifting the lowest shares, nobody ends with more than one pick fewer than in Majority rules. */
+  protect: boolean;
   /** 0 = don't mind repeats … 1 = mix it up. */
   variety: number;
   /** 0 = ignore cost … 1 = lean towards what fits the group's budgets. */
@@ -64,6 +66,7 @@ export const DEFAULT_SETTINGS: PlanSettings = {
   draftWeight: 0.5,
   tolerance: 0.15,
   splitShare: 0.4,
+  protect: true,
   variety: 0.5,
   budgetFit: 0,
   start: null,
@@ -75,7 +78,7 @@ export const DEFAULT_SETTINGS: PlanSettings = {
 /** One traveller's say: their (normalised) plan. */
 export type Ballot = { id: string; name: string; status: "submitted" | "draft"; data: ItineraryData };
 
-export type ReasonKind = "votes" | "fair" | "weekday" | "special" | "travel" | "locked" | "rest" | "variant" | "budget" | "free" | "extra";
+export type ReasonKind = "votes" | "fair" | "weekday" | "special" | "travel" | "locked" | "rest" | "variant" | "budget" | "free" | "extra" | "time";
 /** A human-readable chip on a placed item ("9 of 12 picked this"). */
 export type Reason = { kind: ReasonKind; text: string };
 
@@ -140,10 +143,14 @@ export type PersonResult = {
   missed: MissedPick[];
   /** made ÷ what could fit (null: no picks). */
   satisfaction: number | null;
-  /** Their picks that could fit the days they're there in the chosen window (the share's denominator). */
+  /** What could fit the days they're there in the chosen window — their activity picks plus the free slots they asked for (the share's denominator). */
   feasible: number;
   /** Picks the fairness step added to lift them. */
   floorAdded: number;
+  /** Free slots: the stay-ins they picked, scaled to their days here — how many could be free, and how many are. (Absent on plans from before rest counted.) */
+  rest?: { feasible: number; made: number };
+  /** Picks (activities and free slots) in this plan minus in Majority rules' plan (0 in Majority rules). */
+  vsMajority?: number;
 };
 
 export type FairnessStats = {
@@ -163,6 +170,14 @@ export type FairnessStats = {
   lifted: number;
   /** Why the lowest share couldn't go higher, in plain words (null when it could, or for Majority rules). */
   note: string | null;
+  /** Whether "Protect everyone else" was on, and the most picks anyone lost compared with Majority rules (and how many lost any). */
+  protect?: boolean;
+  maxLoss?: number;
+  losers?: number;
+  /** Why this plan scores above the most popular one (null when it doesn't). */
+  aboveNote?: string | null;
+  /** After each lift, the share of the most popular plan's score given up so far (Custom makes the first part of these). */
+  steps?: number[];
 };
 
 export type ConsensusPlan = {

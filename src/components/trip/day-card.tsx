@@ -247,7 +247,7 @@ function SlotBlock({
         {view.items.length > 0 && (
           <span className={cn("inline-flex items-center gap-1 text-[11px] font-semibold", view.overpacked ? "text-accent-600" : "text-ink-3")}>
             {view.overpacked && <AlertTriangle className="size-3" strokeWidth={2.5} />}
-            {view.fullDay ? `Full day · ${view.fullDay}` : `${formatHours(view.plannedHours)} planned`}
+            {view.fullDay ? `Full day · ${view.fullDay}` : `${formatHours(view.plannedHours)} planned${view.legHours ? " with the drive" : ""}`}
           </span>
         )}
       </div>
